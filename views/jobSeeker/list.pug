@@ -1,0 +1,29 @@
+extends ../layout
+
+block content
+  h2 Job Seekers List
+  a(href="/job-seekers/new") Add New Seeker
+
+  table.table.table-striped.mt-3
+    thead
+      tr
+        th Name
+        th Nationality
+        th Major
+        th Preferred Location
+        th(style="white-space: normal; min-width: 120px;") Education Background
+        th Available From
+        th Actions
+    tbody
+      each seeker in seekers
+        tr
+          td= seeker.name
+          td= seeker.nationality
+          td= seeker.major
+          td= seeker.preferredWorkLocation
+          td= seeker.educationBackground
+          td= seeker.availableFrom ? seeker.availableFrom.toISOString().substring(0,10) : ''
+          td
+            a(href=`/job-seekers/edit/${seeker._id}`) Edit
+            |  
+            a(href=`/job-seekers/delete/${seeker._id}`) Delete

@@ -1,0 +1,31 @@
+extends ../layout
+
+block content
+  h2 Add Job Seeker
+
+  form(action="/job-seekers/new" method="post")
+    label(for="name") Name
+    input(type="text" name="name" placeholder="Name")
+    br
+
+    label(for="nationality") Nationality
+    input(type="text" name="nationality" placeholder="Nationality")
+    br
+
+    label(for="major") Major
+    input(type="text" name="major" placeholder="Major")
+    br
+
+    label(for="preferredWorkLocation") Preferred Work Location
+    input(type="text" name="preferredWorkLocation" placeholder="Preferred Work Location")
+    br
+
+    label(for="educationBackground") Education Background
+    input(type="text" name="educationBackground" placeholder="e.g., Graduate, Bachelor's")
+    br
+
+    label(for="availableFrom") Available From
+    input(type="date" name="availableFrom")
+    br
+
+    button(type="submit") Save

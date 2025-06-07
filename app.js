@@ -4,6 +4,7 @@ const path = require('path');
 const session = require('express-session');
 const userRoutes = require('./router/user');
 // const jobRouter = require('./router/job');
+const jobSeekerRouter = require('./router/jobSeeker');
 
 
 require('dotenv').config();
@@ -36,7 +37,7 @@ app.use(session({
 
 // body-parser와 static 미들웨어
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 
@@ -49,6 +50,7 @@ app.use(function (req, res, next) {
 // ✅ 라우터 등록
 app.use('/', indexRouter);
 // app.use('/job', jobRouter);
+app.use('/job-seekers', jobSeekerRouter);
 app.use('/pages', indexRouter);
 app.use('/facet', facetRouter);
 app.use('/search', searchRouter);

@@ -1,0 +1,31 @@
+extends ../layout
+
+block content
+  h2 Edit Job Seeker
+
+  form(action=`/job-seekers/edit/${seeker._id}` method="post")
+    label(for="name") Name
+    input(type="text" name="name" value=seeker.name)
+    br
+
+    label(for="nationality") Nationality
+    input(type="text" name="nationality" value=seeker.nationality)
+    br
+
+    label(for="major") Major
+    input(type="text" name="major" value=seeker.major)
+    br
+
+    label(for="preferredWorkLocation") Preferred Work Location
+    input(type="text" name="preferredWorkLocation" value=seeker.preferredWorkLocation)
+    br
+
+    label(for="educationBackground") Education Background
+    input(type="text" name="educationBackground" value=seeker.educationBackground)
+    br
+
+    label(for="availableFrom") Available From
+    input(type="date" name="availableFrom" value=(seeker.availableFrom.toISOString().substring(0,10)))
+    br
+
+    button(type="submit") Update
