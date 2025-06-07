@@ -1,0 +1,102 @@
+extends layout
+block content
+  - var displayOnBottom = collections[resource + 'displayOnBottom']['@list'];
+  - var displayOnMiddle = collections[resource + 'displayOnMiddle']['@list'];
+
+  .container(style="padding-top:30px;")
+	.row
+	  .col.mx-auto
+		h4.title #{title}
+	form#formData
+	  .form-row
+		.form-group.col-md-6
+		  label(for="inputID") ID
+		  input#inputID.form-control.border-top-0.border-left-0.border-right-0.rounded-0(
+			type="text", 
+			placeholder="ID", 
+			value=(doc!==null ? doc['@id'].replace(resource, '') : ''), 
+			readonly=(doc)
+		  )
+		.form-group.col-md-6
+		  label(for="inputType") TYPE
+		  select#inputType.selectpicker.d-block(
+			data-style="select-with-transition btn-neutral border text-dark btn-round", 
+			data-live-search="true", 
+			name='@type', 
+			disabled=(doc)
+		  )
+			each opt in structures
+			  option(
+				value=opt._id, 
+				selected=opt._id===(doc ? doc['@type'] : default_title)
+			  ) #{opt._id.replace(resource, '')}
+	  .form-row
+		- var labelValue = (doc && doc[label] && doc[label]['@value']) ? doc[label]['@value'].replace(/\[dot\]/g, '.') : ''
+		.form-group.col-md-6
+		  label(for='inputLabel') Label
+		  input#inputLabel.form-control.border-top-0.border-left-0.border-right-0.rounded-0(
+			type="text", 
+			placeholder="label", 
+			value=labelValue
+		  )
+	  .form-row
+		- var descValue = (doc && doc[description] && doc[description]['@value']) ? doc[description]['@value'].replace(/\[dot\]/g, '.') : ''
+		.form-group.col-12
+		  label(for='desc') 설명
+		  textarea#desc.form-control.border-top-0.border-left-0.border-right-0.rounded-0(
+			style='max-height:200px;', 
+			rows=5
+		  )= descValue
+
+	  #divSubClass.d-none
+		br
+		h5.font-weight-bold 하위클래스
+		hr
+		.form-row.form-group
+		  input#inpSubClass.form-control.border-left-0.border-top-0.border-right-0.rounded-0(readonly)
+		.form-row#sub_class
+
+	  br
+	  h5.font-weight-bold 연계정보
+	  hr
+	  .form-row#linked_info
+		each item in structures
+		  - var key = (doc ? doc['@type'] + '_' + item._id.replace(resource, '') : '');
+		  - var val = '';
+		  - if (doc && doc[key]) val = doc[key]['@id'];
+
+		  .form-group.col-md-6(class=(item['_id'] === default_title ? 'd-none' : ''), data-title=val)
+			label(for=item._id, data-title=item._id.replace(resource, '')) #{item._id.replace(resource, '')}
+			select.selectpicker.d-block(
+			  id=item._id, 
+			  data-style="select-with-transition btn-neutral border text-dark btn-round", 
+			  data-live-search="true", 
+			  name=item._id.replace(resource, ''), 
+			  data-type='@type', 
+			  title=item._id.replace(resource, '') + ' 선택'
+			)
+			  option(value='') #{item._id.replace(resource, '')} 선택
+			  option(data-divider='true')
+			  if(item.list)
+				each opt in item.list
+				  - var labelText = (typeof opt._label === 'string') ? opt._label.replace(/\[dot\]/g, '.') : ''
+				  option(value=opt._id selected=opt._id===val)= labelText
+
+	  br
+	  h5.font-weight-bold 속성정보
+	  hr
+	  .form-row#attribute_info
+		each item in displayOnBottom
+		  - var val = '';
+		  - if (doc && doc[item['@id']] && doc[item['@id']]['@value']) val = doc[item['@id']]['@value'].replace(/\[dot\]/g, '.');
+		  .form-group.col-md-6
+			label.text-nowrap(for=item['@id']) #{item['@id'].replace(resource, '')}
+			textarea.form-control.border-top-0.border-left-0.border-right-0.rounded-0(name=item['@id']) #{val}
+
+	  .row
+		.mx-auto
+		  if (!doc)
+			button.btn.btn-round.btn-primary(type='button', onclick='fnSubmit()') 제출
+		  if (doc)
+			button.btn.btn-round.btn-success(type='button', onclick='fnUpdate()') 수정
+			button.btn.btn-round.btn-danger(type='button', onclick='fnDelete()') 삭제

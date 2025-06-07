@@ -1,0 +1,197 @@
+extends layout
+block content
+  .container(style="padding-top:30px;")
+    .row
+      #left_facets.col-md-3
+        <!--------------------- 패싯 정보 --------------------->
+        #filter_wrap
+          <!--- 패싯 구분 리스트 --->
+
+          //- - console.log('---------------------------------------');
+          //- - console.log('filter_item : ' + JSON.stringify(filter_item, null, '\t'));
+          //- - console.log('---------------------------------------');
+
+          if(filter_item.length > 0)
+            each item in filter_item
+              - var _name = item.split('::')[0].replace(/_/g, ' ');
+              - var _title = item.split('::')[1].replace(/_/g, ' ');
+              - var _attr = item.split('::')[2].replace(/_/g, ' ');
+                .bg-white.border.p-2.my-2
+                  .d-flex.justify-content-between
+                  <!-- 패싯 검색 내용 -->
+                    b(data-title=_title, data-attr=_attr) #{_name} 
+                    .now-ui-icons.ui-1_simple-remove.d-flex.flex-column.justify-content-center.pointer(onclick='fnRemoveFilter("' + item.replace(/ /g, "_") + '")')
+        #facet_wrap(style='padding-top:5em;')
+          <!--- 패싯 구분 서브 리스트 --->
+
+          //- - console.log('---------------------------------------');
+          //- - console.log('list : ' + JSON.stringify(list, null, '\t'));
+          //- - console.log('---------------------------------------');
+          each item in list
+            - var facet_title = item[0].parentType.replace(title,'').replace('_','');
+
+
+
+
+
+
+            //- - console.log("facet_title => " + facet_title);
+            //- - console.log("facet_title => " + facet_title);
+
+
+
+
+
+
+
+            .card
+              <!----- 좌측 패싯별 타이틀 ----->
+              .card-header.p-2.bg-default.text-light(style='border-top:0px; solid #000; padding:0px;') #{facet_title}
+              .card-body.overflow-auto(style='max-height:200px;')
+                span
+
+                <!----- 좌측 패싯별 리스트 ----->
+                each i in item
+                  - var id = i['_id'].replace(resource,'')
+                  - var attr = typeof i.attr === 'object' ? id:i.attr
+                  - var element = id.replace(/_/g, ' ');
+
+
+
+
+
+
+
+
+
+                  //- if(item[0]["parentType"] == "Topic_Event")
+                  //-   - console.log("---------------------------------------");
+                  //-   - console.log("element Topic_Event => " + element);
+                  //-   - console.log("---------------------------------------");
+
+
+
+
+
+                  //- - console.log('---------------------------------------');
+                  //- - console.log('element : ' + JSON.stringify(element, null, '\t'));
+                  //- - console.log('---------------------------------------');
+
+                  //-  - console.log('element => ' + element);
+                  //-  - console.log('attr => ' + attr);
+                  //-  - console.log('parentType => ' + i.parentType);
+
+                  //- h6.pointer(onclick='fnFilterLeft("' + element.replace(/ /g, '_') + '", "' +
+                  //- attr.replace(resource,'').replace(/ /g, '_') + '","' +
+                  //- i.parentType.replace(title, '').replace('_', '') + '")') #{element} (#{i['sum']})
+
+
+
+
+
+
+
+
+
+
+
+
+
+                  //- a(href="")
+
+                  //-   li.h8(style="font-size:12px;line-height: 1.2;margin-bottom:7px;") #{facet_title} #{element} (#{i['sum']})
+                    
+                    
+
+
+
+                  h8.hand(style="font-size:14px;line-height:1.6;" onclick='fnFilterLeft("' + element.replace(/ /g, '_') + '", "' +
+                  attr.replace(resource,'').replace(/ /g, '_') + '","' +
+                  i.parentType.replace(title, '').replace('_', '') + '")') #{element.replace(/\[dot\]/g, '.')} (#{i['sum']})
+                  br
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      .col-md-9
+        <!--------------------- 페이지 당 리스트 수 선택 --------------------->
+        //- #page_selector.d-flex.justify-content-end
+        //-   .btn-group.btn-group-toggle(data-toggle='buttons')
+        //-     label.btn.btn-custom
+        //-       input#p10(type='radio', name='options', autocomplete='off')
+        //-       |  10
+        //-     label.btn.btn-custom.active
+        //-       input#p20(type='radio', name='options', autocomplete='off', checked='')
+        //-       |  20
+        //-     label.btn.btn-custom
+        //-       input#p30(type='radio', name='options', autocomplete='off')
+        //-       |  30
+        //-     label.btn.btn-custom
+        //-       input#p50(type='radio', name='options', autocomplete='off')
+        //-       |  50
+        //-     label.btn.btn-custom
+        //-       input#p100(type='radio', name='options', autocomplete='off')
+        //-       |  100
+        .row
+          <!--------------------- 리스트 --------------------->
+          #body_data.col-md-12(about='body 부분')
+            .body_title_wrap
+              each facet in body
+                <!--- 리스트 타이틀 --->
+                h2.d-inline-block #{facet._id.replace(resource, '')} 
+                span.text-dark (#{facet.count})
+                span(style='float: right')
+                  | Show as:&nbsp;
+                  b Map
+                  | &nbsp;|&nbsp;
+                  a(href=facet._id.replace(resource, '') + "?text=1") Text
+                .body_wrap(name='0')
+                  #map(style="height: 825px;")
+                  script
+                    | var latLngArray = [];
+                    | var map = L.map('map').setView([51.505, -0.09], 13);
+                    | L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    | maxZoom: 19,
+                    | attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                    | }).addTo(map);
+                    |
+                    each doc in facet.list
+                        if(doc[lat_long])
+                            - var lat_longInfo = doc[lat_long]['@value'].replace(/\[dot\]/g, '.').split(',');
+                            | latLngArray.push([!{lat_longInfo}]);
+                            | L.marker( [!{lat_longInfo}] ).addTo(map).bindPopup('
+                            b
+                              if(doc[label])
+                                a(href=doc['@id'].replace(resource, '/resource/')) #{doc[label]['@value']?doc[label]['@value'].replace(/\[dot\]/g, '.').replace(/'/g, '\\\''):doc[label][0]["@value"].replace(/\[dot\]/g, '.').replace(/'/g, '\\\'')}
+                            if(doc[description])
+                                br
+                                if(doc[description]['@value'])
+                                  span #{doc[description]['@value'].replace(/\[dot\]/g, '.').replace(/[\r\n]/g, '').replace(/'/g, '\\\'')}
+                                else
+                                  span #{doc[description].replace(/\[dot\]/g, '.').replace(/[\r\n]/g, '').replace(/'/g, '\\\'')}
+                            |').openPopup();
+                            |
+                    | map.fitBounds(latLngArray);
+                    |
+
+block append_on_header
+  link(rel='stylesheet', media='screen', href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css')
+  script(src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js', type='text/javascript')
+block append_js
+  script(src='/assets/js/custom/facet.js', type='text/javascript')
+  script.
+    //- console.log(!{JSON.stringify(list)});
+    //- console.log('filter_item : ', !{JSON.stringify(filter_item)});
+    //- console.log('body : ', !{JSON.stringify(body)})

@@ -1,0 +1,134 @@
+doctype html
+html(lang="en")
+  head
+    meta(charset="UTF-8")
+    meta(name="viewport", content="width=device-width, initial-scale=1.0")
+    title 선교사 시맨틱 입력창 (클라이언트 측) | 서브측은 만들어야 함
+    style.
+      /* 추가된 CSS 스타일 */
+      body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        margin: 0;
+        overflow-y: auto; /* 스크롤 추가 */
+      }
+      label {
+        display: block;
+        margin-top: 10px;
+      }
+      .hr-line {
+        width: 100%;
+        border-top: 1px solid #add8e6; /* 옅은 파란색으로 변경 */
+        margin: 10px 0; /* 간격 조절 */
+      }
+      /* 추가된 CSS 스타일 */
+      textarea#recordDesc {
+        height: 100px; /* 높이를 조절하여 입력창 크기 조절 */
+        width: 700px; /* 너비를 조절하여 입력창 크기 조절 */
+      }
+      .altLabelBox {
+        display: flex;
+        margin-top: 10px;
+      }
+      .altLabelBox input {
+        margin-right: 5px;
+      }
+    body
+      h1
+        | • 사건 시맨틱 입력창
+      a(href="page1")
+        | Admin으로 가기
+      form(action="/submit" method="post")
+        label(for="name") 사건명:사건명을 입력해주세요(단어와 단어 사이에 언더바(_)를 넣어주세요
+        input(type="text" id="name" name="name" required)
+        div(class="hr-line")
+        label(for="name") rdf:Label:사건명을 입력해주세요. 완전 자연어로 입력하시면 됩니다
+        input(type="text" id="name" name="name" required)
+        div(class="hr-line")
+        
+        label(for="name") skos:altLabel:사건명에 대한 이명 또는 별칭 한자 영어를 입력해 주세요. 여러 개일 경우 추가 또는 제거하실 수 있습니다
+        div(id="altLabelContainer")
+          div(class="altLabelBox")
+            input(type="text" name="name" required)
+          button(type="button" id="addAltLabel") + 추가
+        div(class="hr-line")
+        
+        label(for="recordDesc") Description:사건명에 대한 설명을 해주세요
+        textarea(id="recordDesc" name="recordDesc" required)
+        div(class="hr-line")
+        
+        label(for="producer") 주요인물: 사건관련 주요인물을 선택 또는 새로 입력해주세요
+        select(id="producer" name="producer" onchange="updateProducers()" required)
+          option(value="") 선택 
+        label(for="newProducer") 또는 새로 입력:
+        input(type="text" id="newProducer" name="newProducer")
+        div(class="hr-line")
+        
+        label(for="producer") 시대명: 사건관연 시대명을 입력해주세요
+        select(id="producer" name="producer" onchange="updateProducers()" required)
+          option(value="") 선택 
+        label(for="newProducer") 또는 새로 입력:
+        input(type="text" id="newProducer" name="newProducer")
+        div(class="hr-line")
+        
+        label(for="producer") 디아스포라: 사건과 관련된 디아스포라명을 선택 또는 입력해주세요
+        select(id="producer" name="producer" onchange="updateProducers()" required)
+          option(value="") 선택 
+        label(for="newProducer") 또는 새로 입력:
+        input(type="text" id="newProducer" name="newProducer")
+        div(class="hr-line")
+        
+        label(for="producer") 장소:장소명을 선택 또는 새로 입력해주세요
+        select(id="producer" name="producer" onchange="updateProducers()" required)
+          option(value="") 선택 
+        label(for="newProducer") 또는 새로 입력:
+        input(type="text" id="newProducer" name="newProducer")
+        label(for="location") 위경도:장소에 대한 위경도를 가운데 (,)로 분리해주세요
+        input(type="text" id="location" name="location")
+        div(class="hr-line")
+        
+        label(for="producer") 지역: 사건과 관련된 지역명을 입력해주세요
+        select(id="producer" name="producer" onchange="updateProducers()" required)
+          option(value="") 선택 
+        label(for="newProducer") 또는 새로 입력:
+        input(type="text" id="newProducer" name="newProducer")
+        div(class="hr-line")
+        
+        label(for="producer") 해당년도: 사건관련 해당년도를 (0000-00-00)형태로 입력해주세요
+        select(id="producer" name="producer" onchange="updateProducers()" required)
+          option(value="") 선택 
+        label(for="newProducer") 또는 새로 입력:
+        input(type="text" id="newProducer" name="newProducer")
+        div(class="hr-line")
+        
+        label(for="producer") 등록기관: 등록기관명을 입력해주세요
+        select(id="producer" name="producer" onchange="updateProducers()" required)
+          option(value="") 선택 
+        label(for="newProducer") 또는 새로 입력:
+        input(type="text" id="newProducer" name="newProducer")
+        div(class="hr-line")
+        br
+        div(class="hr-line")
+        br
+        button(type="submit") 제출
+        br
+        br
+        
+      script.
+        // JavaScript로 추가된 부분을 제어
+        document.getElementById('addAltLabel').addEventListener('click', function() {
+          var container = document.getElementById('altLabelContainer');
+          var newBox = document.createElement('div');
+          newBox.className = 'altLabelBox';
+          newBox.innerHTML = '<input type="text" name="name" required><button type="button" class="removeAltLabel">- 제거</button>';
+          container.appendChild(newBox);
+        
+          // 추가된 박스에서 제거 버튼을 눌렀을 때 해당 박스 제거
+          newBox.querySelector('.removeAltLabel').addEventListener('click', function() {
+            container.removeChild(newBox);
+          });
+        });

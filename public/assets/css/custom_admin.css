@@ -1,0 +1,15 @@
+.btn-member-status{
+    font-size: 0.7rem;
+    padding: .5rem;
+    width: 50px !important;
+}
+#memeber-status .bootstrap-select .dropdown-menu.inner li a{
+    padding-top: .2rem;
+    padding-bottom: .2rem;
+    margin-top: 0PX;
+}
+.btn-member-status[title='정상']{background-color:#007bff;}
+.btn-member-status[title='휴직']{background-color:#fd7e14;}
+.btn-member-status[title='퇴사']{background-color:#6c757d;}
+
+.memeber-status .dropdown.bootstrap-select{width:80px !important;}

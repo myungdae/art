@@ -1,0 +1,42 @@
+extends layout
+block content
+  .container(style="padding-top:30px;")
+    .row
+      .col-3
+        #list-tab.list-group(role="tablist")
+          each item, idx in result
+            - var item_id = Array.isArray(item._id) ? item._id[0] : item._id
+            - var displayTitle = (item.label && item.label['@value']) ? item.label['@value'].replace(/\[dot\]/g, '.') : item_id.replace(resource, '')
+            a.list-group-item.list-group-item-action.d-flex.justify-content-between.align-items-center(
+              id='list-' + idx,
+              class=(idx === 0 ? 'active' : ''),
+              data-toggle='list',
+              href='#list-body-' + idx,
+              role='tab',
+              aria-controls=item_id
+            )= displayTitle
+      .col-9
+        #nav-tabContent.tab-content
+          each item, idx in result
+            - var item_id = Array.isArray(item._id) ? item._id[0] : item._id
+            .tab-pane.fade.show(id='list-body-' + idx, class=(idx === 0 ? 'active' : ''), role='tabpanel', aria-labelledby='list-' + idx)
+              each list in item.list
+                .card(style='border-top:2px solid #000')
+                  .card-body
+                    .d-flex.justify-content-start
+                      a(href=list['@id'].replace(resource, '/resource/'))
+                        if (list[resource + '그림'] && list[resource + '그림']['@value'])
+                          img(style='width:100px; min-width:100px; margin:10px;' name="pic" src=list[resource + '그림']['@value'].replace(/\[dot\]/g, '.'))
+                        else
+                          img(style='width:100px; min-width:100px; margin:10px;' name="pic" src='/assets/img/empty.gif')
+                      .desc_wrap
+                        if (list[label])
+                          a.text-info.font-weight-bold(href=list['@id'].replace(resource, '/resource/'))= list[label]['@value'] ? list[label]['@value'].replace(/\[dot\]/g, '.') : (Array.isArray(list[label]) ? list[label][0]['@value'].replace(/\[dot\]/g, '.') : '')
+                        if (list[description])
+                          if (list[description]['@value'])
+                            p.description.overflow-auto.my-0(style='max-height:100px;')= list[description]['@value'].replace(/\[dot\]/g, '.')
+                          else
+                            p.description.overflow-auto.my-0(style='max-height:100px;')= list[description].replace(/\[dot\]/g, '.')
+
+block append_js
+  script.
