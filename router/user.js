@@ -50,5 +50,10 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// ✅ 마이페이지 보여주기 (단순 페이지)
+router.get('/mypage', (req, res) => {
+  res.render('user/mypage');
+});
+
 
 module.exports = router;
