@@ -1,0 +1,65 @@
+// views/job/create.pug
+
+extends ../layout
+
+block content
+  .container.mt-5
+    h2.mb-4 Post a Job
+
+    form(method="POST", action="/job/create")
+
+      .form-group.mb-3
+        label(for="employerEmail") Employer Email
+        input#employerEmail.form-control(type="email", name="employerEmail", required)
+
+      .form-group.mb-3
+        label(for="cellphone") Cellphone
+        input#cellphone.form-control(type="text", name="cellphone")
+
+      .form-group.mb-3
+        label(for="skypeID") Skype ID
+        input#skypeID.form-control(type="text", name="skypeID")
+
+      .form-group.mb-3
+        label(for="hostCountry") Host Country
+        select#hostCountry.form-control(name="hostCountry", required)
+          option(value="") -- Select Country --
+          each country in countries
+            option(value=country.code)= country.name
+
+      .form-group.mb-3
+        label(for="teachingArea") Teaching Area
+        input#teachingArea.form-control(type="text", name="teachingArea", placeholder="e.g. Math, Science, ESL")
+
+      .form-group.mb-3
+        label(for="studentType") Student Type
+        select#studentType.form-control(name="studentType")
+          option(value="") -- Select Type --
+          option(value="Children") Children
+          option(value="Teenagers") Teenagers
+          option(value="Adults") Adults
+          option(value="Business") Business
+
+      // ✅ Payment Options
+      .form-group.mb-4
+        label Purchase Option
+        .form-check
+          input.form-check-input(type="radio", name="purchaseOption", value="1", required)
+          label.form-check-label 1 Ad - $75
+        .form-check
+          input.form-check-input(type="radio", name="purchaseOption", value="4")
+          label.form-check-label 4 Ads - $200 (save $100)
+        .form-check
+          input.form-check-input(type="radio", name="purchaseOption", value="12")
+          label.form-check-label 12 Ads - $550 (save $350)
+        .form-check
+          input.form-check-input(type="radio", name="purchaseOption", value="24")
+          label.form-check-label 24 Ads - $999 (save $600)
+
+      .form-check.mb-3
+        input.form-check-input(type="checkbox", name="resumeDBAccess", id="resumeDBAccess")
+        label.form-check-label(for="resumeDBAccess") Add 30 days access to Teacher Resume DB ($75)
+
+      .text-center
+        button.btn.btn-primary(type="submit") Submit Job Posting
+

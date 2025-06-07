@@ -1,59 +1,93 @@
 const express = require('express');
 const router = express.Router();
-const User = require('../model/user'); // Mongoose 모델 불러오기
+const User = require('../model/user');
 
-// ✅ 회원가입 폼 보여주기
+// Register form
 router.get('/register', (req, res) => {
   res.render('user/register');
 });
 
-// ✅ 회원가입 정보 처리 (POST)
+// Register handler
 router.post('/register', async (req, res) => {
   const { username, email, password, role } = req.body;
 
   try {
-    // 사용자 생성
-    const newUser = new User({
-      username,
-      email,
-      password,
-      role
-    });
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(409).send('This email is already registered.');
+    }
 
+    const newUser = new User({ username, email, password, role });
     await newUser.save();
 
-    console.log('✅  Registration successful:', newUser);
-    res.send('Your registration has been completed successfully!');
+    console.log('✅ Registration successful:', newUser);
+    res.send('✅ Registration completed successfully.');
   } catch (err) {
+    if (err.code === 11000 && err.keyPattern?.email) {
+      return res.status(409).send('This email is already registered. (MongoDB)');
+    }
+
     console.error('❌ Registration error:', err.message);
-    res.status(500).send('Registration failed due to a server error.');
+    res.status(500).send('❌ Registration failed due to a server error.');
   }
 });
 
-// ✅ 로그인 폼 보여주기
+// Login form
 router.get('/login', (req, res) => {
   res.render('user/login');
 });
 
-// ✅ 로그인 처리
+// Login handler
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
+
   try {
     const user = await User.findOne({ email });
+
     if (!user || user.password !== password) {
-      return res.status(401).send('Invalid email or password.');
+      return res.status(401).send('❌ Invalid email or password.');
     }
-    res.send('Login successful!');
+
+    req.session.user = {
+      id: user._id,
+      username: user.username,
+      email: user.email,
+      role: user.role
+    };
+
+    console.log('✅ Login successful. Session saved:', req.session.user);
+    res.redirect('/user/mypage');
   } catch (err) {
-    console.error('❌ 로그인 오류:', err.message);
-    res.status(500).send('Internal server error.');
+    console.error('❌ Login error:', err.message);
+    res.status(500).send('❌ Login failed due to a server error.');
   }
 });
 
-// ✅ 마이페이지 보여주기 (단순 페이지)
+// MyPage
 router.get('/mypage', (req, res) => {
-  res.render('user/mypage');
+  if (!req.session.user) {
+    return res.redirect('/user/login');
+  }
+
+  console.log('✅ MyPage session user:', req.session.user);
+  res.render('user/mypage', { user: req.session.user });
 });
 
+// Session check
+router.get('/test-session', (req, res) => {
+  if (req.session.user) {
+    res.send(`✅ Session active: ${req.session.user.username}`);
+  } else {
+    res.send('❌ No session found');
+  }
+});
+
+// ✅ Logout
+
+router.get('/logout', (req, res) => {
+  req.session.destroy(() => {
+    res.redirect('/'); // 홈으로 리디렉션
+  });
+});
 
 module.exports = router;

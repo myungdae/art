@@ -4,9 +4,14 @@ block content
   .container.mt-5
     h3.mb-4.text-center My Page
 
-    p.text-center
-      | Welcome to your My Page.
-    ul
-      li Username: (user info will be shown here later)
-      li Email: (user info will be shown here later)
-      li Role: (user info will be shown here later)
+    .card
+      .card-body
+        h5.card-title Welcome, #{user.username}!
+        p.card-text
+          | Email: #{user.email}
+        p.card-text
+          | Role: #{user.role}
+
+    .mt-4.text-center
+      a.btn.btn-secondary(href="/") Back to Home
+      a.btn.btn-danger(href="/user/logout") Logout
