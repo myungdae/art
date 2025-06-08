@@ -1,0 +1,23 @@
+extends ../layout
+
+block content
+  h2 Job Seekers (Public View)
+
+  table.table.table-striped.mt-3
+    thead
+      tr
+        th Name
+        th Nationality
+        th Major
+        th Preferred Location
+        th Education Background
+        th Available From
+    tbody
+      each seeker in seekers
+        tr
+          td= seeker.name
+          td= seeker.nationality
+          td= seeker.major
+          td= seeker.preferredWorkLocation
+          td= seeker.educationBackground
+          td= seeker.availableFrom ? seeker.availableFrom.toISOString().substring(0,10) : ''
