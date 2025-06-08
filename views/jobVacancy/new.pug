@@ -1,0 +1,41 @@
+extends ../layout
+
+block content
+  .container.mt-5
+    .row.justify-content-center
+      .col-md-8
+        .card.shadow
+          .card-header.bg-primary.text-white
+            h4.mb-0 Add New Job Vacancy
+
+          .card-body
+            form(method="POST", action="/job-vacancies/new")
+              .form-group.mb-3
+                label Title
+                input.form-control(type="text", name="title")
+
+              .form-group.mb-3
+                label Country
+                input.form-control(type="text", name="country")
+
+              .form-group.mb-3
+                label Student Type
+                input.form-control(type="text", name="studentType")
+
+              .form-group.mb-3
+                label Teaching Area
+                input.form-control(type="text", name="teachingArea")
+
+              .form-group.mb-3
+                label Duration
+                input.form-control(type="text", name="duration")
+
+              .form-group.mb-3
+                label Pay
+                input.form-control(type="text", name="pay")
+
+              .form-group.mb-4
+                label Housing
+                input.form-control(type="text", name="housing")
+
+              button.btn.btn-success.btn-block(type="submit") Submit

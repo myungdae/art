@@ -15,8 +15,14 @@ router.get('/new', (req, res) => {
 
 // 생성 처리
 router.post('/new', async (req, res) => {
-  await JobSeeker.create(req.body);
-  res.redirect('/job-seekers');
+  console.log('📦 [CREATE] JobSeeker POST body:', req.body);  // ✅ 추가
+  try {
+    await JobSeeker.create(req.body);
+    res.redirect('/job-seekers');
+  } catch (err) {
+    console.error('❌ JobSeeker 저장 실패:', err);
+    res.status(400).send('JobSeeker 저장 실패');
+  }
 });
 
 // 수정 폼
@@ -27,8 +33,14 @@ router.get('/edit/:id', async (req, res) => {
 
 // 수정 처리
 router.post('/edit/:id', async (req, res) => {
-  await JobSeeker.findByIdAndUpdate(req.params.id, req.body);
-  res.redirect('/job-seekers');
+  console.log('📦 [UPDATE] JobSeeker POST body:', req.body);  // ✅ 추가
+  try {
+    await JobSeeker.findByIdAndUpdate(req.params.id, req.body);
+    res.redirect('/job-seekers');
+  } catch (err) {
+    console.error('❌ JobSeeker 수정 실패:', err);
+    res.status(400).send('JobSeeker 수정 실패');
+  }
 });
 
 // 삭제

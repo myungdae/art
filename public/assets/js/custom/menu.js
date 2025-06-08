@@ -1,5 +1,5 @@
 $(function() {
-    const menus = ['Job_Vacancies', 'Job_Seekers', 'Online_Tutor']
+    const menus = ['Job_Vacancies', 'Job_Seekers', 'Online_Tutors']
     // const more_menus = ['Collection', '역사적사건', '역사적인물', 
        // '관광명소종류', '자연물종류', '맛집종류', '숙박종류', '유무형문화재종류', '유물유적종류', '인프라종류', '주변동식물', '지역']
     const ul_document = document.querySelector(".navbar-nav.justify-content-center");

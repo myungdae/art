@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const JobSeeker = require('../model/jobSeeker');
+// const JobSeeker = require('../model/jobSeeker');
 const OnlineTutor = require('../model/onlineTutor');
 
 // ✅ Job Seekers 공개 목록
 router.get('/Job_Seekers', async (req, res) => {
-  const seekers = await JobSeeker.find();
+  // const seekers = await JobSeeker.find();
   res.render('public/job_seekers', { seekers });
 });
 

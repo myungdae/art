@@ -1,0 +1,42 @@
+extends ../layout
+
+block content
+  h2 Online Tutors List
+  a.btn.btn-success(href="/online-tutors/create") Add New Tutor
+
+  table.table.table-striped.mt-4
+    thead
+      tr
+        th Name
+        th Nationality
+        th Gender
+        th Expertise
+        th Tutoring Experience
+        th Communication Methods
+        th Available Time
+        th Available From
+        th Actions
+    tbody
+      each tutor in tutors
+        tr
+          td= tutor.name
+          td= tutor.nationality
+          td= tutor.gender
+          td
+            if Array.isArray(tutor.expertise)
+              each val in tutor.expertise
+                span.badge.bg-info.me-1= val
+            else
+              = tutor.expertise
+          td= tutor.tutoringExperience
+          td
+            if Array.isArray(tutor.communicationMethods)
+              each method in tutor.communicationMethods
+                span.badge.bg-secondary.me-1= method
+            else
+              = tutor.communicationMethods
+          td= tutor.availableTime
+          td= tutor.availableFrom ? tutor.availableFrom.toISOString().substring(0, 10) : ''
+          td
+            a.btn.btn-sm.btn-primary(href=`/online-tutors/edit/${tutor._id}`) Edit
+            a.btn.btn-sm.btn-danger.ms-2(href=`/online-tutors/delete/${tutor._id}`) Delete

@@ -7,7 +7,7 @@ const _collection = process.env.COLLECTION;
 
 // ✅ 서비스별 기본 타이틀 및 메뉴 구성
 const _default_title = 'Job_Vacancies';
-const _facet_menu = ['Job_Vacancies', 'Job_Seekers', 'Online_Tutor'];
+const _facet_menu = ['Job_Vacancies', 'Job_Seekers', 'Online_Tutors'];
 const _existSubClass = []; // 하위 분류가 있는 경우만 명시
 
 // ✅ URI 마스킹 버전 설정 (MongoDB 키 충돌 방지용)
@@ -128,7 +128,9 @@ exports.resetStructure = createStructure();
 
 // ✅ 구조 정보 반환 함수
 exports.getStructure = async () => {
-  const class_array = _facet_menu.map(v => ({ '@type': _resource + v }));
+  const class_array = _facet_menu.map(v => ({
+    '@type': { $in: [_resource + v] }  // ✅ 정확한 일치에도 대응
+  }));
   const subClass_array = _facet_menu.map(v => ({ [_subClassOf + '.@id']: _resource + v }));
 
   const _class = await Schema.aggregate([

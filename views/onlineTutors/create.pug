@@ -1,0 +1,71 @@
+extends ../layout
+
+block content
+  h2 Add New Online Tutor
+
+  form(method='POST', action='/online-tutor/new')
+    .form-group
+      label(for='name') Name
+      input.form-control(type='text', name='name', required)
+
+    .form-group
+      label(for='nationality') Nationality
+      input.form-control(type='text', name='nationality', required)
+
+    .form-group
+      label(for='gender') Gender
+      select.form-control(name='gender', required)
+        option(value='') Select gender
+        option(value='Male') Male
+        option(value='Female') Female
+        option(value='Other') Other
+
+    .form-group
+      label(for='expertise') Expertise (select one or more)
+      div
+        label.checkbox-inline
+          input(type='checkbox', name='expertise', value='Grammar')
+          | Grammar
+        label.checkbox-inline.ml-3
+          input(type='checkbox', name='expertise', value='Conversation')
+          | Conversation
+        label.checkbox-inline.ml-3
+          input(type='checkbox', name='expertise', value='ExamPrep')
+          | Exam Prep
+        label.checkbox-inline.ml-3
+          input(type='checkbox', name='expertise', value='BusinessEnglish')
+          | Business English
+
+    .form-group
+      label(for='tutoringExperience') Tutoring Experience
+      select.form-control(name='tutoringExperience', required)
+        option(value='') Select experience
+        option(value='Beginner') Beginner
+        option(value='Intermediate') Intermediate
+        option(value='Advanced') Advanced
+
+    .form-group
+      label(for='communicationMethods') Communication Methods
+      div
+        label.checkbox-inline
+          input(type='checkbox', name='communicationMethods', value='Zoom')
+          | Zoom
+        label.checkbox-inline.ml-3
+          input(type='checkbox', name='communicationMethods', value='Skype')
+          | Skype
+        label.checkbox-inline.ml-3
+          input(type='checkbox', name='communicationMethods', value='Email')
+          | Email
+        label.checkbox-inline.ml-3
+          input(type='checkbox', name='communicationMethods', value='GoogleMeet')
+          | Google Meet
+
+    .form-group
+      label(for='availableFrom') Available From
+      input.form-control(type='date', name='availableFrom', required)
+
+    .form-group
+      label(for='availableTime') Available Time (e.g., 14:00)
+      input.form-control(type='time', name='availableTime')
+
+    button.btn.btn-primary(type='submit') Save

@@ -1,0 +1,33 @@
+extends ../layout
+
+block content
+  h2 Job Vacancies List
+  a(href="/job-vacancies/new") Add New Job
+
+  table.table.table-striped.mt-3
+    thead
+      tr
+        th Title
+        th Country
+        th Student Type
+        th Teaching Area
+        th Duration
+        th Pay
+        th Housing
+        th Date Posted
+        th Actions
+    tbody
+      each job in jobs
+        tr
+          td= job.title
+          td= job.country
+          td= job.studentType
+          td= job.teachingArea
+          td= job.duration
+          td= job.pay
+          td= job.housing
+          td= job.datePosted.toDateString()
+          td
+            a.btn.btn-sm.btn-warning(href=`/job-vacancies/${job._id}/edit`) Edit
+            form(method="POST", action=`/job-vacancies/${job._id}/delete`, style="display:inline")
+              button.btn.btn-sm.btn-danger(type="submit", onclick="return confirm('Are you sure?')") Delete

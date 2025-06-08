@@ -8,6 +8,7 @@ block content
     thead
       tr
         th Name
+        th Country
         th Nationality
         th Major
         th Preferred Location
@@ -18,6 +19,7 @@ block content
       each seeker in seekers
         tr
           td= seeker.name
+          td= seeker.country
           td= seeker.nationality
           td= seeker.major
           td= seeker.preferredWorkLocation

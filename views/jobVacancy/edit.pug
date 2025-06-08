@@ -1,0 +1,35 @@
+extends ../layout
+
+block content
+  h2 Edit Job Vacancy
+
+  form(method="POST", action=`/job-vacancies/${job._id}/edit`)
+    .form-group
+      label Title
+      input.form-control(type="text", name="title", value=job.title)
+
+    .form-group
+      label Country
+      input.form-control(type="text", name="country", value=job.country)
+
+    .form-group
+      label Student Type
+      input.form-control(type="text", name="studentType", value=job.studentType)
+
+    .form-group
+      label Teaching Area
+      input.form-control(type="text", name="teachingArea", value=job.teachingArea)
+
+    .form-group
+      label Duration
+      input.form-control(type="text", name="duration", value=job.duration)
+
+    .form-group
+      label Pay
+      input.form-control(type="text", name="pay", value=job.pay)
+
+    .form-group
+      label Housing
+      input.form-control(type="text", name="housing", value=job.housing)
+
+    button.btn.btn-primary(type="submit") Update
