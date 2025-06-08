@@ -1,5 +1,8 @@
 extends ../layout
 
+block append_on_header
+  script(src="/vendor/ckeditor/ckeditor.js")
+
 block content
   .container.mt-5
     .row.justify-content-center
@@ -11,10 +14,15 @@ block content
           .card-body
             form(method="POST", action="/job-vacancies/new")
 
-              // ✅ Title
+              // ✅ Title → rdfs:label
               .form-group.mb-3
                 label Title
                 input.form-control(type="text", name="title")
+
+              // ✅ Description → dc:description + CKEditor
+              .form-group.mb-4
+                label Description
+                textarea.form-control(name="description", id="description", rows="8")
 
               // ✅ Host Country
               .form-group.mb-3
@@ -27,8 +35,7 @@ block content
                         option(value=c)= c
                   button.btn.btn-outline-dark.ms-2(
                     type="button",
-                    onclick="toggleInput('countryInput')",
-                    style="font-size: 1.2rem; font-weight: bold; padding: 0.25rem 0.75rem; line-height: 1.2;"
+                    onclick="toggleInput('countryInput')"
                   ) +
                 input#countryInput.form-control.mt-2(type="text", name="country", placeholder="Enter new country", style="display: none")
 
@@ -43,8 +50,7 @@ block content
                         option(value=t)= t
                   button.btn.btn-outline-dark.ms-2(
                     type="button",
-                    onclick="toggleInput('studentTypeInput')",
-                    style="font-size: 1.2rem; font-weight: bold; padding: 0.25rem 0.75rem; line-height: 1.2;"
+                    onclick="toggleInput('studentTypeInput')"
                   ) +
                 input#studentTypeInput.form-control.mt-2(type="text", name="studentType", placeholder="Enter new student type", style="display: none")
 
@@ -59,8 +65,7 @@ block content
                         option(value=a)= a
                   button.btn.btn-outline-dark.ms-2(
                     type="button",
-                    onclick="toggleInput('teachingAreaInput')",
-                    style="font-size: 1.2rem; font-weight: bold; padding: 0.25rem 0.75rem; line-height: 1.2;"
+                    onclick="toggleInput('teachingAreaInput')"
                   ) +
                 input#teachingAreaInput.form-control.mt-2(type="text", name="teachingArea", placeholder="Enter new teaching area", style="display: none")
 
@@ -82,9 +87,10 @@ block content
               // ✅ Submit
               button.btn.btn-success.btn-block(type="submit") Submit
 
-  // ✅ JavaScript for + button
+  // ✅ JavaScript for + 버튼과 CKEditor 적용
   script.
     function toggleInput(id) {
       const el = document.getElementById(id);
       el.style.display = (el.style.display === 'none') ? 'block' : 'none';
     }
+    CKEDITOR.replace('description');

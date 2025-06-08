@@ -38,4 +38,13 @@ router.get('/delete/:id', async (req, res) => {
   res.redirect('/online-tutors');
 });
 
+// ✅ /create 경로에서도 접근 가능하게 redirect
+router.get('/create', (req, res) => {
+  res.redirect('/online-tutors/new');
+});
+
+router.post('/create', (req, res) => {
+  res.redirect(307, '/online-tutors/new'); // POST 요청도 유지해서 전달
+});
+
 module.exports = router;

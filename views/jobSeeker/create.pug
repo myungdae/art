@@ -1,35 +1,41 @@
 extends ../layout
 
 block content
-  h2 Add Job Seeker
+  .container.mt-5
+    .row.justify-content-center
+      .col-md-8
+        .card.shadow
+          .card-header.bg-primary.text-white
+            h4.mb-0 Add Job Seeker
 
-  form(action="/job-seekers/new" method="post")
-    label(for="name") Name
-    input(type="text" name="name" placeholder="Name")
-    br
+          .card-body
+            form(method="POST", action="/job-seekers/new")
+              .form-group.mb-3
+                label Name
+                input.form-control(type="text", name="name", placeholder="Name")
 
-    label(for="country") Country
-    input(type="text" name="country" placeholder="Country")
-    br
+              .form-group.mb-3
+                label Country
+                input.form-control(type="text", name="country", placeholder="Country")
 
-    label(for="nationality") Nationality
-    input(type="text" name="nationality" placeholder="Nationality")
-    br
+              .form-group.mb-3
+                label Nationality
+                input.form-control(type="text", name="nationality", placeholder="Nationality")
 
-    label(for="major") Major
-    input(type="text" name="major" placeholder="Major")
-    br
+              .form-group.mb-3
+                label Major
+                input.form-control(type="text", name="major", placeholder="Major")
 
-    label(for="preferredWorkLocation") Preferred Work Location
-    input(type="text" name="preferredWorkLocation" placeholder="Preferred Work Location")
-    br
+              .form-group.mb-3
+                label Preferred Work Location
+                input.form-control(type="text", name="preferredLocation", placeholder="e.g., Seoul, Busan")
 
-    label(for="educationBackground") Education Background
-    input(type="text" name="educationBackground" placeholder="e.g., Graduate, Bachelor's")
-    br
+              .form-group.mb-3
+                label Education Background
+                input.form-control(type="text", name="education", placeholder="e.g., Graduate, Bachelor")
 
-    label(for="availableFrom") Available From
-    input(type="date" name="availableFrom")
-    br
+              .form-group.mb-4
+                label Available From
+                input.form-control(type="date", name="availableFrom")
 
-    button(type="submit") Save
+              button.btn.btn-success.btn-block(type="submit") Submit
