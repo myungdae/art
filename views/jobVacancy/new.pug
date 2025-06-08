@@ -10,32 +10,81 @@ block content
 
           .card-body
             form(method="POST", action="/job-vacancies/new")
+
+              // ✅ Title
               .form-group.mb-3
                 label Title
                 input.form-control(type="text", name="title")
 
+              // ✅ Host Country
               .form-group.mb-3
-                label Country
-                input.form-control(type="text", name="country")
+                label Host Country ✍️
+                .d-flex.align-items-center
+                  select.form-select(name="countrySelect")
+                    option(value="") -- Select Existing Country --
+                    if values && values.countries
+                      each c in values.countries
+                        option(value=c)= c
+                  button.btn.btn-outline-dark.ms-2(
+                    type="button",
+                    onclick="toggleInput('countryInput')",
+                    style="font-size: 1.2rem; font-weight: bold; padding: 0.25rem 0.75rem; line-height: 1.2;"
+                  ) +
+                input#countryInput.form-control.mt-2(type="text", name="country", placeholder="Enter new country", style="display: none")
 
+              // ✅ Student Type
               .form-group.mb-3
-                label Student Type
-                input.form-control(type="text", name="studentType")
+                label Student Type ✍️
+                .d-flex.align-items-center
+                  select.form-select(name="studentTypeSelect")
+                    option(value="") -- Select Existing Type --
+                    if values && values.studentTypes
+                      each t in values.studentTypes
+                        option(value=t)= t
+                  button.btn.btn-outline-dark.ms-2(
+                    type="button",
+                    onclick="toggleInput('studentTypeInput')",
+                    style="font-size: 1.2rem; font-weight: bold; padding: 0.25rem 0.75rem; line-height: 1.2;"
+                  ) +
+                input#studentTypeInput.form-control.mt-2(type="text", name="studentType", placeholder="Enter new student type", style="display: none")
 
+              // ✅ Teaching Area
               .form-group.mb-3
-                label Teaching Area
-                input.form-control(type="text", name="teachingArea")
+                label Teaching Area ✍️
+                .d-flex.align-items-center
+                  select.form-select(name="teachingAreaSelect")
+                    option(value="") -- Select Existing Area --
+                    if values && values.teachingAreas
+                      each a in values.teachingAreas
+                        option(value=a)= a
+                  button.btn.btn-outline-dark.ms-2(
+                    type="button",
+                    onclick="toggleInput('teachingAreaInput')",
+                    style="font-size: 1.2rem; font-weight: bold; padding: 0.25rem 0.75rem; line-height: 1.2;"
+                  ) +
+                input#teachingAreaInput.form-control.mt-2(type="text", name="teachingArea", placeholder="Enter new teaching area", style="display: none")
 
+              // ✅ Duration
               .form-group.mb-3
                 label Duration
                 input.form-control(type="text", name="duration")
 
+              // ✅ Pay
               .form-group.mb-3
                 label Pay
                 input.form-control(type="text", name="pay")
 
+              // ✅ Housing
               .form-group.mb-4
                 label Housing
                 input.form-control(type="text", name="housing")
 
+              // ✅ Submit
               button.btn.btn-success.btn-block(type="submit") Submit
+
+  // ✅ JavaScript for + button
+  script.
+    function toggleInput(id) {
+      const el = document.getElementById(id);
+      el.style.display = (el.style.display === 'none') ? 'block' : 'none';
+    }
