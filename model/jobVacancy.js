@@ -1,12 +1,13 @@
 const mongoose = require('mongoose');
 
-// ✅ Job Vacancy Schema 정의
 const jobVacancySchema = new mongoose.Schema({
   title: {
     type: String,
-    required: [true, 'Job Title (URI) is required'],
-    unique: true,  // 중복 방지
-    trim: true     // 공백 제거
+    required: true,
+    unique: true,       // ✅ 중복 방지
+    trim: true,         
+    lowercase: true,    // ✅ 자동 소문자 저장
+    index: true         // ✅ 인덱스 재생성 보장
   },
   description: { type: String },
   country: { type: String },
@@ -27,8 +28,7 @@ const jobVacancySchema = new mongoose.Schema({
     default: Date.now
   }
 }, {
-  timestamps: true  // createdAt, updatedAt 자동 생성
+  timestamps: true
 });
 
-// ✅ 모델 export
 module.exports = mongoose.model('JobVacancy', jobVacancySchema);
