@@ -29,10 +29,23 @@ router.post('/login', (req, res) => {
   }
 });
 
+
 // ✅ 삭제
 router.post('/delete/:id', requireAdmin, async (req, res) => {
   await JobVacancy.findByIdAndDelete(req.params.id);
   res.redirect('/admin/dashboard');
+});
+
+
+// ✅ 로그아웃
+router.get('/logout', (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      console.error('Logout error:', err);
+      return res.redirect('/admin/dashboard');
+    }
+    res.redirect('/admin/login');
+  });
 });
 
 module.exports = router;
