@@ -49,6 +49,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // ✅ 현재 페이지 정보를 전역 변수로 사용하기 위한 미들웨어
 app.use(function (req, res, next) {
   res.locals.currentPage = req.path;
+  res.locals.session = req.session;  
   next();
 });
 
