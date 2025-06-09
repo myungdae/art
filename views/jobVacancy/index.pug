@@ -8,6 +8,7 @@ block content
     thead
       tr
         th Title
+        th Description
         th Country
         th Student Type
         th Teaching Area
@@ -20,6 +21,7 @@ block content
       each job in jobs
         tr
           td= job.title
+          td(style="max-width: 300px")!= job.description
           td= job.country
           td= job.studentType
           td= job.teachingArea
