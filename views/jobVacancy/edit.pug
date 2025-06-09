@@ -4,7 +4,7 @@ block content
   .container.mt-5
     h2.mb-4 Edit Job Vacancy
 
-    form(method="POST", action=`/job-vacancies/${jobVacancy._id}`)
+    form(method="POST", action=`/job-vacancies/${jobVacancy._id}/edit`)
       .form-group.mb-3
         label(for="title") Job Title
         input.form-control(type="text", id="title", name="title", required, value=jobVacancy.title, oninput="validateTitle()")

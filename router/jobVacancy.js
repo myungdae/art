@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const JobVacancy = require('../model/jobVacancy');
+const sanitizeHtml = require('sanitize-html');
 
-// ✅ 드롭다운 값 추출 함수
+// ✅ distinct 값 추출
 const getDistinctValues = async () => {
   const studentTypes = await JobVacancy.distinct('studentType');
   const countries = await JobVacancy.distinct('country');
@@ -16,7 +17,7 @@ router.get('/', async (req, res) => {
   res.render('jobVacancy/index', { jobs });
 });
 
-// ✅ 등록 폼
+// ✅ 신규 등록 폼
 router.get('/new', async (req, res) => {
   const values = await getDistinctValues();
   res.render('jobVacancy/new', { values });
@@ -28,9 +29,11 @@ router.post('/new', async (req, res) => {
     const data = req.body;
     const rawTitle = (data.title || '').trim();
 
-    if (!rawTitle) return res.status(400).send('❌ Job Title is required');
+    if (!rawTitle) {
+      return res.status(400).send('❌ Job Title is required');
+    }
 
-    const forbiddenChars = /[^\w\s\-]/;
+    const forbiddenChars = /[^\w\s\-가-힣]/;  // 이모지 & 특수문자 필터
     if (forbiddenChars.test(rawTitle)) {
       return res.status(400).send('❌ Title cannot include emojis or special characters');
     }
@@ -42,9 +45,14 @@ router.post('/new', async (req, res) => {
       return res.status(400).send('❌ A job with the same title already exists');
     }
 
+    const cleanDescription = sanitizeHtml(data.description || '', {
+      allowedTags: ['b', 'i', 'em', 'strong', 'p', 'ul', 'ol', 'li', 'br'],
+      allowedAttributes: {}
+    });
+
     const job = new JobVacancy({
       title: rawTitle,
-      description: data.description,
+      description: cleanDescription,
       country: data.country || data.countrySelect,
       studentType: data.studentType || data.studentTypeSelect,
       teachingArea: data.teachingArea || data.teachingAreaSelect,
@@ -58,7 +66,6 @@ router.post('/new', async (req, res) => {
       skypeId: data.skypeId,
       wechatId: data.wechatId,
       homepage: data.homepage,
-      datePosted: data.datePosted || new Date()
     });
 
     await job.save();
@@ -75,21 +82,23 @@ router.post('/new', async (req, res) => {
 // ✅ 수정 폼
 router.get('/:id/edit', async (req, res) => {
   try {
-    const jobVacancy = await JobVacancy.findById(req.params.id).lean();
+    const jobVacancy = await JobVacancy.findById(req.params.id);
     const values = await getDistinctValues();
 
-    if (!jobVacancy) return res.status(404).send('❌ Job Vacancy not found');
+    if (!jobVacancy) {
+      return res.status(404).send('❌ Job Vacancy not found');
+    }
 
-    const datePostedFormatted = jobVacancy.datePosted
+    const formattedDate = jobVacancy.datePosted
       ? new Date(jobVacancy.datePosted).toISOString().slice(0, 10)
       : '';
 
-    console.log('[DEBUG] Loaded jobVacancy for edit:', jobVacancy);
+    console.log('[DEBUG] Loaded for Edit:', jobVacancy);
 
     res.render('jobVacancy/edit', {
       jobVacancy,
       values,
-      datePostedFormatted,
+      datePostedFormatted: formattedDate
     });
   } catch (err) {
     console.error('[ERROR - Load Edit Form]:', err);
@@ -98,14 +107,16 @@ router.get('/:id/edit', async (req, res) => {
 });
 
 // ✅ 수정 처리
-router.post('/:id', async (req, res) => {
+router.post('/:id/edit', async (req, res) => {
   try {
     const data = req.body;
     const rawTitle = (data.title || '').trim();
 
-    if (!rawTitle) return res.status(400).send('❌ Job Title is required');
+    if (!rawTitle) {
+      return res.status(400).send('❌ Job Title is required');
+    }
 
-    const forbiddenChars = /[^\w\s\-]/;
+    const forbiddenChars = /[^\w\s\-가-힣]/;
     if (forbiddenChars.test(rawTitle)) {
       return res.status(400).send('❌ Title cannot include emojis or special characters');
     }
@@ -118,9 +129,14 @@ router.post('/:id', async (req, res) => {
       return res.status(400).send('❌ A job with the same title already exists');
     }
 
+    const cleanDescription = sanitizeHtml(data.description || '', {
+      allowedTags: ['b', 'i', 'em', 'strong', 'p', 'ul', 'ol', 'li', 'br'],
+      allowedAttributes: {}
+    });
+
     await JobVacancy.findByIdAndUpdate(req.params.id, {
       title: rawTitle,
-      description: data.description,
+      description: cleanDescription,
       country: data.country || data.countrySelect,
       studentType: data.studentType || data.studentTypeSelect,
       teachingArea: data.teachingArea || data.teachingAreaSelect,
@@ -134,7 +150,7 @@ router.post('/:id', async (req, res) => {
       skypeId: data.skypeId,
       wechatId: data.wechatId,
       homepage: data.homepage,
-      datePosted: data.datePosted || new Date()
+      datePosted: data.datePosted
     });
 
     res.redirect('/job-vacancies');
