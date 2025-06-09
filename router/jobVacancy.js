@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const JobVacancy = require('../model/jobVacancy');
 
-// ✅ distinct 값 추출 함수
+// ✅ distinct 값 추출
 const getDistinctValues = async () => {
   const studentTypes = await JobVacancy.distinct('studentType');
   const countries = await JobVacancy.distinct('country');
@@ -26,23 +26,23 @@ router.get('/new', async (req, res) => {
 router.post('/new', async (req, res) => {
   try {
     const data = req.body;
-    const rawTitle = (data.title || '').trim().toLowerCase();  // 통일된 검사
+    const rawTitle = (data.title || '').trim();
 
-    // ✅ 이 두 줄이 로그 핵심입니다
-    console.log('[DEBUG] Incoming title:', data.title);
-    console.log('[DEBUG] Processed title:', rawTitle);
-    
     if (!rawTitle) {
       return res.status(400).send('❌ Job Title (URI) is required');
     }
 
-    const existing = await JobVacancy.findOne({ title: rawTitle });
+    // ✅ 대소문자 무시 중복 검사
+    const existing = await JobVacancy.findOne({
+      title: { $regex: new RegExp(`^${rawTitle}$`, 'i') }
+    });
+
     if (existing) {
       return res.status(400).send('❌ A job with the same URI already exists');
     }
 
     const job = new JobVacancy({
-      title: rawTitle,  // 저장도 소문자
+      title: rawTitle,
       description: data.description,
       country: data.country || data.countrySelect,
       studentType: data.studentType || data.studentTypeSelect,
@@ -64,7 +64,7 @@ router.post('/new', async (req, res) => {
   } catch (err) {
     console.error('[ERROR - Job Save]:', err);
     if (err.code === 11000) {
-      return res.status(400).send('❌ A job with the same URI already exists');
+      return res.status(400).send('❌ Duplicate title (URI) exists');
     }
     res.status(500).send('❌ Error saving job vacancy');
   }
@@ -91,13 +91,14 @@ router.get('/:id/edit', async (req, res) => {
 router.post('/:id/edit', async (req, res) => {
   try {
     const data = req.body;
-    const updatedTitle = (data.title || '').trim().toLowerCase();
+    const updatedTitle = (data.title || '').trim();
 
-    // 중복 체크 (자기 자신 제외)
+    // ✅ 대소문자 무시 중복 검사 (자기 자신 제외)
     const existing = await JobVacancy.findOne({
-      title: updatedTitle,
+      title: { $regex: new RegExp(`^${updatedTitle}$`, 'i') },
       _id: { $ne: req.params.id }
     });
+
     if (existing) {
       return res.status(400).send('❌ A job with the same URI already exists');
     }

@@ -3,11 +3,11 @@ const mongoose = require('mongoose');
 const jobVacancySchema = new mongoose.Schema({
   title: {
     type: String,
-    required: true,
-    unique: true,       // ✅ 중복 방지
-    trim: true,         
-    lowercase: true,    // ✅ 자동 소문자 저장
-    index: true         // ✅ 인덱스 재생성 보장
+    required: [true, 'Job Title (URI) is required'],
+    unique: true,
+    trim: true,
+    // ✅ 소문자 강제 제거됨 → 제거
+    // lowercase: true
   },
   description: { type: String },
   country: { type: String },
