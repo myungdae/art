@@ -15,6 +15,7 @@ require('./router/config');
 
 const indexRouter = require('./router/index');
 const adminRouter = require('./router/admin');
+console.log("✅ adminRouter loaded");
 const facetRouter = require('./router/facet');
 const searchRouter = require('./router/search');
 const resourceRouter = require('./router/resource');

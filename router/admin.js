@@ -1,24 +1,38 @@
 const express = require('express');
 const router = express.Router();
-require('dotenv').config();
+const JobVacancy = require('../model/jobVacancy');
+const requireAdmin = require('../middleware/requireAdmin');
+
 
 router.get('/login', (req, res) => {
-  res.render('admin/login');
+  res.render('admin/login');  // ✅ login.pug 불러오기
+});
+
+// ✅ 관리자 대시보드
+router.get('/dashboard', requireAdmin, async (req, res) => {
+  const jobs = await JobVacancy.find();
+  res.render('admin/dashboard', { jobs });
 });
 
 router.post('/login', (req, res) => {
   const { email, password } = req.body;
-  if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
+
+  // .env에 있는 관리자 계정 정보
+  const adminEmail = process.env.ADMIN_EMAIL;
+  const adminPassword = process.env.ADMIN_PASSWORD;
+
+  if (email === adminEmail && password === adminPassword) {
     req.session.isAdmin = true;
     return res.redirect('/admin/dashboard');
   } else {
-    return res.send('Invalid credentials');
+    return res.render('admin/login', { error: 'Invalid credentials' });
   }
 });
 
-router.get('/dashboard', (req, res) => {
-  if (!req.session.isAdmin) return res.status(403).send('Access Denied');
-  res.send('Welcome to Admin Dashboard');
+// ✅ 삭제
+router.post('/delete/:id', requireAdmin, async (req, res) => {
+  await JobVacancy.findByIdAndDelete(req.params.id);
+  res.redirect('/admin/dashboard');
 });
 
 module.exports = router;
