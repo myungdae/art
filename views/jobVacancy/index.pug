@@ -26,7 +26,7 @@ block content
           td= job.duration
           td= job.pay
           td= job.housing
-          td= job.datePosted.toDateString()
+          td= job.datePosted ? job.datePosted.toDateString() : 'No date'
           td
             a.btn.btn-sm.btn-warning(href=`/job-vacancies/${job._id}/edit`) Edit
             form(method="POST", action=`/job-vacancies/${job._id}/delete`, style="display:inline")

@@ -8,7 +8,7 @@ block content
     .row.justify-content-center
       .col-md-8
         .card.shadow
-          .card-header.bg-primary.text-white
+          .card-header.bg-danger.text-white
             h4.mb-0 Add New Job Vacancy
 
           .card-body
@@ -16,12 +16,12 @@ block content
 
               // ✅ Title → rdfs:label
               .form-group.mb-3
-                label Title
-                input.form-control(type="text", name="title")
+                label Job Title (URI)
+                input.form-control(type="text", name="title", required)
 
               // ✅ Description → dc:description + CKEditor
               .form-group.mb-4
-                label Description
+                label Job Description
                 textarea.form-control(name="description", id="description", rows="8")
 
               // ✅ Host Country
@@ -84,10 +84,39 @@ block content
                 label Housing
                 input.form-control(type="text", name="housing")
 
+              // ✅ Additional Fields
+              .form-group.mb-3
+                label Email
+                input.form-control(type="email", name="email")
+
+              .form-group.mb-3
+                label Company Name
+                input.form-control(type="text", name="companyName")
+
+              .form-group.mb-3
+                label Job Location
+                input.form-control(type="text", name="jobLocation")
+
+              .form-group.mb-3
+                label Cellphone Number
+                input.form-control(type="text", name="cellphoneNumber")
+
+              .form-group.mb-3
+                label Skype ID
+                input.form-control(type="text", name="skypeId")
+
+              .form-group.mb-3
+                label WeChat ID
+                input.form-control(type="text", name="wechatId")
+
+              .form-group.mb-4
+                label Homepage
+                input.form-control(type="url", name="homepage")
+
               // ✅ Submit
               button.btn.btn-success.btn-block(type="submit") Submit
 
-  // ✅ JavaScript for + 버튼과 CKEditor 적용
+block append_js
   script.
     function toggleInput(id) {
       const el = document.getElementById(id);
