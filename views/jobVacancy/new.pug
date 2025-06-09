@@ -14,13 +14,13 @@ block content
           .card-body
             form(method="POST", action="/job-vacancies/new", onsubmit="return validateForm()")
 
-              // ✅ Title
+              // ✅ Job Title with oninput validation
               .form-group.mb-3
                 label Job Title
-                input.form-control(type="text", name="title", id="title", required)
-                div#titleError.text-danger.mt-1
+                input.form-control(type="text", name="title", id="title", required, oninput="validateTitle()")
+                div#titleError.text-danger.mt-2
 
-              // ✅ Description + CKEditor
+              // ✅ Job Description (CKEditor)
               .form-group.mb-4
                 label Job Description
                 textarea.form-control(name="description", id="description", rows="8")
@@ -81,11 +81,11 @@ block content
                 input.form-control(type="text", name="pay")
 
               // ✅ Housing
-              .form-group.mb-3
+              .form-group.mb-4
                 label Housing
                 input.form-control(type="text", name="housing")
 
-              // ✅ Additional Info
+              // ✅ Additional Fields
               .form-group.mb-3
                 label Email
                 input.form-control(type="email", name="email")
@@ -119,7 +119,7 @@ block content
 
 block append_js
   script.
-    function validateForm() {
+    function validateTitle() {
       const title = document.getElementById('title').value.trim();
       const errorDiv = document.getElementById('titleError');
       const forbidden = /[^\w\s\-]/;
@@ -127,15 +127,17 @@ block append_js
       if (!title) {
         errorDiv.innerText = '❌ Job Title is required';
         return false;
-      }
-
-      if (forbidden.test(title)) {
+      } else if (forbidden.test(title)) {
         errorDiv.innerText = '❌ Title cannot include emojis or special characters';
         return false;
+      } else {
+        errorDiv.innerText = '';
+        return true;
       }
+    }
 
-      errorDiv.innerText = '';
-      return true;
+    function validateForm() {
+      return validateTitle();
     }
 
     function toggleInput(id) {

@@ -1,146 +1,89 @@
 extends ../layout
 
-block append_on_header
-  script(src="/vendor/ckeditor/ckeditor.js")
-
 block content
   .container.mt-5
-    .row.justify-content-center
-      .col-md-8
-        .card.shadow
-          .card-header.bg-warning.text-white
-            h4.mb-0 Edit Job Vacancy
+    h2.mb-4 Edit Job Vacancy
 
-          .card-body
-            form(method="POST", action=`/job-vacancies/${jobVacancy._id}/edit`, onsubmit="return validateForm()")
+    form(method="POST", action=`/job-vacancies/${jobVacancy._id}`)
+      .form-group.mb-3
+        label(for="title") Job Title
+        input.form-control(type="text", id="title", name="title", required, value=jobVacancy.title, oninput="validateTitle()")
+        small#titleError.text-danger
 
-              // ✅ Title
-              .form-group.mb-3
-                label Job Title
-                input.form-control(type="text", name="title", id="title", required, value=jobVacancy.title)
-                div#titleError.text-danger.mt-1
+      .form-group.mb-3
+        label(for="description") Description
+        textarea.form-control(name="description", id="description")= jobVacancy.description
 
-              // ✅ Description + CKEditor
-              .form-group.mb-4
-                label Job Description
-                textarea.form-control(name="description", id="description", rows="8")= jobVacancy.description
+      .form-group.mb-3
+        label(for="country") Country
+        input.form-control(type="text", name="country", id="country", value=jobVacancy.country)
 
-              // ✅ Host Country
-              .form-group.mb-3
-                label Host Country ✍️
-                .d-flex.align-items-center
-                  select.form-select(name="countrySelect")
-                    option(value="") -- Select Existing Country --
-                    if values && values.countries
-                      each c in values.countries
-                        option(value=c selected=(jobVacancy.country === c))= c
-                  button.btn.btn-outline-dark.ms-2(
-                    type="button",
-                    onclick="toggleInput('countryInput')"
-                  ) +
-                input#countryInput.form-control.mt-2(type="text", name="country", placeholder="Enter new country", style="display: none")
+      .form-group.mb-3
+        label(for="studentType") Student Type
+        input.form-control(type="text", name="studentType", id="studentType", value=jobVacancy.studentType)
 
-              // ✅ Student Type
-              .form-group.mb-3
-                label Student Type ✍️
-                .d-flex.align-items-center
-                  select.form-select(name="studentTypeSelect")
-                    option(value="") -- Select Existing Type --
-                    if values && values.studentTypes
-                      each t in values.studentTypes
-                        option(value=t selected=(jobVacancy.studentType === t))= t
-                  button.btn.btn-outline-dark.ms-2(
-                    type="button",
-                    onclick="toggleInput('studentTypeInput')"
-                  ) +
-                input#studentTypeInput.form-control.mt-2(type="text", name="studentType", placeholder="Enter new student type", style="display: none")
+      .form-group.mb-3
+        label(for="teachingArea") Teaching Area
+        input.form-control(type="text", name="teachingArea", id="teachingArea", value=jobVacancy.teachingArea)
 
-              // ✅ Teaching Area
-              .form-group.mb-3
-                label Teaching Area ✍️
-                .d-flex.align-items-center
-                  select.form-select(name="teachingAreaSelect")
-                    option(value="") -- Select Existing Area --
-                    if values && values.teachingAreas
-                      each a in values.teachingAreas
-                        option(value=a selected=(jobVacancy.teachingArea === a))= a
-                  button.btn.btn-outline-dark.ms-2(
-                    type="button",
-                    onclick="toggleInput('teachingAreaInput')"
-                  ) +
-                input#teachingAreaInput.form-control.mt-2(type="text", name="teachingArea", placeholder="Enter new teaching area", style="display: none")
+      .form-group.mb-3
+        label(for="duration") Duration
+        input.form-control(type="text", name="duration", id="duration", value=jobVacancy.duration)
 
-              // ✅ Duration
-              .form-group.mb-3
-                label Duration
-                input.form-control(type="text", name="duration", value=jobVacancy.duration)
+      .form-group.mb-3
+        label(for="pay") Pay
+        input.form-control(type="text", name="pay", id="pay", value=jobVacancy.pay)
 
-              // ✅ Pay
-              .form-group.mb-3
-                label Pay
-                input.form-control(type="text", name="pay", value=jobVacancy.pay)
+      .form-group.mb-3
+        label(for="housing") Housing
+        input.form-control(type="text", name="housing", id="housing", value=jobVacancy.housing)
 
-              // ✅ Housing
-              .form-group.mb-3
-                label Housing
-                input.form-control(type="text", name="housing", value=jobVacancy.housing)
+      .form-group.mb-3
+        label(for="email") Email
+        input.form-control(type="email", name="email", id="email", value=jobVacancy.email)
 
-              // ✅ Additional Info
-              .form-group.mb-3
-                label Email
-                input.form-control(type="email", name="email", value=jobVacancy.email)
+      .form-group.mb-3
+        label(for="companyName") Company Name
+        input.form-control(type="text", name="companyName", id="companyName", value=jobVacancy.companyName)
 
-              .form-group.mb-3
-                label Company Name
-                input.form-control(type="text", name="companyName", value=jobVacancy.companyName)
+      .form-group.mb-3
+        label(for="jobLocation") Job Location
+        input.form-control(type="text", name="jobLocation", id="jobLocation", value=jobVacancy.jobLocation)
 
-              .form-group.mb-3
-                label Job Location
-                input.form-control(type="text", name="jobLocation", value=jobVacancy.jobLocation)
+      .form-group.mb-3
+        label(for="cellphoneNumber") Cellphone Number
+        input.form-control(type="text", name="cellphoneNumber", id="cellphoneNumber", value=jobVacancy.cellphoneNumber)
 
-              .form-group.mb-3
-                label Cellphone Number
-                input.form-control(type="text", name="cellphoneNumber", value=jobVacancy.cellphoneNumber)
+      .form-group.mb-3
+        label(for="skypeId") Skype ID
+        input.form-control(type="text", name="skypeId", id="skypeId", value=jobVacancy.skypeId)
 
-              .form-group.mb-3
-                label Skype ID
-                input.form-control(type="text", name="skypeId", value=jobVacancy.skypeId)
+      .form-group.mb-3
+        label(for="wechatId") WeChat ID
+        input.form-control(type="text", name="wechatId", id="wechatId", value=jobVacancy.wechatId)
 
-              .form-group.mb-3
-                label WeChat ID
-                input.form-control(type="text", name="wechatId", value=jobVacancy.wechatId)
+      .form-group.mb-3
+        label(for="homepage") Homepage
+        input.form-control(type="text", name="homepage", id="homepage", value=jobVacancy.homepage)
 
-              .form-group.mb-4
-                label Homepage
-                input.form-control(type="url", name="homepage", value=jobVacancy.homepage)
+      .form-group.mb-3
+        label Date Posted
+        input.form-control(type="date", name="datePosted", value=datePostedFormatted)
 
-              // ✅ Submit
-              button.btn.btn-success.btn-block(type="submit") Update
+      button.btn.btn-primary(type="submit") Update
 
-block append_js
   script.
-    function validateForm() {
-      const title = document.getElementById('title').value.trim();
-      const errorDiv = document.getElementById('titleError');
-      const forbidden = /[^\w\s\-]/;
+    function validateTitle() {
+      const titleInput = document.getElementById('title');
+      const errorMsg = document.getElementById('titleError');
+      const value = titleInput.value;
+      const forbidden = /[^\w\s\-가-힣]/;
 
-      if (!title) {
-        errorDiv.innerText = '❌ Job Title is required';
-        return false;
+      if (!value.trim()) {
+        errorMsg.textContent = '❌ Job Title is required';
+      } else if (forbidden.test(value)) {
+        errorMsg.textContent = '❌ Title cannot include emojis or special characters';
+      } else {
+        errorMsg.textContent = '';
       }
-
-      if (forbidden.test(title)) {
-        errorDiv.innerText = '❌ Title cannot include emojis or special characters';
-        return false;
-      }
-
-      errorDiv.innerText = '';
-      return true;
     }
-
-    function toggleInput(id) {
-      const el = document.getElementById(id);
-      el.style.display = (el.style.display === 'none') ? 'block' : 'none';
-    }
-
-    CKEDITOR.replace('description');
