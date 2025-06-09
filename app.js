@@ -14,6 +14,7 @@ require('dotenv').config();
 require('./router/config');
 
 const indexRouter = require('./router/index');
+const adminRouter = require('./router/admin');
 const facetRouter = require('./router/facet');
 const searchRouter = require('./router/search');
 const resourceRouter = require('./router/resource');
@@ -57,6 +58,7 @@ app.use('/job-seekers', jobSeekerRouter);
 app.use('/job-vacancies', jobVacancyRouter);
 app.use('/', publicRouter);
 app.use('/online-tutors', onlineTutorRouter);
+app.use('/admin', adminRouter);
 app.use('/pages', indexRouter);
 app.use('/facet', facetRouter);
 app.use('/search', searchRouter);
