@@ -12,14 +12,15 @@ block content
             h4.mb-0 Add New Job Vacancy
 
           .card-body
-            form(method="POST", action="/job-vacancies/new")
+            form(method="POST", action="/job-vacancies/new", onsubmit="return validateForm()")
 
-              // ✅ Title → rdfs:label
+              // ✅ Title
               .form-group.mb-3
-                label Job Title (URI)
-                input.form-control(type="text", name="title", required)
+                label Job Title
+                input.form-control(type="text", name="title", id="title", required)
+                div#titleError.text-danger.mt-1
 
-              // ✅ Description → dc:description + CKEditor
+              // ✅ Description + CKEditor
               .form-group.mb-4
                 label Job Description
                 textarea.form-control(name="description", id="description", rows="8")
@@ -80,11 +81,11 @@ block content
                 input.form-control(type="text", name="pay")
 
               // ✅ Housing
-              .form-group.mb-4
+              .form-group.mb-3
                 label Housing
                 input.form-control(type="text", name="housing")
 
-              // ✅ Additional Fields
+              // ✅ Additional Info
               .form-group.mb-3
                 label Email
                 input.form-control(type="email", name="email")
@@ -118,8 +119,28 @@ block content
 
 block append_js
   script.
+    function validateForm() {
+      const title = document.getElementById('title').value.trim();
+      const errorDiv = document.getElementById('titleError');
+      const forbidden = /[^\w\s\-]/;
+
+      if (!title) {
+        errorDiv.innerText = '❌ Job Title is required';
+        return false;
+      }
+
+      if (forbidden.test(title)) {
+        errorDiv.innerText = '❌ Title cannot include emojis or special characters';
+        return false;
+      }
+
+      errorDiv.innerText = '';
+      return true;
+    }
+
     function toggleInput(id) {
       const el = document.getElementById(id);
       el.style.display = (el.style.display === 'none') ? 'block' : 'none';
     }
+
     CKEDITOR.replace('description');

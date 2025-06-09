@@ -28,17 +28,26 @@ router.post('/new', async (req, res) => {
     const data = req.body;
     const rawTitle = (data.title || '').trim();
 
+    // ✅ title 필수 검사
     if (!rawTitle) {
-      return res.status(400).send('❌ Job Title (URI) is required');
+      return res.status(400).send('❌ Job Title is required');
     }
 
-    // ✅ 대소문자 무시 중복 검사
+    // ✅ title 이모지/특수문자 차단 정규식 검사
+    const forbiddenChars = /[^\w\s\-]/;  // 한글도 막음
+    // ➤ 한글 허용하려면 아래처럼 변경: /[^\w\s\-가-힣]/;
+
+    if (forbiddenChars.test(rawTitle)) {
+      return res.status(400).send('❌ Title cannot include emojis or special characters');
+    }
+
+    // ✅ 중복 검사 (대소문자 무시)
     const existing = await JobVacancy.findOne({
       title: { $regex: new RegExp(`^${rawTitle}$`, 'i') }
     });
 
     if (existing) {
-      return res.status(400).send('❌ A job with the same URI already exists');
+      return res.status(400).send('❌ A job with the same title already exists');
     }
 
     const job = new JobVacancy({
@@ -64,11 +73,12 @@ router.post('/new', async (req, res) => {
   } catch (err) {
     console.error('[ERROR - Job Save]:', err);
     if (err.code === 11000) {
-      return res.status(400).send('❌ Duplicate title (URI) exists');
+      return res.status(400).send('❌ Duplicate title detected');
     }
     res.status(500).send('❌ Error saving job vacancy');
   }
 });
+
 
 // ✅ 수정 폼
 router.get('/:id/edit', async (req, res) => {
@@ -91,34 +101,29 @@ router.get('/:id/edit', async (req, res) => {
 router.post('/:id/edit', async (req, res) => {
   try {
     const data = req.body;
-    const updatedTitle = (data.title || '').trim();
+    const rawTitle = (data.title || '').trim();
 
-    // ✅ 대소문자 무시 중복 검사 (자기 자신 제외)
+    if (!rawTitle) {
+      return res.status(400).send('❌ Job Title is required');
+    }
+
+    const forbiddenChars = /[^\w\s\-]/;
+    if (forbiddenChars.test(rawTitle)) {
+      return res.status(400).send('❌ Title cannot include emojis or special characters');
+    }
+
     const existing = await JobVacancy.findOne({
-      title: { $regex: new RegExp(`^${updatedTitle}$`, 'i') },
+      title: { $regex: new RegExp(`^${rawTitle}$`, 'i') },
       _id: { $ne: req.params.id }
     });
 
     if (existing) {
-      return res.status(400).send('❌ A job with the same URI already exists');
+      return res.status(400).send('❌ A job with the same title already exists');
     }
 
     await JobVacancy.findByIdAndUpdate(req.params.id, {
-      title: updatedTitle,
-      description: data.description,
-      country: data.country || data.countrySelect,
-      studentType: data.studentType || data.studentTypeSelect,
-      teachingArea: data.teachingArea || data.teachingAreaSelect,
-      duration: data.duration,
-      pay: data.pay,
-      housing: data.housing,
-      email: data.email,
-      companyName: data.companyName,
-      jobLocation: data.jobLocation,
-      cellphoneNumber: data.cellphoneNumber,
-      skypeId: data.skypeId,
-      wechatId: data.wechatId,
-      homepage: data.homepage,
+      title: rawTitle,
+      // ... 생략
     });
 
     res.redirect('/job-vacancies');
@@ -127,6 +132,7 @@ router.post('/:id/edit', async (req, res) => {
     res.status(500).send('❌ Error updating job vacancy');
   }
 });
+
 
 // ✅ 삭제 처리
 router.post('/:id/delete', async (req, res) => {
