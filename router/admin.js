@@ -1,9 +1,13 @@
 const express = require('express');
 const router = express.Router();
+
 const JobVacancy = require('../model/jobVacancy');
+const JobSeeker = require('../model/jobSeeker'); // 반드시 존재해야 함
+const Tutor = require('../model/tutor');         // 반드시 존재해야 함
+
 const requireAdmin = require('../middleware/requireAdmin');
 
-// ✅ 로그인 페이지
+// ✅ 관리자 로그인 페이지
 router.get('/login', (req, res) => {
   res.render('admin/login'); 
 });
@@ -22,10 +26,25 @@ router.post('/login', (req, res) => {
   }
 });
 
-// ✅ 관리자 대시보드
+// ✅ 관리자 대시보드 (통계 포함)
 router.get('/dashboard', requireAdmin, async (req, res) => {
-  const jobs = await JobVacancy.find();
-  res.render('admin/dashboard', { jobs });
+  try {
+    const [jobVacancyCount, jobSeekerCount, tutorCount] = await Promise.all([
+      JobVacancy.countDocuments(),
+      JobSeeker.countDocuments(),
+      Tutor.countDocuments()
+    ]);
+
+    res.render('admin/dashboard', {
+      jobVacancyCount,
+      jobSeekerCount,
+      tutorCount,
+      currentDate: new Date().toLocaleDateString()
+    });
+  } catch (err) {
+    console.error('Admin dashboard error:', err);
+    res.status(500).send('Internal Server Error');
+  }
 });
 
 // ✅ 로그아웃
@@ -35,11 +54,11 @@ router.get('/logout', (req, res) => {
       console.error('Logout error:', err);
       return res.redirect('/admin/dashboard');
     }
-    res.redirect('/admin/login');  // 또는 홈으로 보내려면 '/'로 수정 가능
+    res.redirect('/admin/login');
   });
 });
 
-// ✅ 삭제
+// ✅ 공고 삭제
 router.post('/delete/:id', requireAdmin, async (req, res) => {
   await JobVacancy.findByIdAndDelete(req.params.id);
   res.redirect('/admin/dashboard');
