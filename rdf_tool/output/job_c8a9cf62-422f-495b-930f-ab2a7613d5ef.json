@@ -1,0 +1,21 @@
+{
+  "@id": "http://esl.eventpool.kr/resource/Job_Vacancy/c8a9cf62-422f-495b-930f-ab2a7613d5ef",
+  "@type": [
+    "http://esl.eventpool.kr/resource/Job_Vacancy"
+  ],
+  "http://esl.eventpool.kr/resource/title": {
+    "@value": "Job Title: ESL Teacher in Korea"
+  },
+  "http://esl.eventpool.kr/resource/description": {
+    "@value": "Student Type: HighSchool"
+  },
+  "http://esl.eventpool.kr/resource/hostCountry": {
+    "@id": "http://esl.eventpool.kr/resource/Country/Korea"
+  },
+  "http://esl.eventpool.kr/resource/studentType": {
+    "@id": "http://esl.eventpool.kr/resource/StudentType/Middle"
+  },
+  "http://esl.eventpool.kr/resource/uuid": {
+    "@value": "c8a9cf62-422f-495b-930f-ab2a7613d5ef"
+  }
+}

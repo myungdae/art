@@ -1,0 +1,15 @@
+{
+  "name": "rdf_tool",
+  "version": "1.0.0",
+  "main": "rdf_translator.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "uuid": "^11.1.0"
+  }
+}
