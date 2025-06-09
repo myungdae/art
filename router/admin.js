@@ -25,7 +25,7 @@ router.post('/login', (req, res) => {
     req.session.isAdmin = true;
     return res.redirect('/admin/dashboard');
   } else {
-    return res.render('admin/login', { error: 'Invalid credentials' });
+    return res.render('admin/login', { error: 'Invalid email or password.' });
   }
 });
 

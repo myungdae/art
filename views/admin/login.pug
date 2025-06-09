@@ -3,6 +3,10 @@ extends ../layout
 block content
   .container
     h2 Admin Login
+
+    if error
+      .alert.alert-danger= error  
+
     form(method="POST", action="/admin/login")
       .form-group
         label(for="email") Email
