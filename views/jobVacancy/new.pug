@@ -7,122 +7,91 @@ block content
   .container.mt-5
     .row.justify-content-center
       .col-md-8
-        .card.shadow
+        .card.shadow-lg
           .card-header.bg-danger.text-white
             h4.mb-0 Add New Job Vacancy
 
-          .card-body
+          .card-body.bg-dark.text-light
             form(method="POST", action="/job-vacancies/new", onsubmit="return validateForm()")
 
-              // ✅ Job Title with oninput validation
-              .form-group.mb-3
-                label Job Title
-                input.form-control(type="text", name="title", id="title", required, oninput="validateTitle()")
+              .form-floating.mb-3
+                input.form-control#title(type="text", name="title", required, placeholder="Job Title", oninput="validateTitle()")
+                label(for="title") Job Title
                 div#titleError.text-danger.mt-2
 
-              // ✅ Job Description (CKEditor)
-              .form-group.mb-4
-                label Job Description
+              .mb-4
+                label.text-white.mb-2 Job Description
                 textarea.form-control(name="description", id="description", rows="8")
 
-              // ✅ Host Country
-              .form-group.mb-3
-                label Host Country ✍️
+              .mb-3
+                label.text-white.mb-2 Host Country ✍️
                 .d-flex.align-items-center
                   select.form-select(name="countrySelect")
                     option(value="") -- Select Existing Country --
                     if values && values.countries
                       each c in values.countries
                         option(value=c)= c
-                  button.btn.btn-outline-dark.ms-2(
-                    type="button",
-                    onclick="toggleInput('countryInput')"
-                  ) +
+                  button.btn.btn-outline-light.ms-2(type="button", onclick="toggleInput('countryInput')") +
                 input#countryInput.form-control.mt-2(type="text", name="country", placeholder="Enter new country", style="display: none")
 
-              // ✅ Student Type
-              .form-group.mb-3
-                label Student Type ✍️
+              .mb-3
+                label.text-white.mb-2 Student Type ✍️
                 .d-flex.align-items-center
                   select.form-select(name="studentTypeSelect")
                     option(value="") -- Select Existing Type --
                     if values && values.studentTypes
                       each t in values.studentTypes
                         option(value=t)= t
-                  button.btn.btn-outline-dark.ms-2(
-                    type="button",
-                    onclick="toggleInput('studentTypeInput')"
-                  ) +
+                  button.btn.btn-outline-light.ms-2(type="button", onclick="toggleInput('studentTypeInput')") +
                 input#studentTypeInput.form-control.mt-2(type="text", name="studentType", placeholder="Enter new student type", style="display: none")
 
-              // ✅ Teaching Area
-              .form-group.mb-3
-                label Teaching Area ✍️
+              .mb-3
+                label.text-white.mb-2 Teaching Area ✍️
                 .d-flex.align-items-center
                   select.form-select(name="teachingAreaSelect")
                     option(value="") -- Select Existing Area --
                     if values && values.teachingAreas
                       each a in values.teachingAreas
                         option(value=a)= a
-                  button.btn.btn-outline-dark.ms-2(
-                    type="button",
-                    onclick="toggleInput('teachingAreaInput')"
-                  ) +
+                  button.btn.btn-outline-light.ms-2(type="button", onclick="toggleInput('teachingAreaInput')") +
                 input#teachingAreaInput.form-control.mt-2(type="text", name="teachingArea", placeholder="Enter new teaching area", style="display: none")
 
-              // ✅ Duration
-              .form-group.mb-3
-                label Duration
-                input.form-control(type="text", name="duration")
+              each field in ['duration', 'pay', 'housing', 'email', 'companyName', 'jobLocation', 'cellphoneNumber', 'skypeId', 'wechatId', 'homepage']
+                .form-floating.mb-3
+                  input.form-control(type="text", name=field, id=field, placeholder=field.charAt(0).toUpperCase() + field.slice(1))
+                  label(for=field)= field.charAt(0).toUpperCase() + field.slice(1)
 
-              // ✅ Pay
-              .form-group.mb-3
-                label Pay
-                input.form-control(type="text", name="pay")
+              .form-group.mt-5
+                h4.text-primary.mb-3 Select a Payment Option
+                each val in ['1', '4', '12', '24']
+                  .form-check
+                    input.form-check-input(type="radio", name="adPackage", value=val)
+                    label.form-check-label
+                      if val == '1'
+                        | 1 Ad — $30 one-time payment
+                      else if val == '4'
+                        | 4 Ads — $100 one-time payment 
+                        span.text-danger (save $20)
+                      else if val == '12'
+                        | 12 Ads — $250 one-time payment 
+                        span.text-danger (save $110)
+                      else if val == '24'
+                        | 24 Ads — $450 one-time payment 
+                        span.text-danger (save $270)
 
-              // ✅ Housing
-              .form-group.mb-4
-                label Housing
-                input.form-control(type="text", name="housing")
+                .form-check.mt-3
+                  input.form-check-input(type="checkbox", name="addResumeAccess", value="yes")
+                  label.form-check-label
+                    strong Add 30 days Access to Teacher Resume Database — $50
 
-              // ✅ Additional Fields
-              .form-group.mb-3
-                label Email
-                input.form-control(type="email", name="email")
-
-              .form-group.mb-3
-                label Company Name
-                input.form-control(type="text", name="companyName")
-
-              .form-group.mb-3
-                label Job Location
-                input.form-control(type="text", name="jobLocation")
-
-              .form-group.mb-3
-                label Cellphone Number
-                input.form-control(type="text", name="cellphoneNumber")
-
-              .form-group.mb-3
-                label Skype ID
-                input.form-control(type="text", name="skypeId")
-
-              .form-group.mb-3
-                label WeChat ID
-                input.form-control(type="text", name="wechatId")
-
-              .form-group.mb-4
-                label Homepage
-                input.form-control(type="url", name="homepage")
-
-              // ✅ Submit
-              button.btn.btn-success.btn-block(type="submit") Submit
+              button.btn.btn-success.btn-block.mt-4(type="submit") Submit
 
 block append_js
   script.
     function validateTitle() {
       const title = document.getElementById('title').value.trim();
       const errorDiv = document.getElementById('titleError');
-      const forbidden = /[^\w\s\-]/;
+      const forbidden = /[^\w\s\-가-힣]/;
 
       if (!title) {
         errorDiv.innerText = '❌ Job Title is required';

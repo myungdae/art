@@ -5,9 +5,7 @@ const jobVacancySchema = new mongoose.Schema({
     type: String,
     required: [true, 'Job Title (URI) is required'],
     unique: true,
-    trim: true,
-    // ✅ 소문자 강제 제거됨 → 제거
-    // lowercase: true
+    trim: true
   },
   description: { type: String },
   country: { type: String },
@@ -23,6 +21,11 @@ const jobVacancySchema = new mongoose.Schema({
   skypeId: { type: String },
   wechatId: { type: String },
   homepage: { type: String },
+
+  // ✅ NEW: Payment-related fields
+  adPackage: { type: String }, // '1', '4', '12', '24'
+  addResumeAccess: { type: Boolean }, // true if checked
+
   datePosted: {
     type: Date,
     default: Date.now

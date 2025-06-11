@@ -1,89 +1,69 @@
 extends ../layout
 
+block append_on_header
+  script(src="/vendor/ckeditor/ckeditor.js")
+
 block content
+  - const fields = [{ key: 'country', label: 'Host Country' }, { key: 'studentType', label: 'Student Type' }, { key: 'teachingArea', label: 'Teaching Area' }, { key: 'duration', label: 'Duration' }, { key: 'pay', label: 'Pay' }, { key: 'housing', label: 'Housing' }, { key: 'email', label: 'Email' }, { key: 'companyName', label: 'Company Name' }, { key: 'jobLocation', label: 'Job Location' }, { key: 'cellphoneNumber', label: 'Cellphone Number' }, { key: 'skypeId', label: 'Skype ID' }, { key: 'wechatId', label: 'WeChat ID' }, { key: 'homepage', label: 'Homepage' }]
+
   .container.mt-5
-    h2.mb-4 Edit Job Vacancy
+    .row.justify-content-center
+      .col-md-8
+        .card.shadow-lg
+          .card-header.bg-warning.text-dark
+            h4.mb-0 Edit Job Vacancy
 
-    form(method="POST", action=`/job-vacancies/${jobVacancy._id}/edit`)
-      .form-group.mb-3
-        label(for="title") Job Title
-        input.form-control(type="text", id="title", name="title", required, value=jobVacancy.title, oninput="validateTitle()")
-        small#titleError.text-danger
+          .card-body.bg-dark.text-light
+            form(method="POST", action="/job-vacancies/" + jobVacancy._id + "/edit")
 
-      .form-group.mb-3
-        label(for="description") Description
-        textarea.form-control(name="description", id="description")= jobVacancy.description
+              - var title = (jobVacancy && jobVacancy.title) ? jobVacancy.title : ''
+              .form-floating.mb-3
+                input.form-control#title(type="text", name="title", required, value=title, placeholder="Job Title")
+                label(for="title") Job Title
 
-      .form-group.mb-3
-        label(for="country") Country
-        input.form-control(type="text", name="country", id="country", value=jobVacancy.country)
+              .mb-4
+                label.text-white.mb-2 Job Description
+                - var description = (jobVacancy && jobVacancy.description) ? jobVacancy.description : ''
+                textarea.form-control(name="description", id="description", rows="8")= description
 
-      .form-group.mb-3
-        label(for="studentType") Student Type
-        input.form-control(type="text", name="studentType", id="studentType", value=jobVacancy.studentType)
+              each field in fields
+                - var value = (jobVacancy && jobVacancy[field.key]) ? jobVacancy[field.key] : ''
+                .form-floating.mb-3
+                  input.form-control(type="text", name=field.key, id=field.key, value=value, placeholder=field.label)
+                  label(for=field.key)= field.label
 
-      .form-group.mb-3
-        label(for="teachingArea") Teaching Area
-        input.form-control(type="text", name="teachingArea", id="teachingArea", value=jobVacancy.teachingArea)
+              .form-floating.mb-3
+                - var dateVal = (typeof datePostedFormatted !== 'undefined') ? datePostedFormatted : ''
+                input.form-control(type="date", name="datePosted", value=dateVal, placeholder="Date Posted")
+                label(for="datePosted") Date Posted
 
-      .form-group.mb-3
-        label(for="duration") Duration
-        input.form-control(type="text", name="duration", id="duration", value=jobVacancy.duration)
+              .form-group.mt-5
+                h4.text-primary.mb-3 Select a Payment Option
+                each val in ['1', '4', '12', '24']
+                  - var isChecked = (jobVacancy && jobVacancy.adPackage == val)
+                  .form-check
+                    input.form-check-input(type="radio", name="adPackage", value=val, checked=isChecked)
+                    label.form-check-label
+                      if val == '1'
+                        | 1 Ad — $30 one-time payment
+                      else if val == '4'
+                        | 4 Ads — $100 one-time payment 
+                        span.text-danger (save $20)
+                      else if val == '12'
+                        | 12 Ads — $250 one-time payment 
+                        span.text-danger (save $110)
+                      else if val == '24'
+                        | 24 Ads — $450 one-time payment 
+                        span.text-danger (save $270)
 
-      .form-group.mb-3
-        label(for="pay") Pay
-        input.form-control(type="text", name="pay", id="pay", value=jobVacancy.pay)
+                - var resumeAccess = (jobVacancy && jobVacancy.addResumeAccess)
+                .form-check.mt-3
+                  input.form-check-input(type="checkbox", name="addResumeAccess", value="yes", checked=resumeAccess)
+                  label.form-check-label
+                    strong Add 30 days Access to Teacher Resume Database — $50
 
-      .form-group.mb-3
-        label(for="housing") Housing
-        input.form-control(type="text", name="housing", id="housing", value=jobVacancy.housing)
+              button.btn.btn-warning.btn-block.mt-4(type="submit") Update
 
-      .form-group.mb-3
-        label(for="email") Email
-        input.form-control(type="email", name="email", id="email", value=jobVacancy.email)
-
-      .form-group.mb-3
-        label(for="companyName") Company Name
-        input.form-control(type="text", name="companyName", id="companyName", value=jobVacancy.companyName)
-
-      .form-group.mb-3
-        label(for="jobLocation") Job Location
-        input.form-control(type="text", name="jobLocation", id="jobLocation", value=jobVacancy.jobLocation)
-
-      .form-group.mb-3
-        label(for="cellphoneNumber") Cellphone Number
-        input.form-control(type="text", name="cellphoneNumber", id="cellphoneNumber", value=jobVacancy.cellphoneNumber)
-
-      .form-group.mb-3
-        label(for="skypeId") Skype ID
-        input.form-control(type="text", name="skypeId", id="skypeId", value=jobVacancy.skypeId)
-
-      .form-group.mb-3
-        label(for="wechatId") WeChat ID
-        input.form-control(type="text", name="wechatId", id="wechatId", value=jobVacancy.wechatId)
-
-      .form-group.mb-3
-        label(for="homepage") Homepage
-        input.form-control(type="text", name="homepage", id="homepage", value=jobVacancy.homepage)
-
-      .form-group.mb-3
-        label Date Posted
-        input.form-control(type="date", name="datePosted", value=datePostedFormatted)
-
-      button.btn.btn-primary(type="submit") Update
-
+block append_js
   script.
-    function validateTitle() {
-      const titleInput = document.getElementById('title');
-      const errorMsg = document.getElementById('titleError');
-      const value = titleInput.value;
-      const forbidden = /[^\w\s\-가-힣]/;
-
-      if (!value.trim()) {
-        errorMsg.textContent = '❌ Job Title is required';
-      } else if (forbidden.test(value)) {
-        errorMsg.textContent = '❌ Title cannot include emojis or special characters';
-      } else {
-        errorMsg.textContent = '';
-      }
-    }
+    CKEDITOR.replace('description');

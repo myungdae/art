@@ -2,37 +2,24 @@ const createError = require('http-errors');
 const express = require('express');
 const path = require('path');
 const session = require('express-session');
-const userRoutes = require('./router/user');
+console.log("📌 app.js 시작됨");
 const jobVacancyRouter = require('./router/jobVacancy');
-const jobSeekerRouter = require('./router/jobSeeker');
-const onlineTutorRouter = require('./router/onlineTutor');
-const publicRouter = require('./router/public');
-
-
-
+console.log("✅ jobVacancyRouter require 완료");
 require('dotenv').config();
+console.log("✅ config.js 로드됨");
 require('./router/config');
-
-const indexRouter = require('./router/index');
-const adminRouter = require('./router/admin');
-console.log("✅ adminRouter loaded");
-const facetRouter = require('./router/facet');
-const searchRouter = require('./router/search');
-const resourceRouter = require('./router/resource');
-const introRouter = require('./router/intro');
-const sitemapRouter = require('./router/sitemap');
-const dataRouter = require('./router/data');
 
 const connect = require('./model');
 const app = express();
 connect();
+console.log("✅ DB 연결 시도");
 
-// view engine setup
+// ✅ view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
 app.set('port', process.env.SVR_BASE_PORT || 8608);
 
-// ✅ 세션 미들웨어는 반드시 라우터보다 먼저!
+// ✅ 세션 미들웨어 (라우터보다 먼저)
 app.use(session({
   secret: 'esl-secret-key',
   resave: false,
@@ -40,55 +27,56 @@ app.use(session({
   cookie: { maxAge: 1000 * 60 * 60 } // 1시간
 }));
 
-// body-parser와 static 미들웨어
+// ✅ body-parser + static
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-
-// ✅ 현재 페이지 정보를 전역 변수로 사용하기 위한 미들웨어
+// ✅ 현재 페이지 정보 전역 변수화
 app.use(function (req, res, next) {
   res.locals.currentPage = req.path;
-  res.locals.session = req.session;  
+  res.locals.session = req.session;
   next();
 });
 
-// ✅ 라우터 등록
-app.use('/', indexRouter);
-// app.use('/job', jobRouter);
-app.use('/job-seekers', jobSeekerRouter);
+// ✅ 라우터 로딩 (순서 중요)
+app.use('/', require('./router/index'));
+app.use('/pages', require('./router/index'));
+// app.use('/job-seekers', require('./router/jobSeeker'));
 app.use('/job-vacancies', jobVacancyRouter);
-app.use('/', publicRouter);
-app.use('/online-tutors', onlineTutorRouter);
-app.use('/admin', adminRouter);
-app.use('/pages', indexRouter);
-app.use('/facet', facetRouter);
-app.use('/search', searchRouter);
-app.use('/resource', resourceRouter);
-app.use('/intro', introRouter);
-app.use('/sitemap', sitemapRouter);
-app.use('/data', dataRouter);
+app.use('/online-tutors', require('./router/onlineTutor'));
+app.use('/', require('./router/public'));
+app.use('/admin', require('./router/admin'));
+app.use('/facet', require('./router/facet'));
+app.use('/search', require('./router/search'));
+app.use('/resource', require('./router/resource'));
+app.use('/intro', require('./router/intro'));
+app.use('/sitemap', require('./router/sitemap'));
+app.use('/data', require('./router/data'));
+app.use('/user', require('./router/user'));
 
-// ✅ 사용자 관련 라우터
-app.use('/user', userRoutes);
+console.log("✅ All routers loaded");
 
-// 404 에러 핸들링
+// ✅ 404 핸들링 - 반드시 라우터 다음, 에러 핸들러 전에 위치
 app.use(function (req, res, next) {
-  next(createError(404));
+  res.status(404).render('error', {
+    message: '404 Not Found',
+    error: req.app.get('env') === 'development' ? {} : {}
+  });
 });
 
-// 에러 핸들러
+// ✅ 에러 핸들러
 app.use(function (err, req, res, next) {
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
-  res.status(err.status || 500);
-  res.render('error');
-  next();
+  console.error(err.stack);
+  res.status(err.status || 500).render('error', {
+    message: err.message,
+    error: req.app.get('env') === 'development' ? err : {}
+  });
 });
 
-// 서버 시작
+// ✅ 서버 실행
 app.listen(app.get('port'), () => {
-  console.log(`${app.get('port')}번 포트에서 대기 중`);
+  console.log(`✅ Listening on port ${app.get('port')}`);
 });
 
 module.exports = app;
