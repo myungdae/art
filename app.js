@@ -4,6 +4,8 @@ const path = require('path');
 const session = require('express-session');
 console.log("📌 app.js 시작됨");
 const jobVacancyRouter = require('./router/jobVacancy');
+const jobSeekerRouter = require('./router/jobSeeker');
+
 console.log("✅ jobVacancyRouter require 완료");
 require('dotenv').config();
 console.log("✅ config.js 로드됨");
@@ -42,7 +44,7 @@ app.use(function (req, res, next) {
 // ✅ 라우터 로딩 (순서 중요)
 app.use('/', require('./router/index'));
 app.use('/pages', require('./router/index'));
-// app.use('/job-seekers', require('./router/jobSeeker'));
+app.use('/job-seekers', jobSeekerRouter);
 app.use('/job-vacancies', jobVacancyRouter);
 app.use('/online-tutors', require('./router/onlineTutor'));
 app.use('/', require('./router/public'));

@@ -8,18 +8,17 @@ block content
     .row.justify-content-center
       .col-md-8
         .card.shadow-lg
-          .card-header.bg-warning.text-dark
-            h4.mb-0 Edit Job Seeker
+          .card-header.bg-success.text-white
+            h4.mb-0 New Job Seeker
 
           .card-body.bg-dark.text-light
-            form(method="POST", action=`/job-seekers/${seeker._id}/edit`)
+            form(method="POST", action="/job-seekers/new")
               
               .form-floating.mb-3
                 input.form-control#jobTitle(
                   type="text", 
                   name="jobTitle", 
                   required, 
-                  value=seeker.jobTitle || '', 
                   placeholder="Job Title"
                 )
                 label(for="jobTitle") Job Title
@@ -30,14 +29,13 @@ block content
                   name="description", 
                   id="description", 
                   rows="8"
-                )= seeker.description || ''
+                )
 
               .form-floating.mb-3
                 input.form-control#name(
                   type="text", 
                   name="name", 
                   required, 
-                  value=seeker.name || '', 
                   placeholder="Your Name"
                 )
                 label(for="name") Your Name
@@ -46,7 +44,6 @@ block content
                 input.form-control#email(
                   type="email", 
                   name="email", 
-                  value=seeker.email || '', 
                   placeholder="Email"
                 )
                 label(for="email") Email
@@ -55,7 +52,6 @@ block content
                 input.form-control#nationality(
                   type="text", 
                   name="nationality", 
-                  value=seeker.nationality || '', 
                   placeholder="Nationality"
                 )
                 label(for="nationality") Nationality
@@ -64,7 +60,6 @@ block content
                 input.form-control#preferredWorkLocation(
                   type="text", 
                   name="preferredWorkLocation", 
-                  value=seeker.preferredWorkLocation || '', 
                   placeholder="Preferred Work Location"
                 )
                 label(for="preferredWorkLocation") Preferred Work Location
@@ -73,7 +68,6 @@ block content
                 input.form-control#major(
                   type="text", 
                   name="major", 
-                  value=seeker.major || '', 
                   placeholder="Major"
                 )
                 label(for="major") Major
@@ -82,7 +76,6 @@ block content
                 input.form-control#languageSpoken(
                   type="text", 
                   name="languageSpoken", 
-                  value=seeker.languageSpoken || '', 
                   placeholder="Languages Spoken"
                 )
                 label(for="languageSpoken") Languages Spoken
@@ -91,12 +84,11 @@ block content
                 input.form-control#availableFrom(
                   type="date", 
                   name="availableFrom", 
-                  value=seeker.availableFrom ? seeker.availableFrom.toISOString().substring(0, 10) : '', 
                   placeholder="Available From"
                 )
                 label(for="availableFrom") Available From
 
-              button.btn.btn-warning.btn-block.mt-4(type="submit") Update
+              button.btn.btn-success.btn-block.mt-4(type="submit") Submit
 
 block append_js
   script.
