@@ -4,66 +4,59 @@ block append_on_header
   script(src="/vendor/ckeditor/ckeditor.js")
 
 block content
+  - const fields = [{ key: 'country', label: 'Host Country' }, { key: 'studentType', label: 'Student Type' }, { key: 'teachingArea', label: 'Teaching Area' }, { key: 'duration', label: 'Duration' }, { key: 'pay', label: 'Pay' }, { key: 'housing', label: 'Housing' }, { key: 'email', label: 'Email' }, { key: 'companyName', label: 'Company Name' }, { key: 'jobLocation', label: 'Job Location' }, { key: 'cellphoneNumber', label: 'Cellphone Number' }, { key: 'skypeId', label: 'Skype ID' }, { key: 'wechatId', label: 'WeChat ID' }, { key: 'homepage', label: 'Homepage' }]
+
   .container.mt-5
     .row.justify-content-center
       .col-md-8
-        .card.shadow-lg
-          .card-header.bg-warning.text-dark
-            h4.mb-0 Edit Job Vacancy
+        .card.shadow
+          .card-header.bg-light
+            h4.mb-0.text-dark Edit Job Vacancy
 
-          .card-body.bg-dark.text-light
-            form(method="POST", action=`/job-vacancies/${jobVacancy._id}/edit`)
+          .card-body
+            form(method="POST", action="/job-vacancies/" + jobVacancy._id + "/edit")
 
               .form-floating.mb-3
-                input.form-control#title(type="text", name="title", required, value=jobVacancy.title || '', placeholder="Job Title")
                 label(for="title") Job Title
+                input.form-control#title(type="text", name="title", required, placeholder="Job Title", value=jobVacancy.title)
 
               .mb-4
-                label.text-white.mb-2 Job Description
-                textarea.form-control(name="description", id="description", rows="8")= jobVacancy.description || ''
-
-              - var fields = [{ key: 'country', label: 'Host Country' }, { key: 'studentType', label: 'Student Type' }, { key: 'teachingArea', label: 'Teaching Area' }, { key: 'duration', label: 'Duration' }, { key: 'pay', label: 'Pay' }, { key: 'housing', label: 'Housing' }, { key: 'email', label: 'Email' }, { key: 'companyName', label: 'Company Name' }, { key: 'jobLocation', label: 'Job Location' }, { key: 'cellphoneNumber', label: 'Cellphone Number' }, { key: 'skypeId', label: 'Skype ID' }, { key: 'wechatId', label: 'WeChat ID' }, { key: 'homepage', label: 'Homepage' }]
+                label.form-label Job Description
+                textarea.form-control(name="description", id="description", rows="8")= jobVacancy.description
 
               each field in fields
                 .form-floating.mb-3
-                  input.form-control(
-                    type="text",
-                    name=field.key,
-                    id=field.key,
-                    value=jobVacancy[field.key] || '',
-                    placeholder=field.label
-                  )
                   label(for=field.key)= field.label
+                  input.form-control(type="text", name=field.key, id=field.key, placeholder=field.label, value=jobVacancy[field.key])
 
               .form-floating.mb-3
-                input.form-control(type="date", name="datePosted", value=jobVacancy.datePosted ? jobVacancy.datePosted.toISOString().substring(0, 10) : '', placeholder="Date Posted")
                 label(for="datePosted") Date Posted
+                input.form-control(type="date", name="datePosted", id="datePosted", value=datePostedFormatted)
 
-              .mt-5
+              .form-group.mt-5
                 h4.text-primary.mb-3 Select a Payment Option
-                each val in ['1', '4', '12', '24']
-                  - var isChecked = jobVacancy.adPackage == val
-                  .form-check.mb-2
-                    input.form-check-input(type="radio", name="adPackage", value=val, checked=isChecked, id="ad-" + val)
-                    label.form-check-label(for="ad-" + val)
-                      if val == '1'
+                each opt in ['1', '4', '12', '24']
+                  .form-check
+                    input.form-check-input(type="radio", name="adPackage", id="ad-" + opt, value=opt, checked=jobVacancy.adPackage == opt)
+                    label.form-check-label(for="ad-" + opt)
+                      if opt == '1'
                         | 1 Ad — $30 one-time payment
-                      else if val == '4'
+                      else if opt == '4'
                         | 4 Ads — $100 one-time payment 
                         span.text-danger (save $20)
-                      else if val == '12'
+                      else if opt == '12'
                         | 12 Ads — $250 one-time payment 
                         span.text-danger (save $110)
-                      else if val == '24'
+                      else if opt == '24'
                         | 24 Ads — $450 one-time payment 
                         span.text-danger (save $270)
 
-              .form-check.mt-3
-                input.form-check-input(type="checkbox", name="addResumeAccess", value="yes", checked=jobVacancy.addResumeAccess, id="resumeAccess")
-                label.form-check-label(for="resumeAccess")
-                  strong Add 30 days Access to Teacher Resume Database — $50
+                .form-check.mt-3
+                  input.form-check-input(type="checkbox", name="addResumeAccess", value="yes", id="resumeAccess", checked=jobVacancy.addResumeAccess)
+                  label.form-check-label(for="resumeAccess")
+                    strong Add 30 days Access to Teacher Resume Database — $50
 
-              button.btn.btn-warning.btn-block.mt-4(type="submit") Update
+              button.btn.btn-success.btn-block.mt-4(type="submit") Update
 
 block append_js
   script.

@@ -4,40 +4,38 @@ block append_on_header
   script(src="/vendor/ckeditor/ckeditor.js")
 
 block content
-  - const fields = [{ key: 'country', label: 'Host Country' }, { key: 'studentType', label: 'Student Type' }, { key: 'teachingArea', label: 'Teaching Area' }, { key: 'duration', label: 'Duration' }, { key: 'pay', label: 'Pay' }, { key: 'housing', label: 'Housing' }, { key: 'email', label: 'Email' }, { key: 'companyName', label: 'Company Name' }, { key: 'jobLocation', label: 'Job Location' }, { key: 'cellphoneNumber', label: 'Cellphone Number' }, { key: 'skypeId', label: 'Skype ID' }, { key: 'wechatId', label: 'WeChat ID' }, { key: 'homepage', label: 'Homepage' }]
-
   .container.mt-5
     .row.justify-content-center
       .col-md-8
-        .card.shadow-lg
-          .card-header.bg-success.text-white
-            h4.mb-0 New Job Vacancy
+        .card.shadow
+          .card-header.bg-light
+            h4.mb-0.text-dark New Job Vacancy
 
-          .card-body.bg-dark.text-light
+          .card-body
             form(method="POST", action="/job-vacancies")
 
-              .form-floating.mb-3
-                input.form-control#title(type="text", name="title", required, placeholder="Job Title")
+              .form-group.mb-3
                 label(for="title") Job Title
+                input.form-control#title(type="text", name="title", required, placeholder="Job Title")
 
-              .mb-4
-                label.text-white.mb-2 Job Description
+              .form-group.mb-4
+                label(for="description") Job Description
                 textarea.form-control(name="description", id="description", rows="8")
 
-              each field in fields
-                .form-floating.mb-3
-                  input.form-control(type="text", name=field.key, id=field.key, placeholder=field.label)
+              each field in [{ key: 'country', label: 'Host Country' }, { key: 'studentType', label: 'Student Type' }, { key: 'teachingArea', label: 'Teaching Area' }, { key: 'duration', label: 'Duration' }, { key: 'pay', label: 'Pay' }, { key: 'housing', label: 'Housing' }, { key: 'email', label: 'Email' }, { key: 'companyName', label: 'Company Name' }, { key: 'jobLocation', label: 'Job Location' }, { key: 'cellphoneNumber', label: 'Cellphone Number' }, { key: 'skypeId', label: 'Skype ID' }, { key: 'wechatId', label: 'WeChat ID' }, { key: 'homepage', label: 'Homepage' }]
+                .form-group.mb-3
                   label(for=field.key)= field.label
+                  input.form-control(type="text", name=field.key, id=field.key, placeholder=field.label)
 
-              .form-floating.mb-3
-                input.form-control(type="date", name="datePosted", placeholder="Date Posted")
+              .form-group.mb-3
                 label(for="datePosted") Date Posted
+                input.form-control(type="date", name="datePosted", placeholder="Date Posted")
 
               .form-group.mt-5
                 h4.text-primary.mb-3 Select a Payment Option
                 each opt in ['1', '4', '12', '24']
                   .form-check
-                    input.form-check-input(type="radio", name="adPackage", value=opt)
+                    input.form-check-input(type="radio", name="adPackage", id="ad-" + opt, value=opt)
                     label.form-check-label(for="ad-" + opt)
                       if opt == '1'
                         | 1 Ad — $30 one-time payment

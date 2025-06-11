@@ -1,0 +1,24 @@
+extends ../layout
+
+block content
+  .container.mt-5
+    h1 Resume Board Access
+    p Gain access to hundreds of resumes for teachers located all over the world!
+
+    form(action="/job-seekers/resumeAccess" method="post")
+      .form-check.mb-3
+        input.form-check-input(type="radio", name="accessPeriod", id="access30", value="30", checked)
+        label.form-check-label(for="access30")
+          | 30 Days Teacher Resume Access – $75 one-time payment
+
+      .form-check.mb-3
+        input.form-check-input(type="radio", name="accessPeriod", id="access90", value="90")
+        label.form-check-label(for="access90")
+          | 90 Days Teacher Resume Access – $200 one-time payment
+
+      .form-check.mb-3
+        input.form-check-input(type="radio", name="accessPeriod", id="access365", value="365")
+        label.form-check-label(for="access365")
+          | 365 Days Teacher Resume Access – $550 one-time payment
+
+      button.btn.btn-warning.mt-4(type="submit") Continue to Payment

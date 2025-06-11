@@ -45,10 +45,30 @@ router.post('/new', async (req, res) => {
   }
 });
 
-// 목록 라우트 추가
+// GET: Resume Access 선택 폼
+router.get('/resumeAccess', (req, res) => {
+  res.render('jobSeeker/resumeAccess');
+});
+
+// POST: Resume Access 처리
+router.post('/resumeAccess', (req, res) => {
+  const { accessPeriod } = req.body;
+
+  let price = '';
+  switch (accessPeriod) {
+    case '30': price = '$75'; break;
+    case '90': price = '$200'; break;
+    case '365': price = '$550'; break;
+    default: price = 'unknown';
+  }
+
+  res.send(`You selected ${accessPeriod} days access. Payment of ${price} will be processed.`);
+});
+
+// 목록 라우트
 router.get('/', async (req, res) => {
   try {
-    const seekers = await JobSeeker.find().sort({ availableFrom: 1 }); // 날짜순 정렬 (옵션)
+    const seekers = await JobSeeker.find().sort({ availableFrom: 1 });
     res.render('jobSeeker/index', { seekers });
   } catch (err) {
     console.error('❌ 목록 불러오기 실패:', err);
@@ -94,6 +114,4 @@ router.get('/:id/delete', async (req, res) => {
   }
 });
 
-
 module.exports = router;
-
