@@ -1,0 +1,65 @@
+extends ../layout
+
+block content
+  .container.mt-5
+    .row.justify-content-center
+      .col-md-10
+        .card.shadow
+          .card-header.bg-light.d-flex.justify-content-between.align-items-center
+            h4.mb-0.text-dark= jobVacancy.title
+            a.btn.btn-outline-primary(href='/job-vacancies') ← Back to List
+
+          .card-body
+            p.mb-2
+              strong Host Country: 
+              | #{jobVacancy.country}
+            p.mb-2
+              strong Student Type: 
+              | #{jobVacancy.studentType}
+            p.mb-2
+              strong Teaching Area: 
+              | #{jobVacancy.teachingArea}
+            p.mb-2
+              strong Duration: 
+              | #{jobVacancy.duration}
+            p.mb-2
+              strong Pay: 
+              | #{jobVacancy.pay}
+            p.mb-2
+              strong Housing: 
+              | #{jobVacancy.housing}
+            p.mb-2
+              strong Email: 
+              | #{jobVacancy.email}
+            p.mb-2
+              strong Company Name: 
+              | #{jobVacancy.companyName}
+            p.mb-2
+              strong Job Location: 
+              | #{jobVacancy.jobLocation}
+            p.mb-2
+              strong Cellphone: 
+              | #{jobVacancy.cellphoneNumber}
+            p.mb-2
+              strong Skype ID: 
+              | #{jobVacancy.skypeId}
+            p.mb-2
+              strong WeChat ID: 
+              | #{jobVacancy.wechatId}
+            p.mb-2
+              strong Homepage: 
+              a(href=jobVacancy.homepage target="_blank")= jobVacancy.homepage
+            p.mb-2
+              strong Date Posted: 
+              | #{jobVacancy.datePosted && new Date(jobVacancy.datePosted).toLocaleDateString()}
+            p.mb-2
+              strong Ad Package: 
+              | #{jobVacancy.adPackage}
+            p.mb-2
+              strong Resume Access: 
+              | #{jobVacancy.addResumeAccess ? 'Yes' : 'No'}
+
+            hr
+            h5 Job Description
+            .border.p-3.bg-light(style="white-space: pre-wrap")
+              != jobVacancy.description

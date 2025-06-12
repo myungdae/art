@@ -3,14 +3,47 @@ const router = express.Router();
 const JobVacancy = require('../model/jobVacancy');
 const sanitizeHtml = require('sanitize-html');
 
-console.log("✅ jobVacancyRouter loaded"); // 라우터 자체 로딩 확인
+console.log("✅ jobVacancyRouter loaded");
 
-// ✅ distinct 값 추출
+// ✅ 기본 제공 국가 목록 (30개)
+const defaultCountries = [
+  'Australia', 'Bangladesh', 'Brazil', 'Canada', 'China', 'Egypt',
+  'France', 'Germany', 'India', 'Indonesia', 'Italy', 'Japan',
+  'Malaysia', 'Mexico', 'Netherlands', 'Pakistan', 'Philippines',
+  'Poland', 'Russia', 'Saudi Arabia', 'Singapore', 'South Africa',
+  'South Korea', 'Spain', 'Thailand', 'Turkey', 'UK', 'Ukraine',
+  'USA', 'Vietnam'
+];
+
+// ✅ 기본 제공 학생 유형
+const defaultStudentTypes = [
+  'Adults', 'Business Professionals', 'Elementary', 'High School',
+  'Kindergarten', 'Language Center', 'Middle School', 'Online Students',
+  'Private Tutoring', 'Test Preparation', 'University'
+];
+
+// ✅ 기본 제공 교과 영역
+const defaultTeachingAreas = [
+  'Art', 'Biology', 'Business', 'Chemistry', 'Chinese', 'Computer Science',
+  'Economics', 'Engineering', 'English', 'ESL', 'History', 'Korean',
+  'Math', 'Music', 'PE', 'Physics', 'Science', 'Social Studies', 'Spanish'
+];
+
+// ✅ 고유값 추출 및 병합 함수
 const getDistinctValues = async () => {
-  const studentTypes = await JobVacancy.distinct('studentType');
-  const countries = await JobVacancy.distinct('country');
-  const teachingAreas = await JobVacancy.distinct('teachingArea');
-  return { studentTypes, countries, teachingAreas };
+  const studentTypesFromDB = await JobVacancy.distinct('studentType');
+  const countriesFromDB = await JobVacancy.distinct('country');
+  const teachingAreasFromDB = await JobVacancy.distinct('teachingArea');
+
+  const mergedCountries = [...new Set([...defaultCountries, ...countriesFromDB])].sort((a, b) => a.localeCompare(b));
+  const mergedStudentTypes = [...new Set([...defaultStudentTypes, ...studentTypesFromDB])].sort((a, b) => a.localeCompare(b));
+  const mergedTeachingAreas = [...new Set([...defaultTeachingAreas, ...teachingAreasFromDB])].sort((a, b) => a.localeCompare(b));
+
+  return {
+    countries: mergedCountries,
+    studentTypes: mergedStudentTypes,
+    teachingAreas: mergedTeachingAreas
+  };
 };
 
 // ✅ 목록 조회
@@ -22,7 +55,11 @@ router.get('/', async (req, res) => {
 // ✅ 신규 등록 폼
 router.get('/new', async (req, res) => {
   const values = await getDistinctValues();
-  res.render('jobVacancy/new', { values });
+  res.render('jobVacancy/new', {
+    countries: values.countries,
+    studentTypes: values.studentTypes,
+    teachingAreas: values.teachingAreas
+  });
 });
 
 // ✅ 등록 처리
@@ -33,8 +70,8 @@ router.post('/new', async (req, res) => {
 
     if (!rawTitle) return res.status(400).send('❌ Job Title is required');
 
-    const forbiddenChars = /[^\w\s\-가-힣]/;
-    if (forbiddenChars.test(rawTitle))
+    const forbiddenEmoji = /[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu;
+    if (forbiddenEmoji.test(rawTitle))
       return res.status(400).send('❌ Title cannot include emojis or special characters');
 
     const existing = await JobVacancy.findOne({
@@ -76,16 +113,23 @@ router.post('/new', async (req, res) => {
   }
 });
 
-// ✅ 수정 폼
-router.get('/:id/edit', async (req, res) => {
-  console.log(`✅ GET /:id/edit 진입 — ID: ${req.params.id}`);
-
+// ✅ 단일 조회
+router.get('/:id', async (req, res) => {
   try {
     const jobVacancy = await JobVacancy.findById(req.params.id);
-    if (!jobVacancy) {
-      console.log('❌ Job Vacancy not found');
-      return res.status(404).send('❌ Job Vacancy not found');
-    }
+    if (!jobVacancy) return res.status(404).send('❌ Job not found');
+    res.render('jobVacancy/show', { jobVacancy });
+  } catch (err) {
+    console.error('[ERROR - Load Show Page]:', err);
+    res.status(500).send('❌ Error loading job');
+  }
+});
+
+// ✅ 수정 폼
+router.get('/:id/edit', async (req, res) => {
+  try {
+    const jobVacancy = await JobVacancy.findById(req.params.id);
+    if (!jobVacancy) return res.status(404).send('❌ Job not found');
 
     const values = await getDistinctValues();
     const formattedDate = jobVacancy.datePosted
@@ -93,46 +137,41 @@ router.get('/:id/edit', async (req, res) => {
       : '';
 
     res.render('jobVacancy/edit', {
-      jobVacancy,                     // ✅ 변수명 수정
+      jobVacancy,
+      countries: values.countries,
+      studentTypes: values.studentTypes,
+      teachingAreas: values.teachingAreas,
       datePostedFormatted: formattedDate
     });
-
   } catch (err) {
     console.error('[ERROR - Load Edit Form]:', err);
-    res.status(500).send('❌ Server error while loading edit form');
+    res.status(500).send('❌ Error loading edit form');
   }
 });
 
-
-
 // ✅ 수정 처리
 router.post('/:id/edit', async (req, res) => {
-  console.log('✅ POST 요청 도착: /job-vacancies/' + req.params.id + '/edit');
-
   try {
     const data = req.body;
     const rawTitle = (data.title || '').trim();
 
     if (!rawTitle) return res.status(400).send('❌ Job Title is required');
 
-    const forbiddenChars = /[^\w\s\-가-힣]/;
-    if (forbiddenChars.test(rawTitle))
+    const forbiddenEmoji = /[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu;
+    if (forbiddenEmoji.test(rawTitle))
       return res.status(400).send('❌ Title cannot include emojis or special characters');
 
-    // 동일 title 존재 여부 확인 (단, 본인은 제외)
     const existing = await JobVacancy.findOne({
       title: { $regex: new RegExp(`^${rawTitle}$`, 'i') },
       _id: { $ne: req.params.id }
     });
     if (existing) return res.status(400).send('❌ A job with the same title already exists');
 
-    // description 정제
     const cleanDescription = sanitizeHtml(data.description || '', {
       allowedTags: ['b', 'i', 'em', 'strong', 'p', 'ul', 'ol', 'li', 'br'],
       allowedAttributes: {}
     });
 
-    // 업데이트 수행
     await JobVacancy.findByIdAndUpdate(req.params.id, {
       title: rawTitle,
       description: cleanDescription,
@@ -154,15 +193,12 @@ router.post('/:id/edit', async (req, res) => {
       addResumeAccess: data.addResumeAccess === 'yes'
     });
 
-    console.log('✅ 업데이트 성공. 리디렉션 중...');
     res.redirect('/job-vacancies');
-
   } catch (err) {
     console.error('[ERROR - Job Update]:', err);
     res.status(500).send('❌ Error updating job vacancy');
   }
 });
-
 
 // ✅ 삭제 처리
 router.post('/:id/delete', async (req, res) => {

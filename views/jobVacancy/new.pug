@@ -12,24 +12,87 @@ block content
             h4.mb-0.text-dark New Job Vacancy
 
           .card-body
-            form(method="POST", action="/job-vacancies")
+            form(method="POST", action="/job-vacancies/new")
 
               .form-group.mb-3
                 label(for="title") Job Title
-                input.form-control#title(type="text", name="title", required, placeholder="Job Title")
+                input.form-control#title(type="text", name="title", required, placeholder="Job Title", oninput="validateTitle(this)")
+                small.text-danger#title-error(style="display:none") ❌ Emojis or special characters are not allowed.
 
               .form-group.mb-4
                 label(for="description") Job Description
                 textarea.form-control(name="description", id="description", rows="8")
 
-              each field in [{ key: 'country', label: 'Host Country' }, { key: 'studentType', label: 'Student Type' }, { key: 'teachingArea', label: 'Teaching Area' }, { key: 'duration', label: 'Duration' }, { key: 'pay', label: 'Pay' }, { key: 'housing', label: 'Housing' }, { key: 'email', label: 'Email' }, { key: 'companyName', label: 'Company Name' }, { key: 'jobLocation', label: 'Job Location' }, { key: 'cellphoneNumber', label: 'Cellphone Number' }, { key: 'skypeId', label: 'Skype ID' }, { key: 'wechatId', label: 'WeChat ID' }, { key: 'homepage', label: 'Homepage' }]
-                .form-group.mb-3
-                  label(for=field.key)= field.label
-                  input.form-control(type="text", name=field.key, id=field.key, placeholder=field.label)
+              .form-group.mb-3
+                label(for="country") Host Country
+                .input-group
+                  select.form-control(name="country", id="country", required)
+                    option(disabled selected value='') Select Country
+                    each v in countries
+                      option(value=v)= v
+                  button.btn.btn-outline-secondary(type="button", onclick="addOption('country')") +
+
+              .form-group.mb-3
+                label(for="studentType") Student Type
+                .input-group
+                  select.form-control(name="studentType", id="studentType", required)
+                    option(disabled selected value='') Select Student Type
+                    each v in studentTypes
+                      option(value=v)= v
+                  button.btn.btn-outline-secondary(type="button", onclick="addOption('studentType')") +
+
+              .form-group.mb-3
+                label(for="teachingArea") Teaching Area
+                .input-group
+                  select.form-control(name="teachingArea", id="teachingArea", required)
+                    option(disabled selected value='') Select Teaching Area
+                    each v in teachingAreas
+                      option(value=v)= v
+                  button.btn.btn-outline-secondary(type="button", onclick="addOption('teachingArea')") +
+
+              .form-group.mb-3
+                label(for="duration") Duration
+                input.form-control(type="text", name="duration", id="duration", placeholder="Duration")
+
+              .form-group.mb-3
+                label(for="pay") Pay
+                input.form-control(type="text", name="pay", id="pay", placeholder="Pay")
+
+              .form-group.mb-3
+                label(for="housing") Housing
+                input.form-control(type="text", name="housing", id="housing", placeholder="Housing")
+
+              .form-group.mb-3
+                label(for="email") Email
+                input.form-control(type="email", name="email", id="email", placeholder="Email")
+
+              .form-group.mb-3
+                label(for="companyName") Company Name
+                input.form-control(type="text", name="companyName", id="companyName", placeholder="Company Name")
+
+              .form-group.mb-3
+                label(for="jobLocation") Job Location
+                input.form-control(type="text", name="jobLocation", id="jobLocation", placeholder="Job Location")
+
+              .form-group.mb-3
+                label(for="cellphoneNumber") Cellphone Number
+                input.form-control(type="text", name="cellphoneNumber", id="cellphoneNumber", placeholder="Cellphone Number")
+
+              .form-group.mb-3
+                label(for="skypeId") Skype ID
+                input.form-control(type="text", name="skypeId", id="skypeId", placeholder="Skype ID")
+
+              .form-group.mb-3
+                label(for="wechatId") WeChat ID
+                input.form-control(type="text", name="wechatId", id="wechatId", placeholder="WeChat ID")
+
+              .form-group.mb-3
+                label(for="homepage") Homepage
+                input.form-control(type="text", name="homepage", id="homepage", placeholder="Homepage")
 
               .form-group.mb-3
                 label(for="datePosted") Date Posted
-                input.form-control(type="date", name="datePosted", placeholder="Date Posted")
+                input.form-control(type="date", name="datePosted", id="datePosted")
 
               .form-group.mt-5
                 h4.text-primary.mb-3 Select a Payment Option
@@ -59,3 +122,27 @@ block content
 block append_js
   script.
     CKEDITOR.replace('description');
+
+    function addOption(fieldId) {
+      const value = prompt("Enter new option:");
+      if (value) {
+        const select = document.getElementById(fieldId);
+        const option = document.createElement("option");
+        option.value = value;
+        option.text = value;
+        option.selected = true;
+        select.add(option);
+      }
+    }
+
+    function validateTitle(input) {
+      const regex = /[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu;
+      const errorElem = document.getElementById('title-error');
+      if (regex.test(input.value)) {
+        errorElem.style.display = 'block';
+        input.classList.add('is-invalid');
+      } else {
+        errorElem.style.display = 'none';
+        input.classList.remove('is-invalid');
+      }
+    }
