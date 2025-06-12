@@ -2,10 +2,11 @@ const express = require('express');
 const router = express.Router();
 const JobVacancy = require('../model/jobVacancy');
 const sanitizeHtml = require('sanitize-html');
+const priceConfig = require('../config/priceConfig');
 
 console.log("✅ jobVacancyRouter loaded");
 
-// ✅ 기본 제공 국가 목록 (30개)
+// ✅ 기본 제공 국가 목록
 const defaultCountries = [
   'Australia', 'Bangladesh', 'Brazil', 'Canada', 'China', 'Egypt',
   'France', 'Germany', 'India', 'Indonesia', 'Italy', 'Japan',
@@ -35,9 +36,9 @@ const getDistinctValues = async () => {
   const countriesFromDB = await JobVacancy.distinct('country');
   const teachingAreasFromDB = await JobVacancy.distinct('teachingArea');
 
-  const mergedCountries = [...new Set([...defaultCountries, ...countriesFromDB])].sort((a, b) => a.localeCompare(b));
-  const mergedStudentTypes = [...new Set([...defaultStudentTypes, ...studentTypesFromDB])].sort((a, b) => a.localeCompare(b));
-  const mergedTeachingAreas = [...new Set([...defaultTeachingAreas, ...teachingAreasFromDB])].sort((a, b) => a.localeCompare(b));
+  const mergedCountries = [...new Set([...defaultCountries, ...countriesFromDB])].sort();
+  const mergedStudentTypes = [...new Set([...defaultStudentTypes, ...studentTypesFromDB])].sort();
+  const mergedTeachingAreas = [...new Set([...defaultTeachingAreas, ...teachingAreasFromDB])].sort();
 
   return {
     countries: mergedCountries,
@@ -58,7 +59,8 @@ router.get('/new', async (req, res) => {
   res.render('jobVacancy/new', {
     countries: values.countries,
     studentTypes: values.studentTypes,
-    teachingAreas: values.teachingAreas
+    teachingAreas: values.teachingAreas,
+    priceOptions: priceConfig   // ✅ 추가
   });
 });
 
@@ -69,7 +71,6 @@ router.post('/new', async (req, res) => {
     const rawTitle = (data.title || '').trim();
 
     if (!rawTitle) return res.status(400).send('❌ Job Title is required');
-
     const forbiddenEmoji = /[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu;
     if (forbiddenEmoji.test(rawTitle))
       return res.status(400).send('❌ Title cannot include emojis or special characters');
@@ -141,7 +142,8 @@ router.get('/:id/edit', async (req, res) => {
       countries: values.countries,
       studentTypes: values.studentTypes,
       teachingAreas: values.teachingAreas,
-      datePostedFormatted: formattedDate
+      datePostedFormatted: formattedDate,
+      priceOptions: priceConfig  // ✅ 추가
     });
   } catch (err) {
     console.error('[ERROR - Load Edit Form]:', err);
@@ -156,7 +158,6 @@ router.post('/:id/edit', async (req, res) => {
     const rawTitle = (data.title || '').trim();
 
     if (!rawTitle) return res.status(400).send('❌ Job Title is required');
-
     const forbiddenEmoji = /[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu;
     if (forbiddenEmoji.test(rawTitle))
       return res.status(400).send('❌ Title cannot include emojis or special characters');

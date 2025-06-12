@@ -6,6 +6,10 @@ console.log("📌 app.js 시작됨");
 const jobVacancyRouter = require('./router/jobVacancy');
 const jobSeekerRouter = require('./router/jobSeeker');
 
+
+
+
+
 console.log("✅ jobVacancyRouter require 완료");
 require('dotenv').config();
 console.log("✅ config.js 로드됨");
@@ -46,6 +50,8 @@ app.use('/', require('./router/index'));
 app.use('/pages', require('./router/index'));
 app.use('/job-seekers', jobSeekerRouter);
 app.use('/job-vacancies', jobVacancyRouter);
+
+app.use('/paypal', require('./router/paypal'));
 app.use('/online-tutors', require('./router/onlineTutor'));
 app.use('/', require('./router/public'));
 app.use('/admin', require('./router/admin'));

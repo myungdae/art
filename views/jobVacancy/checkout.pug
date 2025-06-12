@@ -1,0 +1,26 @@
+extends ../layout
+
+block content
+  .container.mt-5
+    .row.justify-content-center
+      .col-md-6
+        .card.shadow
+          .card-header.bg-light
+            h4.mb-0.text-dark Select a Payment Option
+
+          .card-body
+            form(action="/paypal/create-payment" method="POST")
+              .form-group.mb-3
+                label(for="packageId") Choose Ad Package
+                select.form-control(name="packageId" required)
+                  option(value="" disabled selected) -- Choose a Package --
+                  each pkg in priceOptions
+                    option(value=pkg.id)= `${pkg.label} — $${pkg.price} ${pkg.discount ? `(save $${pkg.discount})` : ''}`
+
+              button.btn.btn-primary.mt-4(type="submit") Pay with PayPal
+
+            hr
+            p.text-muted.mt-3
+              | You will be redirected to PayPal for secure checkout.
+              br
+              small.text-danger No additional charges to you — we cover the PayPal fee.
