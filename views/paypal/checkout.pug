@@ -1,0 +1,53 @@
+extends ../layout
+
+block content
+  .container.mt-5
+    .row.justify-content-center
+      .col-md-6
+        .card.shadow
+          .card-header.bg-light
+            h4.mb-0.text-dark Select a Payment Option
+
+          .card-body
+            p.text-dark.mb-3 You are purchasing 1 Job Vacancy Ad — $30 one-time payment
+
+            #paypal-button-container
+
+            hr
+            p.text-muted.mt-3
+              | You will be redirected to PayPal for secure checkout.
+              br
+              small.text-danger No additional charges to you — we cover the PayPal fee.
+
+  // ✅ 실 Client ID로 SDK 불러오기
+  script(src="https://www.paypal.com/sdk/js?client-id=AdCfY_Fv91WJinsDArKeBbdCpOMCO4SK7D-0ZjmbngMFffGJHJRyQIlSg7Av8cLPfh7jCRmeqyJyDIut&currency=USD")
+
+  // ✅ PayPal 버튼 로직
+  script.
+    paypal.Buttons({
+      createOrder: function (data, actions) {
+        return fetch('/paypal/create-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        })
+        .then(res => res.json())
+        .then(order => order.id);
+      },
+      onApprove: function (data, actions) {
+        return fetch(`/paypal/capture-order/${data.orderID}`, {
+          method: 'POST'
+        })
+        .then(res => res.json())
+        .then(details => {
+          alert('✅ Payment successful!');
+          window.location.href = '/paypal/success';
+        });
+      },
+      onError: function (err) {
+        console.error('❌ Payment error:', err);
+        alert('❌ Payment failed. Please try again.');
+      }
+    }).render('#paypal-button-container');
+
+

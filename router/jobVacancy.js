@@ -6,7 +6,6 @@ const priceConfig = require('../config/priceConfig');
 
 console.log("✅ jobVacancyRouter loaded");
 
-// ✅ 기본 제공 국가 목록
 const defaultCountries = [
   'Australia', 'Bangladesh', 'Brazil', 'Canada', 'China', 'Egypt',
   'France', 'Germany', 'India', 'Indonesia', 'Italy', 'Japan',
@@ -16,21 +15,18 @@ const defaultCountries = [
   'USA', 'Vietnam'
 ];
 
-// ✅ 기본 제공 학생 유형
 const defaultStudentTypes = [
   'Adults', 'Business Professionals', 'Elementary', 'High School',
   'Kindergarten', 'Language Center', 'Middle School', 'Online Students',
   'Private Tutoring', 'Test Preparation', 'University'
 ];
 
-// ✅ 기본 제공 교과 영역
 const defaultTeachingAreas = [
   'Art', 'Biology', 'Business', 'Chemistry', 'Chinese', 'Computer Science',
   'Economics', 'Engineering', 'English', 'ESL', 'History', 'Korean',
   'Math', 'Music', 'PE', 'Physics', 'Science', 'Social Studies', 'Spanish'
 ];
 
-// ✅ 고유값 추출 및 병합 함수
 const getDistinctValues = async () => {
   const studentTypesFromDB = await JobVacancy.distinct('studentType');
   const countriesFromDB = await JobVacancy.distinct('country');
@@ -47,24 +43,24 @@ const getDistinctValues = async () => {
   };
 };
 
-// ✅ 목록 조회
 router.get('/', async (req, res) => {
   const jobs = await JobVacancy.find();
   res.render('jobVacancy/index', { jobs });
 });
 
-// ✅ 신규 등록 폼
 router.get('/new', async (req, res) => {
   const values = await getDistinctValues();
+
   res.render('jobVacancy/new', {
+    message: null,
+    showPayment: false,
     countries: values.countries,
     studentTypes: values.studentTypes,
     teachingAreas: values.teachingAreas,
-    priceOptions: priceConfig   // ✅ 추가
+    priceOptions: priceConfig
   });
 });
 
-// ✅ 등록 처리
 router.post('/new', async (req, res) => {
   try {
     const data = req.body;
@@ -106,7 +102,18 @@ router.post('/new', async (req, res) => {
     });
 
     await job.save();
-    res.redirect('/job-vacancies');
+
+    // Flash 제거 → 직접 렌더링
+    const values = await getDistinctValues();
+
+    res.render('jobVacancy/new', {
+      message: '✅ Your job post has been saved.',
+      showPayment: true,
+      countries: values.countries,
+      studentTypes: values.studentTypes,
+      teachingAreas: values.teachingAreas,
+      priceOptions: priceConfig
+    });
   } catch (err) {
     console.error('[ERROR - Job Save]:', err);
     if (err.code === 11000) return res.status(400).send('❌ Duplicate title detected');
@@ -114,7 +121,6 @@ router.post('/new', async (req, res) => {
   }
 });
 
-// ✅ 단일 조회
 router.get('/:id', async (req, res) => {
   try {
     const jobVacancy = await JobVacancy.findById(req.params.id);
@@ -126,7 +132,6 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// ✅ 수정 폼
 router.get('/:id/edit', async (req, res) => {
   try {
     const jobVacancy = await JobVacancy.findById(req.params.id);
@@ -143,7 +148,7 @@ router.get('/:id/edit', async (req, res) => {
       studentTypes: values.studentTypes,
       teachingAreas: values.teachingAreas,
       datePostedFormatted: formattedDate,
-      priceOptions: priceConfig  // ✅ 추가
+      priceOptions: priceConfig
     });
   } catch (err) {
     console.error('[ERROR - Load Edit Form]:', err);
@@ -151,7 +156,6 @@ router.get('/:id/edit', async (req, res) => {
   }
 });
 
-// ✅ 수정 처리
 router.post('/:id/edit', async (req, res) => {
   try {
     const data = req.body;
@@ -201,7 +205,6 @@ router.post('/:id/edit', async (req, res) => {
   }
 });
 
-// ✅ 삭제 처리
 router.post('/:id/delete', async (req, res) => {
   try {
     await JobVacancy.findByIdAndDelete(req.params.id);
