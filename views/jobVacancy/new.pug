@@ -12,121 +12,126 @@ block content
             h4.mb-0.text-dark New Job Vacancy
 
           .card-body
+
+            // ✅ 저장 성공 메시지 (상단 고정)
             if message
               .alert.alert-success(role="alert")
                 span ✅&nbsp; #{message}
 
-            form(method="POST", action="/job-vacancies/new")
-              .form-group.mb-3
-                label(for="title") Job Title
-                input.form-control#title(type="text", name="title", required, placeholder="Job Title", oninput="validateTitle(this)")
-                small.text-danger#title-error(style="display:none") ❌ Emojis or special characters are not allowed.
+            // ✅ 저장 후(showPayment)일 때는 입력폼 생략
+            if !showPayment
+              form(method="POST", action="/job-vacancies/new")
 
-              .form-group.mb-4
-                label(for="description") Job Description
-                textarea.form-control(name="description", id="description", rows="8")
+                .form-group.mb-3
+                  label(for="title") Job Title
+                  input.form-control#title(type="text", name="title", required, placeholder="Job Title", oninput="validateTitle(this)")
+                  small.text-danger#title-error(style="display:none") ❌ Emojis or special characters are not allowed.
 
-              .form-group.mb-3
-                label(for="country") Host Country
-                .input-group
-                  select.form-control(name="country", id="country", required)
-                    option(disabled selected value='') Select Country
-                    each v in countries
-                      option(value=v)= v
-                  button.btn.btn-outline-secondary(type="button", onclick="addOption('country')") +
+                .form-group.mb-4
+                  label(for="description") Job Description
+                  textarea.form-control(name="description", id="description", rows="8")
 
-              .form-group.mb-3
-                label(for="studentType") Student Type
-                .input-group
-                  select.form-control(name="studentType", id="studentType", required)
-                    option(disabled selected value='') Select Student Type
-                    each v in studentTypes
-                      option(value=v)= v
-                  button.btn.btn-outline-secondary(type="button", onclick="addOption('studentType')") +
+                .form-group.mb-3
+                  label(for="country") Host Country
+                  .input-group
+                    select.form-control(name="country", id="country", required)
+                      option(disabled selected value='') Select Country
+                      each v in countries
+                        option(value=v)= v
+                    button.btn.btn-outline-secondary(type="button", onclick="addOption('country')") +
 
-              .form-group.mb-3
-                label(for="teachingArea") Teaching Area
-                .input-group
-                  select.form-control(name="teachingArea", id="teachingArea", required)
-                    option(disabled selected value='') Select Teaching Area
-                    each v in teachingAreas
-                      option(value=v)= v
-                  button.btn.btn-outline-secondary(type="button", onclick="addOption('teachingArea')") +
+                .form-group.mb-3
+                  label(for="studentType") Student Type
+                  .input-group
+                    select.form-control(name="studentType", id="studentType", required)
+                      option(disabled selected value='') Select Student Type
+                      each v in studentTypes
+                        option(value=v)= v
+                    button.btn.btn-outline-secondary(type="button", onclick="addOption('studentType')") +
 
-              .form-group.mb-3
-                label(for="duration") Duration
-                input.form-control(type="text", name="duration", id="duration", placeholder="Duration")
+                .form-group.mb-3
+                  label(for="teachingArea") Teaching Area
+                  .input-group
+                    select.form-control(name="teachingArea", id="teachingArea", required)
+                      option(disabled selected value='') Select Teaching Area
+                      each v in teachingAreas
+                        option(value=v)= v
+                    button.btn.btn-outline-secondary(type="button", onclick="addOption('teachingArea')") +
 
-              .form-group.mb-3
-                label(for="pay") Pay
-                input.form-control(type="text", name="pay", id="pay", placeholder="Pay")
+                .form-group.mb-3
+                  label(for="duration") Duration
+                  input.form-control(type="text", name="duration", id="duration", placeholder="Duration")
 
-              .form-group.mb-3
-                label(for="housing") Housing
-                input.form-control(type="text", name="housing", id="housing", placeholder="Housing")
+                .form-group.mb-3
+                  label(for="pay") Pay
+                  input.form-control(type="text", name="pay", id="pay", placeholder="Pay")
 
-              .form-group.mb-3
-                label(for="email") Email
-                input.form-control(type="email", name="email", id="email", placeholder="Email")
+                .form-group.mb-3
+                  label(for="housing") Housing
+                  input.form-control(type="text", name="housing", id="housing", placeholder="Housing")
 
-              .form-group.mb-3
-                label(for="companyName") Company Name
-                input.form-control(type="text", name="companyName", id="companyName", placeholder="Company Name")
+                .form-group.mb-3
+                  label(for="email") Email
+                  input.form-control(type="email", name="email", id="email", placeholder="Email")
 
-              .form-group.mb-3
-                label(for="jobLocation") Job Location
-                input.form-control(type="text", name="jobLocation", id="jobLocation", placeholder="Job Location")
+                .form-group.mb-3
+                  label(for="companyName") Company Name
+                  input.form-control(type="text", name="companyName", id="companyName", placeholder="Company Name")
 
-              .form-group.mb-3
-                label(for="cellphoneNumber") Cellphone Number
-                input.form-control(type="text", name="cellphoneNumber", id="cellphoneNumber", placeholder="Cellphone Number")
+                .form-group.mb-3
+                  label(for="jobLocation") Job Location
+                  input.form-control(type="text", name="jobLocation", id="jobLocation", placeholder="Job Location")
 
-              .form-group.mb-3
-                label(for="skypeId") Skype ID
-                input.form-control(type="text", name="skypeId", id="skypeId", placeholder="Skype ID")
+                .form-group.mb-3
+                  label(for="cellphoneNumber") Cellphone Number
+                  input.form-control(type="text", name="cellphoneNumber", id="cellphoneNumber", placeholder="Cellphone Number")
 
-              .form-group.mb-3
-                label(for="wechatId") WeChat ID
-                input.form-control(type="text", name="wechatId", id="wechatId", placeholder="WeChat ID")
+                .form-group.mb-3
+                  label(for="skypeId") Skype ID
+                  input.form-control(type="text", name="skypeId", id="skypeId", placeholder="Skype ID")
 
-              .form-group.mb-3
-                label(for="homepage") Homepage
-                input.form-control(type="text", name="homepage", id="homepage", placeholder="Homepage")
+                .form-group.mb-3
+                  label(for="wechatId") WeChat ID
+                  input.form-control(type="text", name="wechatId", id="wechatId", placeholder="WeChat ID")
 
-              .form-group.mb-3
-                label(for="datePosted") Date Posted
-                input.form-control(type="date", name="datePosted", id="datePosted")
+                .form-group.mb-3
+                  label(for="homepage") Homepage
+                  input.form-control(type="text", name="homepage", id="homepage", placeholder="Homepage")
 
-              .form-group.mt-5
-                h4.text-primary.mb-3 Select a Payment Option
-                each opt in ['1', '4', '12', '24']
-                  .form-check
-                    input.form-check-input(type="radio", name="adPackage", id="ad-" + opt, value=opt)
-                    label.form-check-label(for="ad-" + opt)
-                      if opt == '1'
-                        | 1 Ad — $30 one-time payment
-                      else if opt == '4'
-                        | 4 Ads — $100 one-time payment 
-                        span.text-danger (save $20)
-                      else if opt == '12'
-                        | 12 Ads — $250 one-time payment 
-                        span.text-danger (save $110)
-                      else if opt == '24'
-                        | 24 Ads — $450 one-time payment 
-                        span.text-danger (save $270)
+                .form-group.mb-3
+                  label(for="datePosted") Date Posted
+                  input.form-control(type="date", name="datePosted", id="datePosted")
 
-              .form-group.mb-4
-                label.mb-2 Add Resume Access?
-                .form-check.form-check-inline
-                  input.form-check-input(type="radio", name="addResumeAccess", id="resumeYes", value="yes")
-                  label.form-check-label(for="resumeYes") Yes
-                .form-check.form-check-inline
-                  input.form-check-input(type="radio", name="addResumeAccess", id="resumeNo", value="no", checked)
-                  label.form-check-label(for="resumeNo") No
+                .form-group.mt-5
+                  h4.text-primary.mb-3 Select a Payment Option
+                  each opt in ['1', '4', '12', '24']
+                    .form-check
+                      input.form-check-input(type="radio", name="adPackage", id="ad-" + opt, value=opt)
+                      label.form-check-label(for="ad-" + opt)
+                        if opt == '1'
+                          | 1 Ad — $30 one-time payment
+                        else if opt == '4'
+                          | 4 Ads — $100 one-time payment 
+                          span.text-danger (save $20)
+                        else if opt == '12'
+                          | 12 Ads — $250 one-time payment 
+                          span.text-danger (save $110)
+                        else if opt == '24'
+                          | 24 Ads — $450 one-time payment 
+                          span.text-danger (save $270)
 
-              button.btn.btn-success.btn-block.mt-4(type="submit") Submit
+                .form-group.mb-4
+                  label.mb-2 Add Resume Access?
+                  .form-check.form-check-inline
+                    input.form-check-input(type="radio", name="addResumeAccess", id="resumeYes", value="yes")
+                    label.form-check-label(for="resumeYes") Yes
+                  .form-check.form-check-inline
+                    input.form-check-input(type="radio", name="addResumeAccess", id="resumeNo", value="no", checked)
+                    label.form-check-label(for="resumeNo") No
 
-  // ✅ 저장 후 결제 유도
+                button.btn.btn-success.btn-block.mt-4(type="submit") Submit
+
+  // ✅ 저장 완료 후 결제 유도 (폼은 사라짐)
   if showPayment
     .card.mt-5.border-success
       .card-header.bg-success.text-white
