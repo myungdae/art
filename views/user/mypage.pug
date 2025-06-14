@@ -7,10 +7,9 @@ block content
     .card
       .card-body
         h5.card-title Welcome, #{user.username}!
-        p.card-text
-          | Email: #{user.email}
-        p.card-text
-          | Role: #{user.role}
+        p.card-text Email: #{user.email}
+        p.card-text Role: #{user.role}
+        p.card-text Ads Available: #{user.adsAvailable}
 
     .mt-4.text-center
       a.btn.btn-secondary(href="/") Back to Home
