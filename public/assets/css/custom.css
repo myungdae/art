@@ -293,3 +293,59 @@ a:active {
 .nav-item {
   font-size: 1.5rem;
 }
+
+/* 🔶 결제 카드 영역 강화 */
+.payment-card {
+  border-radius: 16px;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.08);
+  padding: 20px;
+  background-color: #ffffff;
+}
+
+/* 🔶 결제 옵션 */
+.payment-option {
+  padding: 10px 15px;
+  margin-bottom: 12px;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  transition: background-color 0.3s;
+}
+
+.payment-option:hover {
+  background-color: #f8f9fa;
+}
+
+/* 🔶 Save 텍스트 */
+.payment-option .text-danger {
+  margin-left: 8px;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+/* 🔶 성공 메시지 카드 */
+.alert-success.payment-complete {
+  font-size: 1.1rem;
+  background-color: #d4edda;
+  border-color: #c3e6cb;
+  color: #155724;
+  border-radius: 8px;
+  padding: 20px;
+  margin-top: 20px;
+  text-align: center;
+}
+
+/* 🔶 PayPal 버튼 여백 조정 */
+#paypal-button-container {
+  margin-top: 30px;
+  text-align: center;
+}
+
+/* 🔶 반응형 정리 */
+@media (max-width: 576px) {
+  .payment-card {
+    padding: 15px;
+  }
+  .payment-option {
+    font-size: 0.95rem;
+  }
+}

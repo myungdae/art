@@ -9,30 +9,17 @@ const requireEmployer = require('../middleware/requireEmployer');
 
 console.log("✅ jobVacancyRouter loaded");
 
-const defaultCountries = [
-  'Australia', 'Bangladesh', 'Brazil', 'Canada', 'China', 'Egypt',
-  'France', 'Germany', 'India', 'Indonesia', 'Italy', 'Japan',
-  'Malaysia', 'Mexico', 'Netherlands', 'Pakistan', 'Philippines',
-  'Poland', 'Russia', 'Saudi Arabia', 'Singapore', 'South Africa',
-  'South Korea', 'Spain', 'Thailand', 'Turkey', 'UK', 'Ukraine',
-  'USA', 'Vietnam'
-];
-
-const defaultStudentTypes = [
-  'Adults', 'Business Professionals', 'Elementary', 'High School',
-  'Kindergarten', 'Language Center', 'Middle School', 
-  'Private Tutoring', 'Test Preparation'
-];
-
-const defaultTeachingAreas = [
-  'English', 'ESL', 'History', 'Korean',
-  'Math', 'Music', 'PE', 'Physics', 'Science', 'Social Studies', 'Spanish'
-];
-
 const getDistinctValues = async () => {
-  const studentTypesFromDB = await JobVacancy.distinct('studentType');
-  const countriesFromDB = await JobVacancy.distinct('country');
-  const teachingAreasFromDB = await JobVacancy.distinct('teachingArea');
+  const [studentTypesFromDB, countriesFromDB, teachingAreasFromDB] = await Promise.all([
+    JobVacancy.distinct('studentType'),
+    JobVacancy.distinct('country'),
+    JobVacancy.distinct('teachingArea')
+  ]);
+
+  const defaultCountries = ['USA', 'South Korea', 'Japan', 'Vietnam', 'China'];
+  const defaultStudentTypes = ['Adults', 'Elementary', 'High School'];
+  const defaultTeachingAreas = ['English', 'Math', 'Science'];
+
   return {
     countries: [...new Set([...defaultCountries, ...countriesFromDB])].sort(),
     studentTypes: [...new Set([...defaultStudentTypes, ...studentTypesFromDB])].sort(),
@@ -41,12 +28,8 @@ const getDistinctValues = async () => {
 };
 
 const htmlSanitizeOptions = {
-  allowedTags: ['b', 'i', 'em', 'strong', 'p', 'ul', 'ol', 'li', 'br', 'h1', 'h2', 'h3', 'span', 'a'],
-  allowedAttributes: {
-    a: ['href', 'target', 'rel'],
-    span: ['style', 'class'],
-    '*': ['style', 'class']
-  },
+  allowedTags: ['b', 'i', 'em', 'strong', 'p', 'ul', 'ol', 'li', 'br', 'a'],
+  allowedAttributes: { a: ['href', 'target', 'rel'], '*': ['style', 'class'] },
   allowedSchemes: ['http', 'https']
 };
 
@@ -56,183 +39,70 @@ router.get('/', async (req, res) => {
   res.render('jobVacancy/index', { jobs });
 });
 
-// ✅ 신규 등록 폼
+// ✅ 신규 등록 폼 (adsAvailable 체크 포함)
 router.get('/new', requireLogin, requireEmployer, async (req, res) => {
-  const values = await getDistinctValues();
-  res.render('jobVacancy/new', {
-    message: null,
-    showPayment: false,
-    countries: values.countries,
-    studentTypes: values.studentTypes,
-    teachingAreas: values.teachingAreas,
-    priceOptions: priceConfig
-  });
+  try {
+    const user = await User.findById(req.user._id);
+    const values = await getDistinctValues();
+    const hasAdSlots = user && user.adsAvailable > 0;
+
+    res.render('jobVacancy/new', {
+      message: null,
+      showPayment: !hasAdSlots, // ✅ 광고가 없으면 결제 유도
+      ...values,
+      priceOptions: priceConfig
+    });
+  } catch (err) {
+    console.error('[ERROR - GET /job-vacancies/new]:', err);
+    res.status(500).send('❌ Failed to load new job form');
+  }
 });
 
 // ✅ 신규 등록 처리
 router.post('/new', requireLogin, requireEmployer, async (req, res) => {
   try {
-    if (!req.user || !req.user._id) {
-      console.error('❌ req.user 또는 req.user._id가 없습니다. 세션 누락 가능성');
-      return res.status(401).send('❌ You must be logged in to post a job.');
+    const user = await User.findById(req.user._id);
+    if (!user || user.adsAvailable <= 0) {
+      const values = await getDistinctValues();
+      return res.status(403).render('jobVacancy/new', {
+        message: '❌ You have no remaining ad slots. Please purchase a package to continue.',
+        showPayment: true,
+        ...values,
+        priceOptions: priceConfig
+      });
     }
 
-    const data = req.body;
-    const rawTitle = (data.title || '').trim();
-    if (!rawTitle) return res.status(400).send('❌ Job Title is required');
-
-    const forbiddenEmoji = /[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu;
-    if (forbiddenEmoji.test(rawTitle)) {
+    const { title, description, ...rest } = req.body;
+    const cleanTitle = (title || '').trim();
+    if (!cleanTitle) return res.status(400).send('❌ Job Title is required');
+    if (/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu.test(cleanTitle)) {
       return res.status(400).send('❌ Title cannot include emojis or special characters');
     }
 
-    const existing = await JobVacancy.findOne({ title: { $regex: new RegExp(`^${rawTitle}$`, 'i') } });
-    if (existing) return res.status(400).send('❌ A job with the same title already exists');
-
-    const cleanDescription = sanitizeHtml(data.description || '', htmlSanitizeOptions);
+    const exists = await JobVacancy.findOne({ title: new RegExp(`^${cleanTitle}$`, 'i') });
+    if (exists) return res.status(400).send('❌ A job with the same title already exists');
 
     const job = new JobVacancy({
-      title: rawTitle,
-      description: cleanDescription,
-      country: data.country || data.countrySelect,
-      studentType: data.studentType || data.studentTypeSelect,
-      teachingArea: data.teachingArea || data.teachingAreaSelect,
-      duration: data.duration,
-      pay: data.pay,
-      housing: data.housing,
-      email: data.email,
-      companyName: data.companyName,
-      jobLocation: data.jobLocation,
-      cellphoneNumber: data.cellphoneNumber,
-      skypeId: data.skypeId,
-      wechatId: data.wechatId,
-      homepage: data.homepage,
-      adPackage: data.adPackage,
-      addResumeAccess: data.addResumeAccess === 'yes',
+      title: cleanTitle,
+      description: sanitizeHtml(description || '', htmlSanitizeOptions),
+      ...rest,
+      addResumeAccess: rest.addResumeAccess === 'yes',
       user: req.user._id
     });
 
     await job.save();
-
-    // ✅ adsAvailable 확인
-    const currentUser = await User.findById(req.user._id);
-    if (!currentUser || currentUser.adsAvailable <= 0) {
-      return res.status(403).send('❌ You have no remaining ad slots. Please purchase a package.');
-    }
-    
-    await User.findByIdAndUpdate(req.user._id, {
-      $inc: { adsAvailable: -1 }
-    });
+    await User.findByIdAndUpdate(req.user._id, { $inc: { adsAvailable: -1 } });
 
     const values = await getDistinctValues();
     res.render('jobVacancy/new', {
       message: '✅ Your job post has been saved.',
       showPayment: true,
-      countries: values.countries,
-      studentTypes: values.studentTypes,
-      teachingAreas: values.teachingAreas,
+      ...values,
       priceOptions: priceConfig
     });
   } catch (err) {
     console.error('[ERROR - Job Save]:', err);
-    if (err.code === 11000) return res.status(400).send('❌ Duplicate title detected');
     res.status(500).send('❌ Error saving job vacancy');
-  }
-});
-
-// ✅ 단건 조회
-router.get('/:id', async (req, res) => {
-  try {
-    const jobVacancy = await JobVacancy.findById(req.params.id);
-    if (!jobVacancy) return res.status(404).send('❌ Job not found');
-    res.render('jobVacancy/show', { jobVacancy });
-  } catch (err) {
-    console.error('[ERROR - Load Show Page]:', err);
-    res.status(500).send('❌ Error loading job');
-  }
-});
-
-// ✅ 수정 폼
-router.get('/:id/edit', requireLogin, requireEmployer, async (req, res) => {
-  try {
-    const jobVacancy = await JobVacancy.findById(req.params.id);
-    if (!jobVacancy) return res.status(404).send('❌ Job not found');
-
-    const values = await getDistinctValues();
-    const formattedDate = jobVacancy.datePosted
-      ? new Date(jobVacancy.datePosted).toISOString().slice(0, 10)
-      : '';
-
-    res.render('jobVacancy/edit', {
-      jobVacancy,
-      countries: values.countries,
-      studentTypes: values.studentTypes,
-      teachingAreas: values.teachingAreas,
-      datePostedFormatted: formattedDate,
-      priceOptions: priceConfig
-    });
-  } catch (err) {
-    console.error('[ERROR - Load Edit Form]:', err);
-    res.status(500).send('❌ Error loading edit form');
-  }
-});
-
-// ✅ 수정 처리
-router.post('/:id/edit', requireLogin, requireEmployer, async (req, res) => {
-  try {
-    const data = req.body;
-    const rawTitle = (data.title || '').trim();
-    if (!rawTitle) return res.status(400).send('❌ Job Title is required');
-
-    const forbiddenEmoji = /[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu;
-    if (forbiddenEmoji.test(rawTitle)) {
-      return res.status(400).send('❌ Title cannot include emojis or special characters');
-    }
-
-    const existing = await JobVacancy.findOne({
-      title: { $regex: new RegExp(`^${rawTitle}$`, 'i') },
-      _id: { $ne: req.params.id }
-    });
-    if (existing) return res.status(400).send('❌ A job with the same title already exists');
-
-    const cleanDescription = sanitizeHtml(data.description || '', htmlSanitizeOptions);
-
-    await JobVacancy.findByIdAndUpdate(req.params.id, {
-      title: rawTitle,
-      description: cleanDescription,
-      country: data.country || data.countrySelect,
-      studentType: data.studentType || data.studentTypeSelect,
-      teachingArea: data.teachingArea || data.teachingAreaSelect,
-      duration: data.duration,
-      pay: data.pay,
-      housing: data.housing,
-      email: data.email,
-      companyName: data.companyName,
-      jobLocation: data.jobLocation,
-      cellphoneNumber: data.cellphoneNumber,
-      skypeId: data.skypeId,
-      wechatId: data.wechatId,
-      homepage: data.homepage,
-      datePosted: data.datePosted,
-      adPackage: data.adPackage,
-      addResumeAccess: data.addResumeAccess === 'yes'
-    });
-
-    res.redirect('/job-vacancies');
-  } catch (err) {
-    console.error('[ERROR - Job Update]:', err);
-    res.status(500).send('❌ Error updating job vacancy');
-  }
-});
-
-// ✅ 삭제 처리
-router.post('/:id/delete', requireLogin, requireEmployer, async (req, res) => {
-  try {
-    await JobVacancy.findByIdAndDelete(req.params.id);
-    res.redirect('/job-vacancies');
-  } catch (err) {
-    console.error('[ERROR - Job Delete]:', err);
-    res.status(500).send('❌ Error deleting job vacancy');
   }
 });
 

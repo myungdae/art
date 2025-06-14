@@ -1,17 +1,14 @@
 extends ../layout
 
 block content
-  - const packages = [{ value: '1', label: '1 Ad — $30' }, { value: '4', label: '4 Ads — $100 (Save $20)' }, { value: '12', label: '12 Ads — $250 (Save $110)' }, { value: '24', label: '24 Ads — $450 (Save $270)' }]
-
   .container.mt-5
     .row.justify-content-center
       .col-md-6
         .card.shadow
           .card-header.text-center(style="background-color: #f8f9fa;")
-            h3(style="color: black; font-weight: bold;") Buy Job Vacancy Ads
+            h3(style="color: black; font-weight: bold;") Select an Ad Package
 
           .card-body(style="background-color: white; color: black; font-size: 16px;")
-            h4.text-center.mb-4 Welcome, #{user.username}!
             form#paymentForm
               .form-group.mb-4
                 each pkg in packages
@@ -31,13 +28,12 @@ block content
             .text-center.mt-3
               a.btn.btn-outline-secondary(href="/user/mypage") Back to My Page
 
-  // ✅ Load PayPal SDK (Client ID 하드코딩됨)
-  script(src="https://www.paypal.com/sdk/js?client-id=AdCfY_Fv91WJinsDArKeBbdCpOMCO4SK7D-0ZjmbngMFffGJHJRyQIlSg7Av8cLPfh7jCRmeqyJyDIut&currency=USD")
+  // ✅ PayPal SDK
+  script(src="https://www.paypal.com/sdk/js?client-id=YOUR_CLIENT_ID&currency=USD")
 
   // ✅ PayPal Button Logic
   script.
     let selectedPackage = '1';
-
     function setPackage(value) {
       selectedPackage = value;
     }

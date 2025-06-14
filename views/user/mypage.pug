@@ -2,15 +2,31 @@ extends ../layout
 
 block content
   .container.mt-5
-    h3.mb-4.text-center My Page
+    .row.justify-content-center
+      .col-md-8
+        .card.shadow
+          .card-header.bg-white.border-bottom
+            h3.mb-0.text-dark.text-center My Page
 
-    .card
-      .card-body
-        h5.card-title Welcome, #{user.username}!
-        p.card-text Email: #{user.email}
-        p.card-text Role: #{user.role}
-        p.card-text Ads Available: #{user.adsAvailable}
+          .card-body
+            h4.text-center.text-dark.mb-4 Welcome, #{user.username}!
 
-    .mt-4.text-center
-      a.btn.btn-secondary(href="/") Back to Home
-      a.btn.btn-danger(href="/user/logout") Logout
+            dl.row
+              dt.col-sm-4.text-right.text-dark Email
+              dd.col-sm-8.text-dark #{user.email}
+
+              dt.col-sm-4.text-right.text-dark Role
+              dd.col-sm-8.text-dark #{user.role}
+
+              dt.col-sm-4.text-right.text-dark Ads Available
+              dd.col-sm-8.text-dark
+                | #{user.adsAvailable}
+                if user.adsAvailable === 0
+                  form(method="GET", action="/paypal/checkout?package=basic", style="display:inline")
+                    button(type="submit", class="btn btn-link p-0 ml-2 text-primary", style="font-size: 1rem; text-decoration: underline;") Buy More Ads
+
+            hr
+
+            .text-center.mt-4
+              a.btn.btn-outline-secondary.mr-2(href="/") Back to Home
+              a.btn.btn-outline-danger(href="/user/logout") Logout
