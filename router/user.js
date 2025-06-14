@@ -1,6 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../model/user');
+const JobVacancy = require('../model/jobVacancy'); 
+
+const auth = require('../middleware/auth');
+const requireLogin = auth.requireLogin;
+
+console.log("✅ typeof requireLogin:", typeof requireLogin);
+
 
 // Register form
 router.get('/register', (req, res) => {
@@ -63,15 +70,18 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// MyPage
-router.get('/mypage', (req, res) => {
-  if (!req.session.user) {
-    return res.redirect('/user/login');
+router.get('/mypage', requireLogin, async (req, res) => {
+  if (req.user.role === 'Employer') {
+    const myAdsCount = await JobVacancy.countDocuments({ user: req.user._id });
+    res.render('user/mypage', {
+      user: req.user,
+      myAdsCount
+    });
+  } else {
+    res.render('user/mypage', { user: req.user, myAdsCount: 0 });
   }
-
-  console.log('✅ MyPage session user:', req.session.user);
-  res.render('user/mypage', { user: req.session.user });
 });
+
 
 // Session check
 router.get('/test-session', (req, res) => {

@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const JobVacancy = require('../model/jobVacancy');
+const User = require('../model/user');
 const sanitizeHtml = require('sanitize-html');
 const priceConfig = require('../config/priceConfig');
 const { requireLogin } = require('../middleware/auth');
@@ -71,6 +72,11 @@ router.get('/new', requireLogin, requireEmployer, async (req, res) => {
 // ✅ 신규 등록 처리
 router.post('/new', requireLogin, requireEmployer, async (req, res) => {
   try {
+    if (!req.user || !req.user._id) {
+      console.error('❌ req.user 또는 req.user._id가 없습니다. 세션 누락 가능성');
+      return res.status(401).send('❌ You must be logged in to post a job.');
+    }
+
     const data = req.body;
     const rawTitle = (data.title || '').trim();
     if (!rawTitle) return res.status(400).send('❌ Job Title is required');
@@ -102,10 +108,15 @@ router.post('/new', requireLogin, requireEmployer, async (req, res) => {
       wechatId: data.wechatId,
       homepage: data.homepage,
       adPackage: data.adPackage,
-      addResumeAccess: data.addResumeAccess === 'yes'
+      addResumeAccess: data.addResumeAccess === 'yes',
+      user: req.user._id
     });
 
     await job.save();
+
+    await User.findByIdAndUpdate(req.user._id, {
+      $inc: { adsAvailable: 1 }
+    });
 
     const values = await getDistinctValues();
     res.render('jobVacancy/new', {
