@@ -114,8 +114,14 @@ router.post('/new', requireLogin, requireEmployer, async (req, res) => {
 
     await job.save();
 
+    // ✅ adsAvailable 확인
+    const currentUser = await User.findById(req.user._id);
+    if (!currentUser || currentUser.adsAvailable <= 0) {
+      return res.status(403).send('❌ You have no remaining ad slots. Please purchase a package.');
+    }
+    
     await User.findByIdAndUpdate(req.user._id, {
-      $inc: { adsAvailable: 1 }
+      $inc: { adsAvailable: -1 }
     });
 
     const values = await getDistinctValues();
