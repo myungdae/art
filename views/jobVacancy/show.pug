@@ -48,7 +48,7 @@ block content
               | #{jobVacancy.wechatId}
             p.mb-2
               strong Homepage: 
-              a(href=jobVacancy.homepage target="_blank")= jobVacancy.homepage
+              a(href=jobVacancy.homepage, target="_blank")= jobVacancy.homepage
             p.mb-2
               strong Date Posted: 
               | #{jobVacancy.datePosted && new Date(jobVacancy.datePosted).toLocaleDateString()}
@@ -60,6 +60,23 @@ block content
               | #{jobVacancy.addResumeAccess ? 'Yes' : 'No'}
 
             hr
-            h5 Job Description
-            .border.p-3.bg-light(style="white-space: pre-wrap")
+            h5.mb-3 Job Description
+            .job-description.border.p-3.bg-light
               != jobVacancy.description
+
+block append_on_header
+  style.
+    .job-description p {
+      margin-bottom: 1rem;
+    }
+    .job-description h1,
+    .job-description h2,
+    .job-description h3 {
+      margin-top: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .job-description ul,
+    .job-description ol {
+      padding-left: 1.5rem;
+      margin-bottom: 1rem;
+    }

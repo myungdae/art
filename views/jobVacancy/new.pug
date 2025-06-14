@@ -115,30 +115,38 @@ block content
                           | 24 Ads — $450 one-time payment 
                           span.text-danger (save $270)
 
-                .form-group.mb-4
+                // 📌 라디오 버튼 정렬 개선
+                div.form-group
                   label.mb-2 Add Resume Access?
-                  .form-check.form-check-inline
-                    input.form-check-input(type="radio", name="addResumeAccess", id="resumeYes", value="yes")
-                    label.form-check-label(for="resumeYes") Yes
-                  .form-check.form-check-inline
-                    input.form-check-input(type="radio", name="addResumeAccess", id="resumeNo", value="no", checked)
-                    label.form-check-label(for="resumeNo") No
+                
+                  div
+                    label.mr-4
+                      input(type="radio", name="resumeAccess", value="yes", checked)
+                      |  Yes
+                    label
+                      input(type="radio", name="resumeAccess", value="no")
+                      |  No
+
 
                 button.btn.btn-success.btn-block.mt-4(type="submit") Submit
 
 block append_js
-  script.
-    CKEDITOR.replace('description');
+                script(src="https://cdn.ckeditor.com/ckeditor5/41.0.0/classic/ckeditor.js")
+                script.
+                  ClassicEditor
+                    .create(document.querySelector('#description'))
+                    .catch(error => console.error(error));
+                
+                  function validateTitle(input) {
+                    const emojiRegex = /[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu;
+                    const koreanRegex = /[ㄱ-ㅎㅏ-ㅣ가-힣]/;
+                    const errorElem = document.getElementById('title-error');
+                    if (emojiRegex.test(input.value) || koreanRegex.test(input.value)) {
+                      errorElem.style.display = 'block';
+                      input.classList.add('is-invalid');
+                    } else {
+                      errorElem.style.display = 'none';
+                      input.classList.remove('is-invalid');
+                    }
+                  }
 
-    function validateTitle(input) {
-      const emojiRegex = /[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu;
-      const koreanRegex = /[ㄱ-ㅎㅏ-ㅣ가-힣]/;
-      const errorElem = document.getElementById('title-error');
-      if (emojiRegex.test(input.value) || koreanRegex.test(input.value)) {
-        errorElem.style.display = 'block';
-        input.classList.add('is-invalid');
-      } else {
-        errorElem.style.display = 'none';
-        input.classList.remove('is-invalid');
-      }
-    }

@@ -24,7 +24,17 @@ const userSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now,
+  },
+  
+  adsAvailable: {
+    type: Number,
+    default: 0
+  },
+  resumeAccess: {
+    type: Boolean,
+    default: false
   }
+
 });
 
 module.exports = mongoose.model('User', userSchema);

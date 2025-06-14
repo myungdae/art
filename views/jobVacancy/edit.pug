@@ -123,18 +123,22 @@ block content
               button.btn.btn-success.btn-block.mt-4(type="submit") Update Job
 
 block append_js
-  script.
-    CKEDITOR.replace('description');
+              script(src="https://cdn.ckeditor.com/ckeditor5/41.0.0/classic/ckeditor.js")
+              script.
+                ClassicEditor
+                  .create(document.querySelector('#description'))
+                  .catch(error => console.error(error));
+              
+                function validateTitle(input) {
+                  const emojiRegex = /[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu;
+                  const koreanRegex = /[ㄱ-ㅎㅏ-ㅣ가-힣]/;
+                  const errorElem = document.getElementById('title-error');
+                  if (emojiRegex.test(input.value) || koreanRegex.test(input.value)) {
+                    errorElem.style.display = 'block';
+                    input.classList.add('is-invalid');
+                  } else {
+                    errorElem.style.display = 'none';
+                    input.classList.remove('is-invalid');
+                  }
+                }
 
-    function validateTitle(input) {
-      const emojiRegex = /[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu;
-      const koreanRegex = /[ㄱ-ㅎㅏ-ㅣ가-힣]/;
-      const errorElem = document.getElementById('title-error');
-      if (emojiRegex.test(input.value) || koreanRegex.test(input.value)) {
-        errorElem.style.display = 'block';
-        input.classList.add('is-invalid');
-      } else {
-        errorElem.style.display = 'none';
-        input.classList.remove('is-invalid');
-      }
-    }

@@ -4,6 +4,8 @@ const path = require('path');
 const session = require('express-session');
 const flash = require('connect-flash');
 require('dotenv').config();
+const userRoutes = require('./router/user');
+
 
 console.log("📌 app.js 시작됨");
 
@@ -57,6 +59,7 @@ app.use('/paypal', paypalRoutes);
 app.use('/job-vacancies', jobVacancyRouter); // 반드시 이 위치
 app.use('/online-tutors', require('./router/onlineTutor'));
 app.use('/', require('./router/public'));
+app.use('/', userRoutes);
 app.use('/admin', require('./router/admin'));
 app.use('/facet', require('./router/facet'));
 app.use('/search', require('./router/search'));

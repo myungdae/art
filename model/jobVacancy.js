@@ -26,6 +26,12 @@ const jobVacancySchema = new mongoose.Schema({
   adPackage: { type: String }, // '1', '4', '12', '24'
   addResumeAccess: { type: Boolean }, // true if checked
 
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+
   datePosted: {
     type: Date,
     default: Date.now
