@@ -3,12 +3,16 @@ const router = express.Router();
 const JobVacancy = require('../model/jobVacancy');
 const User = require('../model/user');
 const sanitizeHtml = require('sanitize-html');
+function escapeRegex(text) {
+  return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+}
 const priceConfig = require('../config/priceConfig');
 const { requireLogin } = require('../middleware/auth');
 const requireEmployer = require('../middleware/requireEmployer');
 
 console.log("✅ jobVacancyRouter loaded");
 
+// ✅ 공통 필드값 추출
 const getDistinctValues = async () => {
   const [studentTypesFromDB, countriesFromDB, teachingAreasFromDB] = await Promise.all([
     JobVacancy.distinct('studentType'),
@@ -33,39 +37,83 @@ const htmlSanitizeOptions = {
   allowedSchemes: ['http', 'https']
 };
 
+
 // ✅ 목록 조회
 router.get('/', async (req, res) => {
   const jobs = await JobVacancy.find();
   res.render('jobVacancy/index', { jobs });
 });
 
-// ✅ 신규 등록 폼 (adsAvailable 체크 포함)
+// ✅ 신규 등록 폼
 router.get('/new', requireLogin, requireEmployer, async (req, res) => {
+  const user = await User.findById(req.user._id);
+  if (user && user.adsAvailable > 0) {
+    return res.redirect('/job-vacancies/new_paid_user');
+  }
+
+  const values = await getDistinctValues();
+  res.render('jobVacancy/new', {
+    message: null,
+    showPayment: true,
+    ...values,
+    priceOptions: priceConfig
+  });
+});
+
+// ✅ Paid 사용자 등록 폼
+router.get('/new_paid_user', requireLogin, (req, res) => {
+  res.render('jobVacancy/new_paid_user', {
+    countries: ['USA', 'Korea', 'Japan', 'China'],
+    studentTypes: ['Kindergarten', 'Elementary', 'Middle School'],
+    teachingAreas: ['ESL', 'Math', 'Science']
+  });
+});
+
+// ✅ Paid 사용자 등록 처리
+router.post('/new_paid_user', requireLogin, requireEmployer, async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
-    const values = await getDistinctValues();
-    const hasAdSlots = user && user.adsAvailable > 0;
+    if (!user || user.adsAvailable <= 0) {
+      return res.status(403).send('❌ No available ad slots');
+    }
 
-    res.render('jobVacancy/new', {
-      message: null,
-      showPayment: !hasAdSlots, // ✅ 광고가 없으면 결제 유도
-      ...values,
-      priceOptions: priceConfig
+    const { title, description, ...rest } = req.body;
+    const cleanTitle = title.trim();
+
+    if (!cleanTitle) return res.status(400).send('❌ Title is required');
+    if (/[😀-🙏]/u.test(cleanTitle)) {
+      return res.status(400).send('❌ Title cannot include emojis');
+    }
+
+    const exists = await JobVacancy.findOne({ title: new RegExp(`^${escapeRegex(cleanTitle)}$`, 'i') });
+    if (exists) return res.status(400).send('❌ Duplicate title exists');
+
+    const job = new JobVacancy({
+      title: cleanTitle,
+      description: sanitizeHtml(description || '', htmlSanitizeOptions),
+      ...rest,
+      addResumeAccess: rest.resumeAccess === 'yes',
+      user: req.user._id
     });
+
+    await job.save();
+    await User.findByIdAndUpdate(req.user._id, { $inc: { adsAvailable: -1 } });
+
+    res.redirect('/user/mypage');
   } catch (err) {
-    console.error('[ERROR - GET /job-vacancies/new]:', err);
-    res.status(500).send('❌ Failed to load new job form');
+    console.error('[ERROR - POST /new_paid_user]:', err);
+    res.status(500).send('❌ Failed to post paid job');
   }
 });
 
-// ✅ 신규 등록 처리
+// ✅ 일반 등록 처리
 router.post('/new', requireLogin, requireEmployer, async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
     if (!user || user.adsAvailable <= 0) {
       const values = await getDistinctValues();
       return res.status(403).render('jobVacancy/new', {
-        message: '❌ You have no remaining ad slots. Please purchase a package to continue.',
+        message: '❌ No available ad slots. Please purchase more.',
         showPayment: true,
         ...values,
         priceOptions: priceConfig
@@ -73,14 +121,15 @@ router.post('/new', requireLogin, requireEmployer, async (req, res) => {
     }
 
     const { title, description, ...rest } = req.body;
-    const cleanTitle = (title || '').trim();
-    if (!cleanTitle) return res.status(400).send('❌ Job Title is required');
-    if (/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu.test(cleanTitle)) {
-      return res.status(400).send('❌ Title cannot include emojis or special characters');
+    const cleanTitle = title.trim();
+
+    if (!cleanTitle) return res.status(400).send('❌ Title is required');
+    if (/[😀-🙏]/u.test(cleanTitle)) {
+      return res.status(400).send('❌ Title cannot include emojis');
     }
 
-    const exists = await JobVacancy.findOne({ title: new RegExp(`^${cleanTitle}$`, 'i') });
-    if (exists) return res.status(400).send('❌ A job with the same title already exists');
+    const exists = await JobVacancy.findOne({ title: new RegExp(`^${escapeRegex(cleanTitle)}$`, 'i') });
+    if (exists) return res.status(400).send('❌ Duplicate title exists');
 
     const job = new JobVacancy({
       title: cleanTitle,
@@ -95,14 +144,132 @@ router.post('/new', requireLogin, requireEmployer, async (req, res) => {
 
     const values = await getDistinctValues();
     res.render('jobVacancy/new', {
-      message: '✅ Your job post has been saved.',
+      message: '✅ Job successfully posted.',
       showPayment: true,
       ...values,
       priceOptions: priceConfig
     });
   } catch (err) {
-    console.error('[ERROR - Job Save]:', err);
-    res.status(500).send('❌ Error saving job vacancy');
+    console.error('[ERROR - POST /new]:', err);
+    res.status(500).send('❌ Failed to post job');
+  }
+});
+
+// ✅ 광고 상세
+router.get('/:id', async (req, res) => {
+  try {
+    const jobVacancy = await JobVacancy.findById(req.params.id).populate('user');
+    if (!jobVacancy) {
+      console.warn(`[GET /:id] Tried to access deleted or non-existent job: ${req.params.id}`);
+      return res.status(404).render('jobVacancy/show', { jobVacancy: null });
+    }
+
+    res.render('jobVacancy/show', { jobVacancy });
+  } catch (err) {
+    console.error('[ERROR - GET /:id]:', err);
+    res.status(500).send('❌ Error loading job ad');
+  }
+});
+
+// ✅ 광고 수정 폼
+router.get('/:id/edit', requireLogin, async (req, res) => {
+  try {
+    const jobVacancy = await JobVacancy.findById(req.params.id).populate('user');
+    if (!jobVacancy) return res.status(404).send('❌ Job not found');
+    if (!jobVacancy.user || !jobVacancy.user._id.equals(req.user._id)) {
+      return res.status(403).send('❌ Unauthorized');
+    }
+
+    const values = await getDistinctValues();
+    const datePostedFormatted = jobVacancy.datePosted
+      ? jobVacancy.datePosted.toISOString().substring(0, 10)
+      : '';
+
+    res.render('jobVacancy/edit', {
+      jobVacancy,
+      datePostedFormatted,
+      ...values
+    });
+  } catch (err) {
+    console.error('[ERROR - GET /:id/edit]:', err);
+    res.status(500).send('❌ Error loading edit form');
+  }
+});
+
+// ✅ 광고 수정 처리
+router.post('/:id/edit', requireLogin, async (req, res) => {
+  try {
+    const jobVacancy = await JobVacancy.findById(req.params.id).populate('user');
+    if (!jobVacancy) return res.status(404).send('❌ Job not found');
+
+    if (!jobVacancy.user || !jobVacancy.user._id.equals(req.user._id)) {
+      return res.status(403).send('❌ Unauthorized');
+    }
+
+    const { title, description, ...rest } = req.body;
+    const cleanTitle = (title || '').trim();
+
+    if (!cleanTitle) return res.status(400).send('❌ Title is required');
+    if (/[😀-🙏]/u.test(cleanTitle)) {
+      return res.status(400).send('❌ Title cannot include emojis');
+    }
+
+    const existing = await JobVacancy.findOne({
+      _id: { $ne: jobVacancy._id },
+      title: new RegExp(`^${escapeRegex(cleanTitle)}$`, 'i')
+    });
+    if (existing) return res.status(400).send('❌ Duplicate title exists');
+
+    jobVacancy.title = cleanTitle;
+    jobVacancy.description = sanitizeHtml(description || '', htmlSanitizeOptions);
+    jobVacancy.country = rest.country || '';
+    jobVacancy.studentType = rest.studentType || '';
+    jobVacancy.teachingArea = rest.teachingArea || '';
+    jobVacancy.duration = rest.duration || '';
+    jobVacancy.pay = rest.pay || '';
+    jobVacancy.housing = rest.housing || '';
+    jobVacancy.email = rest.email || '';
+    jobVacancy.companyName = rest.companyName || '';
+    jobVacancy.jobLocation = rest.jobLocation || '';
+    jobVacancy.cellphoneNumber = rest.cellphoneNumber || '';
+    jobVacancy.skypeId = rest.skypeId || '';
+    jobVacancy.wechatId = rest.wechatId || '';
+    jobVacancy.homepage = rest.homepage || '';
+    jobVacancy.datePosted = rest.datePosted ? new Date(rest.datePosted) : null;
+    jobVacancy.adPackage = rest.adPackage || '';
+    jobVacancy.addResumeAccess = rest.addResumeAccess === 'yes';
+
+    await jobVacancy.save();
+    res.redirect('/user/mypage');
+  } catch (err) {
+    console.error('[ERROR - POST /:id/edit]:', err);
+    res.status(500).send('❌ Failed to update job');
+  }
+});
+
+// ✅ 광고 삭제
+router.delete('/:id', requireLogin, async (req, res) => {
+  console.log('📌 DELETE 요청 도달:', req.method, req.originalUrl);
+
+  try {
+    const ad = await JobVacancy.findById(req.params.id).populate('user');
+    if (!ad) {
+      console.error(`[404] Ad not found for deletion: ${req.params.id}`);
+      return res.status(404).send('❌ Ad not found');
+    }
+
+    if (!ad.user || !ad.user._id.equals(req.user._id)) {
+      return res.status(403).send('❌ Unauthorized deletion attempt');
+    }
+
+    await ad.deleteOne();
+    await User.findByIdAndUpdate(req.user._id, { $inc: { adsAvailable: 1 } });
+
+    console.log(`✅ Ad deleted: ${ad.title} by user ${req.user._id}`);
+    res.redirect('/user/mypage');
+  } catch (err) {
+    console.error('[ERROR - DELETE /:id]:', err);
+    res.status(500).send('❌ Error deleting job ad');
   }
 });
 

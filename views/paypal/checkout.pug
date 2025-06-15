@@ -5,18 +5,19 @@ block content
 
   .container.mt-5
     .row.justify-content-center
-      .col-md-6
-        .card.shadow
-          .card-header.text-center(style="background-color: #f8f9fa;")
-            h3(style="color: black; font-weight: bold;") Buy Job Vacancy Ads
+      .col-md-8.col-lg-6
+        .card.shadow-lg.rounded
+          .card-header.text-center(style="background-color: #f15a29;")
+            h3.text-white.mb-0(style="font-weight: bold; font-size: 1.6rem") Buy Job Vacancy Ads
 
-          .card-body(style="background-color: white; color: black; font-size: 16px;")
+          .card-body.px-4.py-4(style="background-color: white; color: black; font-size: 16px;")
             h4.text-center.mb-4 Welcome, #{user.username}!
+
             form#paymentForm
-              .form-group.mb-4
+              .form-group.mb-4.pl-4
                 each pkg in packages
-                  .form-check
-                    input.form-check-input(
+                  .form-check.d-flex.align-items-center.justify-content-start.mb-2(style="padding-left: 1.5rem;")
+                    input.form-check-input.mt-0.mr-2(
                       type="radio",
                       name="adPackage",
                       id=`pkg-${pkg.value}`,
@@ -24,17 +25,17 @@ block content
                       checked=pkg.value === '1',
                       onchange="setPackage(this.value)"
                     )
-                    label.form-check-label(for=`pkg-${pkg.value}`)= pkg.label
+                    label.form-check-label(for=`pkg-${pkg.value}` style="font-size: 1rem;")= pkg.label
 
               #paypal-button-container.mt-4
 
-            .text-center.mt-3
-              a.btn.btn-outline-secondary(href="/user/mypage") Back to My Page
+            .text-center.mt-4
+              a.btn.btn-outline-secondary.btn-lg(href="/user/mypage") Back to My Page
 
-  // ✅ Load PayPal SDK (Client ID 하드코딩됨)
+  // ✅ Load PayPal SDK
   script(src="https://www.paypal.com/sdk/js?client-id=AdCfY_Fv91WJinsDArKeBbdCpOMCO4SK7D-0ZjmbngMFffGJHJRyQIlSg7Av8cLPfh7jCRmeqyJyDIut&currency=USD")
 
-  // ✅ PayPal Button Logic
+  // ✅ PayPal Logic
   script.
     let selectedPackage = '1';
 
@@ -65,7 +66,7 @@ block content
         .then(res => res.json())
         .then(details => {
           alert('✅ Payment successful!');
-          window.location.href = '/user/mypage';
+          window.location.href = '/job-vacancies/new_paid_user';
         });
       },
       onError: function (err) {

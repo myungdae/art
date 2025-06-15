@@ -4,10 +4,11 @@ block content
   .container.mt-5
     .row.justify-content-center
       .col-md-8
-        .card.shadow
-          .card-header.bg-white.border-bottom
-            h3.mb-0.text-dark.text-center My Page
-
+          .card.shadow
+          // ✅ 배경색 div 안에 텍스트 포함
+          div(style="background-color: #f15a29; padding: 30px 0; text-align: center;")
+            h2(style="color: white; font-size: 2rem; font-weight: bold; margin: 0;") My Page
+          
           .card-body
             h4.text-center.text-dark.mb-4 Welcome, #{user.username}!
 
@@ -26,7 +27,38 @@ block content
                     button(type="submit", class="btn btn-link p-0 ml-2 text-primary", style="font-size: 1rem; text-decoration: underline;") Buy More Ads
 
             hr
+            
+            if user.role === 'Employer'
+            form(method="GET", action=(user.adsAvailable > 0 ? '/job-vacancies/new_paid_user' : '/job-vacancies/new'))
+              button.btn.btn-primary.mb-3(type="submit") Post New Ad
+
 
             .text-center.mt-4
-              a.btn.btn-outline-secondary.mr-2(href="/") Back to Home
-              a.btn.btn-outline-danger(href="/user/logout") Logout
+            a(href="http://esl.eventpool.kr/", class="btn fw-bold px-4 mx-2", style="background-color: #28a745; color: white; font-size: 1rem;") Back to Home
+            a(href="/user/logout", class="btn fw-bold px-4 mx-2", style="background-color: #28a745; color: white; font-size: 1rem;") Logout
+            
+            if ads.length > 0
+              h4.mt-5.text-primary Your Job Ads
+            
+              table.table.table-striped.mt-3
+                thead
+                  tr
+                    th Title
+                    th Posted On
+                    th Actions
+                tbody
+                  each ad in ads
+                    tr
+                      td= ad.title
+                      td= ad.datePosted ? ad.datePosted.toDateString() : 'N/A'
+                      td
+                        a.btn.btn-sm.btn-outline-primary(href=`/job-vacancies/${ad._id}`) View
+                        a.btn.btn-sm.btn-outline-secondary.ml-2(href=`/job-vacancies/${ad._id}/edit`) Edit
+                        form(method="POST", action=`/job-vacancies/${ad._id}?_method=DELETE`, style="display:inline")
+                          button.btn.btn-sm.btn-outline-danger.ml-2(type="submit") Delete
+            else
+              p.mt-4.text-muted You haven't posted any job ads yet.
+
+
+
+

@@ -5,6 +5,7 @@ const session = require('express-session');
 const flash = require('connect-flash');
 require('dotenv').config();
 const userRoutes = require('./router/user');
+const methodOverride = require('method-override');
 
 
 console.log("📌 app.js 시작됨");
@@ -50,6 +51,7 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(methodOverride('_method')); 
 
 // ✅ 라우터 등록
 app.use('/', require('./router/index'));

@@ -5,15 +5,16 @@ function requireLogin(req, res, next) {
     return res.redirect('/login');
   }
 
-  // ✅ 세션에서 user 복구 + _id 필드 강제 설정
+  const userSession = req.session.user;
+  const _id = userSession._id || userSession.id;
+
   req.user = {
-    ...req.session.user,
-    _id: req.session.user._id || req.session.user.id
-      ? new mongoose.Types.ObjectId(req.session.user._id || req.session.user.id)
-      : undefined
+    ...userSession,
+    _id: _id ? new mongoose.Types.ObjectId(_id) : undefined
   };
 
   next();
 }
+
 
 module.exports = { requireLogin };

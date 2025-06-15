@@ -1,8 +1,7 @@
-// ✅ router/user.js (최종 수정본)
 const express = require('express');
 const router = express.Router();
 const User = require('../model/user');
-const JobVacancy = require('../model/jobVacancy'); 
+const JobVacancy = require('../model/jobVacancy');
 const { requireLogin } = require('../middleware/auth');
 
 // ✅ 회원가입 폼
@@ -44,12 +43,14 @@ router.post('/login', async (req, res) => {
     if (!user || user.password !== password) {
       return res.status(401).send('❌ Invalid email or password.');
     }
+
     req.session.user = {
       id: user._id,
       username: user.username,
       email: user.email,
       role: user.role
     };
+
     console.log('✅ Login successful. Session saved:', req.session.user);
     res.redirect('/user/mypage');
   } catch (err) {
@@ -60,24 +61,19 @@ router.post('/login', async (req, res) => {
 
 // ✅ 마이페이지
 router.get('/mypage', requireLogin, async (req, res) => {
-  const user = await User.findById(req.user.id);
-  if (!user) return res.status(404).send('User not found');
+  try {
+    const user = await User.findById(req.user._id);
+    const ads = await JobVacancy.find({ user: user._id }).sort({ createdAt: -1 }); // 최신순
 
-  let myAdsCount = 0;
-  let adsRemaining = 0;
-  const adPackage = parseInt(user.adPackage || '0', 10);
-
-  if (user.role === 'Employer') {
-    myAdsCount = await JobVacancy.countDocuments({ user: user._id });
-    adsRemaining = adPackage - myAdsCount;
+    res.render('user/mypage', {
+      user,
+      adsRemaining: user.adsAvailable || 0,
+      ads
+    });
+  } catch (err) {
+    console.error('❌ Failed to load mypage:', err.message);
+    res.status(500).send('❌ Error loading my page');
   }
-
-  res.render('user/mypage', {
-    user,
-    myAdsCount,
-    adsRemaining,
-    adPackage
-  });
 });
 
 // ✅ 로그아웃

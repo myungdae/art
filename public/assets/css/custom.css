@@ -349,3 +349,9 @@ a:active {
     font-size: 0.95rem;
   }
 }
+ .bold-button {
+   font-weight: bold;
+   color: white;
+   background-color: #007bff;
+   border: none;
+ }

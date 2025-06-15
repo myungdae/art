@@ -2,9 +2,8 @@ const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 require('dotenv').config();
+
 const { requireLogin } = require('../middleware/auth');
-
-
 const User = require('../model/user');
 
 const PAYPAL_API = process.env.PAYPAL_API;
@@ -23,8 +22,8 @@ async function getAccessToken() {
   return res.data.access_token;
 }
 
-// ✅ [GET] Checkout Page
-router.get('/checkout', (req, res) => {
+// ✅ [GET] Checkout Page (로그인 필요)
+router.get('/checkout', requireLogin, (req, res) => {
   const packages = [
     { value: '1', label: '1 Ad — $30' },
     { value: '4', label: '4 Ads — $100 (Save $20)' },
@@ -32,10 +31,17 @@ router.get('/checkout', (req, res) => {
     { value: '24', label: '24 Ads — $450 (Save $270)' },
   ];
 
-  const user = req.session.user || null;
+  // ✅ 세션에 userId 보장
+  if (!req.session.userId && req.user && req.user._id) {
+    req.session.userId = req.user._id;
+    console.log('🆔 Set req.session.userId =', req.user._id);
+  }
 
-  res.render('paypal/checkout', { user: req.user, packages });
+  res.render('paypal/checkout', {
+    user: req.user,
+    packages
   });
+});
 
 // ✅ [POST] Create Order
 router.post('/create-order', async (req, res) => {
@@ -85,6 +91,9 @@ router.post('/capture-order/:orderID', async (req, res) => {
     const { package: adCount } = req.body;
     const accessToken = await getAccessToken();
 
+    console.log('🔐 session.userId:', req.session.userId);
+    console.log('📦 selected ad count:', adCount);
+
     const capture = await axios.post(
       `${PAYPAL_API}/v2/checkout/orders/${orderID}/capture`,
       {},
@@ -96,10 +105,19 @@ router.post('/capture-order/:orderID', async (req, res) => {
       }
     );
 
+    // ✅ 광고 수 증가
     if (req.session.userId && adCount) {
-      await User.findByIdAndUpdate(req.session.userId, {
-        $inc: { adsAvailable: parseInt(adCount, 10) },
+      const result = await User.findByIdAndUpdate(req.session.userId, {
+        $inc: { adsAvailable: parseInt(adCount, 10) }
       });
+
+      if (result) {
+        console.log(`✅ Updated adsAvailable (+${adCount}) for user:`, req.session.userId);
+      } else {
+        console.warn('⚠️ User not found during adsAvailable increment');
+      }
+    } else {
+      console.warn('⚠️ Missing session.userId or adCount');
     }
 
     res.json({ status: 'success', details: capture.data });
