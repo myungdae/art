@@ -6,22 +6,53 @@ block content
 
     .row.text-center
       .col-md-4.mb-4
-        .card.border-info
+        .card.border-info.shadow-sm
           .card-body
             h5.card-title Job Vacancies
-            p.card-text.text-primary #{jobVacancyCount}
+            p.card-text.text-primary.font-weight-bold #{jobVacancyCount}
 
       .col-md-4.mb-4
-        .card.border-success
+        .card.border-success.shadow-sm
           .card-body
             h5.card-title Job Seekers
-            p.card-text.text-success #{jobSeekerCount}
+            p.card-text.text-success.font-weight-bold #{jobSeekerCount}
 
       .col-md-4.mb-4
-        .card.border-warning
+        .card.border-warning.shadow-sm
           .card-body
             h5.card-title Online Tutors
-            p.card-text.text-warning #{tutorCount}
+            p.card-text.text-warning.font-weight-bold #{tutorCount}
+
+    hr
+
+    h4.mt-4.mb-3 Recent Job Vacancies
+    if recentJobs && recentJobs.length > 0
+      .table-responsive(style="max-height: 400px; overflow-y: auto;")
+        table.table.table-hover.table-bordered
+          thead
+            tr.bg-light
+              th Title
+              th Country
+              th Student Type
+              th Teaching Area
+              th Posted Date
+          tbody
+            each job in recentJobs
+              tr
+                td #{job.title}
+                td #{job.country}
+                td #{job.studentType}
+                td #{job.teachingArea}
+                td
+                  - let dateStr = 'N/A';
+                  - if (job.datePosted) {
+                  -   dateStr = new Date(job.datePosted).toISOString().substring(0, 10);
+                  - } else if (job.createdAt) {
+                  -   dateStr = new Date(job.createdAt).toISOString().substring(0, 10);
+                  - }
+                  = dateStr
+    else
+      p.text-muted No recent job vacancies found.
 
     hr
     .text-center.mt-3

@@ -24,21 +24,23 @@ html(lang='en')
 
     header.header
       .container
-        .row.justify-content-center
-          .col-md
-            h5.main-top-menu
-              if session && session.user
-                a(href="/user/mypage", style="padding-left:20px;color:#000000;")
-                  | Mypage
-                  if session.user.adsAvailable !== undefined
-                    |  (#{session.user.adsAvailable} left)
-                a(href="/user/logout", style="padding-left:20px;color:red;") Logout
-              else
-                a(href="/user/register", style="padding-left:20px;color:#000000;") membership
-                a(href="/user/login", style="padding-left:20px;color:#000000;") Login
-              a(href="/admin/login", style="padding-left:20px;color:#000000;") Admin
-              if session && session.isAdmin
-                a(href="/admin/logout", style="padding-left:20px;color:red;") Logout
+    .row.justify-content-center.bg-dark.py-2
+      .col-md.text-end
+        h5.main-top-menu(style="font-size: 1.5rem; font-weight: bold; color: white;")
+          if session && session.user
+            a(href="/user/mypage", style="margin-right: 25px; color: #fff; text-decoration: none;")
+              | Mypage
+              if session.user.adsAvailable !== undefined
+                |  (#{session.user.adsAvailable} left)
+            a(href="/user/logout", style="margin-right: 25px; color: red; text-decoration: none;") Logout
+          else
+            a(href="/user/register", style="margin-right: 25px; color: #fff; text-decoration: none;") Membership
+            a(href="/user/login", style="margin-right: 25px; color: #fff; text-decoration: none;") Login
+          a(href="/admin/login", style="margin-right: 25px; color: #fff; text-decoration: none;") Admin
+          if session && session.isAdmin
+            a(href="/admin/logout", style="margin-right: 25px; color: red; text-decoration: none;") Logout
+
+
 
     header.main-search-header
       .container.main-header-search(style="background-color:#000000 !important")

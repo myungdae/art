@@ -6,7 +6,15 @@ block content
       .col-auto
         h2.text-dark.mb-0 Job Vacancies
       .col-auto
-        a.btn.btn-success(href='/job-vacancies/new') + Post New Job
+        .row.justify-content-between.align-items-center.mb-4
+       
+        .col-auto
+          a.btn.btn-dark.btn-lg.fw-bold.fs-4.text-white(href='/job-vacancies/new') Post New Job Vacancy
+
+
+
+
+
 
     .row
       each job in jobs

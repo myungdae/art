@@ -26,19 +26,21 @@ router.post('/login', (req, res) => {
   }
 });
 
-// ✅ 관리자 대시보드 (통계 포함)
+// ✅ 관리자 대시보드 (통계 + 최근 공고 포함)
 router.get('/dashboard', requireAdmin, async (req, res) => {
   try {
-    const [jobVacancyCount, jobSeekerCount, tutorCount] = await Promise.all([
+    const [jobVacancyCount, jobSeekerCount, tutorCount, recentJobs] = await Promise.all([
       JobVacancy.countDocuments(),
       JobSeeker.countDocuments(),
-      Tutor.countDocuments()
+      Tutor.countDocuments(),
+      JobVacancy.find().sort({ createdAt: -1 }).limit(10).lean()
     ]);
 
     res.render('admin/dashboard', {
       jobVacancyCount,
       jobSeekerCount,
       tutorCount,
+      recentJobs,
       currentDate: new Date().toLocaleDateString()
     });
   } catch (err) {
