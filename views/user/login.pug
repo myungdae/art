@@ -9,17 +9,18 @@ block content
             h2(style="margin: 0; font-weight: bold; font-size: 1.8rem;") Login
 
           .card-body
+            if error
+              .alert.alert-danger.mt-2
+                != error
+
             form(method="POST", action="/user/login")
               .form-group.mb-4
-              label(for="email", style="font-size: 1.1rem; font-weight: bold;") Email
-              input.form-control.rounded-pill(type="email", name="email", placeholder="Enter your email", required)
+                label(for="email", style="font-size: 1.1rem; font-weight: bold;") Email
+                input.form-control.rounded-pill(type="email", name="email", placeholder="Enter your email", required)
 
               .form-group.mb-4
-              label(for="password", style="font-size: 1.1rem; font-weight: bold;") Password
-              input.form-control.rounded-pill(type="password", name="password", placeholder="Enter your password", required)
+                label(for="password", style="font-size: 1.1rem; font-weight: bold;") Password
+                input.form-control.rounded-pill(type="password", name="password", placeholder="Enter your password", required)
 
               .form-group.text-center.mt-4
                 button.btn.btn-success.btn-lg.px-4(type="submit") Log In
-                
-
-                

@@ -22,34 +22,39 @@ block content
                 label(for="description") Job Description *
                 textarea.form-control(name="description", id="description", rows="8")
 
-              // ✅ Country + Student Type
-              .form-row
-                .form-group.col-md-6
-                  label(for="country") Host Country
-                  select.form-control(name="country", id="country", required)
-                    option(disabled selected value='') Select Country
-                    each v in countries
-                      option(value=v)= v
+              // ✅ Country + StudentType
+                .form-row
+                  .form-group.col-md-6
+                    label(for="country") Host Country
+                    select.form-control(name="country", id="country", required)
+                      option(disabled selected value='') Select Country
+                      each v in countries
+                        option(value=v)= v
+                
+                  .form-group.col-md-6
+                    label(for="studentType") Student Type
+                    select.form-control(name="studentType", id="studentType", required)
+                      option(disabled selected value='') Select Student Type
+                      each v in studentTypes
+                        option(value=v)= v
+                
+                // ✅ Teaching Area
+                  .form-group
+                    label(for="teachingArea") Teaching Area
+                    div.ui.fluid.search.selection.dropdown(id="teachingAreaDropdown", tabindex="0")
+                      input(type="hidden", name="teachingArea")
+                      i.dropdown.icon
+                      div.default.text Select Teaching Area
+                      
+                      div.menu
+                        each v in teachingAreas
+                          div.item(data-value=v)= v
 
-                .form-group.col-md-6
-                  label(for="studentType") Student Type
-                  select.form-control(name="studentType", id="studentType", required)
-                    option(disabled selected value='') Select Student Type
-                    each v in studentTypes
-                      option(value=v)= v
 
-              // ✅ Teaching Area (Semantic UI)
-              .form-group
-                label(for="teachingArea") Teaching Area
-                div.ui.fluid.search.selection.dropdown(id="teachingAreaDropdown", tabindex="0")
-                  input(type="hidden", name="teachingArea")
-                  i.dropdown.icon
-                  div.default.text Start typing or choose a subject
-                  div.menu
-                    each v in teachingAreas
-                      div.item(data-value=v)= v
 
-              // ✅ 기타 필드
+
+
+              // ✅ 기타 기본 필드
               .form-row
                 .form-group.col-md-6
                   label(for="duration") Duration
@@ -118,8 +123,8 @@ block content
                           else if opt == '24'
                             | 24 Ads — $450 
                             span.text-danger (save $270)
-
-              // ✅ Resume Access 라디오
+              
+              // ✅ Resume Access 라디오 정렬
               .form-group.mt-4
                 label.mb-2.d-block Add Resume Access?
                 .form-check.form-check-inline.ml-3
@@ -129,38 +134,45 @@ block content
                   input.form-check-input(type="radio", name="resumeAccess", id="resumeNo", value="no")
                   label.form-check-label(for="resumeNo") No
 
-              // ✅ Submit 버튼
-              button.btn.btn-success.btn-block.mt-4(type="submit")
-                | 🚀 Submit Job Posting
+
+              // ✅ 수정: 결제 페이지로 이동
+              a.btn.btn-success.btn-block.mt-4(href="/paypal/checkout")
+                | 💳 Proceed to Payment
 
 block append_js
-  script(src="https://cdn.ckeditor.com/ckeditor5/41.0.0/classic/ckeditor.js")
-  script.
-    ClassicEditor
-      .create(document.querySelector('#description'))
-      .catch(error => console.error(error));
+                script(src="https://cdn.ckeditor.com/ckeditor5/41.0.0/classic/ckeditor.js")
+                script.
+                  ClassicEditor
+                    .create(document.querySelector('#description'))
+                    .catch(error => console.error(error));
+                
+                  function validateTitle(input) {
+                    const emojiRegex = /[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu;
+                    const koreanRegex = /[ㄱ-ㅎㅏ-ㅣ가-힣]/;
+                    const errorElem = document.getElementById('title-error');
+                    if (emojiRegex.test(input.value) || koreanRegex.test(input.value)) {
+                      errorElem.style.display = 'block';
+                      input.classList.add('is-invalid');
+                    } else {
+                      errorElem.style.display = 'none';
+                      input.classList.remove('is-invalid');
+                    }
+                  }
+                
+                // ✅ Semantic UI 초기화
+                script.
+                  $(document).ready(function () {
+                    console.log("✅ Semantic UI initialized");
+                
+                    $('#teachingAreaDropdown').dropdown({
+                      allowAdditions: true,
+                      forceSelection: false,
+                      fullTextSearch: true,
+                      allowReselection: true,
+                      onAdd: function (value, text) {
+                        console.log("➕ 추가됨:", value);
+                      }
+                    });
+                  });
 
-    function validateTitle(input) {
-      const emojiRegex = /[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu;
-      const koreanRegex = /[ㄱ-ㅎㅏ-ㅣ가-힣]/;
-      const errorElem = document.getElementById('title-error');
-      if (emojiRegex.test(input.value) || koreanRegex.test(input.value)) {
-        errorElem.style.display = 'block';
-        input.classList.add('is-invalid');
-      } else {
-        errorElem.style.display = 'none';
-        input.classList.remove('is-invalid');
-      }
-    }
 
-    // ✅ Semantic UI dropdown 초기화
-    $(document).ready(function () {
-      console.log("✅ Semantic UI initialized");
-      $('#teachingAreaDropdown').dropdown({
-        allowAdditions: true,
-        forceSelection: false,
-        onAdd: function (value, text) {
-          console.log("➕ Added:", value);
-        }
-      });
-    });

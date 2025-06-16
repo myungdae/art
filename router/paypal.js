@@ -22,7 +22,7 @@ async function getAccessToken() {
   return res.data.access_token;
 }
 
-// ✅ [GET] Checkout Page (로그인 필요)
+// ✅ [GET] Checkout Page
 router.get('/checkout', requireLogin, (req, res) => {
   const packages = [
     { value: '1', label: '1 Ad — $30' },
@@ -31,7 +31,6 @@ router.get('/checkout', requireLogin, (req, res) => {
     { value: '24', label: '24 Ads — $450 (Save $270)' },
   ];
 
-  // ✅ 세션에 userId 보장
   if (!req.session.userId && req.user && req.user._id) {
     req.session.userId = req.user._id;
     console.log('🆔 Set req.session.userId =', req.user._id);
@@ -43,7 +42,7 @@ router.get('/checkout', requireLogin, (req, res) => {
   });
 });
 
-// ✅ [POST] Create Order
+// ✅ [POST] Create PayPal Order
 router.post('/create-order', async (req, res) => {
   try {
     const selectedPackage = req.body.package || '1';
@@ -84,15 +83,12 @@ router.post('/create-order', async (req, res) => {
   }
 });
 
-// ✅ [POST] Capture Payment
+// ✅ [POST] Capture Order + Redirect
 router.post('/capture-order/:orderID', async (req, res) => {
   try {
     const { orderID } = req.params;
     const { package: adCount } = req.body;
     const accessToken = await getAccessToken();
-
-    console.log('🔐 session.userId:', req.session.userId);
-    console.log('📦 selected ad count:', adCount);
 
     const capture = await axios.post(
       `${PAYPAL_API}/v2/checkout/orders/${orderID}/capture`,
@@ -105,7 +101,6 @@ router.post('/capture-order/:orderID', async (req, res) => {
       }
     );
 
-    // ✅ 광고 수 증가
     if (req.session.userId && adCount) {
       const result = await User.findByIdAndUpdate(req.session.userId, {
         $inc: { adsAvailable: parseInt(adCount, 10) }
@@ -113,14 +108,11 @@ router.post('/capture-order/:orderID', async (req, res) => {
 
       if (result) {
         console.log(`✅ Updated adsAvailable (+${adCount}) for user:`, req.session.userId);
-      } else {
-        console.warn('⚠️ User not found during adsAvailable increment');
       }
-    } else {
-      console.warn('⚠️ Missing session.userId or adCount');
     }
 
-    res.json({ status: 'success', details: capture.data });
+    // ✅ 결제 성공 후 바로 입력창으로 리다이렉트
+    res.json({ status: 'redirect', url: '/job-vacancies/new_paid_user' });
   } catch (error) {
     console.error('❌ capture-order error:', error.response?.data || error.message);
     res.status(500).json({ error: 'Failed to capture PayPal payment' });

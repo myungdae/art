@@ -3,12 +3,13 @@ const router = express.Router();
 const JobVacancy = require('../model/jobVacancy');
 const User = require('../model/user');
 const sanitizeHtml = require('sanitize-html');
-function escapeRegex(text) {
-  return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
-}
 const priceConfig = require('../config/priceConfig');
 const { requireLogin } = require('../middleware/auth');
 const requireEmployer = require('../middleware/requireEmployer');
+
+function escapeRegex(text) {
+  return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+}
 
 console.log("✅ jobVacancyRouter loaded");
 
@@ -37,39 +38,44 @@ const htmlSanitizeOptions = {
   allowedSchemes: ['http', 'https']
 };
 
-
 // ✅ 목록 조회
 router.get('/', async (req, res) => {
   const jobs = await JobVacancy.find();
   res.render('jobVacancy/index', { jobs });
 });
 
-// ✅ 신규 등록 폼
+// ✅ 신규 등록 (결제 유도)
 router.get('/new', requireLogin, requireEmployer, async (req, res) => {
-  const user = await User.findById(req.user._id);
-  if (user && user.adsAvailable > 0) {
-    return res.redirect('/job-vacancies/new_paid_user');
+  try {
+    const user = await User.findById(req.user._id);
+
+    if (user && user.adsAvailable > 0) {
+      // ✅ 광고권 있으면 실제 등록 경로로 이동
+      return res.redirect('/job-vacancies/new_paid_user');
+    }
+
+    const values = await getDistinctValues();
+    res.render('jobVacancy/new', {
+      message: null,
+      showPayment: true,
+      ...values,
+      priceOptions: priceConfig
+    });
+  } catch (err) {
+    console.error('[ERROR - GET /new]:', err);
+    res.status(500).send('❌ Failed to load posting page.');
   }
+});
 
+// ✅ 등록 폼 (결제 후 접근용)
+router.get('/new_paid_user', requireLogin, requireEmployer, async (req, res) => {
   const values = await getDistinctValues();
-  res.render('jobVacancy/new', {
-    message: null,
-    showPayment: true,
-    ...values,
-    priceOptions: priceConfig
-  });
-});
-
-// ✅ Paid 사용자 등록 폼
-router.get('/new_paid_user', requireLogin, (req, res) => {
   res.render('jobVacancy/new_paid_user', {
-    countries: ['USA', 'Korea', 'Japan', 'China'],
-    studentTypes: ['Kindergarten', 'Elementary', 'Middle School'],
-    teachingAreas: ['ESL', 'Math', 'Science']
+    ...values
   });
 });
 
-// ✅ Paid 사용자 등록 처리
+// ✅ 등록 처리 (결제 후)
 router.post('/new_paid_user', requireLogin, requireEmployer, async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
@@ -99,77 +105,36 @@ router.post('/new_paid_user', requireLogin, requireEmployer, async (req, res) =>
     await job.save();
     await User.findByIdAndUpdate(req.user._id, { $inc: { adsAvailable: -1 } });
 
-    res.redirect('/user/mypage');
+    // ✅ 수정됨: 등록 성공 후 상세 페이지로 이동
+    res.redirect(`/job-vacancies/${job._id}?success=true`);
   } catch (err) {
     console.error('[ERROR - POST /new_paid_user]:', err);
     res.status(500).send('❌ Failed to post paid job');
   }
 });
 
-// ✅ 일반 등록 처리
-router.post('/new', requireLogin, requireEmployer, async (req, res) => {
-  try {
-    const user = await User.findById(req.user._id);
-    if (!user || user.adsAvailable <= 0) {
-      const values = await getDistinctValues();
-      return res.status(403).render('jobVacancy/new', {
-        message: '❌ No available ad slots. Please purchase more.',
-        showPayment: true,
-        ...values,
-        priceOptions: priceConfig
-      });
-    }
 
-    const { title, description, ...rest } = req.body;
-    const cleanTitle = title.trim();
-
-    if (!cleanTitle) return res.status(400).send('❌ Title is required');
-    if (/[😀-🙏]/u.test(cleanTitle)) {
-      return res.status(400).send('❌ Title cannot include emojis');
-    }
-
-    const exists = await JobVacancy.findOne({ title: new RegExp(`^${escapeRegex(cleanTitle)}$`, 'i') });
-    if (exists) return res.status(400).send('❌ Duplicate title exists');
-
-    const job = new JobVacancy({
-      title: cleanTitle,
-      description: sanitizeHtml(description || '', htmlSanitizeOptions),
-      ...rest,
-      addResumeAccess: rest.addResumeAccess === 'yes',
-      user: req.user._id
-    });
-
-    await job.save();
-    await User.findByIdAndUpdate(req.user._id, { $inc: { adsAvailable: -1 } });
-
-    const values = await getDistinctValues();
-    res.render('jobVacancy/new', {
-      message: '✅ Job successfully posted.',
-      showPayment: true,
-      ...values,
-      priceOptions: priceConfig
-    });
-  } catch (err) {
-    console.error('[ERROR - POST /new]:', err);
-    res.status(500).send('❌ Failed to post job');
-  }
-});
-
-// ✅ 광고 상세
+// ✅ 광고 상세 보기
 router.get('/:id', async (req, res) => {
   try {
     const jobVacancy = await JobVacancy.findById(req.params.id).populate('user');
     if (!jobVacancy) {
-      console.warn(`[GET /:id] Tried to access deleted or non-existent job: ${req.params.id}`);
-      return res.status(404).render('jobVacancy/show', { jobVacancy: null });
+      return res.status(404).render('jobVacancy/show', {
+        jobVacancy: null,
+        success: false
+      });
     }
 
-    res.render('jobVacancy/show', { jobVacancy });
+    res.render('jobVacancy/show', {
+      jobVacancy,
+      success: req.query.success === 'true'
+    });
   } catch (err) {
     console.error('[ERROR - GET /:id]:', err);
     res.status(500).send('❌ Error loading job ad');
   }
 });
+
 
 // ✅ 광고 수정 폼
 router.get('/:id/edit', requireLogin, async (req, res) => {
@@ -201,7 +166,6 @@ router.post('/:id/edit', requireLogin, async (req, res) => {
   try {
     const jobVacancy = await JobVacancy.findById(req.params.id).populate('user');
     if (!jobVacancy) return res.status(404).send('❌ Job not found');
-
     if (!jobVacancy.user || !jobVacancy.user._id.equals(req.user._id)) {
       return res.status(403).send('❌ Unauthorized');
     }
@@ -249,28 +213,24 @@ router.post('/:id/edit', requireLogin, async (req, res) => {
 
 // ✅ 광고 삭제
 router.delete('/:id', requireLogin, async (req, res) => {
-  console.log('📌 DELETE 요청 도달:', req.method, req.originalUrl);
-
   try {
     const ad = await JobVacancy.findById(req.params.id).populate('user');
     if (!ad) {
-      console.error(`[404] Ad not found for deletion: ${req.params.id}`);
       return res.status(404).send('❌ Ad not found');
     }
-
     if (!ad.user || !ad.user._id.equals(req.user._id)) {
-      return res.status(403).send('❌ Unauthorized deletion attempt');
+      return res.status(403).send('❌ Unauthorized');
     }
 
     await ad.deleteOne();
     await User.findByIdAndUpdate(req.user._id, { $inc: { adsAvailable: 1 } });
 
-    console.log(`✅ Ad deleted: ${ad.title} by user ${req.user._id}`);
     res.redirect('/user/mypage');
   } catch (err) {
     console.error('[ERROR - DELETE /:id]:', err);
     res.status(500).send('❌ Error deleting job ad');
   }
 });
+
 
 module.exports = router;

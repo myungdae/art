@@ -7,74 +7,101 @@ block content
         if !jobVacancy
           .alert.alert-danger ❌ Error: Job data not found or has been deleted.
         else
+          if success
+            .alert.alert-success.text-center(role='alert')
+              | ✅ Registration successful! Your job ad has been posted.
+
           .card.shadow
             .card-header.bg-light.d-flex.justify-content-between.align-items-center
-              h4.mb-0.text-dark= jobVacancy.title
+              h4.mb-0.text-dark= jobVacancy.title || 'Untitled'
               a.btn.btn-outline-primary(href='/job-vacancies') ← Back to List
 
-            .card-body
-              if !(jobVacancy && jobVacancy.user && jobVacancy.user._id)
-                p.text-danger ❌ Error: Invalid access. User not found.
-              else
-                p.mb-2
-                  strong Host Country: 
-                  | #{jobVacancy.country}
-                p.mb-2
-                  strong Student Type: 
-                  | #{jobVacancy.studentType}
-                p.mb-2
-                  strong Teaching Area: 
-                  | #{jobVacancy.teachingArea}
-                p.mb-2
-                  strong Duration: 
-                  | #{jobVacancy.duration}
-                p.mb-2
-                  strong Pay: 
-                  | #{jobVacancy.pay}
-                p.mb-2
-                  strong Housing: 
-                  | #{jobVacancy.housing}
-                p.mb-2
-                  strong Email: 
-                  | #{jobVacancy.email}
-                p.mb-2
-                  strong Company Name: 
-                  | #{jobVacancy.companyName}
-                p.mb-2
-                  strong Job Location: 
-                  | #{jobVacancy.jobLocation}
-                p.mb-2
-                  strong Cellphone: 
-                  | #{jobVacancy.cellphoneNumber}
-                p.mb-2
-                  strong Skype ID: 
-                  | #{jobVacancy.skypeId}
-                p.mb-2
-                  strong WeChat ID: 
-                  | #{jobVacancy.wechatId}
-                p.mb-2
-                  strong Homepage: 
-                  a(href=jobVacancy.homepage, target="_blank")= jobVacancy.homepage
-                p.mb-2
-                  strong Date Posted: 
-                  | #{jobVacancy.datePosted && new Date(jobVacancy.datePosted).toLocaleDateString()}
-                p.mb-2
-                  strong Ad Package: 
-                  | #{jobVacancy.adPackage}
-                p.mb-2
-                  strong Resume Access: 
-                  | #{jobVacancy.addResumeAccess ? 'Yes' : 'No'}
+          .card-body
+            if !(jobVacancy.user && jobVacancy.user._id)
+              p.text-warning ⚠️ Registered user info not found. Displaying ad data only.
 
-                hr
-                h5.mb-3 Job Description
-                .job-description.border.p-3.bg-light
-                  != jobVacancy.description
-                  
-                // ✅ Action Buttons (Edit & Delete)
-                .mt-4.d-flex.justify-content-end
-                  a.btn.btn-secondary.me-2(href=`/job-vacancies/${jobVacancy._id}/edit`) Edit
-                  form(method="POST", action=`/job-vacancies/${jobVacancy._id}?_method=DELETE`)
-                    button.btn.btn-danger(type="submit" onclick="return confirm('Are you sure you want to delete this ad?')") Delete
+            // 📝 Job Description
+            h5.mb-3 📝 Job Description
+            .job-description.border.p-3.bg-light
+              if jobVacancy.description
+                != jobVacancy.description
+              else
+                p.text-muted No description provided.
+
+            hr
+
+            // 📌 Basic Info
+            h5.mb-3 📌 Basic Info
+            ul.list-unstyled
+              li
+                strong Host Country: 
+                | #{jobVacancy.country || 'N/A'}
+              li
+                strong Student Type: 
+                | #{jobVacancy.studentType || 'N/A'}
+              li
+                strong Teaching Area: 
+                | #{jobVacancy.teachingArea || 'N/A'}
+              li
+                strong Duration: 
+                | #{jobVacancy.duration || 'N/A'}
+              li
+                strong Pay: 
+                | #{jobVacancy.pay || 'N/A'}
+              li
+                strong Housing: 
+                | #{jobVacancy.housing || 'N/A'}
+              li
+                strong Ad Package: 
+                | #{jobVacancy.adPackage || 'N/A'}
+              li
+                strong Resume Access: 
+                | #{jobVacancy.addResumeAccess ? 'Yes' : 'No'}
+
+            hr
+
+            // 🏢 Company Info
+            h5.mb-3 🏢 Company Info
+            ul.list-unstyled
+              li
+                strong Company Name: 
+                | #{jobVacancy.companyName || 'N/A'}
+              li
+                strong Job Location: 
+                | #{jobVacancy.jobLocation || 'N/A'}
+              li
+                strong Date Posted: 
+                | #{jobVacancy.datePosted && new Date(jobVacancy.datePosted).toLocaleDateString() || 'N/A'}
+
+            hr
+
+            // 💬 Contact Info
+            h5.mb-3 💬 Contact Info
+            ul.list-unstyled
+              li
+                strong Email: 
+                | #{jobVacancy.email || 'N/A'}
+              li
+                strong Cellphone: 
+                | #{jobVacancy.cellphoneNumber || 'N/A'}
+              li
+                strong Skype ID: 
+                | #{jobVacancy.skypeId || 'N/A'}
+              li
+                strong WeChat ID: 
+                | #{jobVacancy.wechatId || 'N/A'}
+              li
+                strong Homepage: 
+                if jobVacancy.homepage
+                  a(href=jobVacancy.homepage, target="_blank")= jobVacancy.homepage
+                else
+                  | N/A
+
+            // ✅ Action Buttons
+            .mt-4.d-flex.justify-content-end
+              a.btn.btn-secondary.me-2(href=`/job-vacancies/${jobVacancy._id}/edit`) Edit
+              form(method="POST", action=`/job-vacancies/${jobVacancy._id}?_method=DELETE`)
+                button.btn.btn-danger(type="submit" onclick="return confirm('Are you sure you want to delete this ad?')") Delete
 
 block append_on_header
   style.
