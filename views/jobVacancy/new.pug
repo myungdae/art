@@ -22,7 +22,7 @@ block content
                 label(for="description") Job Description *
                 textarea.form-control(name="description", id="description", rows="8")
 
-              // ✅ Country + StudentType
+              // ✅ Country + Student Type
               .form-row
                 .form-group.col-md-6
                   label(for="country") Host Country
@@ -38,15 +38,18 @@ block content
                     each v in studentTypes
                       option(value=v)= v
 
-              // ✅ Teaching Area
+              // ✅ Teaching Area (Semantic UI)
               .form-group
                 label(for="teachingArea") Teaching Area
-                select.form-control(name="teachingArea", id="teachingArea", required)
-                  option(disabled selected value='') Select Teaching Area
-                  each v in teachingAreas
-                    option(value=v)= v
+                div.ui.fluid.search.selection.dropdown(id="teachingAreaDropdown", tabindex="0")
+                  input(type="hidden", name="teachingArea")
+                  i.dropdown.icon
+                  div.default.text Start typing or choose a subject
+                  div.menu
+                    each v in teachingAreas
+                      div.item(data-value=v)= v
 
-              // ✅ 기타 기본 필드
+              // ✅ 기타 필드
               .form-row
                 .form-group.col-md-6
                   label(for="duration") Duration
@@ -115,8 +118,8 @@ block content
                           else if opt == '24'
                             | 24 Ads — $450 
                             span.text-danger (save $270)
-              
-              // ✅ Resume Access 라디오 정렬
+
+              // ✅ Resume Access 라디오
               .form-group.mt-4
                 label.mb-2.d-block Add Resume Access?
                 .form-check.form-check-inline.ml-3
@@ -125,7 +128,6 @@ block content
                 .form-check.form-check-inline
                   input.form-check-input(type="radio", name="resumeAccess", id="resumeNo", value="no")
                   label.form-check-label(for="resumeNo") No
-
 
               // ✅ Submit 버튼
               button.btn.btn-success.btn-block.mt-4(type="submit")
@@ -150,3 +152,15 @@ block append_js
         input.classList.remove('is-invalid');
       }
     }
+
+    // ✅ Semantic UI dropdown 초기화
+    $(document).ready(function () {
+      console.log("✅ Semantic UI initialized");
+      $('#teachingAreaDropdown').dropdown({
+        allowAdditions: true,
+        forceSelection: false,
+        onAdd: function (value, text) {
+          console.log("➕ Added:", value);
+        }
+      });
+    });

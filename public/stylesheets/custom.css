@@ -1,0 +1,6 @@
+/* 추가 항목(Add "text")에 대한 스타일 */
+.ui.dropdown .menu > .addition {
+  font-weight: bold;
+  color: #2185d0; /* Semantic UI 기본 파랑 */
+}
+
