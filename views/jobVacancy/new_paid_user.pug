@@ -9,7 +9,7 @@ block content
             h4.mb-0 Post a Job Ad (Paid User)
 
           .card-body
-            form(method="POST", action="/job-vacancies/new_paid_user")
+            form(method="POST", action="/job-vacancies/new_paid_user", onsubmit="return handleCustomFields()")
               .form-group.mb-3
                 label(for="title") Job Title
                 input.form-control#title(type="text", name="title", required, placeholder="Job Title", oninput="validateTitle(this)")
@@ -19,28 +19,35 @@ block content
                 label(for="description") Job Description
                 textarea.form-control(name="description", id="description", rows="8")
 
+              // ✅ Host Country
               .form-group.mb-3
                 label(for="country") Host Country
-                select.form-control(name="country", id="country", required)
+                select.form-control#countrySelect(name="country")
                   option(disabled selected value='') Select Country
                   each v in countries
                     option(value=v)= v
-              
+                small.text-muted.mt-1 You can also add a new country:
+                input.form-control.mt-1(type="text", id="customCountry", placeholder="Or enter a new Country")
+
+              // ✅ Student Type
               .form-group.mb-3
                 label(for="studentType") Student Type
-                select.form-control(name="studentType", id="studentType", required)
+                select.form-control#studentTypeSelect(name="studentType")
                   option(disabled selected value='') Select Student Type
                   each v in studentTypes
                     option(value=v)= v
-              
+                small.text-muted.mt-1 You can also add a new student type:
+                input.form-control.mt-1(type="text", id="customStudentType", placeholder="Or enter a new Student Type")
+
+              // ✅ Teaching Area
               .form-group.mb-3
                 label(for="teachingArea") Teaching Area
-                select.form-control(name="teachingArea", id="teachingArea", required)
+                select.form-control#teachingArea(name="teachingArea")
                   option(disabled selected value='') Select Teaching Area
                   each v in teachingAreas
                     option(value=v)= v
-
-
+                small.text-muted.mt-1 You can also add a new teaching area:
+                input.form-control.mt-1(type="text", id="customTeachingArea", placeholder="Or enter a new Teaching Area")
 
               .form-group.mb-3
                 label(for="duration") Duration
@@ -86,16 +93,14 @@ block content
                 label(for="datePosted") Date Posted
                 input.form-control(type="date", name="datePosted", id="datePosted")
 
-              div.form-group
+              .form-group
                 label.mb-2 Add Resume Access?
-
-                div
-                  label.mr-4
-                    input(type="radio", name="resumeAccess", value="yes", checked)
-                    |  Yes
-                  label
-                    input(type="radio", name="resumeAccess", value="no")
-                    |  No
+                .form-check.form-check-inline
+                  input.form-check-input(type="radio", name="resumeAccess", id="resumeYes", value="yes", checked)
+                  label.form-check-label(for="resumeYes") Yes
+                .form-check.form-check-inline
+                  input.form-check-input(type="radio", name="resumeAccess", id="resumeNo", value="no")
+                  label.form-check-label(for="resumeNo") No
 
               button.btn.btn-success.btn-block.mt-4(type="submit") Submit
 
@@ -117,4 +122,45 @@ block append_js
         errorElem.style.display = 'none';
         input.classList.remove('is-invalid');
       }
+    }
+
+    function handleCustomFields() {
+      const form = document.querySelector('form');
+
+      const customCountry = document.getElementById('customCountry')?.value.trim();
+      const customStudent = document.getElementById('customStudentType')?.value.trim();
+      const customTeaching = document.getElementById('customTeachingArea')?.value.trim();
+
+      const countrySelect = document.getElementById('countrySelect');
+      const studentTypeSelect = document.getElementById('studentTypeSelect');
+      const teachingSelect = document.getElementById('teachingArea');
+
+      if (customCountry && countrySelect.value === '') {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'country';
+        input.value = customCountry;
+        form.appendChild(input);
+        countrySelect.disabled = true;
+      }
+
+      if (customStudent && studentTypeSelect.value === '') {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'studentType';
+        input.value = customStudent;
+        form.appendChild(input);
+        studentTypeSelect.disabled = true;
+      }
+
+      if (customTeaching && teachingSelect.value === '') {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'teachingArea';
+        input.value = customTeaching;
+        form.appendChild(input);
+        teachingSelect.disabled = true;
+      }
+
+      return true;
     }

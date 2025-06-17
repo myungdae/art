@@ -23,7 +23,7 @@ const getDistinctValues = async () => {
 
   const defaultCountries = ['USA', 'South Korea', 'Japan', 'Vietnam', 'China'];
   const defaultStudentTypes = ['Adults', 'Elementary', 'High School'];
-  const defaultTeachingAreas = ['English', 'Math', 'Science'];
+  const defaultTeachingAreas = ['ESL', 'English', 'Math', 'Science'];
 
   return {
     countries: [...new Set([...defaultCountries, ...countriesFromDB])].sort(),
@@ -44,15 +44,13 @@ router.get('/', async (req, res) => {
     const jobs = await JobVacancy.find().populate('user');
     res.render('jobVacancy/index', {
       jobs,
-      session: req.session  // ⬅️ 이 줄 추가!! 꼭 필요합니다
+      session: req.session
     });
   } catch (err) {
     console.error('❌ Failed to load job list:', err);
     res.status(500).send('Server error');
   }
 });
-
-
 
 // ✅ 신규 등록 (결제 유도)
 router.get('/new', requireLogin, requireEmployer, async (req, res) => {
