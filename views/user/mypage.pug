@@ -2,34 +2,34 @@ extends ../layout
 
 block content
   .container.mt-5
-    h2.text-center.mb-4 My Page
+    h2.text-center.mb-5(style="font-size: 2rem;") My Page
 
     if user
-      .mb-3
-        p
+      .mb-4
+        p(style="font-size: 1.1rem;")
           strong Username:
           | #{user.username}
-        p
+        p(style="font-size: 1.1rem;")
           strong Email:
           | #{user.email}
-        p
+        p(style="font-size: 1.1rem;")
           strong Role:
           | #{user.role}
-        p
+        p(style="font-size: 1.1rem;")
           strong Ads Available:
-          span.text-success.ms-2 #{(typeof user.adsAvailable === 'number') ? user.adsAvailable : 0}
+          span.text-dark.ms-2 #{(typeof user.adsAvailable === 'number') ? user.adsAvailable : 0}
 
       hr
 
-      h3 My Job Ads
+      h3.mb-3(style="font-size: 1.5rem;") My Job Ads
       if jobVacancies && jobVacancies.length > 0
-        table.table.table-bordered
+        table.table.table-bordered.table-hover(style="font-size: 1.05rem;")
           thead
             tr
               th Title
               th Country
               th Date Posted
-              th Actions
+              th.text-center Actions
           tbody
             each vacancy in jobVacancies
               tr
@@ -43,50 +43,29 @@ block content
                   -   dateStr = new Date(vacancy.createdAt).toISOString().substring(0, 10);
                   - }
                   = dateStr
-                td
-                  a.btn.btn-sm.btn-primary.me-2(href='/job-vacancies/' + vacancy._id) View
-                  a.btn.btn-sm.btn-secondary.me-2(href='/job-vacancies/' + vacancy._id + '/edit') Edit
-
+                td.text-center
+                  a.btn.btn-outline-dark.btn-sm.me-1(href='/job-vacancies/' + vacancy._id) View
+                  a.btn.btn-outline-dark.btn-sm.me-1(href='/job-vacancies/' + vacancy._id + '/edit') Edit
+                  form.d-inline(method="POST", action='/job-vacancies/' + vacancy._id + '?_method=DELETE')
+                    button.btn.btn-sm.btn-danger(type="submit" style="color: white;" onclick="return confirm('Are you sure you want to delete this ad?')") Delete
       else
         p.text-muted.mt-2 You haven’t posted any job vacancies yet. Post your first one below.
 
       hr
 
-      h3 My Job Ads (with Delete)
-      if jobVacancies && jobVacancies.length > 0
-        table.table.table-striped.table-hover
-          thead
-            tr
-              th Title
-              th Country
-              th Date Posted
-              th Actions
-          tbody
-            each vacancy in jobVacancies
-              tr
-                td #{vacancy.title}
-                td #{vacancy.country}
-                td
-                  - let dateStr = 'N/A';
-                  - if (vacancy.datePosted) {
-                  -   dateStr = new Date(vacancy.datePosted).toISOString().substring(0, 10);
-                  - } else if (vacancy.createdAt) {
-                  -   dateStr = new Date(vacancy.createdAt).toISOString().substring(0, 10);
-                  - }
-                  = dateStr
-                td
-                  a.btn.btn-sm.btn-primary.me-2(href='/job-vacancies/' + vacancy._id) View
-                  a.btn.btn-sm.btn-secondary.me-2(href='/job-vacancies/' + vacancy._id + '/edit') Edit
-                  form.d-inline(method="POST", action='/job-vacancies/' + vacancy._id + '?_method=DELETE')
-                    button.btn.btn-sm.btn-danger(type="submit" onclick="return confirm('Are you sure you want to delete this ad?')") Delete
+      // ✅ Post a New Job
+      h3.mt-4(style="font-size: 1.5rem;") Post a New Job
 
-      hr
-
-      h3 Post a New Job
       if user.adsAvailable > 0
-        a.btn.btn-success(href='/job-vacancies/new_paid_user') Post Job (Paid User)
+        a.btn.btn-danger.btn-lg.mt-3.text-white(
+          href='/job-vacancies/new_paid_user',
+          style='padding: 14px 28px; font-size: 1.1rem; font-weight: bold;'
+        ) ➕ Post Job (Paid User)
       else
-        a.btn.btn-warning(href='/paypal/checkout') Buy Ad & Post Job
+        a.btn.btn-warning.btn-lg.mt-3.text-dark(
+          href='/paypal/checkout',
+          style='padding: 14px 28px; font-size: 1.1rem; font-weight: bold;'
+        ) 💳 Buy Ad & Post Job
 
     else
       p.text-danger You must be logged in to view this page.

@@ -40,9 +40,19 @@ const htmlSanitizeOptions = {
 
 // ✅ 목록 조회
 router.get('/', async (req, res) => {
-  const jobs = await JobVacancy.find();
-  res.render('jobVacancy/index', { jobs });
+  try {
+    const jobs = await JobVacancy.find().populate('user');
+    res.render('jobVacancy/index', {
+      jobs,
+      session: req.session  // ⬅️ 이 줄 추가!! 꼭 필요합니다
+    });
+  } catch (err) {
+    console.error('❌ Failed to load job list:', err);
+    res.status(500).send('Server error');
+  }
 });
+
+
 
 // ✅ 신규 등록 (결제 유도)
 router.get('/new', requireLogin, requireEmployer, async (req, res) => {
@@ -50,7 +60,6 @@ router.get('/new', requireLogin, requireEmployer, async (req, res) => {
     const user = await User.findById(req.user._id);
 
     if (user && user.adsAvailable > 0) {
-      // ✅ 광고권 있으면 실제 등록 경로로 이동
       return res.redirect('/job-vacancies/new_paid_user');
     }
 
@@ -105,14 +114,12 @@ router.post('/new_paid_user', requireLogin, requireEmployer, async (req, res) =>
     await job.save();
     await User.findByIdAndUpdate(req.user._id, { $inc: { adsAvailable: -1 } });
 
-    // ✅ 수정됨: 등록 성공 후 상세 페이지로 이동
     res.redirect(`/job-vacancies/${job._id}?success=true`);
   } catch (err) {
     console.error('[ERROR - POST /new_paid_user]:', err);
     res.status(500).send('❌ Failed to post paid job');
   }
 });
-
 
 // ✅ 광고 상세 보기
 router.get('/:id', async (req, res) => {
@@ -135,7 +142,6 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-
 // ✅ 광고 수정 폼
 router.get('/:id/edit', requireLogin, async (req, res) => {
   try {
@@ -151,7 +157,7 @@ router.get('/:id/edit', requireLogin, async (req, res) => {
       : '';
 
     res.render('jobVacancy/edit', {
-      jobVacancy,
+      jobVacancy: { ...jobVacancy.toObject(), isNew: false },
       datePostedFormatted,
       ...values
     });
@@ -215,9 +221,7 @@ router.post('/:id/edit', requireLogin, async (req, res) => {
 router.delete('/:id', requireLogin, async (req, res) => {
   try {
     const ad = await JobVacancy.findById(req.params.id).populate('user');
-    if (!ad) {
-      return res.status(404).send('❌ Ad not found');
-    }
+    if (!ad) return res.status(404).send('❌ Ad not found');
     if (!ad.user || !ad.user._id.equals(req.user._id)) {
       return res.status(403).send('❌ Unauthorized');
     }
@@ -231,6 +235,5 @@ router.delete('/:id', requireLogin, async (req, res) => {
     res.status(500).send('❌ Error deleting job ad');
   }
 });
-
 
 module.exports = router;

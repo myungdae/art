@@ -8,6 +8,7 @@ const userRoutes = require('./router/user');
 const methodOverride = require('method-override');
 
 
+
 console.log("📌 app.js 시작됨");
 
 const jobVacancyRouter = require('./router/jobVacancy');

@@ -90,29 +90,31 @@ block content
                   label(for="datePosted") Date Posted
                   input.form-control(type="date", name="datePosted", id="datePosted", value=datePostedFormatted)
 
-                .form-group.mt-5
-                  h4.text-primary.mb-3 Select a Payment Option
-                  each opt in ['1', '4', '12', '24']
-                    .form-check
-                      input.form-check-input(
-                        type="radio",
-                        name="adPackage",
-                        id="ad-" + opt,
-                        value=opt,
-                        checked=(opt == jobVacancy.adPackage)
-                      )
-                      label.form-check-label(for="ad-" + opt)
-                        if opt == '1'
-                          | 1 Ad — $30 one-time payment
-                        else if opt == '4'
-                          | 4 Ads — $100 one-time payment 
-                          span.text-danger (save $20)
-                        else if opt == '12'
-                          | 12 Ads — $250 one-time payment 
-                          span.text-danger (save $110)
-                        else if opt == '24'
-                          | 24 Ads — $450 one-time payment 
-                          span.text-danger (save $270)
+                // ✅ 결제 옵션은 처음 작성시에만 노출
+                if typeof jobVacancy.isNew === 'undefined' || jobVacancy.isNew
+                  .form-group.mt-5
+                    h4.text-primary.mb-3 Select a Payment Option
+                    each opt in ['1', '4', '12', '24']
+                      .form-check
+                        input.form-check-input(
+                          type="radio",
+                          name="adPackage",
+                          id="ad-" + opt,
+                          value=opt,
+                          checked=(opt == jobVacancy.adPackage)
+                        )
+                        label.form-check-label(for="ad-" + opt)
+                          if opt == '1'
+                            | 1 Ad — $30 one-time payment
+                          else if opt == '4'
+                            | 4 Ads — $100 one-time payment 
+                            span.text-danger (save $20)
+                          else if opt == '12'
+                            | 12 Ads — $250 one-time payment 
+                            span.text-danger (save $110)
+                          else if opt == '24'
+                            | 24 Ads — $450 one-time payment 
+                            span.text-danger (save $270)
 
                 .form-group.mb-4
                   label.mb-2 Add Resume Access?

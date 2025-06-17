@@ -6,10 +6,8 @@ html(lang='en')
     title Edu Bridge
     link(rel='shortcut icon', href='/assets/img/favicon.ico', type='image/x-icon')
 
-    // ✅ Semantic UI (CSS는 중복 제거)
+    // ✅ CSS
     link(rel='stylesheet', href='https://cdn.jsdelivr.net/npm/semantic-ui@2.5.0/dist/semantic.min.css')
-
-    // ✅ 기타 스타일
     link(rel='stylesheet', href='https://netdna.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css')
     link(rel='stylesheet', href='/assets/css/jquery-ui.min.css')
     link(rel='stylesheet', href='/assets/css/bootstrap.min.css')
@@ -17,56 +15,77 @@ html(lang='en')
     link(href='/assets/css/now-ui-kit.css?v=1.3.0', rel='stylesheet')
     link(href='/assets/css/custom.css', rel='stylesheet')
 
+    // ✅ 💡 여기에 자식 템플릿에서 삽입할 추가 스크립트/스타일 블록
     block append_on_header
+
+    style.
+      .search-header { position: relative; padding: 40px 0 80px 0; background-color: #fff; }
+      .menu-top { position: absolute; top: 30px; right: 50px; }
+      .menu-top a {
+        margin-left: 25px;
+        font-size: 16pt;
+        font-weight: bold;
+        color: #000;
+        text-decoration: none;
+      }
+      .menu-top a.logout { color: red; }
+
+      .search-input {
+        max-width: 600px;
+        height: 60px;
+        font-size: 16pt;
+        border: 2px solid #ccc;
+        border-radius: 30px;
+        padding: 10px 25px;
+      }
+
+      .main-content {
+        min-height: 500px; /* ✅ 그림 들어갈 넉넉한 높이 확보 */
+        padding: 60px 30px;
+        background-color: #fff;
+      }
+
+      footer.footer {
+        background-color: #333;
+        color: #fff;
+        padding: 30px 0;
+        margin-top: 0;
+      }
 
   body
     include common_value
 
-    header.header
-      .container
-    .row.justify-content-center.bg-dark.py-2
-      .col-md.text-end
-        h5.main-top-menu(style="font-size: 1.5rem; font-weight: bold; color: white;")
+    // ✅ 상단 검색창 + 메뉴
+    header.main-search-header.search-header
+      .container-fluid
+        .menu-top
           if session && session.user
-            a(href="/user/mypage", style="margin-right: 25px; color: #fff; text-decoration: none;")
-              | Mypage
-              if session.user.adsAvailable !== undefined
-                |  (#{session.user.adsAvailable} left)
-            a(href="/user/logout", style="margin-right: 25px; color: red; text-decoration: none;") Logout
+            a(href="/user/mypage") Mypage
+            if session.user.adsAvailable !== undefined
+              | (#{session.user.adsAvailable} left)
+            a.logout(href="/user/logout") Logout
           else
-            a(href="/user/register", style="margin-right: 25px; color: #fff; text-decoration: none;") Membership
-            a(href="/user/login", style="margin-right: 25px; color: #fff; text-decoration: none;") Login
-          a(href="/admin/login", style="margin-right: 25px; color: #fff; text-decoration: none;") Admin
+            a(href="/user/register") Membership
+            a(href="/user/login") Login
+          a(href="/admin/login") Admin
           if session && session.isAdmin
-            a(href="/admin/logout", style="margin-right: 25px; color: red; text-decoration: none;") Logout
+            a.logout(href="/admin/logout") Logout
 
-
-
-    header.main-search-header
-      .container.main-header-search(style="background-color:#000000 !important")
-        .row.justify-content-center
-          .col-md-4
-            a(href='/' style="padding:0px;color:#000000;")
-              img.main-logo-img(src="/assets/img/travel.png", width="300px", height="70px", alt="로고")
-              h5.font-weight-bolder(style="font-size:16px;") 관광 연계탑산 아카이브
-
-          .col-md-6.main-search
-            - if (!searchKeyword) searchKeyword = "검색어를 입력해주세요"
-            .input-group(style="margin-top:20px;")
-              input#searchText.form-control.rounded-pill.border-end-0.ui-autocomplete-input(
-                autocomplete='off',
-                type='text',
-                placeholder=searchKeyword.replace(/\[dot\]/g, '.'),
-                value=searchText,
-                style="color:#adadad;height:50px;font-size:12pt;border-color:#adadad"
+        .text-center
+          h2(style="font-weight: bold; font-size: 28px; margin-bottom: 25px;") Search the ESL Platform
+          - if (!searchKeyword) searchKeyword = "Enter keyword..."
+          .input-group.justify-content-center
+            input#searchText.form-control.search-input(
+              autocomplete='off',
+              type='text',
+              placeholder=searchKeyword.replace(/\[dot\]/g, '.'),
+              value=searchText
+            )
+            span.input-group-append
+              button.sstyly(
+                style="margin-left:-55px;background:none;border:none;margin-top:5px;"
               )
-              span.input-group-append
-                button.sstyly.border-bottom-0.border.rounded-pill(style="margin-left:-65px;margin-top:5px;")
-                  img(src="/assets/img/main/icon-search.png", alt="검색", width="35px")
-                span.input-group(style="margin-left:40px;margin-top:10px;")
-                  a(href="http://kodex.eventpool.kr/", target="_blank")
-                    img(src="/assets/img/main/btn_silkroads_link.png", alt="링크", width="30px")
-                    span &nbsp; 영어 플랫폼
+                img(src="/assets/img/main/icon-search.png", alt="Search", width="30px")
 
     nav.navbar.navbar-expand-md.main_nav_bar
       .container
@@ -74,15 +93,17 @@ html(lang='en')
           li.nav-item.text-nowrap
             a.nav-link.h5.my-0(href='/') HOME
 
-    block content
+    // ✅ 넉넉한 메인 콘텐츠 영역
+    main.main-content
+      block content
 
+    // ✅ 깔끔한 하단
     footer.footer
       .container
-        .row
-          .row.justify-content-center(style="font-size:15pt")
-            h6.text-white Linked Data Center
+        .row.justify-content-center
+          h6.text-white Linked Data Center
 
-    // ✅ 필수 스크립트 (순서 중요)
+    // ✅ 필수 스크립트
     script(src='https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js')
     script(src='/assets/js/core/jquery-ui.min.js', type='text/javascript')
     script(src='/assets/js/core/popper.min.js', type='text/javascript')
@@ -98,15 +119,10 @@ html(lang='en')
     script(src='/assets/js/custom/searchBox.js', type='text/javascript')
     script(src='/assets/js/custom/commconst.js')
     script(src='/assets/js/custom/menu.js')
-
-    // ✅ Semantic JS
     script(src='https://cdn.jsdelivr.net/npm/semantic-ui@2.5.0/dist/semantic.min.js')
 
-    // ✅ Semantic UI 드롭다운 초기화
     script.
       $(document).ready(function () {
-        console.log("✅ Semantic UI initialized");
-
         $('#teachingAreaDropdown').dropdown({
           allowAdditions: true,
           forceSelection: false,

@@ -83,12 +83,17 @@ router.post('/create-order', async (req, res) => {
   }
 });
 
-// ✅ [POST] Capture Order + Redirect
+// ✅ [POST] Capture Order + Update DB + Session + Redirect
 router.post('/capture-order/:orderID', async (req, res) => {
   try {
     const { orderID } = req.params;
     const { package: adCount } = req.body;
     const accessToken = await getAccessToken();
+
+    // ✅ 로그 추가
+    console.log('💬 Received capture-order request');
+    console.log('📦 req.body =', req.body);
+    console.log('📦 req.body.package =', adCount);
 
     const capture = await axios.post(
       `${PAYPAL_API}/v2/checkout/orders/${orderID}/capture`,
@@ -102,13 +107,18 @@ router.post('/capture-order/:orderID', async (req, res) => {
     );
 
     if (req.session.userId && adCount) {
-      const result = await User.findByIdAndUpdate(req.session.userId, {
-        $inc: { adsAvailable: parseInt(adCount, 10) }
-      });
+      const updatedUser = await User.findByIdAndUpdate(
+        req.session.userId,
+        { $inc: { adsAvailable: parseInt(adCount, 10) } },
+        { new: true }
+      );
 
-      if (result) {
-        console.log(`✅ Updated adsAvailable (+${adCount}) for user:`, req.session.userId);
+      if (updatedUser) {
+        req.session.user.adsAvailable = updatedUser.adsAvailable;
+        console.log(`✅ Updated adsAvailable to ${updatedUser.adsAvailable} for user:`, req.session.userId);
       }
+    } else {
+      console.warn('⚠️ Missing session.userId or adCount');
     }
 
     // ✅ 결제 성공 후 바로 입력창으로 리다이렉트
