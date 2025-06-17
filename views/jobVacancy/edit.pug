@@ -5,102 +5,107 @@ block content
     .row.justify-content-center
       .col-md-10
         .card.shadow
-          .card-header.bg-success.text-white.text-center
-            h4.mb-0 Post a Job Ad (Paid User)
+          .card-header.bg-warning.text-white.text-center
+            h4.mb-0 Edit Job Ad
 
           .card-body
-            form(method="POST", action="/job-vacancies/new_paid_user", onsubmit="return handleCustomFields()")
-              .form-group.mb-3
-                label(for="title") Job Title
-                input.form-control#title(type="text", name="title", required, placeholder="Job Title", 
-                oninput="validateTitle(this)")
-                small.text-danger#title-error(style="display:none") ❌ Emojis or Korean characters are not allowed.
+            if !(jobVacancy && jobVacancy.user && jobVacancy.user._id)
+              p.text-danger ❌ Error: Invalid access. User not found.
+            else
+              form(method="POST", action=`/job-vacancies/${jobVacancy._id}/edit`, onsubmit="return handleCustomFields()")
+                .form-group.mb-3
+                  label(for="title") Job Title
+                  input.form-control#title(type="text", name="title", required, value=jobVacancy.title, oninput="validateTitle(this)")
+                  small.text-danger#title-error(style="display:none") ❌ Emojis or Korean characters are not allowed.
 
-              .form-group.mb-4
-                label(for="description") Job Description
-                textarea.form-control(name="description", id="description", rows="8")
+                .form-group.mb-4
+                  label(for="description") Job Description
+                  textarea.form-control(name="description", id="description", rows="8")= jobVacancy.description
 
-              .form-group.mb-3
-                label(for="country") Host Country
-                select.form-control#countrySelect(name="country", required)
-                  option(disabled selected value='') Select Country
-                  each v in countries
-                    option(value=v)= v
-                small.text-muted.mt-1 You can also add a new country:
-                input.form-control.mt-1(type="text", id="customCountry", placeholder="Or enter a new Country")
+                // ✅ Host Country
+                .form-group.mb-3
+                  label(for="country") Host Country
+                  select.form-control#countrySelect(name="country")
+                    option(disabled selected value='') Select Country
+                    each v in countries
+                      option(value=v selected=(v == jobVacancy.country))= v
+                  small.text-muted.mt-1 You can also add a new country:
+                  input.form-control.mt-1(type="text", id="customCountry", placeholder="Or enter a new Country")
 
-              .form-group.mb-3
-                label(for="studentType") Student Type
-                select.form-control#studentTypeSelect(name="studentType", required)
-                  option(disabled selected value='') Select Student Type
-                  each v in studentTypes
-                    option(value=v)= v
-                small.text-muted.mt-1 You can also add a new student type:
-                input.form-control.mt-1(type="text", id="customStudentType", placeholder="Or enter a new Student Type")
+                // ✅ Student Type
+                .form-group.mb-3
+                  label(for="studentType") Student Type
+                  select.form-control#studentTypeSelect(name="studentType")
+                    option(disabled selected value='') Select Student Type
+                    each v in studentTypes
+                      option(value=v selected=(v == jobVacancy.studentType))= v
+                  small.text-muted.mt-1 You can also add a new student type:
+                  input.form-control.mt-1(type="text", id="customStudentType", placeholder="Or enter a new Student Type")
 
-              .form-group.mb-3
-                label(for="teachingArea") Teaching Area
-                select.form-control#teachingArea(name="teachingArea", required)
-                  option(disabled selected value='') Select Teaching Area
-                  each v in teachingAreas
-                    option(value=v)= v
-                small.text-muted.mt-1 You can also add a new teaching area:
-                input.form-control.mt-1(type="text", id="customTeachingArea", placeholder="Or enter a new Teaching Area")
+                // ✅ Teaching Area
+                .form-group.mb-3
+                  label(for="teachingArea") Teaching Area
+                  select.form-control#teachingArea(name="teachingArea")
+                    option(disabled selected value='') Select Teaching Area
+                    each v in teachingAreas
+                      option(value=v selected=(v == jobVacancy.teachingArea))= v
+                  small.text-muted.mt-1 You can also add a new teaching area:
+                  input.form-control.mt-1(type="text", id="customTeachingArea", placeholder="Or enter a new Teaching Area")
 
-              .form-group.mb-3
-                label(for="duration") Duration
-                input.form-control(type="text", name="duration", id="duration", placeholder="Duration")
+                .form-group.mb-3
+                  label(for="duration") Duration
+                  input.form-control(type="text", name="duration", id="duration", value=jobVacancy.duration)
 
-              .form-group.mb-3
-                label(for="pay") Pay
-                input.form-control(type="text", name="pay", id="pay", placeholder="Pay")
+                .form-group.mb-3
+                  label(for="pay") Pay
+                  input.form-control(type="text", name="pay", id="pay", value=jobVacancy.pay)
 
-              .form-group.mb-3
-                label(for="housing") Housing
-                input.form-control(type="text", name="housing", id="housing", placeholder="Housing")
+                .form-group.mb-3
+                  label(for="housing") Housing
+                  input.form-control(type="text", name="housing", id="housing", value=jobVacancy.housing)
 
-              .form-group.mb-3
-                label(for="email") Email
-                input.form-control(type="email", name="email", id="email", placeholder="Email")
+                .form-group.mb-3
+                  label(for="email") Email
+                  input.form-control(type="email", name="email", id="email", value=jobVacancy.email)
 
-              .form-group.mb-3
-                label(for="companyName") Company Name
-                input.form-control(type="text", name="companyName", id="companyName", placeholder="Company Name")
+                .form-group.mb-3
+                  label(for="companyName") Company Name
+                  input.form-control(type="text", name="companyName", id="companyName", value=jobVacancy.companyName)
 
-              .form-group.mb-3
-                label(for="jobLocation") Job Location
-                input.form-control(type="text", name="jobLocation", id="jobLocation", placeholder="Job Location")
+                .form-group.mb-3
+                  label(for="jobLocation") Job Location
+                  input.form-control(type="text", name="jobLocation", id="jobLocation", value=jobVacancy.jobLocation)
 
-              .form-group.mb-3
-                label(for="cellphoneNumber") Cellphone Number
-                input.form-control(type="text", name="cellphoneNumber", id="cellphoneNumber", placeholder="Cellphone Number")
+                .form-group.mb-3
+                  label(for="cellphoneNumber") Cellphone Number
+                  input.form-control(type="text", name="cellphoneNumber", id="cellphoneNumber", value=jobVacancy.cellphoneNumber)
 
-              .form-group.mb-3
-                label(for="skypeId") Skype ID
-                input.form-control(type="text", name="skypeId", id="skypeId", placeholder="Skype ID")
+                .form-group.mb-3
+                  label(for="skypeId") Skype ID
+                  input.form-control(type="text", name="skypeId", id="skypeId", value=jobVacancy.skypeId)
 
-              .form-group.mb-3
-                label(for="wechatId") WeChat ID
-                input.form-control(type="text", name="wechatId", id="wechatId", placeholder="WeChat ID")
+                .form-group.mb-3
+                  label(for="wechatId") WeChat ID
+                  input.form-control(type="text", name="wechatId", id="wechatId", value=jobVacancy.wechatId)
 
-              .form-group.mb-3
-                label(for="homepage") Homepage
-                input.form-control(type="text", name="homepage", id="homepage", placeholder="Homepage")
+                .form-group.mb-3
+                  label(for="homepage") Homepage
+                  input.form-control(type="text", name="homepage", id="homepage", value=jobVacancy.homepage)
 
-              .form-group.mb-3
-                label(for="datePosted") Date Posted
-                input.form-control(type="date", name="datePosted", id="datePosted")
+                .form-group.mb-3
+                  label(for="datePosted") Date Posted
+                  input.form-control(type="date", name="datePosted", id="datePosted", value=datePostedFormatted)
 
-              .form-group
-                label.mb-2 Add Resume Access?
-                .form-check.form-check-inline
-                  input.form-check-input(type="radio", name="resumeAccess", id="resumeYes", value="yes", checked)
-                  label.form-check-label(for="resumeYes") Yes
-                .form-check.form-check-inline
-                  input.form-check-input(type="radio", name="resumeAccess", id="resumeNo", value="no")
-                  label.form-check-label(for="resumeNo") No
+                .form-group.mb-3
+                  label.mb-2 Add Resume Access?
+                  .form-check.form-check-inline
+                    input.form-check-input(type="radio", name="addResumeAccess", id="resumeYes", value="yes", checked=jobVacancy.addResumeAccess)
+                    label.form-check-label(for="resumeYes") Yes
+                  .form-check.form-check-inline
+                    input.form-check-input(type="radio", name="addResumeAccess", id="resumeNo", value="no", checked=!jobVacancy.addResumeAccess)
+                    label.form-check-label(for="resumeNo") No
 
-              button.btn.btn-success.btn-block.mt-4(type="submit") Submit
+                button.btn.btn-warning.btn-block.mt-4(type="submit") Update
 
 block append_js
   script(src="https://cdn.ckeditor.com/ckeditor5/41.0.0/classic/ckeditor.js")
@@ -129,13 +134,17 @@ block append_js
       const customStudent = document.getElementById('customStudentType')?.value.trim();
       const customTeaching = document.getElementById('customTeachingArea')?.value.trim();
 
+      const countrySelect = document.getElementById('countrySelect');
+      const studentTypeSelect = document.getElementById('studentTypeSelect');
+      const teachingSelect = document.getElementById('teachingArea');
+
       if (customCountry) {
         const input = document.createElement('input');
         input.type = 'hidden';
         input.name = 'country';
         input.value = customCountry;
         form.appendChild(input);
-        document.getElementById('countrySelect').disabled = true;
+        if (countrySelect) countrySelect.disabled = true;
       }
 
       if (customStudent) {
@@ -144,7 +153,7 @@ block append_js
         input.name = 'studentType';
         input.value = customStudent;
         form.appendChild(input);
-        document.getElementById('studentTypeSelect').disabled = true;
+        if (studentTypeSelect) studentTypeSelect.disabled = true;
       }
 
       if (customTeaching) {
@@ -153,7 +162,7 @@ block append_js
         input.name = 'teachingArea';
         input.value = customTeaching;
         form.appendChild(input);
-        document.getElementById('teachingArea').disabled = true;
+        if (teachingSelect) teachingSelect.disabled = true;
       }
 
       return true;

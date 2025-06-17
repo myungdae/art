@@ -165,7 +165,7 @@ router.get('/:id/edit', requireLogin, async (req, res) => {
   }
 });
 
-// ✅ 광고 수정 처리
+// ✅ 광고 수정 처리 (POST 방식)
 router.post('/:id/edit', requireLogin, async (req, res) => {
   try {
     const jobVacancy = await JobVacancy.findById(req.params.id).populate('user');
@@ -205,12 +205,62 @@ router.post('/:id/edit', requireLogin, async (req, res) => {
     jobVacancy.homepage = rest.homepage || '';
     jobVacancy.datePosted = rest.datePosted ? new Date(rest.datePosted) : null;
     jobVacancy.adPackage = rest.adPackage || '';
-    jobVacancy.addResumeAccess = rest.addResumeAccess === 'yes';
+    jobVacancy.addResumeAccess = rest.resumeAccess === 'yes';
 
     await jobVacancy.save();
     res.redirect('/user/mypage');
   } catch (err) {
     console.error('[ERROR - POST /:id/edit]:', err);
+    res.status(500).send('❌ Failed to update job');
+  }
+});
+
+// ✅ 광고 수정 처리 (PUT 방식 for method-override)
+router.put('/:id', requireLogin, async (req, res) => {
+  try {
+    const jobVacancy = await JobVacancy.findById(req.params.id).populate('user');
+    if (!jobVacancy) return res.status(404).send('❌ Job not found');
+    if (!jobVacancy.user || !jobVacancy.user._id.equals(req.user._id)) {
+      return res.status(403).send('❌ Unauthorized');
+    }
+
+    const { title, description, ...rest } = req.body;
+    const cleanTitle = (title || '').trim();
+
+    if (!cleanTitle) return res.status(400).send('❌ Title is required');
+    if (/[😀-🙏]/u.test(cleanTitle)) {
+      return res.status(400).send('❌ Title cannot include emojis');
+    }
+
+    const existing = await JobVacancy.findOne({
+      _id: { $ne: jobVacancy._id },
+      title: new RegExp(`^${escapeRegex(cleanTitle)}$`, 'i')
+    });
+    if (existing) return res.status(400).send('❌ Duplicate title exists');
+
+    jobVacancy.title = cleanTitle;
+    jobVacancy.description = sanitizeHtml(description || '', htmlSanitizeOptions);
+    jobVacancy.country = rest.country || '';
+    jobVacancy.studentType = rest.studentType || '';
+    jobVacancy.teachingArea = rest.teachingArea || '';
+    jobVacancy.duration = rest.duration || '';
+    jobVacancy.pay = rest.pay || '';
+    jobVacancy.housing = rest.housing || '';
+    jobVacancy.email = rest.email || '';
+    jobVacancy.companyName = rest.companyName || '';
+    jobVacancy.jobLocation = rest.jobLocation || '';
+    jobVacancy.cellphoneNumber = rest.cellphoneNumber || '';
+    jobVacancy.skypeId = rest.skypeId || '';
+    jobVacancy.wechatId = rest.wechatId || '';
+    jobVacancy.homepage = rest.homepage || '';
+    jobVacancy.datePosted = rest.datePosted ? new Date(rest.datePosted) : null;
+    jobVacancy.adPackage = rest.adPackage || '';
+    jobVacancy.addResumeAccess = rest.resumeAccess === 'yes';
+
+    await jobVacancy.save();
+    res.redirect('/user/mypage');
+  } catch (err) {
+    console.error('[ERROR - PUT /:id]:', err);
     res.status(500).send('❌ Failed to update job');
   }
 });
