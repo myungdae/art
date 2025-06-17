@@ -1,95 +1,127 @@
 extends ../layout
 
-block append_on_header
-  script(src="/vendor/ckeditor/ckeditor.js")
-
 block content
   .container.mt-5
     .row.justify-content-center
-      .col-md-8
-        .card.shadow-lg
-          .card-header.bg-success.text-white
-            h4.mb-0 New Job Seeker
+      .col-md-10
+        .card.shadow
+          .card-header.bg-primary.text-white.text-center
+            h4.mb-0 Register as Job Seeker
 
-          .card-body.bg-dark.text-light
-            form(method="POST", action="/job-seekers/new")
+          .card-body
+            form(method="POST", action="/job-seekers", onsubmit="return handleCustomFields()")
               
-              .form-floating.mb-3
-                input.form-control#jobTitle(
-                  type="text", 
-                  name="jobTitle", 
-                  required, 
-                  placeholder="Job Title"
-                )
-                label(for="jobTitle") Job Title
+              .form-group.mb-3
+                label(for="name") Name
+                input.form-control(type="text", name="name", id="name", required)
 
-              .mb-4
-                label.text-white.mb-2 Job Description
-                textarea.form-control(
-                  name="description", 
-                  id="description", 
-                  rows="8"
-                )
+              .form-group.mb-3
+                label(for="jobTitle") Resume Summary
+                input.form-control#jobTitle(type="text", name="jobTitle", placeholder="e.g., English Teaching Support", oninput="validateTitle(this)")
+                small.text-danger#title-error(style="display:none") ❌ Emojis or Korean characters are not allowed.
 
-              .form-floating.mb-3
-                input.form-control#name(
-                  type="text", 
-                  name="name", 
-                  required, 
-                  placeholder="Your Name"
-                )
-                label(for="name") Your Name
+              .form-group.mb-4
+                label(for="description") Introduction
+                textarea.form-control(name="description", id="description", rows="8")
 
-              .form-floating.mb-3
-                input.form-control#email(
-                  type="email", 
-                  name="email", 
-                  placeholder="Email"
-                )
+              .form-group.mb-3
                 label(for="email") Email
+                input.form-control(type="email", name="email", id="email")
 
-              .form-floating.mb-3
-                input.form-control#nationality(
-                  type="text", 
-                  name="nationality", 
-                  placeholder="Nationality"
-                )
+              .form-group.mb-3
                 label(for="nationality") Nationality
+                select.form-control#nationalitySelect(name="nationality", required)
+                  option(disabled selected value='') Select Nationality
+                  each v in countries
+                    option(value=v)= v
+                small.text-muted.mt-1 You can also add a new nationality:
+                input.form-control.mt-1(type="text", id="customNationality", placeholder="Or enter a new nationality")
 
-              .form-floating.mb-3
-                input.form-control#preferredWorkLocation(
-                  type="text", 
-                  name="preferredWorkLocation", 
-                  placeholder="Preferred Work Location"
-                )
+              .form-group.mb-3
                 label(for="preferredWorkLocation") Preferred Work Location
+                select.form-control#locationSelect(name="preferredWorkLocation")
+                  option(disabled selected value='') Select Location
+                  each v in locations
+                    option(value=v)= v
+                small.text-muted.mt-1 You can also add a new location:
+                input.form-control.mt-1(type="text", id="customLocation", placeholder="Or enter a new location")
 
-              .form-floating.mb-3
-                input.form-control#major(
-                  type="text", 
-                  name="major", 
-                  placeholder="Major"
-                )
+              .form-group.mb-3
                 label(for="major") Major
+                select.form-control#majorSelect(name="major")
+                  option(disabled selected value='') Select Major
+                  each v in majors
+                    option(value=v)= v
+                small.text-muted.mt-1 You can also add a new major:
+                input.form-control.mt-1(type="text", id="customMajor", placeholder="Or enter a new major")
 
-              .form-floating.mb-3
-                input.form-control#languageSpoken(
-                  type="text", 
-                  name="languageSpoken", 
-                  placeholder="Languages Spoken"
-                )
+              .form-group.mb-3
                 label(for="languageSpoken") Languages Spoken
+                input.form-control(type="text", name="languageSpoken", id="languageSpoken")
 
-              .form-floating.mb-3
-                input.form-control#availableFrom(
-                  type="date", 
-                  name="availableFrom", 
-                  placeholder="Available From"
-                )
+              .form-group.mb-3
+                label(for="educationBackground") Education Background
+                input.form-control(type="text", name="educationBackground", id="educationBackground")
+
+              .form-group.mb-3
                 label(for="availableFrom") Available From
+                input.form-control(type="date", name="availableFrom", id="availableFrom")
 
-              button.btn.btn-success.btn-block.mt-4(type="submit") Submit
+              button.btn.btn-primary.btn-block.mt-4(type="submit") Submit
 
 block append_js
+  script(src="https://cdn.ckeditor.com/ckeditor5/41.0.0/classic/ckeditor.js")
   script.
-    CKEDITOR.replace('description');
+    ClassicEditor
+      .create(document.querySelector('#description'))
+      .catch(error => console.error(error));
+
+    function validateTitle(input) {
+      const emojiRegex = /[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu;
+      const koreanRegex = /[\u3131-\uD79D]/;
+      const errorElem = document.getElementById('title-error');
+      if (emojiRegex.test(input.value) || koreanRegex.test(input.value)) {
+        errorElem.style.display = 'block';
+        input.classList.add('is-invalid');
+      } else {
+        errorElem.style.display = 'none';
+        input.classList.remove('is-invalid');
+      }
+    }
+
+    function handleCustomFields() {
+      const form = document.querySelector('form');
+
+      const customNationality = document.getElementById('customNationality')?.value.trim();
+      const customLocation = document.getElementById('customLocation')?.value.trim();
+      const customMajor = document.getElementById('customMajor')?.value.trim();
+
+      if (customNationality) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'nationality';
+        input.value = customNationality;
+        form.appendChild(input);
+        document.getElementById('nationalitySelect').disabled = true;
+      }
+
+      if (customLocation) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'preferredWorkLocation';
+        input.value = customLocation;
+        form.appendChild(input);
+        document.getElementById('locationSelect').disabled = true;
+      }
+
+      if (customMajor) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'major';
+        input.value = customMajor;
+        form.appendChild(input);
+        document.getElementById('majorSelect').disabled = true;
+      }
+
+      return true;
+    }

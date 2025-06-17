@@ -13,7 +13,13 @@ router.get('/register', (req, res) => {
 
 // ✅ 회원가입 처리 + 자동 로그인
 router.post('/register', async (req, res) => {
-  const { username, email, password, role } = req.body;
+  let { username, email, password, role } = req.body;
+
+  // ✅ role 보정: JobSeeker → Job_Seeker (schema enum 일치)
+  if (role === 'JobSeeker' || role === 'Job Seeker') {
+    role = 'Job_Seeker';
+  }
+
   try {
     const existingUser = await User.findOne({ email });
     if (existingUser) return res.status(409).send('This email is already registered.');
@@ -24,7 +30,7 @@ router.post('/register', async (req, res) => {
     console.log('✅ Registration successful:', newUser);
 
     req.session.user = {
-      id: newUser._id,
+      _id: newUser._id, // ✅ 반드시 _id로 저장해야 /resume-access 등에서 작동함
       username: newUser.username,
       email: newUser.email,
       role: newUser.role
@@ -58,7 +64,7 @@ router.post('/login', async (req, res) => {
     }
 
     req.session.user = {
-      id: user._id,
+      _id: user._id, // ✅ 여기서도 반드시 _id로 저장
       username: user.username,
       email: user.email,
       role: user.role
@@ -72,21 +78,19 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// ✅ 마이페이지 (adsAvailable을 항상 최신 DB값으로 반영)
+// ✅ 마이페이지
 router.get('/mypage', requireLogin, async (req, res) => {
   try {
     const ObjectId = mongoose.Types.ObjectId;
-    const userId = ObjectId.isValid(req.session.user.id)
-      ? new ObjectId(req.session.user.id)
-      : req.session.user.id;
+    const userId = ObjectId.isValid(req.session.user._id)
+      ? new ObjectId(req.session.user._id)
+      : req.session.user._id;
 
-    // ✅ 세션이 아니라 실제 DB에서 최신 사용자 정보 가져오기
     const fullUser = await User.findById(userId).lean();
-
     const jobVacancies = await JobVacancy.find({ user: userId }).lean();
 
     res.render('user/mypage', {
-      user: fullUser,       // ✅ 최신 adsAvailable 반영
+      user: fullUser,
       jobVacancies
     });
   } catch (err) {

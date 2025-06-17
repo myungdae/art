@@ -1,0 +1,15 @@
+extends ../layout
+
+block content
+  .container.mt-5
+    h3.text-center.mb-4 Select Resume Access Plan
+
+    .row
+      each option in resumeOptions
+        .col-md-4
+          .card.shadow.mb-4
+            .card-body
+              h5.text-primary= option.label
+              p.text-muted $#{option.price}
+              a.btn.btn-success(href=`/resume-access/pay/${option.id}`) Purchase
+

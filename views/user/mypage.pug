@@ -21,51 +21,59 @@ block content
 
       hr
 
-      h3.mb-3(style="font-size: 1.5rem;") My Job Ads
-      if jobVacancies && jobVacancies.length > 0
-        table.table.table-bordered.table-hover(style="font-size: 1.05rem;")
-          thead
-            tr
-              th Title
-              th Country
-              th Date Posted
-              th.text-center Actions
-          tbody
-            each vacancy in jobVacancies
+      if user.role === 'Employer'
+        h3.mb-3(style="font-size: 1.5rem;") My Job Ads
+        if jobVacancies && jobVacancies.length > 0
+          table.table.table-bordered.table-hover(style="font-size: 1.05rem;")
+            thead
               tr
-                td #{vacancy.title}
-                td #{vacancy.country}
-                td
-                  - let dateStr = 'N/A';
-                  - if (vacancy.datePosted) {
-                  -   dateStr = new Date(vacancy.datePosted).toISOString().substring(0, 10);
-                  - } else if (vacancy.createdAt) {
-                  -   dateStr = new Date(vacancy.createdAt).toISOString().substring(0, 10);
-                  - }
-                  = dateStr
-                td.text-center
-                  a.btn.btn-outline-dark.btn-sm.me-1(href='/job-vacancies/' + vacancy._id) View
-                  a.btn.btn-outline-dark.btn-sm.me-1(href='/job-vacancies/' + vacancy._id + '/edit') Edit
-                  form.d-inline(method="POST", action='/job-vacancies/' + vacancy._id + '?_method=DELETE')
-                    button.btn.btn-sm.btn-danger(type="submit" style="color: white;" onclick="return confirm('Are you sure you want to delete this ad?')") Delete
-      else
-        p.text-muted.mt-2 You haven’t posted any job vacancies yet. Post your first one below.
+                th Title
+                th Country
+                th Date Posted
+                th.text-center Actions
+            tbody
+              each vacancy in jobVacancies
+                tr
+                  td #{vacancy.title}
+                  td #{vacancy.country}
+                  td
+                    - let dateStr = 'N/A';
+                    - if (vacancy.datePosted) {
+                    -   dateStr = new Date(vacancy.datePosted).toISOString().substring(0, 10);
+                    - } else if (vacancy.createdAt) {
+                    -   dateStr = new Date(vacancy.createdAt).toISOString().substring(0, 10);
+                    - }
+                    = dateStr
+                  td.text-center
+                    a.btn.btn-outline-dark.btn-sm.me-1(href='/job-vacancies/' + vacancy._id) View
+                    a.btn.btn-outline-dark.btn-sm.me-1(href='/job-vacancies/' + vacancy._id + '/edit') Edit
+                    form.d-inline(method="POST", action='/job-vacancies/' + vacancy._id + '?_method=DELETE')
+                      button.btn.btn-sm.btn-danger(type="submit" style="color: white;" onclick="return confirm('Are you sure you want to delete this ad?')") Delete
+        else
+          p.text-muted.mt-2 You haven’t posted any job vacancies yet. Post your first one below.
 
-      hr
+        hr
 
-      // ✅ Post a New Job
-      h3.mt-4(style="font-size: 1.5rem;") Post a New Job
+        h3.mt-4(style="font-size: 1.5rem;") Post a New Job
+        if user.adsAvailable > 0
+          a.btn.btn-danger.btn-lg.mt-3.text-white(
+            href='/job-vacancies/new_paid_user',
+            style='padding: 14px 28px; font-size: 1.1rem; font-weight: bold;'
+          ) ➕ Post Job (Paid User)
+        else
+          a.btn.btn-warning.btn-lg.mt-3.text-dark(
+            href='/paypal/checkout',
+            style='padding: 14px 28px; font-size: 1.1rem; font-weight: bold;'
+          ) 💳 Buy Ad & Post Job
 
-      if user.adsAvailable > 0
-        a.btn.btn-danger.btn-lg.mt-3.text-white(
-          href='/job-vacancies/new_paid_user',
-          style='padding: 14px 28px; font-size: 1.1rem; font-weight: bold;'
-        ) ➕ Post Job (Paid User)
-      else
-        a.btn.btn-warning.btn-lg.mt-3.text-dark(
-          href='/paypal/checkout',
-          style='padding: 14px 28px; font-size: 1.1rem; font-weight: bold;'
-        ) 💳 Buy Ad & Post Job
+      else if user.role === 'Job_Seeker'
+        h3.text-center.mt-5 Resume Access
+        p.text-center.text-muted.mt-2 Gain visibility and connect with recruiters worldwide.
+        .d-flex.justify-content-center.mt-4
+          a.btn.btn-success.btn-lg(
+            href='/resume-access',
+            style='padding: 14px 28px; font-size: 1.1rem; font-weight: bold;'
+          ) 🧾 Purchase Resume Access
 
     else
       p.text-danger You must be logged in to view this page.

@@ -1,0 +1,46 @@
+extends ../layout
+
+block content
+  .container.mt-5
+    .row.justify-content-center
+      .col-md-8
+        .card.shadow
+          .card-header.bg-dark.text-white.text-center
+            h4.mb-0 Resume
+
+          .card-body
+            h3.text-primary.text-center.mb-2= jobSeeker.name || 'Unnamed'
+            if jobSeeker.jobTitle
+              h5.text-muted.text-center.mb-4= jobSeeker.jobTitle
+
+            if jobSeeker.description
+              .mb-4
+                h6.text-secondary Self Introduction
+                .border.p-3(style="background-color:#f9f9f9") !{jobSeeker.description}
+
+            hr
+
+            dl.row
+              dt.col-sm-4 Nationality
+              dd.col-sm-8= jobSeeker.nationality || '-'
+
+              dt.col-sm-4 Language(s)
+              dd.col-sm-8= jobSeeker.languageSpoken || '-'
+
+              dt.col-sm-4 Preferred Work Location
+              dd.col-sm-8= jobSeeker.preferredWorkLocation || '-'
+
+              dt.col-sm-4 Major
+              dd.col-sm-8= jobSeeker.major || '-'
+
+              dt.col-sm-4 Education Background
+              dd.col-sm-8= jobSeeker.educationBackground || '-'
+
+              dt.col-sm-4 Available From
+              dd.col-sm-8= jobSeeker.availableFrom ? jobSeeker.availableFrom.toISOString().slice(0, 10) : '-'
+
+              dt.col-sm-4 Email
+              dd.col-sm-8= jobSeeker.email || '-'
+
+    .text-center.mt-4
+      a.btn.btn-outline-secondary(href="/job-seekers") ← Back to List

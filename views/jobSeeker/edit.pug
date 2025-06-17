@@ -1,103 +1,126 @@
 extends ../layout
 
-block append_on_header
-  script(src="/vendor/ckeditor/ckeditor.js")
-
 block content
   .container.mt-5
     .row.justify-content-center
-      .col-md-8
-        .card.shadow-lg
-          .card-header.bg-warning.text-dark
-            h4.mb-0 Edit Job Seeker
+      .col-md-10
+        .card.shadow
+          .card-header.bg-info.text-white.text-center
+            h4.mb-0 Edit Resume
 
-          .card-body.bg-dark.text-light
-            form(method="POST", action=`/job-seekers/${seeker._id}/edit`)
-              
-              .form-floating.mb-3
-                input.form-control#jobTitle(
-                  type="text", 
-                  name="jobTitle", 
-                  required, 
-                  value=seeker.jobTitle || '', 
-                  placeholder="Job Title"
-                )
+          .card-body
+            form(method="POST", action="/job-seekers/" + jobSeeker._id + "?_method=PUT", onsubmit="return handleCustomFields()")
+
+              .form-group.mb-3
+                label(for="name") Name
+                input.form-control(type="text", name="name", id="name", required, value=jobSeeker.name)
+
+              .form-group.mb-3
                 label(for="jobTitle") Job Title
+                input.form-control#jobTitle(type="text", name="jobTitle", required, value=jobSeeker.jobTitle, oninput="validateJobTitle(this)")
+                small.text-danger#title-error(style="display:none") ❌ Emojis or Korean characters are not allowed.
 
-              .mb-4
-                label.text-white.mb-2 Job Description
-                textarea.form-control(
-                  name="description", 
-                  id="description", 
-                  rows="8"
-                )= seeker.description || ''
+              .form-group.mb-4
+                label(for="description") Self Introduction
+                textarea.form-control(name="description", id="description", rows="8")= jobSeeker.description
 
-              .form-floating.mb-3
-                input.form-control#name(
-                  type="text", 
-                  name="name", 
-                  required, 
-                  value=seeker.name || '', 
-                  placeholder="Your Name"
-                )
-                label(for="name") Your Name
-
-              .form-floating.mb-3
-                input.form-control#email(
-                  type="email", 
-                  name="email", 
-                  value=seeker.email || '', 
-                  placeholder="Email"
-                )
-                label(for="email") Email
-
-              .form-floating.mb-3
-                input.form-control#nationality(
-                  type="text", 
-                  name="nationality", 
-                  value=seeker.nationality || '', 
-                  placeholder="Nationality"
-                )
+              .form-group.mb-3
                 label(for="nationality") Nationality
+                select.form-control#nationalitySelect(name="nationality")
+                  option(disabled value='') Select Nationality
+                  each v in nationalities
+                    option(value=v selected=(v === jobSeeker.nationality))= v
+                small.text-muted.mt-1 You can also add a new nationality:
+                input.form-control.mt-1(type="text", id="customNationality", placeholder="Or enter a new Nationality")
 
-              .form-floating.mb-3
-                input.form-control#preferredWorkLocation(
-                  type="text", 
-                  name="preferredWorkLocation", 
-                  value=seeker.preferredWorkLocation || '', 
-                  placeholder="Preferred Work Location"
-                )
+              .form-group.mb-3
                 label(for="preferredWorkLocation") Preferred Work Location
+                select.form-control#locationSelect(name="preferredWorkLocation")
+                  option(disabled value='') Select Location
+                  each v in locations
+                    option(value=v selected=(v === jobSeeker.preferredWorkLocation))= v
+                small.text-muted.mt-1 You can also add a new location:
+                input.form-control.mt-1(type="text", id="customLocation", placeholder="Or enter a new Location")
 
-              .form-floating.mb-3
-                input.form-control#major(
-                  type="text", 
-                  name="major", 
-                  value=seeker.major || '', 
-                  placeholder="Major"
-                )
+              .form-group.mb-3
                 label(for="major") Major
+                select.form-control#majorSelect(name="major")
+                  option(disabled value='') Select Major
+                  each v in majors
+                    option(value=v selected=(v === jobSeeker.major))= v
+                small.text-muted.mt-1 You can also add a new major:
+                input.form-control.mt-1(type="text", id="customMajor", placeholder="Or enter a new Major")
 
-              .form-floating.mb-3
-                input.form-control#languageSpoken(
-                  type="text", 
-                  name="languageSpoken", 
-                  value=seeker.languageSpoken || '', 
-                  placeholder="Languages Spoken"
-                )
-                label(for="languageSpoken") Languages Spoken
+              .form-group.mb-3
+                label(for="languageSpoken") Language(s) Spoken
+                input.form-control(type="text", name="languageSpoken", value=jobSeeker.languageSpoken)
 
-              .form-floating.mb-3
-                input.form-control#availableFrom(
-                  type="date", 
-                  name="availableFrom", 
-                  value=seeker.availableFrom ? seeker.availableFrom.toISOString().substring(0, 10) : '', 
-                  placeholder="Available From"
-                )
+              .form-group.mb-3
+                label(for="educationBackground") Education Background
+                input.form-control(type="text", name="educationBackground", value=jobSeeker.educationBackground)
+
+              .form-group.mb-3
                 label(for="availableFrom") Available From
+                input.form-control(type="date", name="availableFrom", value=availableFormatted)
 
-              button.btn.btn-warning.btn-block.mt-4(type="submit") Update
+              .form-group.mb-3
+                label(for="email") Email
+                input.form-control(type="email", name="email", value=jobSeeker.email)
+
+              button.btn.btn-info.btn-block.mt-4(type="submit") Update Resume
 
 block append_js
+  script(src="https://cdn.ckeditor.com/ckeditor5/41.0.0/classic/ckeditor.js")
   script.
-    CKEDITOR.replace('description');
+    ClassicEditor
+      .create(document.querySelector('#description'))
+      .catch(error => console.error(error));
+
+    function validateJobTitle(input) {
+      const emojiRegex = /[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu;
+      const koreanRegex = /[\u3131-\uD79D]/;
+      const errorElem = document.getElementById('title-error');
+      if (emojiRegex.test(input.value) || koreanRegex.test(input.value)) {
+        errorElem.style.display = 'block';
+        input.classList.add('is-invalid');
+      } else {
+        errorElem.style.display = 'none';
+        input.classList.remove('is-invalid');
+      }
+    }
+
+    function handleCustomFields() {
+      const form = document.querySelector('form');
+
+      const customNationality = document.getElementById('customNationality')?.value.trim();
+      const customLocation = document.getElementById('customLocation')?.value.trim();
+      const customMajor = document.getElementById('customMajor')?.value.trim();
+
+      if (customNationality) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'nationality';
+        input.value = customNationality;
+        form.appendChild(input);
+        document.getElementById('nationalitySelect').disabled = true;
+      }
+
+      if (customLocation) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'preferredWorkLocation';
+        input.value = customLocation;
+        form.appendChild(input);
+        document.getElementById('locationSelect').disabled = true;
+      }
+
+      if (customMajor) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'major';
+        input.value = customMajor;
+        form.appendChild(input);
+        document.getElementById('majorSelect').disabled = true;
+      }
+
+      return true;

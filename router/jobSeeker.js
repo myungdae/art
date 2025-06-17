@@ -1,115 +1,110 @@
 const express = require('express');
 const router = express.Router();
 const JobSeeker = require('../model/jobSeeker');
+const sanitizeHtml = require('sanitize-html');
 
-console.log('✅ JobSeeker router loaded');
+// ✅ 공통 필드 추출 함수
+async function getDistinctFields() {
+  const [countries, majors, locations] = await Promise.all([
+    JobSeeker.distinct('nationality'),
+    JobSeeker.distinct('major'),
+    JobSeeker.distinct('preferredWorkLocation')
+  ]);
+  return { countries, majors, locations };
+}
 
-// GET: Create Form
-router.get('/new', (req, res) => {
-  res.render('jobSeeker/new');
-});
-
-// POST: Submit Form
-router.post('/new', async (req, res) => {
-  try {
-    const {
-      jobTitle,
-      description,
-      name,
-      email,
-      nationality,
-      preferredWorkLocation,
-      major,
-      languageSpoken,
-      availableFrom
-    } = req.body;
-
-    const seeker = new JobSeeker({
-      jobTitle,
-      description,
-      name,
-      email,
-      nationality,
-      preferredWorkLocation,
-      major,
-      languageSpoken,
-      availableFrom
-    });
-
-    await seeker.save();
-    console.log('✅ Job Seeker created:', seeker._id);
-    res.redirect('/job-seekers');
-  } catch (err) {
-    console.error('❌ Error saving Job Seeker:', err);
-    res.status(500).send('Internal server error');
-  }
-});
-
-// GET: Resume Access 선택 폼
-router.get('/resumeAccess', (req, res) => {
-  res.render('jobSeeker/resumeAccess');
-});
-
-// POST: Resume Access 처리
-router.post('/resumeAccess', (req, res) => {
-  const { accessPeriod } = req.body;
-
-  let price = '';
-  switch (accessPeriod) {
-    case '30': price = '$75'; break;
-    case '90': price = '$200'; break;
-    case '365': price = '$550'; break;
-    default: price = 'unknown';
-  }
-
-  res.send(`You selected ${accessPeriod} days access. Payment of ${price} will be processed.`);
-});
-
-// 목록 라우트
+// ✅ 목록
 router.get('/', async (req, res) => {
   try {
-    const seekers = await JobSeeker.find().sort({ availableFrom: 1 });
+    const seekers = await JobSeeker.find().sort({ createdAt: -1 });
     res.render('jobSeeker/index', { seekers });
   } catch (err) {
-    console.error('❌ 목록 불러오기 실패:', err);
-    res.status(500).send('Server Error');
+    console.error(err);
+    res.status(500).send('Error fetching job seekers');
   }
 });
 
-// GET: Edit Form
+// ✅ 새 이력서 폼
+router.get('/new', async (req, res) => {
+  try {
+    const { countries, majors, locations } = await getDistinctFields();
+    res.render('jobSeeker/new', { countries, majors, locations });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error loading form');
+  }
+});
+
+// ✅ 새 이력서 저장
+router.post('/', async (req, res) => {
+  try {
+    const data = {
+      name: req.body.name,
+      jobTitle: sanitizeHtml(req.body.jobTitle || ''),
+      description: sanitizeHtml(req.body.description || '', { allowedTags: [], allowedAttributes: {} }),
+      email: req.body.email,
+      nationality: req.body.nationality,
+      preferredWorkLocation: req.body.preferredWorkLocation,
+      major: req.body.major,
+      languageSpoken: req.body.languageSpoken,
+      educationBackground: req.body.educationBackground,
+      availableFrom: req.body.availableFrom
+    };
+    const newSeeker = new JobSeeker(data);
+    await newSeeker.save();
+    res.redirect('/job-seekers');
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error saving job seeker');
+  }
+});
+
+// ✅ 수정 폼
 router.get('/:id/edit', async (req, res) => {
-  const seeker = await JobSeeker.findById(req.params.id);
-  if (!seeker) return res.status(404).send('Not Found');
-  res.render('jobSeeker/edit', { seeker });
+  try {
+    const seeker = await JobSeeker.findById(req.params.id);
+    if (!seeker) return res.status(404).send('Job Seeker not found');
+
+    const { countries, majors, locations } = await getDistinctFields();
+    res.render('jobSeeker/edit', { jobSeeker: seeker, countries, majors, locations });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error loading edit form');
+  }
 });
 
-// POST: Submit Edits
-router.post('/:id/edit', async (req, res) => {
-  const { jobTitle, description, name, email, nationality, preferredWorkLocation, major, languageSpoken, availableFrom } = req.body;
+// ✅ 수정 처리
+router.put('/:id', async (req, res) => {
+  try {
+    const seeker = await JobSeeker.findById(req.params.id);
+    if (!seeker) return res.status(404).send('Job Seeker not found');
 
-  await JobSeeker.findByIdAndUpdate(req.params.id, {
-    jobTitle,
-    description,
-    name,
-    email,
-    nationality,
-    preferredWorkLocation,
-    major,
-    languageSpoken,
-    availableFrom,
-  });
+    seeker.name = req.body.name;
+    seeker.jobTitle = sanitizeHtml(req.body.jobTitle || '');
+    seeker.description = sanitizeHtml(req.body.description || '', { allowedTags: [], allowedAttributes: {} });
+    seeker.email = req.body.email;
+    seeker.nationality = req.body.nationality;
+    seeker.preferredWorkLocation = req.body.preferredWorkLocation;
+    seeker.major = req.body.major;
+    seeker.languageSpoken = req.body.languageSpoken;
+    seeker.educationBackground = req.body.educationBackground;
+    seeker.availableFrom = req.body.availableFrom;
 
-  res.redirect('/job-seekers');
+    await seeker.save();
+    res.redirect('/job-seekers');
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error updating job seeker');
+  }
 });
 
-// GET: Delete Job Seeker
+// ✅ 삭제
 router.get('/:id/delete', async (req, res) => {
   try {
     await JobSeeker.findByIdAndDelete(req.params.id);
-    console.log(`✅ Deleted Job Seeker: ${req.params.id}`);
     res.redirect('/job-seekers');
   } catch (err) {
-    console.error('❌ Error deleting job seeker:', err);
+    console.error(err);
     res.status(500).send('Error deleting job seeker');
   }
 });

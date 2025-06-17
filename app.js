@@ -6,6 +6,7 @@ const flash = require('connect-flash');
 require('dotenv').config();
 const userRoutes = require('./router/user');
 const methodOverride = require('method-override');
+const resumeAccessRouter = require('./router/resumeAccess');
 
 
 
@@ -60,6 +61,7 @@ app.use('/pages', require('./router/index'));
 app.use('/job-seekers', jobSeekerRouter);
 app.use('/paypal', paypalRoutes);
 app.use('/job-vacancies', jobVacancyRouter); // 반드시 이 위치
+app.use('/resume-access', resumeAccessRouter);
 app.use('/online-tutors', require('./router/onlineTutor'));
 app.use('/', require('./router/public'));
 app.use('/', userRoutes);
