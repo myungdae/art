@@ -13,13 +13,11 @@ const onlineTutorSchema = new mongoose.Schema({
     required: true,
   },
   expertise: {
-    type: [String],
-    enum: ['Grammar', 'Conversation', 'ExamPrep', 'BusinessEnglish'],
+    type: [String],           // ✅ enum 제거됨 → 자유 입력 가능
     required: true,
   },
   tutoringExperience: {
-    type: String,
-    enum: ['Beginner', 'Intermediate', 'Advanced'],
+    type: String,             // ✅ enum 제거됨 → 자유 입력 가능
     required: true,
   },
   communicationMethods: {

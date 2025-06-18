@@ -2,59 +2,133 @@ extends ../layout
 
 block content
   .container.mt-5
-    h2.text-center.mb-4 Edit Tutor Profile
+    .row.justify-content-center
+      .col-md-10
+        .card.shadow
+          .card-header.bg-warning.text-white.text-center
+            h4.mb-0 Edit Online Tutor
 
-    form(method="POST", action=`/online-tutor/${tutor._id}?_method=PUT`)
-      .form-group.mb-3
-        label(for="name") Name
-        input.form-control(type="text", name="name", id="name", required, value=tutor.name)
+          .card-body
+            form(method="POST", action=`/online-tutor/${tutor._id}?_method=PUT`, onsubmit="return handleCustomFields()")
+              .form-group.mb-3
+                label(for="name") Name
+                input.form-control(type="text", name="name", required, value=tutor.name)
 
-      .form-group.mb-3
-        label(for="jobTitle") Job Title
-        input.form-control(type="text", name="jobTitle", id="jobTitle", value=tutor.jobTitle || '')
+              .form-group.mb-3
+                label(for="jobTitle") Job Title
+                input.form-control(type="text", name="jobTitle", value=tutor.jobTitle)
 
-      .form-group.mb-3
-        label(for="expertise") Expertise (comma-separated)
-        input.form-control(type="text", name="expertise", id="expertise", value=(tutor.expertise || []).join(', '))
+              .form-group.mb-3
+                label(for="description") Description
+                textarea.form-control#editor(name="description", rows="4")= tutor.description
 
-      .form-group.mb-3
-        label(for="tutoringExperience") Experience Level
-        select.form-control(name="tutoringExperience", id="tutoringExperience")
-          - const levels = ['Beginner', 'Intermediate', 'Advanced', 'Expert']
-          each level in levels
-            option(value=level selected=(tutor.tutoringExperience === level)) #{level}
+              // ✅ Gender
+              .form-group.mb-3
+                label(for="gender") Gender
+                select.form-control#genderSelect(name="gender")
+                  each v in genders
+                    option(value=v selected=(tutor.gender === v ? 'selected' : false))= v
+                small.text-muted.mt-1 You can also add a new gender:
+                input.form-control.mt-1(type="text", id="customGender", placeholder="Or enter a new gender")
 
-      .form-group.mb-3
-        label(for="bio") Bio
-        textarea.form-control(name="bio", id="bio", rows="5")= tutor.bio || ''
+              // ✅ Expertise (checkbox)
+              .form-group.mb-3
+                label Expertise
+                each v in expertises
+                  div
+                    input(type="checkbox", name="expertise", value=v, id=`expertise-${v}` checked=tutor.expertise.includes(v))
+                    label(for=`expertise-${v}`)= v
+                small.text-muted.mt-1 You can also add a new expertise:
+                input.form-control.mt-1(type="text", id="customExpertise", placeholder="Or enter a new expertise")
 
-      .form-group.mb-3
-        label(for="language") Language
-        input.form-control(type="text", name="language", id="language", value=tutor.language || '')
+              // ✅ Tutoring Experience
+              .form-group.mb-3
+                label(for="tutoringExperience") Tutoring Experience
+                select.form-control#experienceSelect(name="tutoringExperience")
+                  each v in tutoringExperiences
+                    option(value=v selected=(tutor.tutoringExperience === v ? 'selected' : false))= v
+                small.text-muted.mt-1 You can also add a new experience:
+                input.form-control.mt-1(type="text", id="customExperience", placeholder="Or enter a new experience")
 
-      .form-group.mb-3
-        label(for="location") Location
-        input.form-control(type="text", name="location", id="location", value=tutor.location || '')
+              // ✅ Communication Methods (checkbox)
+              .form-group.mb-3
+                label Communication Methods
+                each v in communicationMethods
+                  div
+                    input(type="checkbox", name="communicationMethods", value=v, id=`comm-${v}` checked=tutor.communicationMethods.includes(v))
+                    label(for=`comm-${v}`)= v
+                small.text-muted.mt-1 You can also add a new method:
+                input.form-control.mt-1(type="text", id="customCommunication", placeholder="Or enter a new method")
 
-      .form-group.mb-3
-        label(for="email") Contact Email
-        input.form-control(type="email", name="email", id="email", required, value=tutor.email)
+              // ✅ Language
+              .form-group.mb-3
+                label(for="language") Main Language
+                select.form-control#languageSelect(name="language", required)
+                  each v in languages
+                    option(value=v selected=(tutor.language === v ? 'selected' : false))= v
+                small.text-muted.mt-1 You can also add a new language:
+                input.form-control.mt-1(type="text", id="customLanguage", placeholder="Or enter a new language")
 
-      .form-group.mb-3
-        label(for="availableFrom") Available From (Date)
-        - const availableFromValue = tutor.availableFrom ? new Date(tutor.availableFrom).toISOString().substring(0, 10) : ''
-        input.form-control(type="date", name="availableFrom", id="availableFrom", value=availableFromValue)
+              .form-group.mb-3
+                label(for="email") Email
+                input.form-control(type="email", name="email", value=tutor.email)
 
-      .form-group.mb-3
-        label(for="availableTime") Available Time
-        input.form-control(type="text", name="availableTime", id="availableTime", value=tutor.availableTime || '')
+              .form-group.mb-3
+                label(for="skypeId") Skype ID
+                input.form-control(type="text", name="skypeId", value=tutor.skypeId)
 
-      .form-group.mb-4
-        label(for="rate") Hourly Rate (USD)
-        input.form-control(type="number", name="rate", id="rate", step="1", min="0", value=tutor.rate || '')
+              .form-group.mb-3
+                label(for="zoomId") Zoom ID
+                input.form-control(type="text", name="zoomId", value=tutor.zoomId)
 
-      .text-center
-        button.btn.btn-primary(type="submit" style="padding: 10px 30px; font-size: 1.2rem;") ✅ Update Tutor Profile
+              .form-group.mb-3
+                label(for="hourlyRate") Hourly Rate (USD)
+                input.form-control(type="number", name="hourlyRate", value=tutor.hourlyRate)
 
-    .text-center.mt-3
-      a.btn.btn-outline-secondary(href="/online-tutor") ← Back to List
+              .form-group.mb-3
+                label(for="availableFrom") Available From
+                - const formattedDate = tutor.availableFrom ? tutor.availableFrom.toISOString().substring(0, 10) : ''
+                input.form-control(type="date", name="availableFrom", value=formattedDate)
+
+              .form-group.mb-3
+                label(for="availableTime") Available Time
+                input.form-control(type="text", name="availableTime", value=tutor.availableTime)
+
+              .form-group.mb-3
+                label(for="languagesSpoken") Languages Spoken (comma-separated)
+                input.form-control(type="text", name="languagesSpoken", value=tutor.languagesSpoken ? tutor.languagesSpoken.join(', ') : '')
+
+              button.btn.btn-primary.mt-4(type="submit") Update Tutor
+              a.btn.btn-secondary.ms-2(href="/online-tutor") Cancel
+
+block append_js
+  script.
+    function handleCustomFields() {
+      const form = document.querySelector('form');
+      const customFields = [
+        { id: 'customGender', selectId: 'genderSelect', name: 'gender' },
+        { id: 'customExpertise', selectId: null, name: 'expertise' },
+        { id: 'customExperience', selectId: 'experienceSelect', name: 'tutoringExperience' },
+        { id: 'customCommunication', selectId: null, name: 'communicationMethods' },
+        { id: 'customLanguage', selectId: 'languageSelect', name: 'language' }
+      ];
+      customFields.forEach(field => {
+        const customValue = document.getElementById(field.id)?.value.trim();
+        if (customValue) {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = field.name;
+          input.value = customValue;
+          form.appendChild(input);
+          if (field.selectId) {
+            const selectEl = document.getElementById(field.selectId);
+            if (selectEl) selectEl.disabled = true;
+          }
+        }
+      });
+      return true;
+    }
+
+  script(src="https://cdn.ckeditor.com/4.22.1/standard/ckeditor.js")
+  script.
+    CKEDITOR.replace('editor');

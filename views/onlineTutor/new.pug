@@ -2,84 +2,133 @@ extends ../layout
 
 block content
   .container.mt-5
-    h2.text-center.mb-4 Add New Online Tutor
+    .row.justify-content-center
+      .col-md-10
+        .card.shadow
+          .card-header.bg-success.text-white.text-center
+            h4.mb-0 Register as Online Tutor
 
-    form(method="POST", action="/online-tutor")
-      .form-group.mb-3
-        label(for="name") Name
-        input.form-control(type="text", name="name", required)
+          .card-body
+            form(method="POST", action="/online-tutor", onsubmit="return handleCustomFields()")
+              .form-group.mb-3
+                label(for="name") Name
+                input.form-control(type="text", name="name", required)
 
-      .form-group.mb-3
-        label(for="jobTitle") Job Title
-        input.form-control(type="text", name="jobTitle")
+              .form-group.mb-3
+                label(for="jobTitle") Job Title
+                input.form-control(type="text", name="jobTitle")
 
-      .form-group.mb-3
-        label(for="description") Description
-        textarea.form-control(name="description", rows="4")
+              .form-group.mb-3
+                label(for="description") Description
+                textarea.form-control#editor(name="description", rows="4")
 
-      .form-group.mb-3
-        label(for="gender") Gender
-        select.form-control(name="gender")
-          option(value="") -- Select --
-          option(value="Male") Male
-          option(value="Female") Female
-          option(value="Other") Other
+              // ✅ Gender
+              .form-group.mb-3
+                label(for="gender") Gender
+                select.form-control#genderSelect(name="gender")
+                  each v in genders
+                    option(value=v)= v
+                small.text-muted.mt-1 You can also add a new gender:
+                input.form-control.mt-1(type="text", id="customGender", placeholder="Or enter a new gender")
 
-      .form-group.mb-3
-        label Expertise (multiple)
-        div
-          input.form-check-input(type="checkbox", name="expertise", value="Grammar")
-          | Grammar
-        div
-          input.form-check-input(type="checkbox", name="expertise", value="Speaking")
-          | Speaking
-        div
-          input.form-check-input(type="checkbox", name="expertise", value="Writing")
-          | Writing
+              // ✅ Expertise (순수 checkbox)
+              .form-group.mb-3
+                label Expertise
+                each v in expertises
+                  div
+                    input(type="checkbox", name="expertise", value=v, id=`expertise-${v}`)
+                    label(for=`expertise-${v}`)= v
+                small.text-muted.mt-1 You can also add a new expertise:
+                input.form-control.mt-1(type="text", id="customExpertise", placeholder="Or enter a new expertise")
 
-      .form-group.mb-3
-        label(for="tutoringExperience") Tutoring Experience
-        input.form-control(type="text", name="tutoringExperience")
+              // ✅ Tutoring Experience
+              .form-group.mb-3
+                label(for="tutoringExperience") Tutoring Experience
+                select.form-control#experienceSelect(name="tutoringExperience")
+                  each v in tutoringExperiences
+                    option(value=v)= v
+                small.text-muted.mt-1 You can also add a new experience:
+                input.form-control.mt-1(type="text", id="customExperience", placeholder="Or enter a new experience")
 
-      .form-group.mb-3
-        label Communication Methods
-        div
-          input.form-check-input(type="checkbox", name="communicationMethods", value="Skype")
-          | Skype
-        div
-          input.form-check-input(type="checkbox", name="communicationMethods", value="Zoom")
-          | Zoom
-        div
-          input.form-check-input(type="checkbox", name="communicationMethods", value="Email")
-          | Email
+              // ✅ Communication Methods (순수 checkbox)
+              .form-group.mb-3
+                label Communication Methods
+                each v in communicationMethods
+                  div
+                    input(type="checkbox", name="communicationMethods", value=v, id=`comm-${v}`)
+                    label(for=`comm-${v}`)= v
+                small.text-muted.mt-1 You can also add a new method:
+                input.form-control.mt-1(type="text", id="customCommunication", placeholder="Or enter a new method")
 
-      .form-group.mb-3
-        label(for="email") Email
-        input.form-control(type="email", name="email")
+              // ✅ Language
+              .form-group.mb-3
+                label(for="language") Main Language
+                select.form-control#languageSelect(name="language", required)
+                  each v in languages
+                    option(value=v)= v
+                small.text-muted.mt-1 You can also add a new language:
+                input.form-control.mt-1(type="text", id="customLanguage", placeholder="Or enter a new language")
 
-      .form-group.mb-3
-        label(for="skypeId") Skype ID
-        input.form-control(type="text", name="skypeId")
+              .form-group.mb-3
+                label(for="email") Email
+                input.form-control(type="email", name="email")
 
-      .form-group.mb-3
-        label(for="zoomId") Zoom ID
-        input.form-control(type="text", name="zoomId")
+              .form-group.mb-3
+                label(for="skypeId") Skype ID
+                input.form-control(type="text", name="skypeId")
 
-      .form-group.mb-3
-        label(for="hourlyRate") Hourly Rate (USD)
-        input.form-control(type="number", name="hourlyRate", step="1")
+              .form-group.mb-3
+                label(for="zoomId") Zoom ID
+                input.form-control(type="text", name="zoomId")
 
-      .form-group.mb-3
-        label(for="availableFrom") Available From (Date)
-        input.form-control(type="date", name="availableFrom")
+              .form-group.mb-3
+                label(for="hourlyRate") Hourly Rate (USD)
+                input.form-control(type="number", name="hourlyRate")
 
-      .form-group.mb-3
-        label(for="availableTime") Available Time
-        input.form-control(type="text", name="availableTime")
+              .form-group.mb-3
+                label(for="availableFrom") Available From
+                input.form-control(type="date", name="availableFrom")
 
-      .form-group.mb-4
-        label(for="languagesSpoken") Languages Spoken (comma-separated)
-        input.form-control(type="text", name="languagesSpoken")
+              .form-group.mb-3
+                label(for="availableTime") Available Time
+                input.form-control(type="text", name="availableTime")
 
-      button.btn.btn-primary(type="submit") Save Tutor
-      a.btn.btn-secondary.ms-2(href="/online-tutor") Cancel
+              .form-group.mb-3
+                label(for="languagesSpoken") Languages Spoken (comma-separated)
+                input.form-control(type="text", name="languagesSpoken")
+
+              button.btn.btn-primary.mt-4(type="submit") Submit
+              a.btn.btn-secondary.ms-2(href="/online-tutor") Cancel
+
+block append_js
+  script.
+    function handleCustomFields() {
+      const form = document.querySelector('form');
+      const customFields = [
+        { id: 'customGender', selectId: 'genderSelect', name: 'gender' },
+        { id: 'customExpertise', selectId: null, name: 'expertise' },
+        { id: 'customExperience', selectId: 'experienceSelect', name: 'tutoringExperience' },
+        { id: 'customCommunication', selectId: null, name: 'communicationMethods' },
+        { id: 'customLanguage', selectId: 'languageSelect', name: 'language' }
+      ];
+      customFields.forEach(field => {
+        const customValue = document.getElementById(field.id)?.value.trim();
+        if (customValue) {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = field.name;
+          input.value = customValue;
+          form.appendChild(input);
+          if (field.selectId) {
+            const selectEl = document.getElementById(field.selectId);
+            if (selectEl) selectEl.disabled = true;
+          }
+        }
+      });
+      return true;
+    }
+
+  // ✅ CKEditor
+  script(src="https://cdn.ckeditor.com/4.22.1/standard/ckeditor.js")
+  script.
+    CKEDITOR.replace('editor');
