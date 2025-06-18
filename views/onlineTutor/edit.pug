@@ -7,7 +7,7 @@ block content
     form(method="POST", action=`/online-tutor/${tutor._id}?_method=PUT`)
       .form-group.mb-3
         label(for="name") Name
-        input.form-control(type="text", name="name", value=tutor.name, required)
+        input.form-control(type="text", name="name", required, value=tutor.name)
 
       .form-group.mb-3
         label(for="jobTitle") Job Title
@@ -15,43 +15,37 @@ block content
 
       .form-group.mb-3
         label(for="description") Description
-        textarea.form-control(name="description", rows="4")= tutor.description
+        textarea.form-control(name="description")= tutor.description
 
       .form-group.mb-3
         label(for="gender") Gender
         select.form-control(name="gender")
-          option(value="") -- Select --
-          option(value="Male", selected=tutor.gender=='Male') Male
-          option(value="Female", selected=tutor.gender=='Female') Female
-          option(value="Other", selected=tutor.gender=='Other') Other
+          option(value="") Select Gender
+          option(value="Male", selected=tutor.gender === 'Male') Male
+          option(value="Female", selected=tutor.gender === 'Female') Female
+          option(value="Other", selected=tutor.gender === 'Other') Other
 
       .form-group.mb-3
-        label Expertise (multiple)
-        div
-          input.form-check-input(type="checkbox", name="expertise", value="Grammar", checked=tutor.expertise.includes('Grammar'))
-          | Grammar
-        div
-          input.form-check-input(type="checkbox", name="expertise", value="Speaking", checked=tutor.expertise.includes('Speaking'))
-          | Speaking
-        div
-          input.form-check-input(type="checkbox", name="expertise", value="Writing", checked=tutor.expertise.includes('Writing'))
-          | Writing
+        label(for="expertise") Expertise (comma-separated)
+        input.form-control(type="text", name="expertise", value=(tutor.expertise || []).join(', '))
 
       .form-group.mb-3
-        label(for="tutoringExperience") Tutoring Experience
-        input.form-control(type="text", name="tutoringExperience", value=tutor.tutoringExperience)
+        label(for="tutoringExperience") Experience Level
+        select.form-control(name="tutoringExperience")
+          option(value="") Select Experience
+          option(value="Beginner", selected=tutor.tutoringExperience === 'Beginner') Beginner
+          option(value="Intermediate", selected=tutor.tutoringExperience === 'Intermediate') Intermediate
+          option(value="Advanced", selected=tutor.tutoringExperience === 'Advanced') Advanced
 
       .form-group.mb-3
         label Communication Methods
         div
-          input.form-check-input(type="checkbox", name="communicationMethods", value="Skype", checked=tutor.communicationMethods.includes('Skype'))
-          | Skype
-        div
-          input.form-check-input(type="checkbox", name="communicationMethods", value="Zoom", checked=tutor.communicationMethods.includes('Zoom'))
-          | Zoom
-        div
-          input.form-check-input(type="checkbox", name="communicationMethods", value="Email", checked=tutor.communicationMethods.includes('Email'))
-          | Email
+          label.me-2
+            input(type="checkbox", name="communicationMethods", value="Skype", checked=(tutor.communicationMethods || []).includes("Skype"))
+            | Skype
+          label.me-2
+            input(type="checkbox", name="communicationMethods", value="Zoom", checked=(tutor.communicationMethods || []).includes("Zoom"))
+            | Zoom
 
       .form-group.mb-3
         label(for="email") Email
@@ -67,11 +61,12 @@ block content
 
       .form-group.mb-3
         label(for="hourlyRate") Hourly Rate (USD)
-        input.form-control(type="number", name="hourlyRate", value=tutor.hourlyRate, step="1")
+        input.form-control(type="number", name="hourlyRate", value=tutor.hourlyRate)
 
       .form-group.mb-3
         label(for="availableFrom") Available From (Date)
-        input.form-control(type="date", name="availableFrom", value=tutor.availableFrom.toISOString().substring(0, 10))
+        - const dateValue = tutor.availableFrom ? new Date(tutor.availableFrom).toISOString().substring(0, 10) : ''
+        input.form-control(type="date", name="availableFrom", value=dateValue)
 
       .form-group.mb-3
         label(for="availableTime") Available Time
@@ -81,5 +76,6 @@ block content
         label(for="languagesSpoken") Languages Spoken (comma-separated)
         input.form-control(type="text", name="languagesSpoken", value=(tutor.languagesSpoken || []).join(', '))
 
-      button.btn.btn-primary(type="submit") Update Tutor
-      a.btn.btn-secondary.ms-2(href=`/online-tutor/${tutor._id}`) Cancel
+      .text-center
+        button.btn.btn-primary.btn-lg(type="submit") ✅ Save Changes
+        a.btn.btn-secondary.ms-3(href="/online-tutor") Cancel

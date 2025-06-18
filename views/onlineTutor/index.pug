@@ -2,10 +2,10 @@ extends ../layout
 
 block content
   .container.mt-5
-    h2.text-center.mb-4 Online Tutors
+    h2.text-center.mb-5(style="font-size: 2.2rem; font-weight: bold;") Online Tutors
 
     if tutors.length
-      table.table.table-bordered.table-hover
+      table.table.table-bordered.table-hover(style="font-size: 1.1rem;")
         thead
           tr
             th Name
@@ -26,7 +26,10 @@ block content
                 form.d-inline(method="POST", action=`/online-tutor/${tutor._id}?_method=DELETE`)
                   button.btn.btn-sm.btn-danger(type="submit", onclick="return confirm('Delete this tutor?')") Delete
     else
-      p.text-muted.text-center No online tutors registered yet.
+      p.text-muted.text-center.mt-4(style="font-size: 1.2rem;") No online tutors registered yet.
 
-    .text-center.mt-4
-      a.btn.btn-success.btn-lg(href="/online-tutor/new") ➕ Add New Tutor
+    .text-center.mt-5
+      a.btn.btn-success(
+        href="/online-tutor/new",
+        style="font-size: 1.6rem; padding: 14px 28px; font-weight: bold; color: white;"
+      ) ➕ Add New Tutor

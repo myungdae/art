@@ -1,0 +1,41 @@
+extends layout
+
+block content
+  .container.mt-5
+    // 🎉 메인 환영 메시지
+    .text-center.mb-5
+      h1(style="font-size: 2.8rem; font-weight: bold;") Welcome to the ESL Platform!
+      p.text-muted.mt-3(style="font-size: 1.3rem; max-width: 800px; margin: 0 auto;")
+        | Discover job opportunities, connect with qualified tutors, or showcase your talent to language institutions worldwide.
+
+    // 🔍 검색창
+    .my-5.text-center
+      h3.mb-3(style="font-size: 1.6rem;") Search the ESL Platform
+      input.form-control.mx-auto(
+        type="text",
+        placeholder="Enter keyword...",
+        style="max-width: 600px; height: 3rem; font-size: 1.2rem; text-align: center;"
+      )
+
+    // 🎯 주요 진입 버튼
+    .row.justify-content-center.mt-5
+      .col-md-3.mb-4
+        a.btn.btn-outline-primary.btn-lg.w-100.py-3(
+          style="font-size: 1.4rem;",
+          href="/job-vacancies"
+        ) 💼 Job Vacancies
+      .col-md-3.mb-4
+        a.btn.btn-outline-success.btn-lg.w-100.py-3(
+          style="font-size: 1.4rem;",
+          href="/job-seekers"
+        ) 🧑‍🏫 Job Seekers
+      .col-md-3.mb-4
+        a.btn.btn-outline-warning.btn-lg.w-100.py-3(
+          style="font-size: 1.4rem;",
+          href="/online-tutor"
+        ) 🎓 Online Tutors
+
+    // 👣 푸터 안내
+    hr.my-5
+    .text-center.text-muted
+      small(style="font-size: 1rem;") Powered by Linked Data Center — Global ESL Matching Platform
