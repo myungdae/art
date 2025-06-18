@@ -1,0 +1,16 @@
+extends ../layout
+
+block content
+  .container.mt-5
+    h2.text-center.mb-4(style="font-size: 2rem;") Tutor Access
+
+    p.text-center(style="font-size: 1.2rem;")
+      | Access student resumes and start tutoring right away.
+
+    .text-center.mt-4
+      form(method="POST", action="/tutor-access/confirm")
+        button.btn.btn-warning.btn-lg.text-white(
+          type="submit",
+          style="padding: 16px 36px; font-size: 1.2rem; font-weight: bold;"
+        )
+          | 💳 Purchase Tutor Access - $#{price} / 30 days

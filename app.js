@@ -7,6 +7,9 @@ require('dotenv').config();
 const userRoutes = require('./router/user');
 const methodOverride = require('method-override');
 const resumeAccessRouter = require('./router/resumeAccess');
+const onlineTutorRouter = require('./router/onlineTutor');  // ✅ 이름 정정
+const tutorAccessRouter = require('./router/tutorAccess');  // ✅ 새 라우터 등록
+
 
 
 
@@ -62,9 +65,10 @@ app.use('/job-seekers', jobSeekerRouter);
 app.use('/paypal', paypalRoutes);
 app.use('/job-vacancies', jobVacancyRouter); // 반드시 이 위치
 app.use('/resume-access', resumeAccessRouter);
-app.use('/online-tutors', require('./router/onlineTutor'));
+app.use('/online-tutor', onlineTutorRouter); // ✅ 정확한 경로와 라우터 사용
 app.use('/', require('./router/public'));
 app.use('/', userRoutes);
+app.use('/tutor-access', tutorAccessRouter);                // ✅ 진입 경로
 app.use('/admin', require('./router/admin'));
 app.use('/facet', require('./router/facet'));
 app.use('/search', require('./router/search'));

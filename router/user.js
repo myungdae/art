@@ -18,6 +18,8 @@ router.post('/register', async (req, res) => {
   // ✅ role 보정: JobSeeker → Job_Seeker (schema enum 일치)
   if (role === 'JobSeeker' || role === 'Job Seeker') {
     role = 'Job_Seeker';
+  } else if (role === 'OnlineTutor' || role === 'Online Tutor') {
+    role = 'Online_Tutor';
   }
 
   try {

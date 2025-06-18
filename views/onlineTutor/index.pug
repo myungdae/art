@@ -1,0 +1,32 @@
+extends ../layout
+
+block content
+  .container.mt-5
+    h2.text-center.mb-4 Online Tutors
+
+    if tutors.length
+      table.table.table-bordered.table-hover
+        thead
+          tr
+            th Name
+            th Job Title
+            th Expertise
+            th Experience
+            th Actions
+        tbody
+          each tutor in tutors
+            tr
+              td #{tutor.name}
+              td #{tutor.jobTitle || '—'}
+              td #{(tutor.expertise || []).join(', ')}
+              td #{tutor.tutoringExperience || '—'}
+              td
+                a.btn.btn-outline-primary.btn-sm.me-1(href=`/online-tutor/${tutor._id}`) View
+                a.btn.btn-outline-secondary.btn-sm.me-1(href=`/online-tutor/${tutor._id}/edit`) Edit
+                form.d-inline(method="POST", action=`/online-tutor/${tutor._id}?_method=DELETE`)
+                  button.btn.btn-sm.btn-danger(type="submit", onclick="return confirm('Delete this tutor?')") Delete
+    else
+      p.text-muted.text-center No online tutors registered yet.
+
+    .text-center.mt-4
+      a.btn.btn-success.btn-lg(href="/online-tutor/new") ➕ Add New Tutor

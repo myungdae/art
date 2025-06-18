@@ -1,0 +1,22 @@
+extends ../layout
+
+block content
+  .container.mt-5
+    h2.text-center.mb-4 Purchase Tutor Access
+
+    p.text-center.text-muted Choose your visibility duration below:
+
+    if price.length
+      .row.justify-content-center
+        each option in price
+          .col-md-4.mb-3
+            .card.shadow-sm
+              .card-body.text-center
+                h5= option.label
+                p.text-muted $#{option.price}
+                form(method="POST", action="/paypal/checkout")
+                  input(type="hidden", name="role", value="Online_Tutor")
+                  input(type="hidden", name="planId", value=option.id)
+                  button.btn.btn-warning.btn-lg(type="submit") 🧾 Purchase
+    else
+      p.text-danger.text-center No pricing options available.

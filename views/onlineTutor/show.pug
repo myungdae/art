@@ -1,0 +1,56 @@
+extends ../layout
+
+block content
+  .container.mt-5
+    h2.text-center.mb-4 Online Tutor Details
+
+    .card
+      .card-body
+        dl.row
+          dt.col-sm-3 Name
+          dd.col-sm-9 #{tutor.name}
+
+          dt.col-sm-3 Job Title
+          dd.col-sm-9 #{tutor.jobTitle || '—'}
+
+          dt.col-sm-3 Description
+          dd.col-sm-9 #{tutor.description || '—'}
+
+          dt.col-sm-3 Gender
+          dd.col-sm-9 #{tutor.gender || '—'}
+
+          dt.col-sm-3 Expertise
+          dd.col-sm-9 #{(tutor.expertise || []).join(', ') || '—'}
+
+          dt.col-sm-3 Tutoring Experience
+          dd.col-sm-9 #{tutor.tutoringExperience || '—'}
+
+          dt.col-sm-3 Communication Methods
+          dd.col-sm-9 #{(tutor.communicationMethods || []).join(', ') || '—'}
+
+          dt.col-sm-3 Email
+          dd.col-sm-9 #{tutor.email || '—'}
+
+          dt.col-sm-3 Skype ID
+          dd.col-sm-9 #{tutor.skypeId || '—'}
+
+          dt.col-sm-3 Zoom ID
+          dd.col-sm-9 #{tutor.zoomId || '—'}
+
+          dt.col-sm-3 Hourly Rate
+          dd.col-sm-9 #{tutor.hourlyRate ? `$${tutor.hourlyRate}` : '—'}
+
+          dt.col-sm-3 Available From
+          dd.col-sm-9 #{tutor.availableFrom ? tutor.availableFrom.toDateString() : '—'}
+
+          dt.col-sm-3 Available Time
+          dd.col-sm-9 #{tutor.availableTime || '—'}
+
+          dt.col-sm-3 Languages Spoken
+          dd.col-sm-9 #{(tutor.languagesSpoken || []).join(', ') || '—'}
+
+    .mt-4.text-center
+      a.btn.btn-outline-secondary(href="/online-tutor") ← Back to List
+      a.btn.btn-primary.ms-2(href=`/online-tutor/${tutor._id}/edit`) Edit
+      form.d-inline(method="POST", action=`/online-tutor/${tutor._id}?_method=DELETE`)
+        button.btn.btn-danger.ms-2(type="submit", onclick="return confirm('Are you sure you want to delete this tutor?')") Delete

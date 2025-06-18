@@ -1,0 +1,85 @@
+extends ../layout
+
+block content
+  .container.mt-5
+    h2.text-center.mb-4 Add New Online Tutor
+
+    form(method="POST", action="/online-tutor")
+      .form-group.mb-3
+        label(for="name") Name
+        input.form-control(type="text", name="name", required)
+
+      .form-group.mb-3
+        label(for="jobTitle") Job Title
+        input.form-control(type="text", name="jobTitle")
+
+      .form-group.mb-3
+        label(for="description") Description
+        textarea.form-control(name="description", rows="4")
+
+      .form-group.mb-3
+        label(for="gender") Gender
+        select.form-control(name="gender")
+          option(value="") -- Select --
+          option(value="Male") Male
+          option(value="Female") Female
+          option(value="Other") Other
+
+      .form-group.mb-3
+        label Expertise (multiple)
+        div
+          input.form-check-input(type="checkbox", name="expertise", value="Grammar")
+          | Grammar
+        div
+          input.form-check-input(type="checkbox", name="expertise", value="Speaking")
+          | Speaking
+        div
+          input.form-check-input(type="checkbox", name="expertise", value="Writing")
+          | Writing
+
+      .form-group.mb-3
+        label(for="tutoringExperience") Tutoring Experience
+        input.form-control(type="text", name="tutoringExperience")
+
+      .form-group.mb-3
+        label Communication Methods
+        div
+          input.form-check-input(type="checkbox", name="communicationMethods", value="Skype")
+          | Skype
+        div
+          input.form-check-input(type="checkbox", name="communicationMethods", value="Zoom")
+          | Zoom
+        div
+          input.form-check-input(type="checkbox", name="communicationMethods", value="Email")
+          | Email
+
+      .form-group.mb-3
+        label(for="email") Email
+        input.form-control(type="email", name="email")
+
+      .form-group.mb-3
+        label(for="skypeId") Skype ID
+        input.form-control(type="text", name="skypeId")
+
+      .form-group.mb-3
+        label(for="zoomId") Zoom ID
+        input.form-control(type="text", name="zoomId")
+
+      .form-group.mb-3
+        label(for="hourlyRate") Hourly Rate (USD)
+        input.form-control(type="number", name="hourlyRate", step="1")
+
+      .form-group.mb-3
+        label(for="availableFrom") Available From (Date)
+        input.form-control(type="date", name="availableFrom")
+
+      .form-group.mb-3
+        label(for="availableTime") Available Time
+        input.form-control(type="text", name="availableTime")
+
+      .form-group.mb-4
+        label(for="languagesSpoken") Languages Spoken (comma-separated)
+        input.form-control(type="text", name="languagesSpoken")
+
+      button.btn.btn-primary(type="submit") Save Tutor
+      a.btn.btn-secondary.ms-2(href="/online-tutor") Cancel

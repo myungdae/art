@@ -1,0 +1,52 @@
+extends ../layout
+
+block content
+  .container.mt-5
+    h2.text-center.mb-4 Confirm Your Purchase
+
+    p.text-center.text-muted Please click the button below to complete payment with PayPal.
+
+    .card.shadow.p-4.mx-auto(style="max-width: 500px;")
+      h4.text-center.mb-3= plan.label
+      p.text-center.text-muted.mb-2 Price: $#{plan.price}
+      #paypal-button-container
+
+  // PayPal SDK 로딩 (클라이언트 ID 포함)
+  script(src=`https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&currency=USD`)
+
+  // PayPal 버튼 렌더링 및 결제 처리
+  script.
+    paypal.Buttons({
+      createOrder: function(data, actions) {
+        return fetch('/paypal/create-order', {
+          method: 'post',
+          headers: {
+            'content-type': 'application/json'
+          },
+          body: JSON.stringify({
+            package: '#{plan.id}'
+          })
+        }).then(function(res) {
+          return res.json();
+        }).then(function(data) {
+          return data.id;
+        });
+      },
+      onApprove: function(data, actions) {
+        return fetch(`/paypal/capture-order/${data.orderID}`, {
+          method: 'post',
+          headers: {
+            'content-type': 'application/json'
+          },
+          body: JSON.stringify({
+            package: '#{plan.id}'
+          })
+        }).then(function(res) {
+          return res.json();
+        }).then(function(details) {
+          if (details.status === 'redirect') {
+            window.location.href = details.url;
+          }
+        });
+      }
+    }).render('#paypal-button-container');
