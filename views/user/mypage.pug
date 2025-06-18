@@ -29,26 +29,34 @@ block content
           - const diffTime = endDate - now;
           - const remainingDays = Math.max(0, Math.ceil(diffTime / 86400000));
           - const percentUsed = Math.min(100, Math.floor(((duration - remainingDays) / duration) * 100));
+          - const formatDate = (date) => date.toISOString().substring(0, 10);
 
-          if remainingDays <= 0
-            if user.role === 'Online_Tutor'
-              p.text-center.mt-3(style="font-size: 1.1rem; color: red; font-weight: bold;")
-                | ❌ Tutor Visibility Expired
-            else
-              p.text-center.mt-3(style="font-size: 1.1rem; color: red; font-weight: bold;")
-                | ❌ Resume Access Expired
-          else
-            p.text-center.mt-3(style="font-size: 1.1rem; color: #007bff; font-weight: bold;")
-              | ⏳ Remaining Days: #{remainingDays} day#{remainingDays === 1 ? '' : 's'}
+          h4.text-center.text-primary.mt-4(style="font-weight: bold;") 🧭 Tutor Visibility Status
 
-            .progress.mx-auto(style="height: 20px; max-width: 400px; margin-top: 6px;")
-              .progress-bar.bg-info(
-                role="progressbar",
-                style=`width: ${100 - percentUsed}%`,
-                ariaValuenow=remainingDays,
-                ariaValuemin="0",
-                ariaValuemax=duration
-              ) #{100 - percentUsed}%
+          .text-center.mt-2
+            p.mb-1(style="font-size: 1.05rem;")
+              | 📅 Start Date:
+              span.text-dark #{formatDate(startDate)}
+            p.mb-1(style="font-size: 1.05rem;")
+              | 🛑 End Date:
+              span.text-dark #{formatDate(endDate)}
+            p.mb-2(style="font-size: 1.1rem; font-weight: bold; color: #007bff")
+              | ⏳ Remaining Days for Tutor Visibility:#{remainingDays} day#{remainingDays === 1 ? '' : 's'}
+
+          .progress.mx-auto(style="height: 22px; max-width: 420px; margin-top: 10px;")
+            .progress-bar.bg-info(
+              role="progressbar",
+              style=`width: ${100 - percentUsed}%`,
+              ariaValuenow=remainingDays,
+              ariaValuemin="0",
+              ariaValuemax=duration
+            ) #{100 - percentUsed}%
+
+          .d-flex.justify-content-center.mt-4
+            a.btn.btn-success.btn-lg.text-white(
+              href='/tutor-access',
+              style='padding: 16px 36px; font-size: 1.2rem; font-weight: bold;'
+            ) 🔄 Extend Visibility
 
       hr
 
