@@ -28,7 +28,7 @@ block content
                 label(for="nationality") Nationality
                 select.form-control#nationalitySelect(name="nationality")
                   option(disabled value='') Select Nationality
-                  each v in nationalities
+                  each v in countries
                     option(value=v selected=(v === jobSeeker.nationality))= v
                 small.text-muted.mt-1 You can also add a new nationality:
                 input.form-control.mt-1(type="text", id="customNationality", placeholder="Or enter a new Nationality")

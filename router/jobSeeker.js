@@ -43,9 +43,9 @@ router.post('/', async (req, res) => {
       jobTitle: sanitizeHtml(req.body.jobTitle || ''),
       description: sanitizeHtml(req.body.description || '', { allowedTags: [], allowedAttributes: {} }),
       email: req.body.email,
-      nationality: req.body.nationality,
-      preferredWorkLocation: req.body.preferredWorkLocation,
-      major: req.body.major,
+      nationality: req.body.nationality || req.body.customNationality,
+      preferredWorkLocation: req.body.preferredWorkLocation || req.body.customPreferredWorkLocation,
+      major: req.body.major || req.body.customMajor,
       languageSpoken: req.body.languageSpoken,
       educationBackground: req.body.educationBackground,
       availableFrom: req.body.availableFrom
@@ -66,7 +66,12 @@ router.get('/:id/edit', async (req, res) => {
     if (!seeker) return res.status(404).send('Job Seeker not found');
 
     const { countries, majors, locations } = await getDistinctFields();
-    res.render('jobSeeker/edit', { jobSeeker: seeker, countries, majors, locations });
+    res.render('jobSeeker/edit', {
+      jobSeeker: seeker,
+      countries,
+      majors,
+      locations
+    });
   } catch (err) {
     console.error(err);
     res.status(500).send('Error loading edit form');
@@ -83,9 +88,9 @@ router.put('/:id', async (req, res) => {
     seeker.jobTitle = sanitizeHtml(req.body.jobTitle || '');
     seeker.description = sanitizeHtml(req.body.description || '', { allowedTags: [], allowedAttributes: {} });
     seeker.email = req.body.email;
-    seeker.nationality = req.body.nationality;
-    seeker.preferredWorkLocation = req.body.preferredWorkLocation;
-    seeker.major = req.body.major;
+    seeker.nationality = req.body.nationality || req.body.customNationality;
+    seeker.preferredWorkLocation = req.body.preferredWorkLocation || req.body.customPreferredWorkLocation;
+    seeker.major = req.body.major || req.body.customMajor;
     seeker.languageSpoken = req.body.languageSpoken;
     seeker.educationBackground = req.body.educationBackground;
     seeker.availableFrom = req.body.availableFrom;
