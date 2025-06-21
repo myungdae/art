@@ -1,17 +1,14 @@
-// router/admin.js
-
 const express = require('express');
 const router = express.Router();
-const requireAdmin = require('../middleware/requireAdmin');
 
-// ✅ 모델 불러오기
 const JobVacancy = require('../model/jobVacancy');
 const JobSeeker = require('../model/jobSeeker');
-const Tutor = require('../model/tutor');
+const OnlineTutor = require('../model/onlineTutor');
+const requireAdmin = require('../middleware/requireAdmin');
 
 // ✅ 관리자 로그인 페이지
 router.get('/login', (req, res) => {
-  res.render('admin/login');  // views/admin/login.pug
+  res.render('admin/login');
 });
 
 // ✅ 로그인 처리
@@ -28,40 +25,31 @@ router.post('/login', (req, res) => {
   }
 });
 
-// ✅ 로그아웃
+// ✅ 로그아웃 처리
 router.get('/logout', (req, res) => {
   req.session.destroy(() => {
     res.redirect('/admin/login');
   });
 });
 
-// ✅ 관리자 대시보드 (통계 + 가입자 리스트 출력)
+// ✅ 관리자 대시보드
 router.get('/dashboard', requireAdmin, async (req, res) => {
   try {
-    const [jobVacancyCount, jobSeekerCount, tutorCount] = await Promise.all([
-      JobVacancy.countDocuments(),
-      JobSeeker.countDocuments(),
-      Tutor.countDocuments()
-    ]);
-
-    const [jobVacancies, jobSeekers, tutors] = await Promise.all([
-      JobVacancy.find().sort({ createdAt: -1 }),
-      JobSeeker.find().sort({ createdAt: -1 }),
-      Tutor.find().sort({ createdAt: -1 }),
-    ]);
+    const jobVacancies = await JobVacancy.find().sort({ createdAt: -1 });
+    const jobSeekers = await JobSeeker.find().sort({ createdAt: -1 });
+    const onlineTutors = await OnlineTutor.find().sort({ _id: -1 }); // 최신순
 
     res.render('admin/dashboard', {
-      jobVacancyCount,
-      jobSeekerCount,
-      tutorCount,
       jobVacancies,
       jobSeekers,
-      tutors,
-      currentDate: new Date().toLocaleDateString()
+      onlineTutors
     });
   } catch (err) {
-    console.error('Admin dashboard error:', err);
-    res.status(500).send('Server Error');
+    console.error('❌ Admin dashboard error:', err);
+    res.status(500).render('error', {
+      message: 'Admin Dashboard Error',
+      error: err
+    });
   }
 });
 

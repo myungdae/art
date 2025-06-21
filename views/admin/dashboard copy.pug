@@ -4,33 +4,38 @@ block content
   .container.mt-5
     h2.text-center.mb-4 Admin Dashboard
 
-    // ✅ EMPLOYERS TABLE
-    h4.mb-3.text-primary Employers
-    table.table.table-bordered.table-striped
+    p.text-end.mb-4
+      strong Date: 
+      | #{currentDate}
+
+    hr
+
+    // ✅ Job Vacancies Table
+    h3.mb-3 Job Vacancies
+    table.table.table-bordered
       thead
         tr
           th Username
           th Email
-          th Role
           th Remaining Tokens
           th Created At
       tbody
         each jv in jobVacancies
           tr
-            td= jv.companyName || 'N/A'
+            td= jv.username || 'N/A'
             td= jv.email || 'N/A'
-            td Employer
-            td= jv.remainingTokens !== undefined ? jv.remainingTokens : 'N/A'
-            td= jv.createdAt ? new Date(jv.createdAt).toLocaleDateString() : 'N/A'
+            td= (typeof jv.remainingTokens === 'number') ? jv.remainingTokens : 'N/A'
+            td= jv.createdAt ? jv.createdAt.toDateString() : 'N/A'
 
-    // ✅ JOB SEEKERS TABLE
-    h4.mt-5.mb-3.text-success Job Seekers
-    table.table.table-bordered.table-striped
+    hr
+
+    // ✅ Job Seekers Table
+    h3.mt-5.mb-3 Job Seekers
+    table.table.table-bordered
       thead
         tr
           th Username
           th Email
-          th Role
           th Remaining Days
           th Created At
       tbody
@@ -40,31 +45,30 @@ block content
           - const durationDays = js.resumeAccess?.durationDays || 0;
           - const remainingDays = (startDate && durationDays) ? Math.max(0, Math.ceil((startDate.getTime() + durationDays * 86400000 - now.getTime()) / 86400000)) : 'N/A';
           tr
-            td= js.name || 'N/A'
+            td= js.username || 'N/A'
             td= js.email || 'N/A'
-            td Job Seeker
             td= remainingDays
-            td= js.createdAt ? new Date(js.createdAt).toLocaleDateString() : 'N/A'
+            td= js.createdAt ? js.createdAt.toDateString() : 'N/A'
 
-    // ✅ ONLINE TUTORS TABLE
-    h4.mt-5.mb-3.text-info Online Tutors
-    table.table.table-bordered.table-striped
+    hr
+
+    // ✅ Online Tutors Table
+    h3.mt-5.mb-3 Online Tutors
+    table.table.table-bordered
       thead
         tr
           th Username
           th Email
-          th Role
           th Remaining Days
           th Created At
       tbody
-        each ot in onlineTutors && onlineTutors.length > 0 ? onlineTutors : []
+        each tutor in tutors
           - const now = new Date();
-          - const startDate = ot.resumeAccess?.startDate ? new Date(ot.resumeAccess.startDate) : null;
-          - const durationDays = ot.resumeAccess?.durationDays || 0;
+          - const startDate = tutor.resumeAccess?.startDate ? new Date(tutor.resumeAccess.startDate) : null;
+          - const durationDays = tutor.resumeAccess?.durationDays || 0;
           - const remainingDays = (startDate && durationDays) ? Math.max(0, Math.ceil((startDate.getTime() + durationDays * 86400000 - now.getTime()) / 86400000)) : 'N/A';
           tr
-            td= ot.name || 'N/A'
-            td= ot.email || 'N/A'
-            td Online Tutor
+            td= tutor.username || 'N/A'
+            td= tutor.email || 'N/A'
             td= remainingDays
-            td= ot.createdAt ? new Date(ot.createdAt).toLocaleDateString() : 'N/A'
+            td= tutor.createdAt ? tutor.createdAt.toDateString() : 'N/A'
