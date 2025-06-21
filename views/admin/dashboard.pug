@@ -2,70 +2,80 @@ extends ../layout
 
 block content
   .container.mt-5
-    h2.text-center.mb-4 Admin Dashboard
+    h1.text-center.mb-5 Admin Dashboard
 
-    .row.mb-4
+    .row.text-center.mb-4
       .col-md-4
-        .card.text-white.bg-primary.mb-3
-          .card-header Job Vacancies
+        .card.shadow
+          .card-header.bg-danger.text-white Job Vacancies
           .card-body
-            h5.card-title= jobVacancyCount
-            p.card-text Total Job Ads
-
-      .col-md-4
-        .card.text-white.bg-success.mb-3
-          .card-header Job Seekers
-          .card-body
-            h5.card-title= jobSeekerCount
-            p.card-text Total Job Seekers
+            h2= jobVacancyCount
 
       .col-md-4
-        .card.text-white.bg-info.mb-3
-          .card-header Tutors
+        .card.shadow
+          .card-header.bg-success.text-white Job Seekers
           .card-body
-            h5.card-title= tutorCount
-            p.card-text Total Tutors
+            h2= jobSeekerCount
 
-    h3.mt-5 Job Seekers with Resume Board Access
+      .col-md-4
+        .card.shadow
+          .card-header.bg-warning.text-white Online Tutors
+          .card-body
+            h2= tutorCount
 
-    table.table.table-striped
+    // ✅ Job Vacancies Table
+    h3.mt-5.mb-3 Job Vacancies
+    table.table.table-bordered
+      thead
+        tr
+          th Username
+          th Email
+          th Remaining Tokens
+          th Date Registered
+      tbody
+        each job in jobVacancies
+          tr
+            td= job.username || 'N/A'
+            td= job.email || 'N/A'
+            td= (typeof job.remainingTokens === 'number') ? job.remainingTokens : 'N/A'
+            td= job.createdAt ? new Date(job.createdAt).toLocaleDateString() : 'N/A'
+
+    // ✅ Job Seekers Table
+    h3.mt-5.mb-3 Job Seekers
+    table.table.table-bordered
       thead
         tr
           th Username
           th Email
           th Remaining Days
+          th Date Registered
       tbody
         each js in jobSeekers
-          - const msPerDay = 1000 * 60 * 60 * 24;
-          - const now = new Date();
-          - let remaining = 'N/A';
-          - if (js.resumeAccess && js.resumeAccess.startDate && js.resumeAccess.durationDays) {
-          -   const endDate = new Date(js.resumeAccess.startDate).getTime() + js.resumeAccess.durationDays * msPerDay;
-          -   remaining = Math.max(0, Math.ceil((endDate - now.getTime()) / msPerDay));
-          - }
+          - const start = js.resumeAccess?.startDate ? new Date(js.resumeAccess.startDate) : null
+          - const duration = js.resumeAccess?.durationDays || 0
+          - const remainingDays = (start) ? Math.max(0, Math.ceil((start.getTime() + duration * 86400000 - Date.now()) / 86400000)) : 'N/A'
           tr
-            td= js.username
-            td= js.email
-            td= remaining
+            td= js.username || 'N/A'
+            td= js.email || 'N/A'
+            td= typeof remainingDays === 'number' ? remainingDays + ' days' : 'N/A'
+            td= js.createdAt ? new Date(js.createdAt).toLocaleDateString() : 'N/A'
 
-    h3.mt-5 Online Tutors with Resume Board Access
-
-    table.table.table-striped
+    // ✅ Online Tutors Table
+    h3.mt-5.mb-3 Online Tutors
+    table.table.table-bordered
       thead
         tr
           th Username
           th Email
           th Remaining Days
+          th Date Registered
       tbody
         each tutor in tutors
-          - const msPerDay = 1000 * 60 * 60 * 24;
-          - const now = new Date();
-          - let remaining = 'N/A';
-          - if (tutor.resumeAccess && tutor.resumeAccess.startDate && tutor.resumeAccess.durationDays) {
-          -   const endDate = new Date(tutor.resumeAccess.startDate).getTime() + tutor.resumeAccess.durationDays * msPerDay;
-          -   remaining = Math.max(0, Math.ceil((endDate - now.getTime()) / msPerDay));
-          - }
+          - const start = tutor.resumeAccess?.startDate ? new Date(tutor.resumeAccess.startDate) : null
+          - const duration = tutor.resumeAccess?.durationDays || 0
+          - const remainingDays = (start) ? Math.max(0, Math.ceil((start.getTime() + duration * 86400000 - Date.now()) / 86400000)) : 'N/A'
           tr
-            td= tutor.username
-            td= tutor.email
-            td= remaining
+            td= tutor.username || 'N/A'
+            td= tutor.email || 'N/A'
+            td= typeof remainingDays === 'number' ? remainingDays + ' days' : 'N/A'
+            td= tutor.createdAt ? new Date(tutor.createdAt).toLocaleDateString() : 'N/A'
