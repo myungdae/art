@@ -5,31 +5,39 @@ block content
     h2.text-center.mb-5(style="font-size: 2rem;") My Page
 
     if user
+      - var roleMap = {
+        'Employer': 'Employer',
+        'Job_Seeker': 'Job Seeker',
+        'Online_Tutor': 'Online Tutor'
+      }
+      - var displayRole = roleMap[user.role] || user.role;
       .mb-4
         p(style="font-size: 1.1rem;")
           strong Username:
           | #{user.username}
+
         p(style="font-size: 1.1rem;")
           strong Email:
           | #{user.email}
-        - var displayRole = (user.role === 'Job_Seeker') ? 'Job Seeker' : (user.role === 'Online_Tutor') ? 'Online Tutor' : user.role
+
         p(style="font-size: 1.1rem;")
           strong Role:
           | #{displayRole}
+
         p(style="font-size: 1.1rem;")
           strong Ads Available:
           span.text-dark.ms-2 #{(typeof user.adsAvailable === 'number') ? user.adsAvailable : 0}
 
-        // ✅ 공통: Resume Access or Tutor Visibility 상태 표시
+        //- ✅ Resume Access or Tutor Visibility
         if (user.role === 'Job_Seeker' || user.role === 'Online_Tutor') && user.resumeAccess
-          - const startDate = new Date(user.resumeAccess.startDate);
-          - const duration = user.resumeAccess.durationDays;
-          - const endDate = new Date(startDate.getTime() + duration * 86400000);
-          - const now = new Date();
-          - const diffTime = endDate - now;
-          - const remainingDays = Math.max(0, Math.ceil(diffTime / 86400000));
-          - const percentUsed = Math.min(100, Math.floor(((duration - remainingDays) / duration) * 100));
-          - const formatDate = (date) => date.toISOString().substring(0, 10);
+          - var startDate = new Date(user.resumeAccess.startDate);
+          - var duration = user.resumeAccess.durationDays;
+          - var endDate = new Date(startDate.getTime() + duration * 86400000);
+          - var now = new Date();
+          - var diffTime = endDate - now;
+          - var remainingDays = Math.max(0, Math.ceil(diffTime / 86400000));
+          - var percentUsed = Math.min(100, Math.floor(((duration - remainingDays) / duration) * 100));
+          - var formatDate = function(date) { return date.toISOString().substring(0, 10); };
 
           h4.text-center.text-primary.mt-4(style="font-weight: bold;") 🧭 Tutor Visibility Status
 
@@ -41,7 +49,8 @@ block content
               | 🛑 End Date:
               span.text-dark #{formatDate(endDate)}
             p.mb-2(style="font-size: 1.1rem; font-weight: bold; color: #007bff")
-              | ⏳ Remaining Days for Tutor Visibility:#{remainingDays} day#{remainingDays === 1 ? '' : 's'}
+              | ⏳ Remaining Days: #{(remainingDays === 1) ? '1 day' : `${remainingDays} days`}
+
 
           .progress.mx-auto(style="height: 22px; max-width: 420px; margin-top: 10px;")
             .progress-bar.bg-info(
@@ -73,17 +82,16 @@ block content
                 th.text-center Actions
             tbody
               each vacancy in jobVacancies
+                - var dateStr = 'N/A';
+                if vacancy.datePosted
+                  - dateStr = new Date(vacancy.datePosted).toISOString().substring(0, 10);
+                else if vacancy.createdAt
+                  - dateStr = new Date(vacancy.createdAt).toISOString().substring(0, 10);
+
                 tr
-                  td #{vacancy.title}
-                  td #{vacancy.country}
-                  td
-                    - let dateStr = 'N/A';
-                    - if (vacancy.datePosted) {
-                    -   dateStr = new Date(vacancy.datePosted).toISOString().substring(0, 10);
-                    - } else if (vacancy.createdAt) {
-                    -   dateStr = new Date(vacancy.createdAt).toISOString().substring(0, 10);
-                    - }
-                    = dateStr
+                  td= vacancy.title
+                  td= vacancy.country
+                  td= dateStr
                   td.text-center
                     a.btn.btn-outline-dark.btn-sm.me-1(href='/job-vacancies/' + vacancy._id) View
                     a.btn.btn-outline-dark.btn-sm.me-1(href='/job-vacancies/' + vacancy._id + '/edit') Edit
@@ -108,12 +116,8 @@ block content
 
       else if user.role === 'Job_Seeker'
         h3.text-center.mt-5 Resume Access
-
-        p.text-center.mt-2(
-          style='color: #343a40; font-size: 1.15rem; font-weight: 600;'
-        )
+        p.text-center.mt-2(style='color: #343a40; font-size: 1.15rem; font-weight: 600;')
           | Gain visibility and connect with recruiters worldwide.
-
         .d-flex.justify-content-center.mt-4
           a.btn.btn-warning.btn-lg.text-white(
             href='/resume-access',
@@ -122,12 +126,8 @@ block content
 
       else if user.role === 'Online_Tutor'
         h3.text-center.mt-5 Tutor Visibility
-
-        p.text-center.mt-2(
-          style='color: #343a40; font-size: 1.15rem; font-weight: 600;'
-        )
+        p.text-center.mt-2(style='color: #343a40; font-size: 1.15rem; font-weight: 600;')
           | Gain visibility and connect with students worldwide.
-
         .d-flex.justify-content-center.mt-4
           a.btn.btn-warning.btn-lg.text-white(
             href='/tutor-access',

@@ -1,15 +1,18 @@
+// router/admin.js
+
 const express = require('express');
 const router = express.Router();
 
-const JobVacancy = require('../model/jobVacancy');
-const JobSeeker = require('../model/jobSeeker'); // 반드시 존재해야 함
-const Tutor = require('../model/tutor');         // 반드시 존재해야 함
-
 const requireAdmin = require('../middleware/requireAdmin');
+
+// ✅ 모델 불러오기 (❗ 반드시 필요)
+const JobVacancy = require('../model/jobVacancy');
+const JobSeeker = require('../model/jobSeeker');
+const Tutor = require('../model/tutor');
 
 // ✅ 관리자 로그인 페이지
 router.get('/login', (req, res) => {
-  res.render('admin/login'); 
+  res.render('admin/login');  // views/admin/login.pug
 });
 
 // ✅ 로그인 처리
@@ -26,44 +29,30 @@ router.post('/login', (req, res) => {
   }
 });
 
-// ✅ 관리자 대시보드 (통계 + 최근 공고 포함)
+// ✅ 관리자 대시보드 (통계 포함)
 router.get('/dashboard', requireAdmin, async (req, res) => {
   try {
-    const [jobVacancyCount, jobSeekerCount, tutorCount, recentJobs] = await Promise.all([
+    const [jobVacancyCount, jobSeekerCount, tutorCount] = await Promise.all([
       JobVacancy.countDocuments(),
       JobSeeker.countDocuments(),
-      Tutor.countDocuments(),
-      JobVacancy.find().sort({ createdAt: -1 }).limit(10).lean()
+      Tutor.countDocuments()
     ]);
+
+    const jobSeekers = await JobSeeker.find();
+    const tutors = await Tutor.find();
 
     res.render('admin/dashboard', {
       jobVacancyCount,
       jobSeekerCount,
       tutorCount,
-      recentJobs,
+      jobSeekers,
+      tutors,
       currentDate: new Date().toLocaleDateString()
     });
   } catch (err) {
     console.error('Admin dashboard error:', err);
-    res.status(500).send('Internal Server Error');
+    res.status(500).send('Server Error');
   }
-});
-
-// ✅ 로그아웃
-router.get('/logout', (req, res) => {
-  req.session.destroy((err) => {
-    if (err) {
-      console.error('Logout error:', err);
-      return res.redirect('/admin/dashboard');
-    }
-    res.redirect('/admin/login');
-  });
-});
-
-// ✅ 공고 삭제
-router.post('/delete/:id', requireAdmin, async (req, res) => {
-  await JobVacancy.findByIdAndDelete(req.params.id);
-  res.redirect('/admin/dashboard');
 });
 
 module.exports = router;

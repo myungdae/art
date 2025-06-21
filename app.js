@@ -9,9 +9,7 @@ const methodOverride = require('method-override');
 const resumeAccessRouter = require('./router/resumeAccess');
 const onlineTutorRouter = require('./router/onlineTutor');  // ✅ 이름 정정
 const tutorAccessRouter = require('./router/tutorAccess');  // ✅ 새 라우터 등록
-
-
-
+const adminRouter = require('./router/admin');
 
 console.log("📌 app.js 시작됨");
 
@@ -66,6 +64,7 @@ app.use('/paypal', paypalRoutes);
 app.use('/job-vacancies', jobVacancyRouter); // 반드시 이 위치
 app.use('/resume-access', resumeAccessRouter);
 app.use('/online-tutor', onlineTutorRouter); // ✅ 정확한 경로와 라우터 사용
+app.use('/admin', adminRouter);
 app.use('/', require('./router/public'));
 app.use('/', userRoutes);
 app.use('/tutor-access', tutorAccessRouter);                // ✅ 진입 경로

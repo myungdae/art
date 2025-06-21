@@ -1,17 +1,23 @@
 extends ../layout
 
 block content
-  .container
-    h2 Admin Login
+  .container.mt-5
+    .row.justify-content-center
+      .col-md-6
+        .card.shadow
+          .card-header.bg-primary.text-white.text-center
+            h4.mb-0 Admin Login
+          .card-body
+            if error
+              .alert.alert-danger.text-center= error
 
-    if error
-      .alert.alert-danger= error  
+            form(method="POST", action="/admin/login")
+              .form-group.mb-3
+                label(for="email") Email
+                input.form-control#email(type="email", name="email", required, placeholder="Enter email")
 
-    form(method="POST", action="/admin/login")
-      .form-group
-        label(for="email") Email
-        input.form-control(type="email", name="email", required)
-      .form-group
-        label(for="password") Password
-        input.form-control(type="password", name="password", required)
-      button.btn.btn-primary(type="submit") Login
+              .form-group.mb-3
+                label(for="password") Password
+                input.form-control#password(type="password", name="password", required, placeholder="Enter password")
+
+              button.btn.btn-primary.btn-block(type="submit") Login

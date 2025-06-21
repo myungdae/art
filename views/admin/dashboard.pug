@@ -4,56 +4,68 @@ block content
   .container.mt-5
     h2.text-center.mb-4 Admin Dashboard
 
-    .row.text-center
-      .col-md-4.mb-4
-        .card.border-info.shadow-sm
+    .row.mb-4
+      .col-md-4
+        .card.text-white.bg-primary.mb-3
+          .card-header Job Vacancies
           .card-body
-            h5.card-title Job Vacancies
-            p.card-text.text-primary.font-weight-bold #{jobVacancyCount}
+            h5.card-title= jobVacancyCount
+            p.card-text Total Job Ads
 
-      .col-md-4.mb-4
-        .card.border-success.shadow-sm
+      .col-md-4
+        .card.text-white.bg-success.mb-3
+          .card-header Job Seekers
           .card-body
-            h5.card-title Job Seekers
-            p.card-text.text-success.font-weight-bold #{jobSeekerCount}
+            h5.card-title= jobSeekerCount
+            p.card-text Total Job Seekers
 
-      .col-md-4.mb-4
-        .card.border-warning.shadow-sm
+      .col-md-4
+        .card.text-white.bg-info.mb-3
+          .card-header Tutors
           .card-body
-            h5.card-title Online Tutors
-            p.card-text.text-warning.font-weight-bold #{tutorCount}
+            h5.card-title= tutorCount
+            p.card-text Total Tutors
 
-    hr
+    h3.mt-5 Job Seekers with Resume Board Access
 
-    h4.mt-4.mb-3 Recent Job Vacancies
-    if recentJobs && recentJobs.length > 0
-      .table-responsive(style="max-height: 400px; overflow-y: auto;")
-        table.table.table-hover.table-bordered
-          thead
-            tr.bg-light
-              th Title
-              th Country
-              th Student Type
-              th Teaching Area
-              th Posted Date
-          tbody
-            each job in recentJobs
-              tr
-                td #{job.title}
-                td #{job.country}
-                td #{job.studentType}
-                td #{job.teachingArea}
-                td
-                  - let dateStr = 'N/A';
-                  - if (job.datePosted) {
-                  -   dateStr = new Date(job.datePosted).toISOString().substring(0, 10);
-                  - } else if (job.createdAt) {
-                  -   dateStr = new Date(job.createdAt).toISOString().substring(0, 10);
-                  - }
-                  = dateStr
-    else
-      p.text-muted No recent job vacancies found.
+    table.table.table-striped
+      thead
+        tr
+          th Username
+          th Email
+          th Remaining Days
+      tbody
+        each js in jobSeekers
+          - const msPerDay = 1000 * 60 * 60 * 24;
+          - const now = new Date();
+          - let remaining = 'N/A';
+          - if (js.resumeAccess && js.resumeAccess.startDate && js.resumeAccess.durationDays) {
+          -   const endDate = new Date(js.resumeAccess.startDate).getTime() + js.resumeAccess.durationDays * msPerDay;
+          -   remaining = Math.max(0, Math.ceil((endDate - now.getTime()) / msPerDay));
+          - }
+          tr
+            td= js.username
+            td= js.email
+            td= remaining
 
-    hr
-    .text-center.mt-3
-      small.text-muted Data as of #{currentDate}
+    h3.mt-5 Online Tutors with Resume Board Access
+
+    table.table.table-striped
+      thead
+        tr
+          th Username
+          th Email
+          th Remaining Days
+      tbody
+        each tutor in tutors
+          - const msPerDay = 1000 * 60 * 60 * 24;
+          - const now = new Date();
+          - let remaining = 'N/A';
+          - if (tutor.resumeAccess && tutor.resumeAccess.startDate && tutor.resumeAccess.durationDays) {
+          -   const endDate = new Date(tutor.resumeAccess.startDate).getTime() + tutor.resumeAccess.durationDays * msPerDay;
+          -   remaining = Math.max(0, Math.ceil((endDate - now.getTime()) / msPerDay));
+          - }
+          tr
+            td= tutor.username
+            td= tutor.email
+            td= remaining

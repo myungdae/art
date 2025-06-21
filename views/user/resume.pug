@@ -1,0 +1,61 @@
+extends ../layout
+
+block content
+  .container.mt-5
+    h2.text-center.mb-4(style="font-size: 2rem;") 🧾 Resume Access
+
+    if user && user.role === 'Job_Seeker'
+      - var access = user.resumeAccess || {};
+      - var hasAccess = access.startDate && access.durationDays;
+      - var remainingDays = '-';
+      - var percentUsed = 0;
+      - var formatDate = function(date) { return date.toISOString().substring(0, 10); };
+
+      if hasAccess
+        - var startDate = new Date(access.startDate);
+        - var duration = access.durationDays;
+        - var endDate = new Date(startDate.getTime() + duration * 86400000);
+        - var now = new Date();
+        - var diffTime = endDate - now;
+        - remainingDays = Math.max(0, Math.ceil(diffTime / 86400000));
+        - percentUsed = Math.min(100, Math.floor(((duration - remainingDays) / duration) * 100));
+
+        .alert.alert-success.text-center
+          strong ✅ Your resume is visible to recruiters.
+          br
+          | 📅 From: #{formatDate(startDate)} &nbsp;&nbsp; ➡️ &nbsp;&nbsp; To: #{formatDate(endDate)}
+          br
+          | ⏳ Remaining Days: #{remainingDays} day#{remainingDays === 1 ? '' : 's'}
+
+        .progress.mx-auto.mt-3(style="height: 22px; max-width: 420px;")
+          .progress-bar.bg-info(
+            role="progressbar",
+            style=`width: ${100 - percentUsed}%`,
+            ariaValuenow=remainingDays,
+            ariaValuemin="0",
+            ariaValuemax=duration
+          ) #{100 - percentUsed}%
+
+        .text-center.mt-4
+          a.btn.btn-success.btn-lg.text-white(
+            href='/resume-access/extend',
+            style='padding: 16px 36px; font-size: 1.2rem; font-weight: bold;'
+          ) 🔄 Extend Access
+
+      else
+        .alert.alert-warning.text-center
+          strong ⚠️ You do not have an active resume access.
+          br
+          | Recruiters cannot find your profile until you activate visibility.
+
+        .text-center.mt-4
+          a.btn.btn-warning.btn-lg.text-white(
+            href='/paypal/resume-checkout',
+            style='padding: 18px 36px; font-size: 1.3rem; font-weight: bold;'
+          ) 💳 Purchase Resume Access
+
+    else
+      .alert.alert-danger.text-center
+        strong ❌ Access Denied.
+        br
+        | Only job seekers can access this page. Please log in with a job seeker account.

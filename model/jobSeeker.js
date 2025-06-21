@@ -11,7 +11,6 @@ const jobSeekerSchema = new mongoose.Schema({
   languageSpoken: { type: String },                     // 구사 언어
   educationBackground: { type: String },                // 학력
   availableFrom: { type: Date }                         // 시작 가능일
-});
+}, { timestamps: true });  // ✅ createdAt, updatedAt 자동 생성
 
 module.exports = mongoose.model('JobSeeker', jobSeekerSchema);
-

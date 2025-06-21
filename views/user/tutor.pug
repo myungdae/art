@@ -1,0 +1,46 @@
+extends ../layout
+
+block content
+  .container.mt-5
+    h2.text-center.mb-5(style="font-size: 2rem;") Tutor Visibility Page
+
+    if user && user.role === 'Online_Tutor'
+      - const startDate = user.resumeAccess?.startDate ? new Date(user.resumeAccess.startDate) : null;
+      - const duration = user.resumeAccess?.durationDays || 0;
+      - const endDate = startDate ? new Date(startDate.getTime() + duration * 86400000) : null;
+      - const now = new Date();
+      - const remainingDays = (startDate && endDate) ? Math.max(0, Math.ceil((endDate - now) / 86400000)) : 0;
+      - const percentUsed = duration > 0 ? Math.min(100, Math.floor(((duration - remainingDays) / duration) * 100)) : 0;
+      - const formatDate = (date) => date?.toISOString().substring(0, 10) || 'N/A';
+
+      h4.text-center.text-success.mt-4(style="font-weight: bold;") 📘 Tutor Visibility Status
+
+      .text-center.mt-3
+        p(style="font-size: 1.1rem;")
+          | 📅 Start Date:
+          span.text-dark.ms-2 #{formatDate(startDate)}
+        p(style="font-size: 1.1rem;")
+          | ⏳ End Date:
+          span.text-dark.ms-2 #{formatDate(endDate)}
+        p(style="font-size: 1.1rem; font-weight: bold; color: #007bff;")
+          | 🧭 Remaining Days:
+          span.text-dark.ms-2 #{remainingDays} day#{remainingDays === 1 ? '' : 's'}
+
+      .progress.mx-auto.my-4(style="height: 22px; max-width: 420px;")
+        .progress-bar.bg-info(
+          role="progressbar",
+          style=`width: ${100 - percentUsed}%`,
+          ariaValuenow=remainingDays,
+          ariaValuemin="0",
+          ariaValuemax=duration
+        ) #{100 - percentUsed}%
+
+      .d-flex.justify-content-center.mt-4
+        a.btn.btn-success.btn-lg.text-white(
+          href='/tutor-access',
+          style='padding: 16px 36px; font-size: 1.2rem; font-weight: bold;'
+        ) 🔄 Extend Visibility
+
+    else
+      .alert.alert-danger.text-center.mt-5
+        | Only Online Tutors can access this page.
