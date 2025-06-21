@@ -5,12 +5,9 @@ block content
     h2.text-center.mb-5(style="font-size: 2rem;") My Page
 
     if user
-      - var roleMap = {
-        'Employer': 'Employer',
-        'Job_Seeker': 'Job Seeker',
-        'Online_Tutor': 'Online Tutor'
-      }
+      - var roleMap = { 'Employer': 'Employer', 'Job_Seeker': 'Job Seeker', 'Online_Tutor': 'Online Tutor' };
       - var displayRole = roleMap[user.role] || user.role;
+
       .mb-4
         p(style="font-size: 1.1rem;")
           strong Username:
@@ -50,7 +47,6 @@ block content
               span.text-dark #{formatDate(endDate)}
             p.mb-2(style="font-size: 1.1rem; font-weight: bold; color: #007bff")
               | ⏳ Remaining Days: #{(remainingDays === 1) ? '1 day' : `${remainingDays} days`}
-
 
           .progress.mx-auto(style="height: 22px; max-width: 420px; margin-top: 10px;")
             .progress-bar.bg-info(
