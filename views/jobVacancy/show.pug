@@ -71,7 +71,7 @@ block content
                 | #{jobVacancy.jobLocation || 'N/A'}
               li
                 strong Date Posted: 
-                | #{jobVacancy.datePosted && new Date(jobVacancy.datePosted).toLocaleDateString() || 'N/A'}
+                | #{jobVacancy.datePosted ? new Date(jobVacancy.datePosted).toLocaleDateString() : 'N/A'}
 
             hr
 

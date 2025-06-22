@@ -9,15 +9,15 @@ block content
             h4.mb-0 Edit Job Advertisement
 
           .card-body
-            form.form(method="POST", action="/job-vacancies/" + jobVacancy._id + "?_method=PUT", onsubmit="return handleCustomFieds()")
+            form.form(method="POST", action="/job-vacancies/" + jobVacancy._id + "?_method=PUT", onsubmit="return handleCustomFields()")
               .form-group.mb-3
                 label(for="title") Job Title
-                input.form-control#title(type="text", name="title", required, value=jobVacancy.title, oninput="validateTitle(this)")
+                input.form-control#title(type="text", name="title", required, value=jobVacancy.title || '', oninput="validateTitle(this)")
                 small.text-danger#title-error(style="display:none") ❌ Emojis or Korean characters are not allowed.
 
               .form-group.mb-4
                 label(for="description") Job Description
-                textarea.form-control(name="description", id="description", rows="8")= jobVacancy.description
+                textarea.form-control(name="description", id="description", rows="8")= jobVacancy.description || ''
 
               .form-group.mb-3
                 label(for="country") Host Country
@@ -48,47 +48,47 @@ block content
 
               .form-group.mb-3
                 label(for="duration") Duration
-                input.form-control(type="text", name="duration", id="duration", value=jobVacancy.duration)
+                input.form-control(type="text", name="duration", id="duration", value=jobVacancy.duration || '')
 
               .form-group.mb-3
                 label(for="pay") Pay
-                input.form-control(type="text", name="pay", id="pay", value=jobVacancy.pay)
+                input.form-control(type="text", name="pay", id="pay", value=jobVacancy.pay || '')
 
               .form-group.mb-3
                 label(for="housing") Housing
-                input.form-control(type="text", name="housing", id="housing", value=jobVacancy.housing)
+                input.form-control(type="text", name="housing", id="housing", value=jobVacancy.housing || '')
 
               .form-group.mb-3
                 label(for="email") Email
-                input.form-control(type="email", name="email", id="email", value=jobVacancy.email)
+                input.form-control(type="email", name="email", id="email", value=jobVacancy.email || '')
 
               .form-group.mb-3
                 label(for="companyName") Company Name
-                input.form-control(type="text", name="companyName", id="companyName", value=jobVacancy.companyName)
+                input.form-control(type="text", name="companyName", id="companyName", value=jobVacancy.companyName || '')
 
               .form-group.mb-3
                 label(for="jobLocation") Job Location
-                input.form-control(type="text", name="jobLocation", id="jobLocation", value=jobVacancy.jobLocation)
+                input.form-control(type="text", name="jobLocation", id="jobLocation", value=jobVacancy.jobLocation || '')
 
               .form-group.mb-3
                 label(for="cellphoneNumber") Cellphone Number
-                input.form-control(type="text", name="cellphoneNumber", id="cellphoneNumber", value=jobVacancy.cellphoneNumber)
+                input.form-control(type="text", name="cellphoneNumber", id="cellphoneNumber", value=jobVacancy.cellphoneNumber || '')
 
               .form-group.mb-3
                 label(for="skypeId") Skype ID
-                input.form-control(type="text", name="skypeId", id="skypeId", value=jobVacancy.skypeId)
+                input.form-control(type="text", name="skypeId", id="skypeId", value=jobVacancy.skypeId || '')
 
               .form-group.mb-3
                 label(for="wechatId") WeChat ID
-                input.form-control(type="text", name="wechatId", id="wechatId", value=jobVacancy.wechatId)
+                input.form-control(type="text", name="wechatId", id="wechatId", value=jobVacancy.wechatId || '')
 
               .form-group.mb-3
                 label(for="homepage") Homepage
-                input.form-control(type="text", name="homepage", id="homepage", value=jobVacancy.homepage)
+                input.form-control(type="text", name="homepage", id="homepage", value=jobVacancy.homepage || '')
 
               .form-group.mb-3
                 label(for="datePosted") Date Posted
-                input.form-control(type="date", name="datePosted", id="datePosted", value=datePostedFormatted)
+                input.form-control(type="date", name="datePosted", id="datePosted", value=datePostedFormatted || '')
 
               .form-group
                 label.mb-2 Add Resume Access?

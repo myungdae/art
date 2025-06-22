@@ -5,174 +5,162 @@ block content
     .row.justify-content-center
       .col-md-10
         .card.shadow
-          .card-header.bg-light
-            h4.mb-0.text-dark New Job Vacancy
+          .card-header.bg-primary.text-white.text-center
+            h4.mb-0 Post a Job Ad
 
           .card-body
-            form(method="POST", action="/job-vacancies/new")
-
-              // ✅ Job Title
+            form(method="POST", action="/job-vacancies", onsubmit="return handleCustomFields()")
               .form-group.mb-3
-                label(for="title") Job Title *
+                label(for="title") Job Title
                 input.form-control#title(type="text", name="title", required, placeholder="Job Title", oninput="validateTitle(this)")
                 small.text-danger#title-error(style="display:none") ❌ Emojis or Korean characters are not allowed.
 
-              // ✅ Description
               .form-group.mb-4
-                label(for="description") Job Description *
+                label(for="description") Job Description
                 textarea.form-control(name="description", id="description", rows="8")
 
-              // ✅ Country + StudentType
-                .form-row
-                  .form-group.col-md-6
-                    label(for="country") Host Country
-                    select.form-control(name="country", id="country", required)
-                      option(disabled selected value='') Select Country
-                      each v in countries
-                        option(value=v)= v
-                
-                  .form-group.col-md-6
-                    label(for="studentType") Student Type
-                    select.form-control(name="studentType", id="studentType", required)
-                      option(disabled selected value='') Select Student Type
-                      each v in studentTypes
-                        option(value=v)= v
-                
-                // ✅ Teaching Area
-                  .form-group
-                    label(for="teachingArea") Teaching Area
-                    div.ui.fluid.search.selection.dropdown(id="teachingAreaDropdown", tabindex="0")
-                      input(type="hidden", name="teachingArea")
-                      i.dropdown.icon
-                      div.default.text Select Teaching Area
-                      
-                      div.menu
-                        each v in teachingAreas
-                          div.item(data-value=v)= v
+              // ✅ Host Country
+              .form-group.mb-3
+                label(for="country") Host Country
+                select.form-control#countrySelect(name="country")
+                  option(disabled selected value='') Select Country
+                  each v in countries
+                    option(value=v)= v
+                small.text-muted.mt-1 You can also add a new country:
+                input.form-control.mt-1(type="text", id="customCountry", placeholder="Or enter a new Country")
 
+              // ✅ Student Type
+              .form-group.mb-3
+                label(for="studentType") Student Type
+                select.form-control#studentTypeSelect(name="studentType")
+                  option(disabled selected value='') Select Student Type
+                  each v in studentTypes
+                    option(value=v)= v
+                small.text-muted.mt-1 You can also add a new student type:
+                input.form-control.mt-1(type="text", id="customStudentType", placeholder="Or enter a new Student Type")
 
+              // ✅ Teaching Area
+              .form-group.mb-3
+                label(for="teachingArea") Teaching Area
+                select.form-control#teachingArea(name="teachingArea")
+                  option(disabled selected value='') Select Teaching Area
+                  each v in teachingAreas
+                    option(value=v)= v
+                small.text-muted.mt-1 You can also add a new teaching area:
+                input.form-control.mt-1(type="text", id="customTeachingArea", placeholder="Or enter a new Teaching Area")
 
+              .form-group.mb-3
+                label(for="duration") Duration
+                input.form-control(type="text", name="duration", id="duration", placeholder="Duration")
 
+              .form-group.mb-3
+                label(for="pay") Pay
+                input.form-control(type="text", name="pay", id="pay", placeholder="Pay")
 
-              // ✅ 기타 기본 필드
-              .form-row
-                .form-group.col-md-6
-                  label(for="duration") Duration
-                  input.form-control(type="text", name="duration", placeholder="e.g. 12 months")
+              .form-group.mb-3
+                label(for="housing") Housing
+                input.form-control(type="text", name="housing", id="housing", placeholder="Housing")
 
-                .form-group.col-md-6
-                  label(for="pay") Pay
-                  input.form-control(type="text", name="pay", placeholder="e.g. $2500/month")
+              .form-group.mb-3
+                label(for="email") Email
+                input.form-control(type="email", name="email", id="email", placeholder="Email")
 
-              .form-row
-                .form-group.col-md-6
-                  label(for="housing") Housing
-                  input.form-control(type="text", name="housing", placeholder="e.g. Provided")
+              .form-group.mb-3
+                label(for="companyName") Company Name
+                input.form-control(type="text", name="companyName", id="companyName", placeholder="Company Name")
 
-                .form-group.col-md-6
-                  label(for="email") Email
-                  input.form-control(type="email", name="email", placeholder="Your contact email")
+              .form-group.mb-3
+                label(for="jobLocation") Job Location
+                input.form-control(type="text", name="jobLocation", id="jobLocation", placeholder="Job Location")
 
-              .form-row
-                .form-group.col-md-6
-                  label(for="companyName") Company Name
-                  input.form-control(type="text", name="companyName")
+              .form-group.mb-3
+                label(for="cellphoneNumber") Cellphone Number
+                input.form-control(type="text", name="cellphoneNumber", id="cellphoneNumber", placeholder="Cellphone Number")
 
-                .form-group.col-md-6
-                  label(for="jobLocation") Job Location
-                  input.form-control(type="text", name="jobLocation")
+              .form-group.mb-3
+                label(for="skypeId") Skype ID
+                input.form-control(type="text", name="skypeId", id="skypeId", placeholder="Skype ID")
 
-              .form-row
-                .form-group.col-md-6
-                  label(for="cellphoneNumber") Cellphone Number
-                  input.form-control(type="text", name="cellphoneNumber")
+              .form-group.mb-3
+                label(for="wechatId") WeChat ID
+                input.form-control(type="text", name="wechatId", id="wechatId", placeholder="WeChat ID")
 
-                .form-group.col-md-6
-                  label(for="skypeId") Skype ID
-                  input.form-control(type="text", name="skypeId")
+              .form-group.mb-3
+                label(for="homepage") Homepage
+                input.form-control(type="text", name="homepage", id="homepage", placeholder="Homepage")
 
-              .form-row
-                .form-group.col-md-6
-                  label(for="wechatId") WeChat ID
-                  input.form-control(type="text", name="wechatId")
+              .form-group.mb-3
+                label(for="datePosted") Date Posted
+                input.form-control(type="date", name="datePosted", id="datePosted")
 
-                .form-group.col-md-6
-                  label(for="homepage") Homepage
-                  input.form-control(type="text", name="homepage")
-
-              // ✅ Date Posted (숨김 처리)
-              input(type="hidden", name="datePosted", value=new Date().toISOString().substring(0, 10))
-
-              // ✅ Payment Options
-              .form-group.mt-5
-                h4.text-primary.mb-3 Select a Payment Option
-                .form-row
-                  each opt, idx in ['1', '4', '12', '24']
-                    .col-md-6.mb-2
-                      .form-check
-                        input.form-check-input.ml-3(type="radio", name="adPackage", id="ad-" + opt, value=opt)
-                        label.form-check-label(for="ad-" + opt).ml-2
-                          if opt == '1'
-                            | 1 Ad — $30 one-time payment
-                          else if opt == '4'
-                            | 4 Ads — $100 
-                            span.text-danger (save $20)
-                          else if opt == '12'
-                            | 12 Ads — $250 
-                            span.text-danger (save $110)
-                          else if opt == '24'
-                            | 24 Ads — $450 
-                            span.text-danger (save $270)
-              
-              // ✅ Resume Access 라디오 정렬
-              .form-group.mt-4
-                label.mb-2.d-block Add Resume Access?
-                .form-check.form-check-inline.ml-3
+              .form-group
+                label.mb-2 Add Resume Access?
+                .form-check.form-check-inline
                   input.form-check-input(type="radio", name="resumeAccess", id="resumeYes", value="yes", checked)
                   label.form-check-label(for="resumeYes") Yes
                 .form-check.form-check-inline
                   input.form-check-input(type="radio", name="resumeAccess", id="resumeNo", value="no")
                   label.form-check-label(for="resumeNo") No
 
-
-              // ✅ 수정: 결제 페이지로 이동
-              a.btn.btn-success.btn-block.mt-4(href="/paypal/checkout")
-                | 💳 Proceed to Payment
+              button.btn.btn-primary.btn-block.mt-4(type="submit") Submit
 
 block append_js
-                script(src="https://cdn.ckeditor.com/ckeditor5/41.0.0/classic/ckeditor.js")
-                script.
-                  ClassicEditor
-                    .create(document.querySelector('#description'))
-                    .catch(error => console.error(error));
-                
-                  function validateTitle(input) {
-                    const emojiRegex = /[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu;
-                    const koreanRegex = /[ㄱ-ㅎㅏ-ㅣ가-힣]/;
-                    const errorElem = document.getElementById('title-error');
-                    if (emojiRegex.test(input.value) || koreanRegex.test(input.value)) {
-                      errorElem.style.display = 'block';
-                      input.classList.add('is-invalid');
-                    } else {
-                      errorElem.style.display = 'none';
-                      input.classList.remove('is-invalid');
-                    }
-                  }
-                
-                // ✅ Semantic UI 초기화
-                script.
-                  $(document).ready(function () {
-                    console.log("✅ Semantic UI initialized");
-                
-                    $('#teachingAreaDropdown').dropdown({
-                      allowAdditions: true,
-                      forceSelection: false,
-                      fullTextSearch: true,
-                      allowReselection: true,
-                      onAdd: function (value, text) {
-                        console.log("➕ 추가됨:", value);
-                      }
-                    });
-                  });
+  script(src="https://cdn.ckeditor.com/ckeditor5/41.0.0/classic/ckeditor.js")
+  script.
+    ClassicEditor
+      .create(document.querySelector('#description'))
+      .catch(error => console.error(error));
 
+    function validateTitle(input) {
+      const emojiRegex = /[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu;
+      const koreanRegex = /[ㄱ-ㅎㅏ-ㅣ가-힣]/;
+      const errorElem = document.getElementById('title-error');
+      if (emojiRegex.test(input.value) || koreanRegex.test(input.value)) {
+        errorElem.style.display = 'block';
+        input.classList.add('is-invalid');
+      } else {
+        errorElem.style.display = 'none';
+        input.classList.remove('is-invalid');
+      }
+    }
 
+    function handleCustomFields() {
+      const form = document.querySelector('form');
+
+      const customCountry = document.getElementById('customCountry')?.value.trim();
+      const customStudent = document.getElementById('customStudentType')?.value.trim();
+      const customTeaching = document.getElementById('customTeachingArea')?.value.trim();
+
+      const countrySelect = document.getElementById('countrySelect');
+      const studentTypeSelect = document.getElementById('studentTypeSelect');
+      const teachingSelect = document.getElementById('teachingArea');
+
+      if (customCountry && countrySelect.value === '') {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'country';
+        input.value = customCountry;
+        form.appendChild(input);
+        countrySelect.disabled = true;
+      }
+
+      if (customStudent && studentTypeSelect.value === '') {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'studentType';
+        input.value = customStudent;
+        form.appendChild(input);
+        studentTypeSelect.disabled = true;
+      }
+
+      if (customTeaching && teachingSelect.value === '') {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'teachingArea';
+        input.value = customTeaching;
+        form.appendChild(input);
+        teachingSelect.disabled = true;
+      }
+
+      return true;
+    }

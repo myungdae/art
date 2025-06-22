@@ -4,22 +4,28 @@ block content
   .container.mt-5
     h2.text-center.mb-4 Job Vacancies
 
-    if jobs.length === 0
-      p.text-muted No job postings available.
+    if jobVacancies && jobVacancies.length === 0
+      p.text-muted.text-center No job postings available.
+
     else
-      table.table.table-bordered
-        thead
+      table.table.table-bordered.table-hover
+        thead.table-light
           tr
             th Title
             th Country
-            th Date Posted
+            th Company
+            th Posted
             th Actions
         tbody
-          each job in jobs
+          each job in jobVacancies
             tr
-              td= job.title
-              td= job.country || '—'
-              td= job.datePosted ? job.datePosted.toISOString().substring(0, 10) : '—'
+              td= job.title || 'Untitled'
+              td= job.country || 'N/A'
+              td= job.companyName || 'N/A'
+              td= job.datePosted ? new Date(job.datePosted).toLocaleDateString() : 'N/A'
               td
-                a.btn.btn-sm.btn-primary(href=`/job-vacancies/${job._id}`) View
-                a.btn.btn-sm.btn-warning.ms-1(href=`/job-vacancies/${job._id}/edit`) Edit
+                a.btn.btn-sm.btn-outline-primary(href=`/job-vacancies/${job._id}`) View
+                a.btn.btn-sm.btn-outline-secondary.ms-2(href=`/job-vacancies/${job._id}/edit`) Edit
+
+    .mt-4.text-end
+      a.btn.btn-success(href='/job-vacancies/new') + Post New Job

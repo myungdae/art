@@ -1,0 +1,13 @@
+@prefix : <#>.
+@prefix dc: <http://purl.org/dc/elements/1.1/>.
+@prefix res: <>.
+
+res:684fd86320c71763a7d5e339
+    a res:JobVacancy;
+    res:addResumeAccess "false";
+    res:country "Australia";
+    res:homepage "http://odex.kr";
+    res:studentType "Adults";
+    res:teachingArea "Biology";
+    dc:description "<p>Are you there Holy Holy  mmmmm</p>";
+    dc:title "This is rdf-translator test (myungdae 1/4 ) 2nd edit".
