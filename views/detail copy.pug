@@ -1,0 +1,792 @@
+extends layout
+block content
+  link(href='/assets/css/ninja-slider.css', rel='stylesheet')
+  style.
+    #ninja-slider {
+      display: none;
+    }
+
+    #ninja-slider.fullscreen {
+      display: block;
+    }
+
+    .video-background {
+      background: #000;
+      position: relative;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      /*z-index: -99;*/
+    }
+
+    .video-foreground,
+    .video-background iframe {
+      position: relative;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      /*pointer-events: none;*/
+    }
+
+  //연계 정보
+  - var displayOnMiddle = collections[resource + 'displayOnMiddle']['@list'].map(function(v){return v['@id']});
+  - var link_data = displayOnMiddle.filter(function(v){if(doc[v]) return v}).map(function(v){let obj = {}; obj[v.replace(resource, '')] = doc[v]; return obj;});
+  
+
+  
+  //속성 정보
+  - var displayOnBottom = collections[resource + 'displayOnBottom']['@list'].map(function(v){return v['@id']});
+  //- var attribute_data = displayOnBottom.filter(function(v) { if(v !== resource + '기록물페이지') if(doc[v]) return v}).map(function(v){let obj = {}; obj[v.replace(resource, '')] = doc[v]['@value']; return obj;});
+  - var attribute_data = displayOnBottom.filter(function(v) { if(doc[v]) return v}).map(function(v){let obj = {}; obj[v] = doc[v]['@value']; return obj;});
+
+  - var displayOnCompany = collections[resource + 'displayOnCompany']['@list'].map(function(v){return v['@id']});
+  - var company_data = displayOnCompany.filter(function(v) { if(doc[v]) return v}).map(function(v){let obj = {}; obj[v] = doc[v]['@value']; return obj;});
+
+  //- 테이블 정보
+  //- 전체 패싯 구성정보(OrderedCollection) 에서 선택 패싯의 구성요소정보(displayOnTable) 정보 리턴
+  //- 리턴 정보를 통해 테이블 등 정보 구성
+  //- - var displayOnTable = collections[resource + 'displayOnTable']['@list'].filter(function(v){if(v['@id'].indexOf(parentClass) > -1) return v});
+
+  - var displayOnTop = collections[resource + 'displayOnTop']['@list'].map(function(v){return v['@id']});
+
+  //- - console.log('resource : ' + resource);
+  //- - console.log('displayOnTop : ' + JSON.stringify(displayOnMiddle, null, 2));
+  //- - console.log('displayOnMiddle : ' + JSON.stringify(displayOnMiddle, null, 2));
+  //- - console.log('link_data : ' + JSON.stringify(link_data, null, 2));
+  //- - console.log('displayOnMiddle : ' + JSON.stringify(displayOnMiddle, null, '\t'));
+  //- - console.log('link_data : ' + JSON.stringify(link_data, null, '\t'));
+  //- - console.log('displayOnBottom : ' + JSON.stringify(displayOnBottom, null, '\t'));
+  //- - console.log('attribute_data : ' + JSON.stringify(attribute_data, null, '\t'));
+  //- - console.log('displayOnLabel : ' + JSON.stringify(displayOnLabel['@id'], null, '\t'));
+
+
+
+  //- - console.log('resource : ' + JSON.stringify(resource, null, '\t'));
+  //- - var displayOnPage = collections[resource + 'displayOnPage']['@list'].map(function(v){return v['@id']});
+  //- - var page_data = displayOnPage.filter(function(v){if(doc[v]) return v}).map(function(v){let obj = {}; obj[v.replace(resource, '')] = [].concat(doc[v]); return obj;});
+  //- - console.log('collections : ' + JSON.stringify(collections, null, '\t'));
+  //- - console.log('doc : ' + JSON.stringify(doc, null, '\t'));
+  //- - console.log('doc description : ' + doc[resource + '설명']);
+
+
+  .container(style="padding-top:30px;border:0px solid #ddd;")
+    .row.justify-content-end
+      <!--------------------- 타이틀 정보 --------------------->
+      .col-md-9(style='font-size:20px;font-weight:bold;') 
+
+        //- - console.log('doc : ' + JSON.stringify(doc, null, 5));
+        
+        h7.d-inline-block.m-0 
+        //- if(doc['@id'] && doc['@type'])
+        if(doc['@id'])
+          | #{doc['@id'].replace(resource, '').replace(/_/g, ' ').replace(/\[dot\]/g, '.')}
+        if(doc['@type'])
+          | &nbsp;(#{doc['@type'].replace(resource, '')})
+
+        if(table_collections.length > 0)
+          h7.d-inline-block.text-primary.m-0 &nbsp;( #{table_collections.length} )
+
+
+        <!------ View Clip ----->
+        if (doc["http://sight[dot]eventpool[dot]kr/resource/topic_clip"])
+          - var viewClipURL = doc["http://sight[dot]eventpool[dot]kr/resource/topic_clip"]["@value"];
+          hr
+          div.inline-container
+            span.inline-text.h4.font-weight-bolder 영상
+            a(href=viewClipURL.replace(/\[dot\]/g, '.') target="_blank") 
+              img(src='/assets/img/btn_play_red.png' width='30px')
+            br
+            hr
+            br
+            
+    .row
+      .col-md-3.phone-images
+        a(name="pic")
+          if(doc[resource + '그림'])
+            if(doc[resource + '그림']['@value'])
+              img(name="pic" src=doc[resource + '그림']['@value'].replace(/\[dot\]/g, '.'))
+          else
+            img(name="pic" src="/assets/img/empty.gif")
+
+
+
+
+      <!--------------------- 설명 정보 --------------------->
+      if(doc[description])
+        if(doc[description]['@value'])
+          - var descriptionText = doc[description]['@value'].replace(/\[dot\]/g, '.');
+        else
+          - var descriptionText = doc[description].replace(/\[dot\]/g, '.'); 
+      if(doc[resource + '설명'])
+        if(doc[resource + '설명']['@value'])
+          - var descriptionText = doc[resource + '설명']['@value'].replace(/\[dot\]/g, '.'); 
+        else
+          - var descriptionText = doc[resource + '설명'].replace(/\[dot\]/g, '.'); 
+
+      //- - console.log('skos_Concept : ' + JSON.stringify(skos_Concept, null, 5));
+      //- - console.log('skos_Namefilter : ' + JSON.stringify(skos_Namefilter, null, 5));
+
+      if(descriptionText)
+
+        - descriptionText = descriptionText.replace(/\r\n/g, '<br>');
+        //- - console.log('descriptionText : ' + descriptionText); 
+
+        //- 시소러스 단어 정보가 있는 경우 설명에 추가
+        if(skos_Concept)
+          each items in skos_Concept
+            //- 공연예술은 공연과 중첩되므로, 수동으로 제외처리
+            if( items[label] && items[label]['@value'] != "공연예술")
+              - var replaceSKOS = items[label]['@value'];
+              if(items[description])
+                - var SKOSdescription = items[description]['@value'];
+              else 
+                - var SKOSdescription = replaceSKOS;
+
+            - descriptionText = descriptionText.replace(replaceSKOS, '[a href="/resource/' + replaceSKOS + '" style="color:#ff3399;cursor:pointer;" data-toggle="tooltip" data-placement="bottom" title="' + SKOSdescription + '" a]' + replaceSKOS + '[a end]');
+
+
+        //- 시소러스 인명 정보가 잇는 경우 설명에 추가
+        if(skos_Namefilter)
+          each items in skos_Namefilter
+            if(items[label])
+              - var replaceSKOS = items[label]['@value'];
+              if(items[description])
+                - var SKOSdescription = items[description]['@value'];
+              else 
+                - var SKOSdescription = replaceSKOS;
+
+            - descriptionText = descriptionText.replace(replaceSKOS, '[a href="/resource/' + replaceSKOS + '" style="color:#378936;cursor:pointer;" data-toggle="tooltip" data-placement="bottom" title="' + SKOSdescription + '" a]' + replaceSKOS + '[a end]');
+
+            //- html tag 정보 변환
+            - descriptionText = descriptionText.replace(/\[b\]/g, '<b>');
+            - descriptionText = descriptionText.replace(/\[\/b\]/g, '</b>');
+            - descriptionText = descriptionText.replace(/\[br\]/g, '<br/>');
+            - descriptionText = descriptionText.replace(/\\r\\n/g, '<br>');
+
+          
+      .col-md-9
+        if(descriptionText)
+          h4.font-weight-bolder  설명
+          .border.rounded.p-3.font-weight-normal 
+            | !{descriptionText.replace(/\[a href=/g, '<a href=').replace(/a\]/g, '>').replace(/\[a end\]/g, '</a>')} 
+
+
+        <!--------------------- ISNI --------------------->
+        if(doc[resource + 'ISNI'])
+          if(doc[resource + 'ISNI']['@value'])
+            - var isni = doc[resource + 'ISNI']['@value'];
+          else
+            - var isni = doc[resource + 'ISNI'];
+          if(isni)
+            br
+            h7.font-weight-bolder ISNI : &nbsp;
+              a(href=isni.replace(/\[dot\]/g, '.') target="_blank") #{decodeURI(isni.replace(/\[dot\]/g, '.'))}
+
+        <!--------------------- Wiki --------------------->
+        if(doc[resource + 'Wiki'])
+          if(doc[resource + 'Wiki'].length > 1)
+            each items in doc[resource + 'Wiki']
+              //- -console.log("items : " + items["@value"]);
+              if(items["@value"])
+                - var Wiki = items['@value'];
+              else
+                - var Wiki = items;
+              //- - console.log('Wiki : ' + Wiki.length);
+              if(Wiki)
+                br
+                h7.font-weight-bolder Wiki : &nbsp;
+                  a(href=Wiki.replace(/\[dot\]/g, '.') target="_blank") #{decodeURI(Wiki.replace(/\[dot\]/g, '.'))}
+          else 
+            if(doc[resource + 'Wiki']["@value"])
+              - var Wiki = doc[resource + 'Wiki']["@value"];
+            else
+                - var Wiki = doc[resource + 'Wiki'];
+            if(Wiki)
+              br
+              h7.font-weight-bolder Wiki : &nbsp;
+                a(href=Wiki.replace(/\[dot\]/g, '.') target="_blank") #{decodeURI(Wiki.replace(/\[dot\]/g, '.'))}
+
+          
+
+
+        <!--------------------- Thesauri --------------------->
+        - const labelData = [];
+        if (Labeldata)
+          hr
+          h4.font-weight-bolder 시소러스
+          each item in Labeldata
+            h7.font-weight-bolder #{item.replace(/\[dot\]/g, '.').replace(/rdf-schema\#label/, 'rdfs:label').replace(/core\#altLabel/, ' skos:altLabel').replace(/ore\#prefLabel/, 'skos:prefLabel').replace(/core\#hiddenLabel/, 'skos:hiddenLabel')}
+            br
+
+
+        <!--------------------- 연계 정보 --------------------->
+        if(link_data.length > 0 || doc['http://www[dot]w3[dot]org/2004/02/skos/core#related'])
+          hr
+          h4.font-weight-bolder 맥락을 위한 연계탐색
+          if(link_data.length > 0)
+
+            //- - console.log('link_data : ' + JSON.stringify(link_data, null, '\t'));
+
+            <!----- 연계정보 카테고리 ----->
+            each link in link_data
+              .d-flex.justify-content-between.border-bottom.py-2
+
+                - let title_link = Object.keys(link).toString().replace(/\[dot\]/g, '.');
+
+                //- - console.log("{Object.keys(link).toString() : " + Object.keys(link).toString());
+
+                if(title_link.match(/https?:\/\/[\w\-\.]+/g))
+                  a(href=title_link target="_blank")
+                    span #{Object.keys(link).toString().replace(/\[dot\]/g, '.')} 
+                else 
+                  <!----- 연계정보 URI to Label ----->
+                  if(displayOnLabel[Object.keys(link).toString().replace(/\[dot\]/g, '.')])
+                    span #{displayOnLabel[Object.keys(link).toString().replace(/\[dot\]/g, '.')]} 
+                  else 
+                    span #{Object.keys(link).toString().replace(/\[dot\]/g, '.')}
+                
+                <!----- 연계정보 내용 ----->
+                each item in link
+                  if Object.keys(item).length > 1
+                    .text-right
+                      each o in item
+                      
+                          //a.d-block(href=o[Object.keys(o)].replace(/\[dot\]/g, '.')) #{o[Object.keys(o)].replace(resource, '')}
+                          a.d-inline(href=o[Object.keys(o)].replace(resource, ''), style="line-height:2.3") #{o[Object.keys(o)].replace(resource, '').replace(/\[dot\]/g, '.')}&nbsp;&nbsp;
+                          //- - console.log("---------------------------");
+                          //- - console.log("topic_clip : " + topic_clip);
+
+                          <!----- 영상 클릭 (Topic Clip : _Topic , _Discussion) 반영 ----->
+                          if(displayOnMovieClip[o[Object.keys(o)]])
+                            - var topic_clip_url = displayOnMovieClip[o[Object.keys(o)]];
+                            a(href=topic_clip_url.replace(/\[dot\]/g, '.') target="_blank" style="display: inline-block;") 
+                                    img(src='/assets/img/btn_play.png' width='17px')
+                          br
+                          //- - console.log("---------------------------");
+                  else
+                    //a(href=item[Object.keys(item)].replace(/\[dot\]/g, '.')) #{item[Object.keys(item)].replace(resource, '')}
+                    a(href=item[Object.keys(item)].replace(resource, '')) #{item[Object.keys(item)].replace(resource, '').replace(/\[dot\]/g, '.')}
+                
+              <!----- 영상 클립 전체 재생 ----->
+              
+              //- - console.log('Object.keys(link) : ' + Object.keys(link));
+
+              if (Object.keys(link) == "Seminar_Topic" || Object.keys(link) == "Keyword_Topic" || Object.keys(link) == "Seminar_Discussion")
+                if (doc[resource + 'play_all'])
+                  if (doc[resource + 'play_all']['@value'])
+                    - var PlayAllURL = doc[resource + 'play_all']['@value'].replace(/\[dot\]/g, '.');
+                      div(style="text-align:right;margin-top:10px;")
+                        a(href=PlayAllURL, target='_blank')
+                          h8(style="font-size:12pt;") &nbsp;&nbsp;Play All&nbsp;&nbsp;
+                          img(src="/assets/img/btn_play_red.png", style='width:20px;')
+                        
+                        
+
+
+              hr
+        //- if(doc['http://www[dot]w3[dot]org/2004/02/skos/core#related'])
+        //-   - var relatedLink = doc['http://www[dot]w3[dot]org/2004/02/skos/core#related']['@id'].replace(/\[dot\]/g, '.');
+        //-   - console.log(relatedLink);
+        //-   .d-flex.justify-content-between.border-bottom.py-2
+        //-     span SKOS:Related 정보
+        //-     a(href=relatedLink, style="font-size:12pt;") #{doc['http://www[dot]w3[dot]org/2004/02/skos/core#related']['@id'].replace(resource, '')}
+
+        //- - console.log('doc : ' + JSON.stringify(doc, null, 5));
+      
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+        <!--------------------- 속성 정보 --------------------->
+        if(attribute_data.length > 0)
+          hr
+          h4.font-weight-bolder 속성정보
+          table.table.table-bordered.table-hover
+        
+            each item in attribute_data
+        
+              if(Object.keys(item).length > 0)
+                  tr
+                    <!---------- 유투브 링크 ---------->
+                    if(Object.keys(item).toString() === 'Youtube')
+                      td
+                        .d-block Youtube
+                        .video-background(style='height:600px;')
+                          .video-foreground
+                            iframe(src='https://www.youtube.com/embed/' + item[Object.keys(item)] + '?controls=ontrols=0&showinfo=0&rel=0&autoplay=1&loop=1&playlist=' + item[Object.keys(item)]
+                            , frameborder='0', allowfullscreen)
+                    else
+        
+                      //- if(Object.keys(item).toString())
+                      //- console.log('is URL : ' + isValidURL(Object.keys(item).toString().replace('[dot]','.')));
+                      //- - console.log('attrib_cnt : ' + JSON.stringify(doc[Object.keys(item)]));
+                      //- - console.log('doc[Object.keys(item)] : ' + JSON.stringify(doc[Object.keys(item)], null, 2));
+                      //- - console.log('httpChgdot : ' + doc[Object.keys(item)]['@value']);
+        
+                      - let httpChgdot = doc[Object.keys(item)]['@value']?doc[Object.keys(item)]['@value'].replace(/\[dot\]/g, '.'):'';
+        
+                      // http 로 시작하면 링크 처리
+                      if (httpChgdot.startsWith('http'))
+                        td.text-nowrap #{Object.keys(item).toString().replace(resource, '').replace(/\[dot\]/g, '.')} 
+                        td.text-nowrap
+                          a.text-info.font-weight-bold(href=httpChgdot, target='_blank') #{httpChgdot.replace(/\[dot\]/g, '.')}
+                      else
+                        if (doc[Object.keys(item)]['@value'])
+        
+                          <!----- 속성 URI to Label ----->
+                          if(displayOnLabel[Object.keys(item).toString().replace(resource, '').replace(/\[dot\]/g, '.')])
+                            td.text-nowrap #{displayOnLabel[Object.keys(item).toString().replace(resource, '').replace(/\[dot\]/g, '.')]}
+                          else 
+                            td.text-nowrap #{Object.keys(item).toString().replace(resource, '').replace(/\[dot\]/g, '.')}
+                          //- td.text-nowrap #{Object.keys(item).toString().replace(resource, '').replace(/\[dot\]/g, '.')}
+                          td.p-3 #{doc[Object.keys(item)]['@value'].replace(/\[dot\]/g, '.')}
+                        
+                        
+                          //- if (doc[Object.keys(item)].replace(resource, '') == "그림")
+                          //-   - console.log('in....');
+                          //- - var picURL = doc[Object.keys(item)]['@value'].replace(/\[dot\]/g, '.')
+                          //- img(src=picURL, style='width: 50px;')
+                        
+                        else
+        
+                          <!----- 속성 URI to Label ----->
+                          if(displayOnLabel[Object.keys(item).toString().replace(resource, '').replace(/\[dot\]/g, '.')])
+                            td.text-nowrap #{displayOnLabel[Object.keys(item).toString().replace(resource, '').replace(/\[dot\]/g, '.')]}
+                          else 
+                            td.text-nowrap #{Object.keys(item).toString().replace(resource, '').replace(/\[dot\]/g, '.')}
+        
+        
+                          //- td.text-nowrap #{Object.keys(item).toString().replace(resource, '').replace(/\[dot\]/g, '.')}
+                          td
+                            if (doc[Object.keys(item)].length > 1)
+                              each col_attr in doc[Object.keys(item)]
+                                p(style="font-size:10pt;color:black;font-weight:bold;") #{col_attr['@value'].replace(/\[dot\]/g, '.')}                            
+                            else 
+        
+                              //- if (Object.keys(item) == "그림")
+                              //-   - var PicURL = doc[Object.keys(item)]["@id"].replace(/\[dot\]/g, '.')
+                              //-   img(src=PicURL, style='width: 50px;')
+                              //- - console.log('doc[Object.keys(item)] : ' + JSON.stringify(doc[Object.keys(item)], null, 2));
+        
+                              if(doc[Object.keys(item)])
+                                #{doc[Object.keys(item)]}
+
+
+        if(company_data.length > 0)
+          hr
+          h4.font-weight-bolder 기본정보
+          table.table.table-bordered.table-hover
+        
+            each item in company_data
+              if(Object.keys(item).length > 0)
+                  tr
+                    <!---------- 유투브 링크 ---------->
+                    if(Object.keys(item).toString() === 'Youtube')
+                      td
+                        .d-block Youtube
+                        .video-background(style='height:600px;')
+                          .video-foreground
+                            iframe(src='https://www.youtube.com/embed/' + item[Object.keys(item)] + '?controls=ontrols=0&showinfo=0&rel=0&autoplay=1&loop=1&playlist=' + item[Object.keys(item)]
+                            , frameborder='0', allowfullscreen)
+                    else
+                      //- if(Object.keys(item).toString())
+                      //- console.log('is URL : ' + isValidURL(Object.keys(item).toString().replace('[dot]','.')));
+                      //- - console.log('attrib_cnt : ' + JSON.stringify(doc[Object.keys(item)]));
+                      //- - console.log('doc[Object.keys(item)] : ' + JSON.stringify(doc[Object.keys(item)], null, 2));
+                      //- - console.log('httpChgdot : ' + doc[Object.keys(item)]['@value']);
+        
+                      - let httpChgdot = doc[Object.keys(item)]['@value']?doc[Object.keys(item)]['@value'].replace(/\[dot\]/g, '.'):'';
+        
+                      // http 로 시작하면 링크 처리
+                      if (httpChgdot.startsWith('http'))
+                        td.text-nowrap #{Object.keys(item).toString().replace(resource, '').replace(/\[dot\]/g, '.')} 
+                        td.text-nowrap
+                          a.text-info.font-weight-bold(href=httpChgdot, target='_blank') #{httpChgdot.replace(/\[dot\]/g, '.')}
+                      else
+                        if (doc[Object.keys(item)]['@value'])
+        
+                          <!----- 속성 URI to Label ----->
+                          if(displayOnLabel[Object.keys(item).toString().replace(resource, '').replace(/\[dot\]/g, '.')])
+                            td.text-nowrap #{displayOnLabel[Object.keys(item).toString().replace(resource, '').replace(/\[dot\]/g, '.')]}
+                          else 
+                            td.text-nowrap #{Object.keys(item).toString().replace(resource, '').replace(/\[dot\]/g, '.')}
+                          //- td.text-nowrap #{Object.keys(item).toString().replace(resource, '').replace(/\[dot\]/g, '.')}
+                          td.p-3 #{doc[Object.keys(item)]['@value'].replace(/\[dot\]/g, '.')}
+                        
+                        
+                          //- if (doc[Object.keys(item)].replace(resource, '') == "그림")
+                          //-   - console.log('in....');
+                          //- - var picURL = doc[Object.keys(item)]['@value'].replace(/\[dot\]/g, '.')
+                          //- img(src=picURL, style='width: 50px;')
+                        
+                        else
+        
+                          <!----- 속성 URI to Label ----->
+                          if(displayOnLabel[Object.keys(item).toString().replace(resource, '').replace(/\[dot\]/g, '.')])
+                            td.text-nowrap #{displayOnLabel[Object.keys(item).toString().replace(resource, '').replace(/\[dot\]/g, '.')]}
+                          else 
+                            td.text-nowrap #{Object.keys(item).toString().replace(resource, '').replace(/\[dot\]/g, '.')}
+        
+        
+                          //- td.text-nowrap #{Object.keys(item).toString().replace(resource, '').replace(/\[dot\]/g, '.')}
+                          td
+                            if (doc[Object.keys(item)].length > 1)
+                              each col_attr in doc[Object.keys(item)]
+                                p(style="font-size:10pt;color:black;font-weight:bold;") #{col_attr['@value'].replace(/\[dot\]/g, '.')}                            
+                            else 
+        
+                              //- if (Object.keys(item) == "그림")
+                              //-   - var PicURL = doc[Object.keys(item)]["@id"].replace(/\[dot\]/g, '.')
+                              //-   img(src=PicURL, style='width: 50px;')
+                              //- - console.log('doc[Object.keys(item)] : ' + JSON.stringify(doc[Object.keys(item)], null, 2));
+        
+                              if(doc[Object.keys(item)])
+                                #{doc[Object.keys(item)]}
+
+
+
+        //- - console.log('table_collections : ' + JSON.stringify(table_collections, null, 2));
+
+        //- <!--------------------- 테이블 정보 --------------------->
+        //- if(table_collections.length > 0 && displayOnTable[0])
+        //-   - var columns = displayOnTable[0]['@id'].replace(parentClass + '-','').split('_')
+
+
+          //- - console.log('displayOnTable : ' + JSON.stringify(displayOnTable,null,2));
+          //- - console.log('displayOnTable[0][@id] : ' + displayOnTable[0]['@id']);
+          //- - console.log('parentClass : ' + parentClass);
+          //- - console.log('columns : ' + columns);
+
+          
+          //- hr
+          //- h4.font-weight-bold 테이블
+          //- table.table.table-bordered.table-hover
+          //-   thead
+          //-     <!----------------- 테이블 타이틀 ---------------->
+          //-     tr.bg-default
+          //-       each col in columns
+          //-         th.text-center(style="color:#000000;background-color:#eeeeee;font-weight:bolder") #{col.replace(resource, '').replace(/\[dot\]/g, '.')}
+                  
+                  
+          //-         //- - console.log('col : ' + JSON.stringify(col, null, 2));
+
+
+          //-   tbody
+          //-     each row in table_collections
+
+
+          //-       //- - console.log('-----------------------------------------------------');
+          //-       //- - console.log('row : ' + JSON.stringify(row, null, 2));
+          //-       //- - console.log('default_title : ' + default_title);
+          //-       //- - console.log('-----------------------------------------------------');
+
+          //-       - var col_1 = (row[resource + '그림']?row[resource + '그림']['@value']:'/assets/img/empty.gif');
+          //-       - var col_2 = (row[label]['@value'] || row[label]);
+          //-       - var col_place = (row[resource + '이벤트_장소']?row[resource + '이벤트_장소']['@id']:'');
+          //-       - var col_test = (row[default_title + '_피전자']);
+
+          //-       //- - console.log(columns[2]);
+          //-       //- - console.log(col_test);
+
+          //-       - var col_3, col_4, col_5, col_6, col_7;
+
+
+
+          //-       if(columns[2])
+          //-         if(row[default_title + '_' + columns[2]])
+          //-           - var id_obj = row[default_title + '_' + columns[2]];
+          //-           // - col_3 = Object.keys(id_obj).length
+          //-           if(Object.keys(id_obj).length > 1)
+          //-             - col_3 = id_obj;
+          //-           else
+          //-             - col_3 = id_obj['@id'];
+
+          //-       if(columns[3])
+          //-         if(row[default_title + '_' + columns[3]])
+          //-           - var id_obj = row[default_title + '_' + columns[3]];
+          //-           // - col_4 = Object.keys(id_obj).length
+          //-           if(Object.keys(id_obj).length > 1)
+          //-             - col_4 = id_obj;
+          //-           else
+          //-             - col_4 = id_obj['@id'];
+          //-       if(columns[4])
+          //-         if(row[default_title + '_' + columns[4]])
+          //-           - var id_obj = row[default_title + '_' + columns[4]];
+          //-           // - col_4 = Object.keys(id_obj).length
+          //-           if(Object.keys(id_obj).length > 1)
+          //-             - col_5 = id_obj;
+          //-           else
+          //-             - col_5 = id_obj['@id'];
+          //-       if(columns[5])
+          //-         if(row[default_title + '_' + columns[5]])
+          //-           - var id_obj = row[default_title + '_' + columns[5]];
+          //-           // - col_4 = Object.keys(id_obj).length
+          //-           if(Object.keys(id_obj).length > 1)
+          //-             - col_6 = id_obj;
+          //-           else
+          //-             - col_6 = id_obj['@id'];
+          //-       if(columns[6])
+          //-         if(row[default_title + '_' + columns[6]])
+          //-           - var id_obj = row[default_title + '_' + columns[6]];
+          //-           // - col_4 = Object.keys(id_obj).length
+          //-           if(Object.keys(id_obj).length > 1)
+          //-             - col_7 = id_obj;
+          //-           else
+          //-             - col_7 = id_obj['@id'];
+                
+
+          //-       //- - console.log('---------------------------------------------------------');
+          //-       //- - console.log('columns : ' + JSON.stringify(columns));
+          //-       //- - console.log('---------------------------------------------------------')
+
+
+
+
+          //-       //if(columns[2])
+          //-       //  if(row[row['@type'] + '_' + columns[2]])
+          //-       //    - var id_obj = row[row['@type'] + '_' + columns[2]];
+          //-       //    // - col_3 = Object.keys(id_obj).length
+          //-       //    if(Object.keys(id_obj).length > 1)
+          //-       //      - col_3 = id_obj;
+          //-       //    else
+          //-       //      - col_3 = id_obj['@id'];
+
+          //-       //if(columns[3])
+          //-       //  if(row[row['@type'] + '_' + columns[3]])
+          //-       //    - var id_obj = row[row['@type'] + '_' + columns[3]];
+          //-       //    // - col_4 = Object.keys(id_obj).length
+          //-       //    if(Object.keys(id_obj).length > 1)
+          //-       //      - col_4 = id_obj;
+          //-       //    else
+          //-       //      - col_4 = id_obj['@id'];
+              
+
+          //-       //- - console.log('--------------------------');
+          //-       //- - console.log('row : ' + JSON.stringify(row, null, 2));
+          //-       //- - console.log(col_3);
+          //-       //- - console.log('--------------------------');
+                
+
+          //-       tr
+          //-         <!--- 테이블 그림 정보(ARKO 기준) --->
+          //-         if(col_1)
+          //-           td(style="width:60px;").text-center
+          //-             img(src=col_1, style='width: 50px;')
+                    
+          //-         if(col_place)
+          //-           td(style="margin-left:10px;").text-center
+          //-             a.text-info.font-weight-bold(href=col_place.replace(/\[dot\]/g, '.')) #{col_place.replace(resource, '')} 
+                      
+                  
+          //-         <!--- 테이블 이벤트 정보(ARKO 기준) --->
+          //-         if(col_2)
+          //-           td(style="margin-left:10px;").text-left
+                      //- a.text-info.font-weight-bold(href=row['@id'].replace(resource, '')) #{col_2.replace(resource, '')} 
+
+
+                  //- <!--- 테이블 장소 정보 (ARKO 기준) --->
+                  //- if(columns[2])
+                  //-   td(style="width:20%;").text-center
+                  //-     if(typeof col_3 === 'string')
+                  //-       a.text-info.font-weight-bold(href=col_3.replace(resource, '')) #{col_3.replace(resource, '')} 
+                  //-     else if(typeof col_3 === 'undefined')
+                  //-     else
+                  //-       each col in col_3
+                  //-         a.text-info.font-weight-bold(href=col['@id'].replace(resource, '')) #{col['@id'].replace(resource, '')}
+                  //-         br
+                  
+                  //- if(col_3)
+                  //-   td(style="margin-left:10px;").text-left
+                  //-     a.text-info.font-weight-bold(href=row['@id'].replace(resource, '')) #{col_3.replace(resource, '')} 
+
+                  
+
+                  //- <!--- 테이블 인물 정보 --->
+                  //- if(columns[3])
+                  //-   td.text-center
+                  //-     if(typeof col_4 === 'string')
+                  //-       //a.text-info.font-weight-bold(href=col_4.replace(/\[dot\]/g, '.')) #{col_4.replace(resource, '')} 
+                  //-       a.text-info.font-weight-bold(href=col_4.replace(resource, '.')) #{col_4.replace(resource, '')} 
+                  //-     else if(typeof col_4 === 'undefined')
+                  //-     else
+                  //-       each col in col_4
+                  //-         //a.text-info.font-weight-bold(href=col['@id'].replace(/\[dot\]/g, '.')) #{col['@id'].replace(resource, '')}
+                  //-         a.text-info.font-weight-bold(href=col['@id'].replace(resource, '.')) #{col['@id'].replace(resource, '')} 
+                  //-         br
+                  //- <!--- 테이블 영역 정보 --->
+                  //- if(columns[4])
+                  //-   td.text-center
+                  //-     if(typeof col_5 === 'string')
+                  //-       //a.text-info.font-weight-bold(href=col_5.replace(/\[dot\]/g, '.')) #{col_5.replace(resource, '')}
+                  //-       a.text-info.font-weight-bold(href=col_5.replace(resource, '')) #{col_5.replace(resource, '')} 
+                  //-     else if(typeof col_5 === 'undefined')
+                  //-     else
+                  //-       each col in col_5
+                  //-         //a.text-info.font-weight-bold(href=col['@id'].replace(/\[dot\]/g, '.')) #{col['@id'].replace(resource, '')}
+                  //-         a.text-info.font-weight-bold(href=col['@id'].replace(resource, '.')) #{col['@id'].replace(resource, '')} 
+                  //-         br
+                  //- <!--- 테이블 연도 정보 --->
+                  //- if(columns[5])
+                  //-   td.text-center
+                  //-     if(typeof col_6 === 'string')
+                  //-       //a.text-info.font-weight-bold(href=col_6.replace(/\[dot\]/g, '.')) #{col_6.replace(resource, '')}
+                  //-       a.text-info.font-weight-bold(href=col_6.replace(resource, '')) #{col_6.replace(resource, '')} 
+                  //-     else if(typeof col_6 === 'undefined')
+                  //-     else
+                  //-       each col in col_6
+                  //-         //a.text-info.font-weight-bold(href=col['@id'].replace(/\[dot\]/g, '.')) #{col['@id'].replace(resource, '')}
+                  //-         a.text-info.font-weight-bold(href=col['@id'].replace(resource, '')) #{col['@id'].replace(resource, '')} 
+                  //-         br
+                  //- <!-- 테이블 *** 정보 --->
+                  //- if(columns[6])
+                  //-   td.text-center
+                  //-     if(typeof col_7 === 'string')
+                  //-       //a.text-info.font-weight-bold(href=col_7.replace(/\[dot\]/g, '.')) #{col_7.replace(resource, '')}
+                  //-       a.text-info.font-weight-bold(href=col_7.replace(resource, '')) #{col_7.replace(resource, '')} 
+                  //-     else if(typeof col_7 === 'undefined')
+                  //-     else
+                  //-       each col in col_7
+                  //-         //a.text-info.font-weight-bold(href=col['@id'].replace(/\[dot\]/g, '.')) #{col['@id'].replace(resource, '')}
+                  //-         a.text-info.font-weight-bold(href=col['@id'].replace(resource, '')) #{col['@id'].replace(resource, '')} 
+                  //-         br
+    
+
+
+
+
+        <!--------------------- 영상 정보 --------------------->
+                  if(doc[resource + 'Youtube'])
+                    hr
+                    h4.font-weight-bolder 영상 정보
+                    table.table.table-bordered.table-hover
+                    tr
+                        - var YoutubeURL = doc[resource + 'Youtube']['@value'].replace('https://youtu[dot]be/', '');
+                        td
+                          p Youtube
+                          .video-background(style='height:600px;')
+                            .video-foreground
+                              iframe(src='https://www.youtube.com/embed/' + YoutubeURL
+                              , frameborder='0', allowfullscreen)
+                    hr
+
+        <!--------------------- 지도 정보 --------------------->
+        if(doc[lat_long])
+          hr
+          h4.font-weight-bolder 위치 정보
+          table.table.table-bordered.table-hover
+          tr
+              - var lat_longInfo = doc[lat_long]['@value'].replace(/\[dot\]/g, '.').split(',');
+              td
+                p Google Map <br>
+                  iframe(src='https://maps.google.com/?ll=' + lat_longInfo[0] + ',' + lat_longInfo[1] + '&z=16&output=embed'
+                  ,style='width:100%;height:500px'
+                  ,frameborder='0')
+          hr
+
+
+
+
+        <!--------------------- 기록물 페이지 --------------------->
+          if(doc[resource + '기록물페이지'] && doc[resource + '기록물페이지'].length > 1)
+            hr
+            h4.font-weight-bolder Photo Gallery
+            table.table.table-bordered.table-hover
+            tr
+              td
+                row
+                  .col-md(style="display:flex;justify-content:center;align-items:center;")
+                    .row(style="margin:10px;").justify-content-center
+          
+                      each item in doc[resource + '기록물페이지']
+                        //- - console.log(item['@value']);
+                        - var imgItem = item['@value'].replace(/\[dot\]/g, '.');
+                        .col-md-3.mt-2.mb-2.mr-3
+                        img(src=imgItem alt="record info" width="500px")
+            hr
+
+
+
+
+
+
+
+
+
+    //- var columns = displayOnTable[0]['@id'].replace(parentClass + '_','').split('_')
+    
+    //- if(page_data.length > 0)
+    //-   .row
+    //-     .col-12
+    //-       hr
+
+
+    //-       #{page_data + 'asfasfasdfasfa'}
+
+    //-       each item in page_data
+    //-         if(Object.keys(item) == '기록물페이지')
+    //-           #ninja-slider
+    //-             .slider-inner.p-0.m-0.w-100
+    //-               ul
+    //-                 each pic in item[Object.keys(item)]
+    //-                   li
+    //-                     //a.ns-img(href=pic['@value'].replace(/\[dot\]/g, '.'))
+    //-                     a.ns-img(href=pic['@value'].replace(resource, ''))
+    //-               #fsBtn.fs-icon(title="Expand/Close")
+    //-         h4.font-weight-bolder #{Object.keys(item)}
+    //-         .row
+    //-           each val, idx in item[Object.keys(item)]
+    //-             .col-md-4
+    //-               //img(src=val['@value'].replace(/\[dot\]/g, '.'), onclick='lightbox(' + idx + ')')
+    //-               img(src=val['@value'].replace(resouce, '.'), onclick='lightbox(' + idx + ')')
+
+
+
+
+    .row
+      .col.mx-auto
+        //a.btn.btn-info(href=resource.replace(/\[dot\]/g, '.').replace('resource', 'data/read') + doc['@id'].replace(resource, '')) 수정
+        //- a.btn.btn-info(href='/data/read/' + doc['@id'].replace(resource, '')) 수정
+
+
+
+
+
+block append_js
+  script(src='/assets/js/custom/ninja-slider.js', type='text/javascript')
+  script.
+    function lightbox(idx) {
+      nslider.init(idx);
+      let fsBtn = document.getElementById("fsBtn");
+      fsBtn.click();
+    }
+    $(function () {
+      $('[data-toggle="tooltip"]').tooltip()
+    })
+    //- console.log('collections : ', !{JSON.stringify(collections)});
+    //- console.log('doc : ', !{JSON.stringify(doc)});
+    //- console.log('table collections : ', !{JSON.stringify(table_collections)});
+    //- console.log('parent class : ', !{JSON.stringify(parentClass)});
+    //- console.log('displayOnMiddle : ', !{JSON.stringify(displayOnMiddle)});
+    //- console.log('columns : ', !{JSON.stringify(columns)});
+    //- console.log('link_data : ', !{JSON.stringify(link_data)});
+    //- console.log('attribute_data : ', !{JSON.stringify(attribute_data)});

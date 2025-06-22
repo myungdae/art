@@ -2,23 +2,18 @@ extends layout
 
 block content
   .container.mt-5
-    // 🎉 메인 환영 메시지
-    .text-center.mb-5
-      h1(style="font-size: 2.8rem; font-weight: bold;") Welcome to the ESL Platform!
-      p.text-muted.mt-3(style="font-size: 1.3rem; max-width: 800px; margin: 0 auto;")
-        | Discover job opportunities, connect with qualified tutors, or showcase your talent to language institutions worldwide.
 
-    // 🔍 검색창
+    // 🔍 검색창 최상단 (하나만 남김)
     .my-5.text-center
-      h3.mb-3(style="font-size: 1.6rem;") Search the ESL Platform
+      h2.mb-4(style="font-size: 2rem; font-weight: bold;") Search the ESL Platform
       input.form-control.mx-auto(
         type="text",
         placeholder="Enter keyword...",
-        style="max-width: 600px; height: 3rem; font-size: 1.2rem; text-align: center;"
+        style="max-width: 600px; height: 3rem; font-size: 1.3rem; text-align: center;"
       )
 
-    // 🎯 주요 진입 버튼
-    .row.justify-content-center.mt-5
+    // 🎯 주요 진입 버튼 (텍스트 박스 위로 이동)
+    .row.justify-content-center.mt-4
       .col-md-3.mb-4
         a.btn.btn-outline-primary.btn-lg.w-100.py-3(
           style="font-size: 1.4rem;",
@@ -35,7 +30,41 @@ block content
           href="/online-tutor"
         ) 🎓 Online Tutors
 
+    // 🎉 메인 환영 메시지
+    .text-center.mb-5
+      h1(style="font-size: 3rem; font-weight: bold;") Welcome to the ESL Semantic Platform!
+      p.text-muted.mt-3(style="font-size: 1.5rem; max-width: 900px; margin: 0 auto;")
+        | Discover job opportunities, connect with qualified tutors, or showcase your talent to language institutions worldwide.
+
+    // 🧠 RDF 메시지 박스
+    .card.shadow.mb-5
+      .card-body
+        h4.text-danger.text-center.mb-4(style="font-size: 1.6rem; font-weight: bold;") RDF-Compliant · Semantically-Driven · Facet-Linked
+        p.text-center(style="font-size: 1.3rem;")
+          | Your ESL platform isn't just a data portal —
+          strong RDF-compliant, semantically-driven knowledge interface
+          | , where every 
+          strong Job Vacancy
+          | , 
+          strong Job Seeker
+          | , or 
+          strong Online Tutor
+          |  entry must:
+        ul.mt-4(style="font-size: 1.2rem;")
+          li 🧩 
+            strong Fit the ESL ontology schema:
+            |  Structured vocabulary and relationships
+          li 🌐 
+            strong Reflect RDF-compliant keys and values:
+            |  Semantic fields like 
+            code @id
+            |  and 
+            code @type
+          li 📚 
+            strong Feed the structure that drives:
+            |  Facet Navigation · Linked Exploration · Direct Access
+
     // 👣 푸터 안내
     hr.my-5
     .text-center.text-muted
-      small(style="font-size: 1rem;") Powered by Linked Data Center — Global ESL Matching Platform
+      small(style="font-size: 1.1rem;") Powered by Linked Data Center — Global ESL Matching Platform
