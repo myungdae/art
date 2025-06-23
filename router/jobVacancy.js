@@ -3,17 +3,9 @@ const router = express.Router();
 const JobVacancy = require('../model/jobVacancy');
 const sanitizeHtml = require('sanitize-html');
 const { requireLogin } = require('../middleware/auth');
-const { requireEmployer } = require('../middleware/requireEmployer');
-const fs = require('fs');
-const path = require('path');
-const {
-  translateJobVacancyToRDF,
-  saveRDFToFile,
-  storeToJSONLD,
-  saveRDFToMongo
-} = require('../rdf-translator');
+const { translateJobVacancyToRDF, storeToJSONLD, saveRDFToMongo } = require('../rdf-translator');
 
-// ✅ 전체 목록
+// ✅ 전체 리스트
 router.get('/', async (req, res) => {
   try {
     const jobVacancies = await JobVacancy.find().sort({ createdAt: -1 });
@@ -24,141 +16,39 @@ router.get('/', async (req, res) => {
   }
 });
 
-// ✅ 신규 작성 폼 (일반 사용자)
-router.get('/new', requireLogin, async (req, res) => {
-  try {
-    const countries = await JobVacancy.distinct('country');
-    const studentTypes = await JobVacancy.distinct('studentType');
-    const teachingAreas = await JobVacancy.distinct('teachingArea');
-    res.render('jobVacancy/new', { countries, studentTypes, teachingAreas });
-  } catch (err) {
-    console.error('❌ Error loading form:', err);
-    res.status(500).send('Form error');
-  }
+// ✅ 신규 등록 폼
+router.get('/new', requireLogin, (req, res) => {
+  res.render('jobVacancy/new');
 });
 
-// ✅ 신규 작성 폼 (Paid User)
-router.get('/new_paid_user', requireLogin, requireEmployer, async (req, res) => {
-  try {
-    const [studentTypes, countries, teachingAreas] = await Promise.all([
-      JobVacancy.distinct('studentType'),
-      JobVacancy.distinct('country'),
-      JobVacancy.distinct('teachingArea')
-    ]);
-
-    res.render('jobVacancy/new_paid_user', {
-      jobVacancy: {},
-      studentTypes,
-      countries,
-      teachingAreas
-    });
-  } catch (err) {
-    console.error('❌ Error loading paid user form:', err);
-    res.status(500).send('Form error');
-  }
-});
-
-// ✅ POST /new (일반 사용자)
+// ✅ 등록 처리
 router.post('/new', requireLogin, async (req, res) => {
   try {
-    const job = new JobVacancy({
-      title: sanitizeHtml(req.body.title),
-      description: sanitizeHtml(req.body.description, { allowedTags: false }),
-      country: req.body.country || req.body.customCountry,
-      studentType: req.body.studentType || req.body.customStudentType,
-      teachingArea: req.body.teachingArea || req.body.customTeachingArea,
-      duration: req.body.duration,
-      pay: req.body.pay,
-      housing: req.body.housing,
-      adPackage: req.body.adPackage,
-      addResumeAccess: req.body.addResumeAccess === 'on',
-      companyName: req.body.companyName,
-      jobLocation: req.body.jobLocation,
-      datePosted: new Date(),
-      email: req.body.email,
-      cellphoneNumber: req.body.cellphoneNumber,
-      skypeId: req.body.skypeId,
-      wechatId: req.body.wechatId,
-      homepage: req.body.homepage,
-      user: req.user._id
+    const sanitizedTitle = sanitizeHtml(req.body.title);
+    const newJob = new JobVacancy({
+      title: sanitizedTitle,
+      country: req.body.country,
+      studentType: req.body.studentType,
+      teachingArea: req.body.teachingArea,
+      duration: req.body.duration
     });
-
-    await job.save();
-
-    const rdfStore = translateJobVacancyToRDF(job);
-    const rdfPath = path.join(__dirname, `../public/rdf/${job._id}.ttl`);
-
-    try {
-      await saveRDFToFile(rdfStore, rdfPath);
-      const jsonld = await storeToJSONLD(rdfStore);
-      await saveRDFToMongo(jsonld);
-      console.log(`✅ RDF 및 MongoDB 저장 성공`);
-    } catch (rdfErr) {
-      console.error(`❌ RDF 처리 실패: ${rdfErr.message}`);
-    }
-
-    res.redirect(`/job-vacancies/${job._id}?success=true`);
+    await newJob.save();
+    res.redirect('/job-vacancies');
   } catch (err) {
-    console.error('❌ Job creation failed:', err);
-    res.status(500).send('Job creation failed');
-  }
-});
-
-// ✅ POST /new_paid_user (Paid User)
-router.post('/new_paid_user', requireLogin, requireEmployer, async (req, res) => {
-  try {
-    const job = new JobVacancy({
-      title: sanitizeHtml(req.body.title),
-      description: sanitizeHtml(req.body.description, { allowedTags: false }),
-      country: req.body.country || req.body.customCountry,
-      studentType: req.body.studentType || req.body.customStudentType,
-      teachingArea: req.body.teachingArea || req.body.customTeachingArea,
-      duration: req.body.duration,
-      pay: req.body.pay,
-      housing: req.body.housing,
-      adPackage: req.body.adPackage,
-      addResumeAccess: req.body.addResumeAccess === 'on',
-      companyName: req.body.companyName,
-      jobLocation: req.body.jobLocation,
-      datePosted: new Date(),
-      email: req.body.email,
-      cellphoneNumber: req.body.cellphoneNumber,
-      skypeId: req.body.skypeId,
-      wechatId: req.body.wechatId,
-      homepage: req.body.homepage,
-      user: req.user._id
-    });
-
-    await job.save();
-
-    const rdfStore = translateJobVacancyToRDF(job);
-    const rdfPath = path.join(__dirname, `../public/rdf/${job._id}.ttl`);
-
-    try {
-      await saveRDFToFile(rdfStore, rdfPath);
-      const jsonld = await storeToJSONLD(rdfStore);
-      await saveRDFToMongo(jsonld);
-      console.log(`✅ RDF 및 MongoDB 저장 성공`);
-    } catch (rdfErr) {
-      console.error(`❌ RDF 처리 실패: ${rdfErr.message}`);
-    }
-
-    res.redirect(`/job-vacancies/${job._id}?success=true`);
-  } catch (err) {
-    console.error('❌ Paid user job creation failed:', err);
-    res.status(500).send('등록 실패');
+    console.error(err);
+    res.status(500).send('Error saving job vacancy');
   }
 });
 
 // ✅ 상세 보기
 router.get('/:id', async (req, res) => {
   try {
-    const jobVacancy = await JobVacancy.findById(req.params.id).populate('user');
-    const success = req.query.success === 'true';
-    res.render('jobVacancy/show', { jobVacancy, success });
+    const jobVacancy = await JobVacancy.findById(req.params.id);
+    if (!jobVacancy) return res.status(404).send('Job not found');
+    res.render('jobVacancy/show', { jobVacancy });
   } catch (err) {
-    console.error('❌ Job not found:', err);
-    res.status(404).send('Job not found');
+    console.error(err);
+    res.status(500).send('Error retrieving job');
   }
 });
 
@@ -167,75 +57,56 @@ router.get('/:id/edit', requireLogin, async (req, res) => {
   try {
     const jobVacancy = await JobVacancy.findById(req.params.id);
     if (!jobVacancy) return res.status(404).send('Job not found');
-
-    const countries = await JobVacancy.distinct('country');
-    const studentTypes = await JobVacancy.distinct('studentType');
-    const teachingAreas = await JobVacancy.distinct('teachingArea');
-
-    res.render('jobVacancy/edit', { jobVacancy, countries, studentTypes, teachingAreas });
+    res.render('jobVacancy/edit', { jobVacancy });
   } catch (err) {
-    console.error('❌ Error loading edit form:', err);
-    res.status(500).send('Error');
+    console.error(err);
+    res.status(500).send('Error loading edit form');
   }
 });
 
 // ✅ 수정 처리
 router.put('/:id', requireLogin, async (req, res) => {
   try {
-    const job = await JobVacancy.findById(req.params.id);
-    if (!job) return res.status(404).send('Job not found');
-
-    Object.assign(job, {
-      title: sanitizeHtml(req.body.title),
-      description: sanitizeHtml(req.body.description, { allowedTags: false }),
-      country: req.body.country || req.body.customCountry,
-      studentType: req.body.studentType || req.body.customStudentType,
-      teachingArea: req.body.teachingArea || req.body.customTeachingArea,
-      duration: req.body.duration,
-      pay: req.body.pay,
-      housing: req.body.housing,
-      adPackage: req.body.adPackage,
-      addResumeAccess: req.body.addResumeAccess === 'on',
-      companyName: req.body.companyName,
-      jobLocation: req.body.jobLocation,
-      email: req.body.email,
-      cellphoneNumber: req.body.cellphoneNumber,
-      skypeId: req.body.skypeId,
-      wechatId: req.body.wechatId,
-      homepage: req.body.homepage
+    const sanitizedTitle = sanitizeHtml(req.body.title);
+    await JobVacancy.findByIdAndUpdate(req.params.id, {
+      title: sanitizedTitle,
+      country: req.body.country,
+      studentType: req.body.studentType,
+      teachingArea: req.body.teachingArea,
+      duration: req.body.duration
     });
-
-    await job.save();
-
-    const rdfStore = translateJobVacancyToRDF(job);
-    const rdfPath = path.join(__dirname, `../public/rdf/${job._id}.ttl`);
-
-    try {
-      await saveRDFToFile(rdfStore, rdfPath);
-      const jsonld = await storeToJSONLD(rdfStore);
-      await saveRDFToMongo(jsonld);
-      console.log(`✅ RDF 및 Mongo 업데이트 성공`);
-    } catch (rdfErr) {
-      console.error(`❌ RDF 업데이트 실패: ${rdfErr.message}`);
-    }
-
-    res.redirect(`/job-vacancies/${job._id}`);
+    res.redirect('/job-vacancies');
   } catch (err) {
-    console.error('❌ Update failed:', err);
-    res.status(500).send('Update failed');
+    console.error(err);
+    res.status(500).send('Error updating job vacancy');
   }
 });
 
 // ✅ 삭제
 router.delete('/:id', requireLogin, async (req, res) => {
   try {
-    const job = await JobVacancy.findByIdAndDelete(req.params.id);
-    const rdfPath = path.join(__dirname, `../public/rdf/${req.params.id}.ttl`);
-    if (fs.existsSync(rdfPath)) fs.unlinkSync(rdfPath);
+    await JobVacancy.findByIdAndDelete(req.params.id);
     res.redirect('/job-vacancies');
   } catch (err) {
-    console.error('❌ Delete failed:', err);
-    res.status(500).send('Delete failed');
+    console.error(err);
+    res.status(500).send('Error deleting job vacancy');
+  }
+});
+
+// ✅ ✅ ✅ RDF 변환 및 MongoDB 저장 (추가 기능)
+router.get('/rdf/convert/:id', async (req, res) => {
+  try {
+    const job = await JobVacancy.findById(req.params.id);
+    if (!job) return res.status(404).send('Job not found');
+
+    const store = translateJobVacancyToRDF(job);
+    const jsonld = await storeToJSONLD(store);
+    await saveRDFToMongo(jsonld);
+
+    res.json({ success: true, message: 'RDF converted and saved', id: job._id });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('RDF conversion error');
   }
 });
 

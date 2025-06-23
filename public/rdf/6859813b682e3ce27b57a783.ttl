@@ -1,0 +1,22 @@
+@prefix : <#>.
+@prefix dc: <http://purl.org/dc/elements/1.1/>.
+@prefix res: <>.
+
+res:6859813b682e3ce27b57a783
+    a res:JobVacancy;
+    res:addResumeAccess "false";
+    res:cellphoneNumber "821098765432";
+    res:companyName "Pagoda";
+    res:country "Korea";
+    res:duration "iyr";
+    res:email "youngdo@gmail.com";
+    res:homepage "http://odex.kr";
+    res:housing "provided";
+    res:jobLocation "Seoul";
+    res:pay "2,000";
+    res:studentType "Kindergarten";
+    res:teachingArea "English";
+    dc:date "2025-06-23T16:30:51.317Z";
+    dc:description
+    "<p>This is a test for facet/job_vacancies and the details</p>";
+    dc:title "Youngdo's test for facet".

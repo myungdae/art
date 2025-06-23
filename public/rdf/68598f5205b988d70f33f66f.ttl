@@ -1,0 +1,20 @@
+@prefix : <#>.
+@prefix dc: <http://purl.org/dc/elements/1.1/>.
+@prefix res: <>.
+
+res:68598f5205b988d70f33f66f
+    a res:JobVacancy;
+    res:addResumeAccess "false";
+    res:cellphoneNumber "Pagoda";
+    res:companyName "821099998888";
+    res:country "Korea";
+    res:duration "2 yrs";
+    res:email "youngdo@gmail.com";
+    res:housing "provided";
+    res:jobLocation "Seoul";
+    res:pay "200,000";
+    res:studentType "Business Professionals";
+    res:teachingArea "Business";
+    dc:date "2025-06-23T17:30:58.736Z";
+    dc:description "<p>After env change Hope it works</p>";
+    dc:title "After env change".

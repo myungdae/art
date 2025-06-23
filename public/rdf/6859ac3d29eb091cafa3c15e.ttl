@@ -1,0 +1,13 @@
+@prefix : <#>.
+@prefix dc: <http://purl.org/dc/elements/1.1/>.
+@prefix res: <>.
+
+res:6859ac3d29eb091cafa3c15e
+    a res:JobVacancy;
+    res:addResumeAccess "false";
+    res:country "Brazil";
+    res:studentType "Adults";
+    res:teachingArea "Spanish";
+    dc:date "2025-06-23T19:34:21.735Z";
+    dc:description "<p>Final test</p>";
+    dc:title "Final test".

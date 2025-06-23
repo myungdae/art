@@ -1,0 +1,20 @@
+@prefix : <#>.
+@prefix dc: <http://purl.org/dc/elements/1.1/>.
+@prefix res: <>.
+
+res:6859920ee83392bfb61c1ecc
+    a res:JobVacancy;
+    res:addResumeAccess "false";
+    res:cellphoneNumber "821098765432";
+    res:companyName "Sisa";
+    res:country "Korea";
+    res:duration "1";
+    res:email "doosun@gmail.com";
+    res:housing "provided";
+    res:jobLocation "Seoul";
+    res:pay "100,000";
+    res:studentType "Kindergarten";
+    res:teachingArea "English";
+    dc:date "2025-06-23T17:42:38.293Z";
+    dc:description "<p>Recovering Facet</p>";
+    dc:title "Recovering Facet".

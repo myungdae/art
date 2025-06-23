@@ -1,0 +1,13 @@
+@prefix : <#>.
+@prefix dc: <http://purl.org/dc/elements/1.1/>.
+@prefix res: <>.
+
+res:68592c0c452a1a394ea429f6
+    a res:JobVacancy;
+    res:addResumeAccess "false";
+    res:country "Korea";
+    res:studentType "Kindergarten";
+    res:teachingArea "Geography";
+    dc:date "2025-06-23T10:27:24.967Z";
+    dc:description "<p>Hard2 should be 12</p>";
+    dc:title "Hard2 should be 12".

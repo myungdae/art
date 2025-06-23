@@ -1,11 +1,13 @@
+// 📁 ~/esl/rdf-translator.js
+
 const fs = require('fs');
 const $rdf = require('rdflib');
 const { MongoClient } = require('mongodb');
 
 const BASE_URI = 'http://esl.eventpool.kr/resource/';
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017';
-const DB_NAME = 'eventpool';
-const COLLECTION_NAME = 'resources'; // RDF 저장 컬렉션
+const DB_NAME = 'eventpool'; // ✅ .env에 따라 고정
+const COLLECTION_NAME = process.env.COLLECTION || 'esl'; // ✅ esl로 저장
 
 /**
  * JobVacancy 데이터를 RDF triples로 변환
@@ -84,7 +86,11 @@ async function saveRDFToMongo(jsonld) {
   const db = client.db(DB_NAME);
   const col = db.collection(COLLECTION_NAME);
 
-  // @id 기준 upsert
+  // ✅ @type이 없으면 강제로 추가
+  if (!jsonld["@type"]) {
+    jsonld["@type"] = "Job_Vacancies";
+  }
+
   const id = jsonld["@id"];
   await col.updateOne(
     { "@id": id },
