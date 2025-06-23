@@ -5,8 +5,17 @@
 res:6858b8cc84cbe716c42f5476
     a res:JobVacancy;
     res:addResumeAccess "false";
+    res:cellphoneNumber "82-10-99998888";
+    res:companyName "Pagoda Institute";
     res:country "Korea";
+    res:duration "1 yr";
+    res:email "abc@gmail.com";
+    res:housing "provided";
+    res:jobLocation "Seoul";
+    res:pay "200,000";
     res:studentType "Elementary";
     res:teachingArea "English";
     dc:date "2025-06-23T02:15:40.552Z";
-    dc:title "Atrempt".
+    dc:description
+    "<p><strong>Attempt</strong> to insert in rady-made rdf bla bla bla</p>";
+    dc:title "Attempt to insert in rady-made rdf".

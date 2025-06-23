@@ -1,0 +1,16 @@
+extends ../layout
+
+block content
+  .container.mt-5
+    h2.text-center.mb-4 RDF Resource Detail
+
+    if ttlContent
+      - const lines = ttlContent.split('\n').filter(l => l.trim().length > 0 && !l.trim().startsWith('@prefix'));
+      each line in lines
+        if line.includes(':')
+          .card.shadow-sm.mb-3.p-3
+            - const parts = line.split(/\s+/);
+            h5.text-primary= parts[0]
+            p.mb-0= parts.slice(1).join(' ')
+    else
+      p.text-danger RDF data could not be loaded.

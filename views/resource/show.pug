@@ -1,0 +1,13 @@
+extends ../layout
+
+block content
+  .container.mt-5
+    h2.text-center RDF Resource: #{id}
+
+    ul
+      each t in triples
+        li= t
+
+    // ✅ RDF 보기 및 다운로드 버튼 (루프 밖 + 변수 수정)
+    a.btn.btn-outline-primary(href=`/rdf-resource/${id}`) View RDF
+    a.btn.btn-outline-secondary(href=`/rdf/${id}.ttl`, download) Download RDF (.ttl)

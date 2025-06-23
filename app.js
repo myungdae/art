@@ -10,6 +10,7 @@ const resumeAccessRouter = require('./router/resumeAccess');
 const onlineTutorRouter = require('./router/onlineTutor');  // ✅ 이름 정정
 const tutorAccessRouter = require('./router/tutorAccess');  // ✅ 새 라우터 등록
 const adminRouter = require('./router/admin');
+const rdfResourceRouter = require('./router/rdf-resource');
 
 console.log("📌 app.js 시작됨");
 
@@ -68,6 +69,7 @@ app.use('/admin', adminRouter);
 app.use('/', require('./router/public'));
 app.use('/', userRoutes);
 app.use('/tutor-access', tutorAccessRouter);                // ✅ 진입 경로
+app.use('/rdf-resource', rdfResourceRouter);
 app.use('/admin', require('./router/admin'));
 app.use('/facet', require('./router/facet'));
 app.use('/search', require('./router/search'));
