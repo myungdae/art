@@ -1,3 +1,4 @@
+console.log("✅ jobVacancyRouter loaded");
 const express = require('express');
 const router = express.Router();
 const JobVacancy = require('../model/jobVacancy');
@@ -5,7 +6,8 @@ const sanitizeHtml = require('sanitize-html');
 const { requireLogin } = require('../middleware/auth');
 const fs = require('fs');
 const path = require('path');
-const requireEmployer = require('../middleware/requireEmployer');
+const { requireEmployer } = require('../middleware/requireEmployer');
+
 
 
 // ✅ RDF 처리 함수
@@ -45,6 +47,7 @@ router.get('/new', requireLogin, async (req, res) => {
 
 // ✅ Paid User 전용 신규 등록 폼
 router.get('/new_paid_user', requireLogin, requireEmployer, async (req, res) => {
+  console.log("✅ req.user in new_paid_user route:", req.user);
   try {
     const [studentTypesFromDB, countriesFromDB, teachingAreasFromDB] = await Promise.all([
       JobVacancy.distinct('studentType'),
@@ -61,6 +64,46 @@ router.get('/new_paid_user', requireLogin, requireEmployer, async (req, res) => 
   } catch (err) {
     console.error('❌ Error loading paid user form:', err);
     res.status(500).send('Form error');
+  }
+});
+
+// ✅ POST /new_paid_user 처리
+router.post('/new_paid_user', requireLogin, requireEmployer, async (req, res) => {
+  try {
+    const job = new JobVacancy();
+
+    // ✅ 필드 처리 (new에서 했던 것과 동일하게)
+    job.title = sanitizeHtml(req.body.title);
+    job.description = sanitizeHtml(req.body.description, { allowedTags: false });
+    job.country = req.body.country || req.body.customCountry;
+    job.studentType = req.body.studentType || req.body.customStudentType;
+    job.teachingArea = req.body.teachingArea || req.body.customTeachingArea;
+    job.duration = req.body.duration;
+    job.pay = req.body.pay;
+    job.housing = req.body.housing;
+    job.adPackage = req.body.adPackage;
+    job.addResumeAccess = req.body.addResumeAccess === 'on';
+    job.companyName = req.body.companyName;
+    job.jobLocation = req.body.jobLocation;
+    job.datePosted = new Date();
+    job.email = req.body.email;
+    job.cellphoneNumber = req.body.cellphoneNumber;
+    job.skypeId = req.body.skypeId;
+    job.wechatId = req.body.wechatId;
+    job.homepage = req.body.homepage;
+    job.user = req.user._id;
+
+    await job.save();
+
+    // ✅ RDF 저장
+    const store = translateJobVacancyToRDF(job);
+    const filePath = path.join(__dirname, `../rdf/job_${job._id}.ttl`);
+    await saveRDFToFile(store, filePath);
+
+    res.redirect(`/job-vacancies/${job._id}?success=true`);
+  } catch (err) {
+    console.error('❌ new_paid_user 등록 실패:', err);
+    res.status(500).send('등록 실패');
   }
 });
 
