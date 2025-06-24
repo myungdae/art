@@ -21,6 +21,26 @@ router.get('/new', requireLogin, (req, res) => {
   res.render('jobVacancy/new');
 });
 
+// ✅ 유료 사용자 전용 신규 등록 폼
+router.get('/new_paid_user', requireLogin, async (req, res) => {
+  try {
+    const [studentTypesFromDB, countriesFromDB, teachingAreasFromDB] = await Promise.all([
+      JobVacancy.distinct('studentType'),
+      JobVacancy.distinct('country'),
+      JobVacancy.distinct('teachingArea')
+    ]);
+
+    res.render('jobVacancy/new_paid_user', {
+      studentTypes: studentTypesFromDB,
+      countries: countriesFromDB,
+      teachingAreas: teachingAreasFromDB
+    });
+  } catch (err) {
+    console.error('Error loading new_paid_user form:', err);
+    res.status(500).send('Error loading form');
+  }
+});
+
 // ✅ 등록 처리
 router.post('/new', requireLogin, async (req, res) => {
   try {
@@ -52,12 +72,24 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// ✅ 수정 폼
+// ✅ 수정 폼 (드롭다운 값 포함)
 router.get('/:id/edit', requireLogin, async (req, res) => {
   try {
     const jobVacancy = await JobVacancy.findById(req.params.id);
     if (!jobVacancy) return res.status(404).send('Job not found');
-    res.render('jobVacancy/edit', { jobVacancy });
+
+    const [studentTypesFromDB, countriesFromDB, teachingAreasFromDB] = await Promise.all([
+      JobVacancy.distinct('studentType'),
+      JobVacancy.distinct('country'),
+      JobVacancy.distinct('teachingArea')
+    ]);
+
+    res.render('jobVacancy/edit', {
+      jobVacancy,
+      studentTypes: studentTypesFromDB,
+      countries: countriesFromDB,
+      teachingAreas: teachingAreasFromDB
+    });
   } catch (err) {
     console.error(err);
     res.status(500).send('Error loading edit form');
@@ -93,7 +125,7 @@ router.delete('/:id', requireLogin, async (req, res) => {
   }
 });
 
-// ✅ ✅ ✅ RDF 변환 및 MongoDB 저장 (추가 기능)
+// ✅ RDF 변환 및 MongoDB 저장
 router.get('/rdf/convert/:id', async (req, res) => {
   try {
     const job = await JobVacancy.findById(req.params.id);
