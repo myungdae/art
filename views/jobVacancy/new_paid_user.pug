@@ -9,7 +9,7 @@ block content
             h4.mb-0 Post a Job Ad (Paid User)
 
           .card-body
-            form(method="POST", action="/job-vacancies/new_paid_user", onsubmit="return handleCustomFields()")
+            form(method="POST", action="/job-vacancies/new", onsubmit="return handleCustomFields()")
               .form-group.mb-3
                 label(for="title") Job Title
                 input.form-control#title(type="text", name="title", required, placeholder="Job Title", oninput="validateTitle(this)")
