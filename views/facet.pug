@@ -1,38 +1,30 @@
 extends layout
 
 block content
-  .container(style="padding-top:30px;")
+  .container.mt-5
     h2.text-center.mb-4 #{facetType.replace(/_/g, ' ')}
 
     .row
-      // 좌측 필터 영역
+      // ✅ 필터 영역
       .col-md-3
-        .bg-light.p-3.mb-3
-          h4 Filters
-          if Array.isArray(facetList)
-            each facet in facetList
-              .mb-3
-                strong= facet._id.replace(/_/g, ' ')
-                ul.list-unstyled
-                  each value in facet.values
-                    li
-                      a(href=`?filter=${facet._id}:${value.val}`)= `${value.val} (${value.count})`
+        h5.mb-3 Filters
+        form(method='get', action='/facet/' + facetType)
+          each facet in facetList
+            .mb-3
+              strong= facet._id
+              each val in facet.values
+                .form-check
+                  input.form-check-input(type='checkbox', name='filter', value=facet._id + ':' + val.val, id=facet._id + '-' + val.val)
+                  label.form-check-label(for=facet._id + '-' + val.val)= `${val.val} (${val.count})`
+          button.btn.btn-sm.btn-primary.mt-3(type='submit') Apply Filters
 
-      // 우측 본문 영역
+      // ✅ 결과 영역
       .col-md-9
-        if Array.isArray(docs) && docs.length > 0
-          each doc in docs
-            - var labelText = (doc[titleKey] && doc[titleKey]['@value']) ? doc[titleKey]['@value'] : (doc.title || 'Untitled');
-            - var descText = (doc[descriptionKey] && doc[descriptionKey]['@value']) ? doc[descriptionKey]['@value'] : (doc.description || 'No description');
-
-            .card.shadow-sm.mb-3
-              .card-body
-                h5.card-title.text-primary= labelText.replace(/\[dot\]/g, '.')
-                p.card-text.text-muted= descText.replace(/\[dot\]/g, '.')
-                if doc['@id']
-                  small.text-secondary ID: #{doc['@id'].replace(resource, '')}
+        if docs.length === 0
+          .alert.alert-warning.text-center.mt-4 No results found for "#{facetType}"
         else
-          .alert.alert-warning No results found for "#{facetType}"
-
-block append_js
-  script(src='/assets/js/custom/facet.js', type='text/javascript')
+          each doc in docs
+            .card.shadow-sm.mb-3.p-3
+              h5.text-primary= doc[titleKey] || 'Untitled'
+              p.mb-1.text-muted(style="font-size: 0.9rem")= doc[descriptionKey] || 'No description.'
+              a(href=doc['@id'], target="_blank") View Resource →
