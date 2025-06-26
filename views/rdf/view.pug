@@ -2,38 +2,59 @@ extends ../layout
 
 block content
   .container.mt-5
-    if notFound
-      h2.text-danger Resource not found
-    else
-      .card.shadow
-        .card-header.bg-primary.text-white.text-center
-          h3.mb-0= label
+    // ✅ Top Title as Job Title
+    if doc.title
+      h2.text-center.mb-4.text-success #{doc.title}
 
-        .card-body
-          if description
-            .mb-4
-              h5.text-secondary Description
-              .border.p-2.bg-light
-                != description
+    // ✅ Description Section (plaintext only)
+    if doc.description
+      h4.text-primary.mb-2 Description
+      p.mb-4 #{doc.description.replace(/(<([^>]+)>)/gi, '')} // HTML 태그 제거 처리
 
-          // ✅ Country & Target Info
-          - const coreKeys = ['country', 'studentType', 'teachingArea'];
-          .mb-4
-            h5.text-secondary Country & Target Info
-            ul.list-group
-              each key in coreKeys
-                if doc[key]
-                  li.list-group-item
-                    b= key + ': '
-                    a(href=`/facet/${key}/${encodeURIComponent(doc[key])}`)= doc[key]
+    // ✅ Inverse Connection Section
+    h4.text-primary.mt-4.mb-3 Inverse Connection
+    ul.list-group.mb-4
+      if doc.country
+        li.list-group-item
+          strong Country: 
+          a.ms-2(href=`/facet/country?filter=country:${doc.country}`)= doc.country
+      if doc.studentType
+        li.list-group-item
+          strong Student Type: 
+          a.ms-2(href=`/facet/studentType?filter=studentType:${doc.studentType}`)= doc.studentType
+      if doc.teachingArea
+        li.list-group-item
+          strong Teaching Area: 
+          a.ms-2(href=`/facet/teachingArea?filter=teachingArea:${doc.teachingArea}`)= doc.teachingArea
 
-          // ✅ Job Details
-          - const ignoreKeys = ['@id', 'rdfs:label', 'http://purl[dot]org/dc/elements/1[dot]1/description', ...coreKeys];
-          .mb-4
-            h5.text-secondary Job Details
-            ul.list-group
-              each val, key in doc
-                if !ignoreKeys.includes(key) && val
-                  li.list-group-item
-                    b= key.replace('res:', '') + ': '
-                    | #{val}
+    // ✅ Job Details Section
+    h4.text-primary.mb-3 Job Details
+    ul.list-group
+      if doc.duration
+        li.list-group-item
+          strong Duration: 
+          span.ms-2= doc.duration
+      if doc.pay
+        li.list-group-item
+          strong Pay: 
+          span.ms-2 $#{doc.pay}/month
+      if doc.housing
+        li.list-group-item
+          strong Housing: 
+          span.ms-2= doc.housing
+      if doc.email
+        li.list-group-item
+          strong Email: 
+          span.ms-2= doc.email
+      if doc.companyName
+        li.list-group-item
+          strong Company Name: 
+          span.ms-2= doc.companyName
+      if doc.jobLocation
+        li.list-group-item
+          strong Job Location: 
+          span.ms-2= doc.jobLocation
+      if doc._id
+        li.list-group-item
+          strong Internal ID: 
+          span.ms-2= doc._id
