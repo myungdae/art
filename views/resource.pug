@@ -1,0 +1,28 @@
+extends layout
+
+block content
+  .container.mt-5
+    if doc
+      .card.shadow.p-4
+        h2.mb-4.text-primary= doc['rdfs:label'] || 'Untitled'
+
+        if doc['http://purl.org/dc/elements/1.1/description']
+          p.lead.text-secondary= doc['http://purl.org/dc/elements/1.1/description']
+        else
+          p.text-muted No description provided.
+
+        hr
+
+        h5.text-dark.mt-4 Metadata
+        ul
+          each val, key in doc
+            if key !== '_id' && key !== '__v'
+              li
+                strong= key + ': '
+                | #{JSON.stringify(val)}
+
+      a.btn.btn-outline-primary.mt-4(href='/') ← Back to Home
+    else
+      .alert.alert-danger.mt-5
+        strong Error:
+        |  Resource not found or invalid.
