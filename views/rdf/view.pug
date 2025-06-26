@@ -4,16 +4,23 @@ block content
   .container.mt-5
     h2.text-center.mb-4 RDF Resource Detail
 
-    if triples && triples.length
-      each t in triples
-        .mb-4.p-3.border.rounded
-          p.mb-1.text-muted Subject:
-          code.d-block.mb-2= t.subject
+    if doc
+      // ✅ Subject 한 번만 출력
+      .mb-4
+        p.text-muted.mb-1 Subject:
+        code.d-block.mb-2= doc['@id'] || '(no @id)'
 
-          p.mb-1.text-muted Predicate:
-          code.d-block.mb-2= t.predicate
+      // ✅ Predicate-Object 출력
+      each val, key in doc
+        if key !== '_id' && key !== '@id'
+          .mb-3.p-3.border.rounded
+            p.mb-1.text-muted Predicate:
+            code.d-block.mb-2= key
 
-          p.mb-1.text-muted Object:
-          code.d-block= t.object
+            p.mb-1.text-muted Object:
+            if typeof val === 'string' && val.startsWith('<p>')
+              div(style='padding-left: 1rem') !{val}
+            else
+              code.d-block= typeof val === 'object' ? JSON.stringify(val) : val
     else
-      .alert.alert-danger.mt-4 No RDF triples found.
+      .alert.alert-danger.mt-4 No RDF data found.
