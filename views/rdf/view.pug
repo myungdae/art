@@ -2,32 +2,38 @@ extends ../layout
 
 block content
   .container.mt-5
-    if doc
-      h1.text-center.mb-4= doc['title'] || 'Untitled'
-
-      if doc['http://purl.org/dc/elements/1.1/description']
-        .mb-4
-          h5 Description</h5>
-          .card.p-3
-            .desc-content !{doc['http://purl.org/dc/elements/1.1/description'].toString()}
-
-      ul.list-group.mb-4
-        if doc['country']
-          li.list-group-item
-            strong Country:
-            a.ms-2(href='/facet/country/' + encodeURIComponent(doc['country']))= doc['country']
-
-        if doc['studentType']
-          li.list-group-item
-            strong Student Type:
-            a.ms-2(href='/facet/studentType/' + encodeURIComponent(doc['studentType']))= doc['studentType']
-
-        if doc['teachingArea']
-          li.list-group-item
-            strong Teaching Area:
-            a.ms-2(href='/facet/teachingArea/' + encodeURIComponent(doc['teachingArea']))= doc['teachingArea']
-
-      a.btn.btn-outline-primary.mt-4(href='/facet/Job_Vacancies') ← Back to List
-
+    if notFound
+      h2.text-danger Resource not found
     else
-      .alert.alert-danger.mt-5 ❌ No RDF document found.
+      .card.shadow
+        .card-header.bg-primary.text-white.text-center
+          h3.mb-0= label
+
+        .card-body
+          if description
+            .mb-4
+              h5.text-secondary Description
+              .border.p-2.bg-light
+                != description
+
+          // ✅ Country & Target Info
+          - const coreKeys = ['country', 'studentType', 'teachingArea'];
+          .mb-4
+            h5.text-secondary Country & Target Info
+            ul.list-group
+              each key in coreKeys
+                if doc[key]
+                  li.list-group-item
+                    b= key + ': '
+                    a(href=`/facet/${key}/${encodeURIComponent(doc[key])}`)= doc[key]
+
+          // ✅ Job Details
+          - const ignoreKeys = ['@id', 'rdfs:label', 'http://purl[dot]org/dc/elements/1[dot]1/description', ...coreKeys];
+          .mb-4
+            h5.text-secondary Job Details
+            ul.list-group
+              each val, key in doc
+                if !ignoreKeys.includes(key) && val
+                  li.list-group-item
+                    b= key.replace('res:', '') + ': '
+                    | #{val}
