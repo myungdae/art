@@ -45,7 +45,7 @@ function normalizeFacetType(facetType) {
     .replace(/s$/i, '');         // Tutors → Tutor
 }
 
-// ✅ 메인 핸들러
+// ✅ 기본 목록 + 필터링 지원 (e.g., /facet/country?filter=studentType:Middle)
 router.get('/:type', async (req, res) => {
   const facetTypeRaw = req.params.type;
   const normalizedType = normalizeFacetType(facetTypeRaw);
@@ -107,6 +107,41 @@ router.get('/:type', async (req, res) => {
     facetList,
     filter_item,
     baseURI: BASE   // ✅ View 링크 생성을 위한 BASE 전달
+  });
+});
+
+// ✅ 개별 값 필터링 (e.g., /facet/country/South Korea)
+router.get('/:type/:value', async (req, res) => {
+  const facetTypeRaw = req.params.type;
+  const facetValue = decodeURIComponent(req.params.value);
+  const normalizedType = normalizeFacetType(facetTypeRaw);
+
+  const client = new MongoClient(MONGO_URI);
+  await client.connect();
+  const db = client.db(DB_NAME);
+  const col = db.collection(COLLECTION_NAME);
+
+  const query = {
+    [TYPE]: { $regex: normalizedType, $options: 'i' },
+    [facetTypeRaw]: facetValue
+  };
+
+  const rawDocs = await col.find(query).toArray();
+
+  const docs = rawDocs.map(doc => ({
+    _id: doc[ID] || '',
+    _type: doc[TYPE] || '',
+    _label: getFirstAvailableValue(doc, LABEL_KEYS, 'No Title'),
+    _description: getFirstAvailableValue(doc, DESCRIPTION_KEYS, 'No description.')
+  }));
+
+  res.render('facet', {
+    facetType: facetTypeRaw,
+    facetValue,
+    docs,
+    facetList: [],
+    filter_item: [],
+    baseURI: BASE
   });
 });
 

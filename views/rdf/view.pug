@@ -2,25 +2,32 @@ extends ../layout
 
 block content
   .container.mt-5
-    h2.text-center.mb-4 RDF Resource Detail
-
     if doc
-      // ✅ Subject 한 번만 출력
-      .mb-4
-        p.text-muted.mb-1 Subject:
-        code.d-block.mb-2= doc['@id'] || '(no @id)'
+      h1.text-center.mb-4= doc['title'] || 'Untitled'
 
-      // ✅ Predicate-Object 출력
-      each val, key in doc
-        if key !== '_id' && key !== '@id'
-          .mb-3.p-3.border.rounded
-            p.mb-1.text-muted Predicate:
-            code.d-block.mb-2= key
+      if doc['http://purl.org/dc/elements/1.1/description']
+        .mb-4
+          h5 Description</h5>
+          .card.p-3
+            .desc-content !{doc['http://purl.org/dc/elements/1.1/description'].toString()}
 
-            p.mb-1.text-muted Object:
-            if typeof val === 'string' && val.startsWith('<p>')
-              div(style='padding-left: 1rem') !{val}
-            else
-              code.d-block= typeof val === 'object' ? JSON.stringify(val) : val
+      ul.list-group.mb-4
+        if doc['country']
+          li.list-group-item
+            strong Country:
+            a.ms-2(href='/facet/country/' + encodeURIComponent(doc['country']))= doc['country']
+
+        if doc['studentType']
+          li.list-group-item
+            strong Student Type:
+            a.ms-2(href='/facet/studentType/' + encodeURIComponent(doc['studentType']))= doc['studentType']
+
+        if doc['teachingArea']
+          li.list-group-item
+            strong Teaching Area:
+            a.ms-2(href='/facet/teachingArea/' + encodeURIComponent(doc['teachingArea']))= doc['teachingArea']
+
+      a.btn.btn-outline-primary.mt-4(href='/facet/Job_Vacancies') ← Back to List
+
     else
-      .alert.alert-danger.mt-4 No RDF data found.
+      .alert.alert-danger.mt-5 ❌ No RDF document found.
