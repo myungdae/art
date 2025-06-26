@@ -10,7 +10,7 @@ const BASE = 'http://esl.eventpool.kr/resource/';
 router.get('/:id', async (req, res) => {
   const rawId = req.params.id;
   const decodedId = decodeURIComponent(rawId);
-  const normalizedId = decodedId.replace(/ /g, '_'); // 핵심 수정
+  const normalizedId = decodedId.replace(/ /g, '_'); // 공백 → 언더바
   const fullId = BASE + normalizedId;
 
   const client = new MongoClient(MONGO_URI);

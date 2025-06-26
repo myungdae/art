@@ -2,17 +2,12 @@ extends layout
 
 block content
   .container.mx-auto.px-4.py-8
-
     h2.text-2xl.font-bold.mb-6= facetType
 
-    // ✅ 그리드 레이아웃 (필터 + 콘텐츠)
     div(class="grid grid-cols-1 md:grid-cols-4 gap-8")
-
-      // ✅ 필터 영역 (폼 포함)
+      // ✅ 필터 영역
       div.col-span-1#filters
         h4.mb-4.text-xl.font-semibold.text-gray-700 Filters
-
-        // ✅ 전체 필터 form
         form(method="GET", action=`/facet/${facetType}`)
           each facet in facetList
             if facet && facet.values && facet.values.length
@@ -28,8 +23,6 @@ block content
                     checked=filter_item && filter_item.some(item => item.title === facet._id && item.value === val.val)
                   )
                   label(for=checkboxId class="ml-2 text-sm") #{val.val} (#{val.count})
-
-          // ✅ 필터 적용 버튼
           button(type="submit" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600") Apply Filters
 
       // ✅ 콘텐츠 카드 영역
@@ -40,13 +33,13 @@ block content
               h3.text-xl.font-semibold.text-blue-700.mb-2= doc._label || 'No Title'
               p.text-gray-700.mb-3!= doc._description || 'No description available.'
 
-              - const fullId = doc['@id'];
-              - const showLink = fullId && fullId.startsWith(baseURI);
-              - const safeId = showLink ? fullId.replace(baseURI, '').replace(/ /g, '_') : null;
+              - const fullId = doc._id;
+              - const showLink = baseURI && fullId && fullId.startsWith(baseURI);
+              - const safeId = showLink ? fullId.replace(baseURI, '') : null;
 
               if showLink && safeId
                 a(
-                  href='/resource/' + encodeURIComponent(safeId),
+                  href='/resource/' + safeId,
                   class="text-blue-500 font-semibold hover:underline"
                 ) → View Resource
               else

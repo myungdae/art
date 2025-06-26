@@ -5,6 +5,7 @@ const { MongoClient } = require('mongodb');
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017';
 const DB_NAME = 'eventpool';
 const COLLECTION_NAME = process.env.COLLECTION || 'esl';
+const BASE = 'http://esl.eventpool.kr/resource/';  // ✅ 리소스 base URI
 
 // RDF Key Constants
 const LABEL_KEYS = [
@@ -40,8 +41,8 @@ function getFirstAvailableValue(doc, keys, fallback = '') {
 // ✅ 복수형 facetType → 단수형 type 변환
 function normalizeFacetType(facetType) {
   return facetType
-    .replace(/ies$/i, 'y')       // e.g., Vacancies → Vacancy
-    .replace(/s$/i, '');         // e.g., Tutors → Tutor
+    .replace(/ies$/i, 'y')       // Vacancies → Vacancy
+    .replace(/s$/i, '');         // Tutors → Tutor
 }
 
 // ✅ 메인 핸들러
@@ -55,7 +56,6 @@ router.get('/:type', async (req, res) => {
   const db = client.db(DB_NAME);
   const col = db.collection(COLLECTION_NAME);
 
-  // ✅ 필터 파싱
   let filterQuery = {};
   let filter_item = [];
 
@@ -73,7 +73,6 @@ router.get('/:type', async (req, res) => {
     });
   }
 
-  // ✅ 문서 조회 및 가공
   const rawDocs = await col.find({
     [TYPE]: { $regex: normalizedType, $options: 'i' },
     ...filterQuery
@@ -86,7 +85,6 @@ router.get('/:type', async (req, res) => {
     _description: getFirstAvailableValue(doc, DESCRIPTION_KEYS, 'No description.')
   }));
 
-  // ✅ 필터 목록 생성
   const facetList = [];
   const facetFields = ['country', 'studentType', 'teachingArea'];
 
@@ -103,12 +101,12 @@ router.get('/:type', async (req, res) => {
     });
   }
 
-  // ✅ 렌더링
   res.render('facet', {
     facetType: facetTypeRaw,
     docs,
     facetList,
-    filter_item
+    filter_item,
+    baseURI: BASE   // ✅ View 링크 생성을 위한 BASE 전달
   });
 });
 
