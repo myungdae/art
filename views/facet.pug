@@ -38,7 +38,18 @@ block content
           each doc in docs
             div(class="card shadow-md bg-white p-6 mb-6 rounded-lg transition transform hover:scale-105")
               h3.text-xl.font-semibold.text-blue-700.mb-2= doc._label || 'No Title'
-              p.text-gray-700.mb-3= doc._description || 'No description available.'
-              a(href=doc._id class="text-blue-500 font-semibold hover:underline") → View Resource
+              p.text-gray-700.mb-3!= doc._description || 'No description available.'
+
+              - const fullId = doc['@id'];
+              - const showLink = fullId && fullId.startsWith(baseURI);
+              - const safeId = showLink ? fullId.replace(baseURI, '').replace(/ /g, '_') : null;
+
+              if showLink && safeId
+                a(
+                  href='/resource/' + encodeURIComponent(safeId),
+                  class="text-blue-500 font-semibold hover:underline"
+                ) → View Resource
+              else
+                span.text-gray-400 No valid link
         else
           p.text-gray-500.mt-6 No resources found.
