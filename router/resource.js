@@ -1,44 +1,28 @@
 const express = require('express');
 const router = express.Router();
 const { MongoClient } = require('mongodb');
-require('dotenv').config();
 
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017';
 const DB_NAME = 'eventpool';
 const COLLECTION_NAME = process.env.COLLECTION || 'esl';
-const BASE = 'http://esl.eventpool.kr/resource/';
 
-const LABEL = 'rdfs:label';
-const DESCRIPTION = 'http://purl.org/dc/elements/1.1/description';
-const TYPE = '@type';
-const ID = '@id';
-
-// ✅ 상세 페이지 라우터
 router.get('/:id', async (req, res) => {
-  const idParam = req.params.id;
-  const fullId = BASE + idParam;
+  const client = new MongoClient(MONGO_URI);
+  await client.connect();
 
-  try {
-    const client = new MongoClient(MONGO_URI);
-    await client.connect();
-    const db = client.db(DB_NAME);
-    const col = db.collection(COLLECTION_NAME);
+  const db = client.db(DB_NAME);
+  const col = db.collection(COLLECTION_NAME);
 
-    const doc = await col.findOne({ [ID]: fullId });
+  const id = decodeURIComponent(req.params.id);
+  const fullId = `http://esl.eventpool.kr/resource/${id}`; // ✅ 반드시 전체 URI로
 
-    if (!doc) {
-      return res.status(404).render('404', { message: '❌ Resource not found' });
-    }
+  const doc = await col.findOne({ '@id': fullId });
 
-    res.render('resource', {
-      title: doc[LABEL] || 'No Title',
-      description: doc[DESCRIPTION] || 'No Description',
-      doc
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('❌ Internal Server Error');
+  if (!doc) {
+    return res.status(404).send('❌ Resource not found');
   }
+
+  res.render('rdf/view', { doc });  // ✅ 올바른 뷰 경로
 });
 
 module.exports = router;
