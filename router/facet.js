@@ -31,9 +31,15 @@ router.get('/:type', async (req, res) => {
     });
   }
 
+  // ✅ 데이터 조회
   const data = await col.find(filterQuery).limit(100).toArray();
 
-  // ✅ 필터 필드가 존재하지 않아도 작동하도록 보호
+  // ✅ _label 설정
+  data.forEach(item => {
+    item._label = (item[LABEL] && item[LABEL]['@value']) || item['title'] || item['@id'] || 'No Title';
+  });
+
+  // ✅ 필터 필드 정의 및 집계
   const facetFields = ['country', 'studentType', 'teachingArea'];
   const filtersData = [];
 
@@ -65,6 +71,7 @@ router.get('/:type', async (req, res) => {
     }
   }
 
+  // ✅ 렌더링
   res.render('facet', {
     data,
     filters: filtersData,

@@ -3,11 +3,16 @@ const mongoose = require('mongoose');
 const jobVacancySchema = new mongoose.Schema({
   title: {
     type: String,
-    required: [true, 'Job Title (URI) is required'],
-    unique: true,
+    required: [true, 'Job Title is required'],
+    trim: true
+  },
+  _label: {
+    type: String,
+    required: [true, 'Job Title (_label) is required'],
     trim: true
   },
   description: { type: String },
+  _description: { type: String },
   country: { type: String },
   studentType: { type: String },
   teachingArea: { type: String },
@@ -21,17 +26,12 @@ const jobVacancySchema = new mongoose.Schema({
   skypeId: { type: String },
   wechatId: { type: String },
   homepage: { type: String },
-
-  // ✅ NEW: Payment-related fields
-  adPackage: { type: String }, // '1', '4', '12', '24'
-  addResumeAccess: { type: Boolean }, // true if checked
-
+  adPackage: { type: String },
+  addResumeAccess: { type: Boolean },
   user: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: false
+    ref: 'User'
   },
-
   datePosted: {
     type: Date,
     default: Date.now

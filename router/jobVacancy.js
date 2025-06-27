@@ -47,6 +47,38 @@ router.get('/new_paid_user', requireLogin, async (req, res) => {
   }
 });
 
+// ✅ 유료 사용자 전용 등록 처리
+router.post('/new_paid_user', requireLogin, async (req, res) => {
+  try {
+    const sanitizedTitle = sanitizeHtml(req.body.title);
+    const newJob = new JobVacancy({
+      title: sanitizedTitle,
+      _label: sanitizedTitle,  // ✅ _label 추가
+      country: req.body.country,
+      studentType: req.body.studentType,
+      teachingArea: req.body.teachingArea,
+      duration: req.body.duration
+    });
+    await newJob.save();
+
+    console.log("✅ [PaidUser] JobVacancy saved:", newJob.title);
+
+    const facetEntry = createFacetEntryFromCRUD(newJob);
+    const client = new MongoClient(MONGO_URI);
+    await client.connect();
+    const db = client.db('eventpool');
+    const col = db.collection('esl');
+    await col.insertOne(facetEntry);
+    await client.close();
+
+    res.redirect('/job-vacancies');
+  } catch (err) {
+    console.error("❌ Error saving job vacancy (paid):", err);
+    res.status(500).send('Error saving job vacancy');
+  }
+});
+
+
 // ✅ 등록 처리 + RDF 자동 저장
 router.post('/new', requireLogin, async (req, res) => {
   try {

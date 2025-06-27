@@ -10,14 +10,16 @@ block content
 
           .card-body
             form(method="POST", action="/job-vacancies", onsubmit="return handleCustomFields()")
+              // ✅ Job Title → rdfs:label
               .form-group.mb-3
                 label(for="title") Job Title
-                input.form-control#title(type="text", name="title", required, placeholder="Job Title", oninput="validateTitle(this)")
+                input.form-control#title(type="text", name="rdfs:label[@value]", required, placeholder="Job Title", oninput="validateTitle(this)")
                 small.text-danger#title-error(style="display:none") ❌ Emojis or Korean characters are not allowed.
 
+              // ✅ Description → dc:description
               .form-group.mb-4
                 label(for="description") Job Description
-                textarea.form-control(name="description", id="description", rows="8")
+                textarea.form-control(name="http://purl.org/dc/elements/1.1/description[@value]", id="description", rows="8")
 
               // ✅ Host Country
               .form-group.mb-3

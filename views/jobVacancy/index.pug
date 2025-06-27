@@ -19,13 +19,14 @@ block content
         tbody
           each job in jobVacancies
             tr
-              td= job.title || 'Untitled'
+              td= job._label || job.title || 'Untitled'
               td= job.country || 'N/A'
               td= job.companyName || 'N/A'
-              td= job.datePosted ? new Date(job.datePosted).toLocaleDateString() : 'N/A'
+              td= job.datePosted ? new Date(job.datePosted).toLocaleDateString() : (job.createdAt ? new Date(job.createdAt).toLocaleDateString() : 'N/A')
               td
                 a.btn.btn-sm.btn-outline-primary(href=`/job-vacancies/${job._id}`) View
                 a.btn.btn-sm.btn-outline-secondary.ms-2(href=`/job-vacancies/${job._id}/edit`) Edit
 
     .mt-4.text-end
-      a.btn.btn-success(href='/job-vacancies/new') + Post New Job
+      a.btn.btn-success.me-2(href='/job-vacancies/new') + Post Free Job
+      a.btn.btn-warning(href='/job-vacancies/new_paid_user') + Post Paid Job

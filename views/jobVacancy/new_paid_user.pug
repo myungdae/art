@@ -9,17 +9,19 @@ block content
             h4.mb-0 Post a Job Ad (Paid User)
 
           .card-body
-            form(method="POST", action="/job-vacancies/new", onsubmit="return handleCustomFields()")
+            form(method="POST", action="/job-vacancies/new_paid_user", onsubmit="return handleCustomFields()")
               .form-group.mb-3
                 label(for="title") Job Title
                 input.form-control#title(type="text", name="title", required, placeholder="Job Title", oninput="validateTitle(this)")
                 small.text-danger#title-error(style="display:none") ❌ Emojis or Korean characters are not allowed.
 
-              .form-group.mb-4
-                label(for="description") Job Description
-                textarea.form-control(name="description", id="description", rows="8")
+                // ✅ Hidden label (auto-generated from title)
+                input(type="hidden", name="_label", id="_label")
 
-              // ✅ Host Country
+              .form-group.mb-4
+                label(for="_description") Job Description
+                textarea.form-control(name="_description", id="description", rows="8")
+
               .form-group.mb-3
                 label(for="country") Host Country
                 select.form-control#countrySelect(name="country")
@@ -29,7 +31,6 @@ block content
                 small.text-muted.mt-1 You can also add a new country:
                 input.form-control.mt-1(type="text", id="customCountry", placeholder="Or enter a new Country")
 
-              // ✅ Student Type
               .form-group.mb-3
                 label(for="studentType") Student Type
                 select.form-control#studentTypeSelect(name="studentType")
@@ -39,7 +40,6 @@ block content
                 small.text-muted.mt-1 You can also add a new student type:
                 input.form-control.mt-1(type="text", id="customStudentType", placeholder="Or enter a new Student Type")
 
-              // ✅ Teaching Area
               .form-group.mb-3
                 label(for="teachingArea") Teaching Area
                 select.form-control#teachingArea(name="teachingArea")
@@ -115,12 +115,15 @@ block append_js
       const emojiRegex = /[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu;
       const koreanRegex = /[ㄱ-ㅎㅏ-ㅣ가-힣]/;
       const errorElem = document.getElementById('title-error');
+      const labelField = document.getElementById('_label');
       if (emojiRegex.test(input.value) || koreanRegex.test(input.value)) {
         errorElem.style.display = 'block';
         input.classList.add('is-invalid');
+        labelField.value = '';
       } else {
         errorElem.style.display = 'none';
         input.classList.remove('is-invalid');
+        labelField.value = input.value.trim().replace(/\s+/g, '_');  // auto-generate _label
       }
     }
 

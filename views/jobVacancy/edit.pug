@@ -5,44 +5,53 @@ block content
     .row.justify-content-center
       .col-md-10
         .card.shadow
-          .card-header.bg-primary.text-white.text-center
+          .card-header.bg-warning.text-white.text-center
             h4.mb-0 Edit Job Advertisement
 
           .card-body
             form.form(method="POST", action="/job-vacancies/" + jobVacancy._id + "?_method=PUT", onsubmit="return handleCustomFields()")
               .form-group.mb-3
-                label(for="title") Job Title
-                input.form-control#title(type="text", name="title", required, value=jobVacancy.title || '', oninput="validateTitle(this)")
+                label(for="_label") Job Title
+                input.form-control#title(type="text", name="_label", required, value=jobVacancy._label || jobVacancy.title, oninput="validateTitle(this)")
                 small.text-danger#title-error(style="display:none") ❌ Emojis or Korean characters are not allowed.
 
               .form-group.mb-4
-                label(for="description") Job Description
-                textarea.form-control(name="description", id="description", rows="8")= jobVacancy.description || ''
+                label(for="_description") Job Description
+                textarea.form-control(name="_description", id="description", rows="8")= jobVacancy._description || ''
 
               .form-group.mb-3
                 label(for="country") Host Country
                 select.form-control#countrySelect(name="country")
-                  option(disabled value='') Select Country
+                  option(disabled selected value='') Select Country
                   each v in countries
-                    option(value=v selected=(v === jobVacancy.country))= v
+                    if jobVacancy.country === v
+                      option(value=v selected)= v
+                    else
+                      option(value=v)= v
                 small.text-muted.mt-1 You can also add a new country:
                 input.form-control.mt-1(type="text", id="customCountry", placeholder="Or enter a new Country")
 
               .form-group.mb-3
                 label(for="studentType") Student Type
                 select.form-control#studentTypeSelect(name="studentType")
-                  option(disabled value='') Select Student Type
+                  option(disabled selected value='') Select Student Type
                   each v in studentTypes
-                    option(value=v selected=(v === jobVacancy.studentType))= v
+                    if jobVacancy.studentType === v
+                      option(value=v selected)= v
+                    else
+                      option(value=v)= v
                 small.text-muted.mt-1 You can also add a new student type:
                 input.form-control.mt-1(type="text", id="customStudentType", placeholder="Or enter a new Student Type")
 
               .form-group.mb-3
                 label(for="teachingArea") Teaching Area
                 select.form-control#teachingArea(name="teachingArea")
-                  option(disabled value='') Select Teaching Area
+                  option(disabled selected value='') Select Teaching Area
                   each v in teachingAreas
-                    option(value=v selected=(v === jobVacancy.teachingArea))= v
+                    if jobVacancy.teachingArea === v
+                      option(value=v selected)= v
+                    else
+                      option(value=v)= v
                 small.text-muted.mt-1 You can also add a new teaching area:
                 input.form-control.mt-1(type="text", id="customTeachingArea", placeholder="Or enter a new Teaching Area")
 
@@ -88,18 +97,18 @@ block content
 
               .form-group.mb-3
                 label(for="datePosted") Date Posted
-                input.form-control(type="date", name="datePosted", id="datePosted", value=datePostedFormatted || '')
+                input.form-control(type="date", name="datePosted", id="datePosted", value=jobVacancy.datePosted ? jobVacancy.datePosted.toISOString().substring(0,10) : '')
 
               .form-group
                 label.mb-2 Add Resume Access?
                 .form-check.form-check-inline
-                  input.form-check-input(type="radio", name="resumeAccess", id="resumeYes", value="yes", checked=(jobVacancy.resumeAccess === 'yes'))
+                  input.form-check-input(type="radio", name="resumeAccess", id="resumeYes", value="yes", checked=jobVacancy.resumeAccess === 'yes')
                   label.form-check-label(for="resumeYes") Yes
                 .form-check.form-check-inline
-                  input.form-check-input(type="radio", name="resumeAccess", id="resumeNo", value="no", checked=(jobVacancy.resumeAccess === 'no'))
+                  input.form-check-input(type="radio", name="resumeAccess", id="resumeNo", value="no", checked=jobVacancy.resumeAccess === 'no')
                   label.form-check-label(for="resumeNo") No
 
-              button.btn.btn-primary.btn-block.mt-4(type="submit") Update
+              button.btn.btn-warning.btn-block.mt-4(type="submit") Update
 
 block append_js
   script(src="https://cdn.ckeditor.com/ckeditor5/41.0.0/classic/ckeditor.js")
@@ -110,7 +119,7 @@ block append_js
 
     function validateTitle(input) {
       const emojiRegex = /[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu;
-      const koreanRegex = /[\u3131-\uD79D]/;
+      const koreanRegex = /[ㄱ-ㅎㅏ-ㅣ가-힣]/;
       const errorElem = document.getElementById('title-error');
       if (emojiRegex.test(input.value) || koreanRegex.test(input.value)) {
         errorElem.style.display = 'block';
@@ -128,31 +137,35 @@ block append_js
       const customStudent = document.getElementById('customStudentType')?.value.trim();
       const customTeaching = document.getElementById('customTeachingArea')?.value.trim();
 
-      if (customCountry) {
+      const countrySelect = document.getElementById('countrySelect');
+      const studentTypeSelect = document.getElementById('studentTypeSelect');
+      const teachingSelect = document.getElementById('teachingArea');
+
+      if (customCountry && countrySelect.value === '') {
         const input = document.createElement('input');
         input.type = 'hidden';
         input.name = 'country';
         input.value = customCountry;
         form.appendChild(input);
-        document.getElementById('countrySelect').disabled = true;
+        countrySelect.disabled = true;
       }
 
-      if (customStudent) {
+      if (customStudent && studentTypeSelect.value === '') {
         const input = document.createElement('input');
         input.type = 'hidden';
         input.name = 'studentType';
         input.value = customStudent;
         form.appendChild(input);
-        document.getElementById('studentTypeSelect').disabled = true;
+        studentTypeSelect.disabled = true;
       }
 
-      if (customTeaching) {
+      if (customTeaching && teachingSelect.value === '') {
         const input = document.createElement('input');
         input.type = 'hidden';
         input.name = 'teachingArea';
         input.value = customTeaching;
         form.appendChild(input);
-        document.getElementById('teachingArea').disabled = true;
+        teachingSelect.disabled = true;
       }
 
       return true;

@@ -83,36 +83,31 @@ exports.search = {
   ]
 };
 
-// ✅ 구조 초기화 함수
+// ✅ 구조 초기화 함수 (TableDisplay 제거 버전)
 const createStructure = async () => {
   try {
-    const tableDisplay = await Schema.findOne({ '@id': _resource + 'TableDisplay' });
-    const menuOrder = tableDisplay?.toObject()[_resource + '전체메뉴순서'];
-    const default_facet = menuOrder && menuOrder['@list']
-      ? menuOrder['@list'].filter(v => !v['@id'].includes('with'))
-      : [];
-
     await Structure.deleteMany({});
 
-    for (const v of default_facet) {
-      const arr = await Schema.find({ '@type': v['@id'] });
+    for (const title of _facet_menu) {
+      const typeId = _resource + title;
+      const arr = await Schema.find({ '@type': typeId });
       let query;
 
-      if (_existSubClass.includes(v['@id'].replace(_resource, ''))) {
-        const subClass = await Schema.find({ [_subClassOf + '.@id']: v['@id'] });
+      if (_existSubClass.includes(title)) {
+        const subClass = await Schema.find({ [_subClassOf + '.@id']: typeId });
         const sub_query = subClass.map(s => ({ '@type': s.toObject()['@id'] }));
         const subDocs = await Schema.aggregate([{ '$match': { '$or': sub_query } }]);
 
         query = subDocs.map(o => ({
           facet_id: o['@id'],
-          _type: v['@id'],
+          _type: typeId,
           _subClass: o['@type']
         }));
       } else {
         query = arr.map(w => ({
           facet_id: w.toObject()['@id'],
           _type: w.toObject()['@type'],
-          _class: v['@id']
+          _class: typeId
         }));
       }
 
@@ -122,6 +117,7 @@ const createStructure = async () => {
     console.error(e);
   }
 };
+
 
 // ✅ 초기화 자동 실행
 exports.resetStructure = createStructure();

@@ -13,7 +13,7 @@ block content
 
           .card.shadow
             .card-header.bg-light.d-flex.justify-content-between.align-items-center
-              h4.mb-0.text-dark= jobVacancy.title || 'Untitled'
+              h4.mb-0.text-dark= jobVacancy._label || jobVacancy.title || 'Untitled'
               a.btn.btn-outline-primary(href='/job-vacancies') ← Back to List
 
           .card-body
@@ -23,7 +23,9 @@ block content
             // 📝 Job Description
             h5.mb-3 📝 Job Description
             .job-description.border.p-3.bg-light
-              if jobVacancy.description
+              if jobVacancy._description
+                != jobVacancy._description
+              else if jobVacancy.description
                 != jobVacancy.description
               else
                 p.text-muted No description provided.
