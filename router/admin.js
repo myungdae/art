@@ -6,7 +6,6 @@ const JobSeeker = require('../model/jobSeeker');
 const OnlineTutor = require('../model/onlineTutor');
 const requireAdmin = require('../middleware/requireAdmin');
 
-// ✅ 관리자 로그인
 router.get('/login', (req, res) => {
   res.render('admin/login');
 });
@@ -24,44 +23,34 @@ router.post('/login', (req, res) => {
   }
 });
 
-// ✅ 로그아웃
 router.get('/logout', (req, res) => {
   req.session.destroy(() => {
     res.redirect('/admin/login');
   });
 });
 
-// ✅ 관리자 대시보드
 router.get('/dashboard', requireAdmin, async (req, res) => {
   try {
-    // Employers: adsAvailable > 0 인 paid user
+    const now = new Date();
+
     const employers = await User.find({
       role: 'Employer',
       adsAvailable: { $gt: 0 }
     }).sort({ createdAt: -1 });
+    console.log("✅ Employers found:", employers.length);
 
-    // Job Seekers: resumeAccess 있고 Remaining Days > 0
     const jobSeekersRaw = await JobSeeker.find().sort({ createdAt: -1 });
-    const jobSeekers = jobSeekersRaw.filter(js => {
-      if (!js.resumeAccess) return false;
-      const startDate = js.resumeAccess.startDate ? new Date(js.resumeAccess.startDate) : null;
-      const durationDays = js.resumeAccess.durationDays || 0;
-      if (!startDate || durationDays === 0) return false;
-      const now = new Date();
-      const diff = (startDate.getTime() + durationDays * 86400000 - now.getTime()) / 86400000;
-      return diff > 0;
+    console.log("✅ JobSeekers raw count:", jobSeekersRaw.length);
+    const jobSeekers = jobSeekersRaw.map(js => {
+      console.log("🔍 JobSeeker debug:", js.name, js.resumeAccess);
+      return { ...js.toObject(), remainingDays: 1 };
     });
 
-    // Online Tutors: resumeAccess 있고 Remaining Days > 0
     const onlineTutorsRaw = await OnlineTutor.find().sort({ createdAt: -1 });
-    const onlineTutors = onlineTutorsRaw.filter(ot => {
-      if (!ot.resumeAccess) return false;
-      const startDate = ot.resumeAccess.startDate ? new Date(ot.resumeAccess.startDate) : null;
-      const durationDays = ot.resumeAccess.durationDays || 0;
-      if (!startDate || durationDays === 0) return false;
-      const now = new Date();
-      const diff = (startDate.getTime() + durationDays * 86400000 - now.getTime()) / 86400000;
-      return diff > 0;
+    console.log("✅ OnlineTutors raw count:", onlineTutorsRaw.length);
+    const onlineTutors = onlineTutorsRaw.map(ot => {
+      console.log("🔍 OnlineTutor debug:", ot.username || ot.name, ot.resumeAccess);
+      return { ...ot.toObject(), remainingDays: 1 };
     });
 
     res.render('admin/dashboard', {
@@ -69,6 +58,7 @@ router.get('/dashboard', requireAdmin, async (req, res) => {
       jobSeekers,
       onlineTutors
     });
+
   } catch (err) {
     console.error('❌ Admin dashboard error:', err);
     res.status(500).render('error', {

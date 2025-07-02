@@ -4,7 +4,7 @@ block content
   .container.mt-5
     h2.text-center.mb-4 Admin Dashboard
 
-    // ✅ EMPLOYERS
+    // ✅ Employers
     h4.mb-3.text-primary Employers
     table.table.table-bordered.table-striped
       thead
@@ -18,10 +18,10 @@ block content
           tr
             td= emp.username || 'N/A'
             td= emp.email || 'N/A'
-            td= emp.adsAvailable !== undefined ? emp.adsAvailable : 'N/A'
+            td= emp.adsAvailable || 0
             td= emp.createdAt ? new Date(emp.createdAt).toLocaleDateString() : 'N/A'
 
-    // ✅ JOB SEEKERS
+    // ✅ Job Seekers
     h4.mt-5.mb-3.text-success Job Seekers
     table.table.table-bordered.table-striped
       thead
@@ -32,17 +32,13 @@ block content
           th Created At
       tbody
         each js in jobSeekers
-          - const now = new Date();
-          - const startDate = js.resumeAccess?.startDate ? new Date(js.resumeAccess.startDate) : null;
-          - const durationDays = js.resumeAccess?.durationDays || 0;
-          - const remainingDays = (startDate && durationDays) ? Math.max(0, Math.ceil((startDate.getTime() + durationDays * 86400000 - now.getTime()) / 86400000)) : 'N/A';
           tr
-            td= js.username || 'N/A'
+            td= js.name || 'N/A'
             td= js.email || 'N/A'
-            td= remainingDays
+            td= js.remainingDays || 0
             td= js.createdAt ? new Date(js.createdAt).toLocaleDateString() : 'N/A'
 
-    // ✅ ONLINE TUTORS
+    // ✅ Online Tutors
     h4.mt-5.mb-3.text-info Online Tutors
     table.table.table-bordered.table-striped
       thead
@@ -53,12 +49,8 @@ block content
           th Created At
       tbody
         each ot in onlineTutors
-          - const now = new Date();
-          - const startDate = ot.resumeAccess?.startDate ? new Date(ot.resumeAccess.startDate) : null;
-          - const durationDays = ot.resumeAccess?.durationDays || 0;
-          - const remainingDays = (startDate && durationDays) ? Math.max(0, Math.ceil((startDate.getTime() + durationDays * 86400000 - now.getTime()) / 86400000)) : 'N/A';
           tr
-            td= ot.username || 'N/A'
+            td= ot.name || 'N/A'
             td= ot.email || 'N/A'
-            td= remainingDays
+            td= ot.remainingDays || 0
             td= ot.createdAt ? new Date(ot.createdAt).toLocaleDateString() : 'N/A'
