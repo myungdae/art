@@ -6,7 +6,9 @@ const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017';
 const DB_NAME = 'eventpool';
 const COLLECTION_NAME = process.env.COLLECTION || 'esl';
 
-// ✅ Facet Navigation
+const LABEL = 'rdfs:label';
+const DESCRIPTION = 'http://purl.org/dc/elements/1.1/description';
+
 router.get('/:type', async (req, res) => {
   const facetType = req.params.type;
   const filter = req.query.filter;
@@ -16,13 +18,17 @@ router.get('/:type', async (req, res) => {
   const db = client.db(DB_NAME);
   const col = db.collection(COLLECTION_NAME);
 
+  console.log("✅ MONGO_URI:", MONGO_URI);
+  console.log("✅ DB_NAME:", DB_NAME);
+  console.log("✅ COLLECTION_NAME:", COLLECTION_NAME);
+
+  // ✅ 기본 filterQuery: Job_Vacancies 포함
   let filterQuery = {
-    "@type": {
-      $in: [facetType, `http://esl.eventpool.kr/resource/${facetType}`]
-    }
+    "@type": { $regex: "Job_Vacancies" }
   };
   let filter_item = [];
 
+  // ✅ 추가 필터 처리 (UI 표시용)
   if (filter) {
     const filters = Array.isArray(filter) ? filter : [filter];
     filters.forEach(f => {
@@ -35,25 +41,39 @@ router.get('/:type', async (req, res) => {
     });
   }
 
-  console.log("📌 최종 요청 URL과 필터:", req.originalUrl, req.query.filter);
-  console.log("📌 최종 filterQuery:", JSON.stringify(filterQuery, null, 2));
+  console.log("✅ 최종 filterQuery:", JSON.stringify(filterQuery, null, 2));
 
+  // ✅ 데이터 조회
   const data = await col.find(filterQuery).limit(100).toArray();
-  console.log("✅ 데이터 갯수:", data.length);
+  console.log(`✅ 데이터 갯수 (MongoDB): ${data.length}`);
+  console.log("✅ 데이터 내용 (MongoDB):");
+  console.log(JSON.stringify(data, null, 2));
 
+  // ✅ _label / _description 생성
   data.forEach(item => {
-    item._label = item['rdfs:label']?.['@value'] || item['title'] || item['@id'] || 'No Title';
-    item._description = item['http://purl.org/dc/elements/1.1/description']?.['@value'] || item['description'] || 'No description';
+    item._label =
+      (item['http://www.w3.org/2000/01/rdf-schema#label'] && item['http://www.w3.org/2000/01/rdf-schema#label']['@value']) ||
+      (item['rdfs:label'] && item['rdfs:label']['@value']) ||
+      item['title'] ||
+      item['dc:title'] ||
+      item['@id'] ||
+      'No Title';
+
+    item._description =
+      (item['http://purl.org/dc/elements/1.1/description'] && item['http://purl.org/dc/elements/1.1/description']['@value']) ||
+      item['dc:description'] ||
+      item['description'] ||
+      'No description';
   });
 
-  // ✅ 필터용 필드 집계
+  // ✅ 필터 필드 집계
   const facetFields = ['country', 'studentType', 'teachingArea'];
   const filtersData = [];
 
   for (let field of facetFields) {
     try {
       const agg = await col.aggregate([
-        { $match: filterQuery },
+        { $match: { "@type": { $regex: "Job_Vacancies" } } },
         { $group: { _id: `$${field}`, count: { $sum: 1 } } },
         { $sort: { count: -1 } }
       ]).toArray();
@@ -74,17 +94,16 @@ router.get('/:type', async (req, res) => {
         });
       }
     } catch (err) {
-      console.error(`❌ Error processing facet field ${field}:`, err.message);
+      console.error(`Error processing facet field ${field}:`, err.message);
     }
   }
 
+  // ✅ 렌더링
   res.render('facet', {
     data,
     filters: filtersData,
     filter_item
   });
-
-  await client.close();
 });
 
 module.exports = router;

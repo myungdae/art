@@ -1,0 +1,163 @@
+const express = require('express');
+const router = express.Router();
+const JobVacancy = require('../model/jobVacancy');
+const sanitizeHtml = require('sanitize-html');
+const { requireLogin } = require('../middleware/auth');
+const { createFacetEntryFromCRUD } = require('../utils/createFacetEntry');
+const { MongoClient } = require('mongodb');
+
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017';
+const COLLECTION_NAME = process.env.COLLECTION || 'esl';
+
+// ✅ 전체 리스트
+router.get('/', async (req, res) => {
+  try {
+    const jobVacancies = await JobVacancy.find().sort({ createdAt: -1 });
+    res.render('jobVacancy/index', { jobVacancies });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server Error');
+  }
+});
+
+// ✅ 신규 등록 폼 (무료)
+router.get('/new', requireLogin, (req, res) => {
+  res.render('jobVacancy/new');
+});
+
+// ✅ 유료 사용자 신규 등록 폼
+router.get('/new_paid_user', requireLogin, async (req, res) => {
+  try {
+    const [studentTypes, countries, teachingAreas] = await Promise.all([
+      JobVacancy.distinct('studentType'),
+      JobVacancy.distinct('country'),
+      JobVacancy.distinct('teachingArea')
+    ]);
+    res.render('jobVacancy/new_paid_user', { studentTypes, countries, teachingAreas });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error loading form');
+  }
+});
+
+// ✅ 무료 사용자 등록 처리
+router.post('/new', requireLogin, async (req, res) => {
+  try {
+    const sanitizedTitle = sanitizeHtml(req.body.title);
+    const newJob = new JobVacancy({
+      title: sanitizedTitle,
+      _label: sanitizedTitle,
+      country: req.body.country,
+      studentType: req.body.studentType,
+      teachingArea: req.body.teachingArea,
+      duration: req.body.duration
+    });
+    await newJob.save();
+
+    const facetEntry = createFacetEntryFromCRUD(newJob);
+    const client = new MongoClient(MONGO_URI);
+    await client.connect();
+    const db = client.db('eventpool');
+    const col = db.collection(COLLECTION_NAME);
+    await col.insertOne(facetEntry);
+    console.log(`✅ Inserted to facet: ${facetEntry['@id']}`);
+    await client.close();
+
+    res.redirect('/job-vacancies');
+  } catch (err) {
+    console.error("❌ Error saving job vacancy:", err);
+    res.status(500).send('Error saving job vacancy');
+  }
+});
+
+// ✅ 유료 사용자 등록 처리
+router.post('/new_paid_user', requireLogin, async (req, res) => {
+  try {
+    const sanitizedTitle = sanitizeHtml(req.body.title);
+    const newJob = new JobVacancy({
+      title: sanitizedTitle,
+      _label: sanitizedTitle,
+      country: req.body.country,
+      studentType: req.body.studentType,
+      teachingArea: req.body.teachingArea,
+      duration: req.body.duration
+    });
+    await newJob.save();
+
+    const facetEntry = createFacetEntryFromCRUD(newJob);
+    const client = new MongoClient(MONGO_URI);
+    await client.connect();
+    const db = client.db('eventpool');
+    const col = db.collection(COLLECTION_NAME);
+    await col.insertOne(facetEntry);
+    console.log(`✅ Inserted to facet: ${facetEntry['@id']}`);
+    await client.close();
+
+    res.redirect('/job-vacancies');
+  } catch (err) {
+    console.error("❌ Error saving paid user job vacancy:", err);
+    res.status(500).send('Error saving job vacancy');
+  }
+});
+
+// ✅ 상세 보기
+router.get('/:id', async (req, res) => {
+  try {
+    const jobVacancy = await JobVacancy.findById(req.params.id);
+    if (!jobVacancy) return res.status(404).send('Job not found');
+    res.render('jobVacancy/show', { jobVacancy });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error retrieving job');
+  }
+});
+
+// ✅ 수정 폼
+router.get('/:id/edit', requireLogin, async (req, res) => {
+  try {
+    const jobVacancy = await JobVacancy.findById(req.params.id);
+    if (!jobVacancy) return res.status(404).send('Job not found');
+
+    const [studentTypes, countries, teachingAreas] = await Promise.all([
+      JobVacancy.distinct('studentType'),
+      JobVacancy.distinct('country'),
+      JobVacancy.distinct('teachingArea')
+    ]);
+    res.render('jobVacancy/edit', { jobVacancy, studentTypes, countries, teachingAreas });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error loading edit form');
+  }
+});
+
+// ✅ 수정 처리
+router.put('/:id', requireLogin, async (req, res) => {
+  try {
+    const sanitizedTitle = sanitizeHtml(req.body.title);
+    await JobVacancy.findByIdAndUpdate(req.params.id, {
+      title: sanitizedTitle,
+      _label: sanitizedTitle,
+      country: req.body.country,
+      studentType: req.body.studentType,
+      teachingArea: req.body.teachingArea,
+      duration: req.body.duration
+    });
+    res.redirect('/job-vacancies');
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error updating job vacancy');
+  }
+});
+
+// ✅ 삭제
+router.delete('/:id', requireLogin, async (req, res) => {
+  try {
+    await JobVacancy.findByIdAndDelete(req.params.id);
+    res.redirect('/job-vacancies');
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error deleting job vacancy');
+  }
+});
+
+module.exports = router;
