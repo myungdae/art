@@ -7,9 +7,33 @@ const JobVacancy = require('../model/jobVacancy');
 const { requireLogin } = require('../middleware/auth');
 
 // ✅ 회원가입 폼
-router.get('/register', (req, res) => {
-  res.render('user/register');
+router.get('/mypage', requireLogin, async (req, res) => {
+  try {
+    const ObjectId = mongoose.Types.ObjectId;
+    const userId = ObjectId.isValid(req.session.user._id)
+      ? new ObjectId(req.session.user._id)
+      : req.session.user._id;
+
+    const fullUser = await User.findById(userId).lean();
+    const jobVacancies = await JobVacancy.find({ user: userId }).lean();
+
+    let jobSeekerData = null;
+    if (fullUser.role === 'Job_Seeker') {
+      const JobSeeker = require('../model/jobSeeker');
+      jobSeekerData = await JobSeeker.findOne({ email: fullUser.email }).lean();
+    }
+
+    res.render('user/mypage', {
+      user: fullUser,
+      jobVacancies,
+      jobSeekerData
+    });
+  } catch (err) {
+    console.error('❌ Failed to load mypage:', err.message);
+    res.status(500).send('❌ Error loading My Page');
+  }
 });
+
 
 // ✅ 회원가입 처리 + 자동 로그인
 router.post('/register', async (req, res) => {

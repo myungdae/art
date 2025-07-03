@@ -9,78 +9,68 @@ block content
       - var displayRole = roleMap[user.role] || user.role;
 
       .mb-4
-        p(style="font-size: 1.1rem;")
+        p(style="font-size: 1.2rem;")
           strong Username:
           | #{user.username}
 
-        p(style="font-size: 1.1rem;")
+        p(style="font-size: 1.2rem;")
           strong Email:
           | #{user.email}
 
-        p(style="font-size: 1.1rem;")
+        p(style="font-size: 1.2rem;")
           strong Role:
           | #{displayRole}
 
-        p(style="font-size: 1.1rem;")
-          strong Ads Available:
-          span.text-dark.ms-2 #{(typeof user.adsAvailable === 'number') ? user.adsAvailable : 0}
+      if user.role === 'Employer'
+        h3.mt-4.mb-3 My Job Ads
 
-      if user.role === 'Job_Seeker'
-        if seeker && seeker.resumeAccess
-          - var startDate = new Date(seeker.resumeAccess.startDate);
-          - var duration = seeker.resumeAccess.durationDays;
-          - var endDate = new Date(startDate.getTime() + duration * 86400000);
-          - var now = new Date();
-          - var diffTime = endDate - now;
-          - var remainingDays = Math.max(0, Math.ceil(diffTime / 86400000));
-          - var formatDate = function(date) { return date.toISOString().substring(0, 10); };
-
-          h4.text-center.text-primary.mt-4(style="font-weight: bold;") 🧭 Resume Access Status
-          .text-center.mt-2
-            p.mb-1(style="font-size: 1.05rem;")
-              | 📅 Start Date:
-              span.text-dark #{formatDate(startDate)}
-            p.mb-1(style="font-size: 1.05rem;")
-              | 🛑 End Date:
-              span.text-dark #{formatDate(endDate)}
-            p.mb-2(style="font-size: 1.1rem; font-weight: bold; color: #007bff")
-              | ⏳ Remaining Days: #{remainingDays}
-
-          .progress.mx-auto(style="height: 22px; max-width: 420px; margin-top: 10px;")
-            .progress-bar.bg-info(
-              role="progressbar",
-              style=`width: ${Math.min(100, Math.floor(((duration - remainingDays) / duration) * 100))}%`,
-              ariaValuenow=remainingDays,
-              ariaValuemin="0",
-              ariaValuemax=duration
-            ) #{100 - Math.floor(((duration - remainingDays) / duration) * 100)}%
-
-          .d-flex.justify-content-center.mt-4
-            a.btn.btn-success.btn-lg.text-white(
-              href='/resume-access/extend',
-              style='padding: 18px 40px; font-size: 1.4rem; font-weight: bold;'
-            ) 🔄 Extend Resume Access
+        if jobVacancies && jobVacancies.length
+          table.table.table-bordered
+            thead
+              tr
+                th Title
+                th Country
+                th Date Posted
+                th.text-center Actions
+            tbody
+              each job in jobVacancies
+                tr
+                  td= job.title
+                  td= job.country
+                  td= job.createdAt ? new Date(job.createdAt).toISOString().substring(0,10) : 'N/A'
+                  td.text-center
+                    a.btn.btn-outline-dark.btn-sm(href='/job-vacancies/' + job._id) View
+                    a.btn.btn-outline-dark.btn-sm(href='/job-vacancies/' + job._id + '/edit') Edit
+                    form.d-inline(method='POST', action='/job-vacancies/' + job._id + '?_method=DELETE')
+                      button.btn.btn-sm.btn-danger(type='submit', onclick='return confirm("Delete this ad?")') Delete
         else
-          p.text-muted.text-center No active resume access
-          .d-flex.justify-content-center.mt-4
-            a.btn.btn-warning.btn-lg.text-white(
-              href='/resume-access',
-              style='padding: 20px 40px; font-size: 1.5rem; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;'
-            ) 🧾 PURCHASE RESUME ACCESS
+          p.text-muted No job ads posted yet.
 
-      else if user.role === 'Employer'
-        h3.mt-4.text-center(style="font-size: 1.5rem; font-weight: bold;") My Job Ads
-        p.text-muted.text-center You can manage your posted job vacancies here.
+        a.btn.btn-lg.btn-danger.mt-3.text-white(href='/job-vacancies/new_paid_user')
+          | ➕ Post Job (Paid User)
+
+      else if user.role === 'Job_Seeker'
+        if jobSeekerData && jobSeekerData.resumeAccess
+          - var startDate = new Date(jobSeekerData.resumeAccess.startDate)
+          - var duration = jobSeekerData.resumeAccess.durationDays
+          - var endDate = new Date(startDate.getTime() + duration * 86400000)
+          - var now = new Date()
+          - var remainingDays = Math.max(0, Math.ceil((endDate - now) / 86400000))
+
+          h4.mt-4.text-success 🧭 Resume Visibility
+          p(style="font-size: 1.1rem;") 📅 Start: #{startDate.toISOString().substring(0,10)}
+          p(style="font-size: 1.1rem;") 🛑 End: #{endDate.toISOString().substring(0,10)}
+          p(style="font-size: 1.3rem; font-weight: bold; color: green;") ⏳ Remaining Days: #{remainingDays}
+
+          a.btn.btn-lg.btn-primary.mt-3.text-white(href='/resume-access') 🔄 Extend Resume Access
+        else
+          p.text-muted.mt-4 No active resume access.
+          a.btn.btn-lg.btn-warning.mt-3.text-dark(href='/resume-access') 🧾 Purchase Resume Access
 
       else if user.role === 'Online_Tutor'
-        h3.text-center.mt-5 Tutor Visibility
-        p.text-center.mt-2(style='color: #343a40; font-size: 1.15rem; font-weight: 600;')
-          | Gain visibility and connect with students worldwide.
-        .d-flex.justify-content-center.mt-4
-          a.btn.btn-warning.btn-lg.text-white(
-            href='/tutor-access',
-            style='padding: 20px 40px; font-size: 1.5rem; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;'
-          ) 🧾 PURCHASE TUTOR VISIBILITY
+        // 비슷한 방식으로 Online Tutor visibility 출력
+        p.text-muted.mt-4 Visibility status coming soon...
+        a.btn.btn-lg.btn-warning.mt-3.text-dark(href='/tutor-access') 🧾 Purchase Tutor Visibility
 
     else
       p.text-danger You must be logged in to view this page.
