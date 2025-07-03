@@ -1,0 +1,8 @@
+h3.mb-4 Resume Access
+
+if canPostResume
+  p.text-success You have an active resume access.
+  a.btn.btn-success(href='/job-seekers/new') ➕ Post Resume
+else
+  p.text-muted You do not have active resume access.
+  a.btn.btn-warning(href='/resume-access') 🧾 Purchase Resume Access

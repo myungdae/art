@@ -1,0 +1,8 @@
+h3.mb-4 Tutor Visibility
+
+if canPostResume
+  p.text-success You have an active tutor visibility.
+  a.btn.btn-success(href='/online-tutors/new') ➕ Post Tutor Profile
+else
+  p.text-muted You do not have active tutor visibility.
+  a.btn.btn-warning(href='/tutor-access') 🧾 Purchase Tutor Visibility

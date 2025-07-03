@@ -1,0 +1,25 @@
+h3.mb-3 My Job Ads
+
+if jobVacancies && jobVacancies.length > 0
+  table.table.table-bordered
+    thead
+      tr
+        th Title
+        th Country
+        th Date Posted
+        th Actions
+    tbody
+      each vacancy in jobVacancies
+        tr
+          td= vacancy.title
+          td= vacancy.country
+          td= vacancy.createdAt ? new Date(vacancy.createdAt).toISOString().substring(0,10) : 'N/A'
+          td
+            a.btn.btn-sm.btn-outline-primary.me-1(href=`/job-vacancies/${vacancy._id}`) View
+            a.btn.btn-sm.btn-outline-secondary.me-1(href=`/job-vacancies/${vacancy._id}/edit`) Edit
+            form.d-inline(method="POST", action=`/job-vacancies/${vacancy._id}?_method=DELETE`)
+              button.btn.btn-sm.btn-danger(type="submit") Delete
+else
+  p.text-muted You haven’t posted any job vacancies yet.
+
+a.btn.btn-danger.mt-3(href='/job-vacancies/new_paid_user') ➕ Post Job
