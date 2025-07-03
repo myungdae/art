@@ -31,6 +31,8 @@ console.log("✅ DB 연결 시도");
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
 app.set('port', process.env.SVR_BASE_PORT || 8608);
+app.set('view cache', false);
+
 
 // ✅ 세션 미들웨어 (flash보다 먼저)
 app.use(session({

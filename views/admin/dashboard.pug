@@ -1,12 +1,12 @@
 extends ../layout
 
 block content
-  .container.mt-5
-    h2.text-center.mb-4 Admin Dashboard
+  h1.text-center.mb-4 Admin Dashboard
 
-    // ✅ Employers
-    h4.mb-3.text-primary Employers
-    table.table.table-bordered.table-striped
+  // ✅ Employers
+  h2.text-danger.mt-4 Employers
+  if employers && employers.length
+    table.table.table-striped
       thead
         tr
           th Username
@@ -18,12 +18,15 @@ block content
           tr
             td= emp.username || 'N/A'
             td= emp.email || 'N/A'
-            td= emp.adsAvailable || 0
-            td= emp.createdAt ? new Date(emp.createdAt).toLocaleDateString() : 'N/A'
+            td= emp.adsAvailable !== undefined ? emp.adsAvailable : 'N/A'
+            td= emp.createdAt || 'N/A'
+  else
+    p.text-muted No active Employers found
 
-    // ✅ Job Seekers
-    h4.mt-5.mb-3.text-success Job Seekers
-    table.table.table-bordered.table-striped
+  // ✅ Job Seekers
+  h2.text-success.mt-5 Job Seekers
+  if jobSeekers && jobSeekers.length
+    table.table.table-striped
       thead
         tr
           th Username
@@ -33,14 +36,17 @@ block content
       tbody
         each js in jobSeekers
           tr
-            td= js.name || 'N/A'
+            td= js.username || 'N/A'
             td= js.email || 'N/A'
-            td= js.remainingDays || 0
-            td= js.createdAt ? new Date(js.createdAt).toLocaleDateString() : 'N/A'
+            td= js.remainingDays !== undefined ? js.remainingDays : 'N/A'
+            td= js.createdAt || 'N/A'
+  else
+    p.text-muted No active Job Seekers found
 
-    // ✅ Online Tutors
-    h4.mt-5.mb-3.text-info Online Tutors
-    table.table.table-bordered.table-striped
+  // ✅ Online Tutors
+  h2.text-primary.mt-5 Online Tutors
+  if onlineTutors && onlineTutors.length
+    table.table.table-striped
       thead
         tr
           th Username
@@ -50,7 +56,9 @@ block content
       tbody
         each ot in onlineTutors
           tr
-            td= ot.name || 'N/A'
+            td= ot.username || 'N/A'
             td= ot.email || 'N/A'
-            td= ot.remainingDays || 0
-            td= ot.createdAt ? new Date(ot.createdAt).toLocaleDateString() : 'N/A'
+            td= ot.remainingDays !== undefined ? ot.remainingDays : 'N/A'
+            td= ot.createdAt || 'N/A'
+  else
+    p.text-muted No active Online Tutors found
