@@ -7,44 +7,16 @@ const JobVacancy = require('../model/jobVacancy');
 const { requireLogin } = require('../middleware/auth');
 
 // ✅ 회원가입 폼
-router.get('/mypage', requireLogin, async (req, res) => {
-  try {
-    const ObjectId = mongoose.Types.ObjectId;
-    const userId = ObjectId.isValid(req.session.user._id)
-      ? new ObjectId(req.session.user._id)
-      : req.session.user._id;
-
-    const fullUser = await User.findById(userId).lean();
-    const jobVacancies = await JobVacancy.find({ user: userId }).lean();
-
-    let jobSeekerData = null;
-    if (fullUser.role === 'Job_Seeker') {
-      const JobSeeker = require('../model/jobSeeker');
-      jobSeekerData = await JobSeeker.findOne({ email: fullUser.email }).lean();
-    }
-
-    res.render('user/mypage', {
-      user: fullUser,
-      jobVacancies,
-      jobSeekerData
-    });
-  } catch (err) {
-    console.error('❌ Failed to load mypage:', err.message);
-    res.status(500).send('❌ Error loading My Page');
-  }
+router.get('/register', (req, res) => {
+  res.render('user/register');
 });
 
-
-// ✅ 회원가입 처리 + 자동 로그인
+// ✅ 회원가입 처리
 router.post('/register', async (req, res) => {
   let { username, email, password, role } = req.body;
-
-  // ✅ role 보정: JobSeeker → Job_Seeker (schema enum 일치)
-  if (role === 'JobSeeker' || role === 'Job Seeker') {
-    role = 'Job_Seeker';
-  } else if (role === 'OnlineTutor' || role === 'Online Tutor') {
-    role = 'Online_Tutor';
-  }
+  // role 보정
+  if (role === 'JobSeeker' || role === 'Job Seeker') role = 'Job_Seeker';
+  else if (role === 'OnlineTutor' || role === 'Online Tutor') role = 'Online_Tutor';
 
   try {
     const existingUser = await User.findOne({ email });
@@ -53,20 +25,14 @@ router.post('/register', async (req, res) => {
     const newUser = new User({ username, email, password, role });
     await newUser.save();
 
-    console.log('✅ Registration successful:', newUser);
-
     req.session.user = {
-      _id: newUser._id, // ✅ 반드시 _id로 저장해야 /resume-access 등에서 작동함
+      _id: newUser._id,
       username: newUser.username,
       email: newUser.email,
       role: newUser.role
     };
-
-    return res.redirect('/user/mypage');
+    res.redirect('/user/mypage');
   } catch (err) {
-    if (err.code === 11000 && err.keyPattern?.email) {
-      return res.status(409).send('This email is already registered.');
-    }
     console.error('❌ Registration error:', err.message);
     res.status(500).send('❌ Registration failed.');
   }
@@ -88,15 +54,12 @@ router.post('/login', async (req, res) => {
                 New here? <a href="/user/register" style="color:gold;text-decoration:underline;">Register</a> and choose your role.`
       });
     }
-
     req.session.user = {
-      _id: user._id, // ✅ 여기서도 반드시 _id로 저장
+      _id: user._id,
       username: user.username,
       email: user.email,
       role: user.role
     };
-
-    console.log('✅ Login successful:', req.session.user);
     res.redirect('/user/mypage');
   } catch (err) {
     console.error('❌ Login error:', err.message);
@@ -108,9 +71,7 @@ router.post('/login', async (req, res) => {
 router.get('/mypage', requireLogin, async (req, res) => {
   try {
     const ObjectId = mongoose.Types.ObjectId;
-    const userId = ObjectId.isValid(req.session.user._id)
-      ? new ObjectId(req.session.user._id)
-      : req.session.user._id;
+    const userId = ObjectId.isValid(req.session.user._id) ? new ObjectId(req.session.user._id) : req.session.user._id;
 
     const fullUser = await User.findById(userId).lean();
     const jobVacancies = await JobVacancy.find({ user: userId }).lean();
