@@ -4,42 +4,41 @@ const { MongoClient } = require('mongodb');
 
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017';
 const DB_NAME = 'eventpool';
-const COLLECTION_NAME = 'esl'; // ✅ 실제 MongoDB 컬렉션 이름
+const COLLECTION = 'esl';
 const BASE = 'http://esl.eventpool.kr/resource/';
 
 router.get('/:type', async (req, res) => {
   const facetType = req.params.type;
-  const filter = req.query.filter;
+  const filterQuery = { "@type": { $in: [facetType, `${BASE}${facetType}`] } };
+  const filtersParam = req.query.filter;
+
+  if (filtersParam) {
+    const filters = Array.isArray(filtersParam) ? filtersParam : [filtersParam];
+    filters.forEach(f => {
+      const [field, val] = f.split(':');
+      filterQuery[field] = val;
+    });
+  }
 
   const client = new MongoClient(MONGO_URI);
   await client.connect();
   const db = client.db(DB_NAME);
-  const col = db.collection(COLLECTION_NAME);
-
-  // ✅ 필터 쿼리
-  const filterQuery = {
-    "@type": {
-      $in: [facetType, `${BASE}${facetType}`]
-    }
-  };
-
-  if (filter) {
-    // 💡 filter 파라미터가 있을 경우
-    filterQuery["rdfs:label.@value"] = { $regex: filter, $options: 'i' };
-  }
-
-  console.log("📌 facetType:", facetType);
-  console.log("📌 filterQuery:", JSON.stringify(filterQuery, null, 2));
+  const col = db.collection(COLLECTION);
 
   const data = await col.find(filterQuery).toArray();
+  const count = data.length;
 
-  console.log(`✅ 데이터 갯수: ${data.length}`);
+  const filters = [];
+  const countries = await col.distinct('country', filterQuery);
+  if (countries.length) {
+    filters.push({ field: 'country', values: countries });
+  }
+  const titles = await col.distinct('rdfs:label.@value', filterQuery);
+  if (titles.length) {
+    filters.push({ field: 'rdfs:label.@value', values: titles });
+  }
 
-  res.render('facet', {
-    data,
-    filters: [],  // 필요시 확장
-    type: facetType
-  });
+  res.render('facet', { data, count, filters });
 });
 
 module.exports = router;

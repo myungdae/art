@@ -1,24 +1,36 @@
 extends layout
 
 block content
-  h2.text-center.mb-4 Facet View
-  p.text-center.text-muted Total records found: #{data.length}
+  .container
+    .row
+      .col-md-3
+        h5 Filters
+        if filters.length
+          each filter in filters
+            h6 #{filter.field}
+            ul.list-unstyled
+              each val in filter.values
+                li
+                  a(href=`?filter=${filter.field}:${encodeURIComponent(val)}`)= val
+        else
+          p.text-muted No filters available
 
-  if data.length === 0
-    p.text-center.text-danger No records found.
-  else
-    .container
-      .row
-        each item in data
-          .col-md-6.col-lg-4.mb-4
-            .card.p-3
-              - var label = (item['rdfs:label'] && item['rdfs:label']['@value']) || item['@id'] || 'No Title';
-              - var desc = (item['http://purl.org/dc/elements/1.1/description'] && item['http://purl.org/dc/elements/1.1/description']['@value']) || 'No description';
+      .col-md-9
+        h3 Facet View
+        p Total records found: #{count}
+        if data.length
+          .row
+            each item in data
+              .col-md-4
+                .card.mb-3.p-3
+                  h4= (item['rdfs:label'] && item['rdfs:label']['@value']) ? item['rdfs:label']['@value'] : (item['@id'] || 'No Title')
+                  p= (item['http://purl.org/dc/elements/1.1/description'] && item['http://purl.org/dc/elements/1.1/description']['@value']) ? item['http://purl.org/dc/elements/1.1/description']['@value'] : 'No description'
+                  
+                  if item.resumeAccess
+                    ul
+                      li 📅 Start: #{new Date(item.resumeAccess.startDate).toISOString().substring(0,10)}
+                      li ⏳ Duration: #{item.resumeAccess.durationDays} days
 
-              h4= label
-              p= desc
-
-              if item.resumeAccess
-                ul
-                  li 📅 Start: #{new Date(item.resumeAccess.startDate).toISOString().substring(0,10)}
-                  li ⏳ Duration: #{item.resumeAccess.durationDays} days
+                  a.btn.btn-outline-primary.mt-2(href=`/resource/${encodeURIComponent(item['@id'])}`) View Details
+        else
+          p.text-danger No records found.

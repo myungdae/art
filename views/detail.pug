@@ -1,16 +1,13 @@
 extends layout
 
 block content
-  .container.mx-auto.px-4
-    .bg-white.shadow-md.rounded-lg.p-6
-      // ✅ _label → rdfs:label → title → @id 순서로 안전하게 title 결정
-      - const label = doc._label || doc['rdfs:label']?.['@value'] || doc.title || doc['@id'] || 'No Title'
-      h1.text-2xl.font-bold.mb-4= label
-
-      // ✅ 상세 정보 테이블
+  .container.mt-5
+    h2= doc['rdfs:label']?.['@value'] || doc['@id']
+    p= doc['http://purl.org/dc/elements/1.1/description']?.['@value'] || 'No description available'
+    
+    if doc.resumeAccess
       ul
-        each val, key in doc
-          if key !== '_id'
-            li.mb-2
-              strong= key + ': '
-              | #{typeof val === 'object' ? JSON.stringify(val, null, 2) : val}
+        li 📅 Start: #{new Date(doc.resumeAccess.startDate).toISOString().substring(0,10)}
+        li ⏳ Duration: #{doc.resumeAccess.durationDays} days
+
+    pre= JSON.stringify(doc, null, 2)
