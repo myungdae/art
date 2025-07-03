@@ -1,13 +1,22 @@
 extends layout
 
 block content
-  .container.mt-5
-    h2= doc['rdfs:label']?.['@value'] || doc['@id']
-    p= doc['http://purl.org/dc/elements/1.1/description']?.['@value'] || 'No description available'
-    
-    if doc.resumeAccess
-      ul
-        li 📅 Start: #{new Date(doc.resumeAccess.startDate).toISOString().substring(0,10)}
-        li ⏳ Duration: #{doc.resumeAccess.durationDays} days
+  .container
+    h2.mt-4.mb-3= item['rdfs:label']?.['@value'] || item['@id'] || 'No Title'
+    p= item['http://purl.org/dc/elements/1.1/description']?.['@value'] || 'No description'
 
-    pre= JSON.stringify(doc, null, 2)
+    if item.resumeAccess
+      ul
+        if item.resumeAccess.startDate
+          li 📅 Start Date: #{new Date(item.resumeAccess.startDate).toISOString().substring(0,10)}
+        if item.resumeAccess.durationDays
+          li ⏳ Duration: #{item.resumeAccess.durationDays} days
+
+    if item.hostCountry
+      p Host Country: #{item.hostCountry}
+    if item.studentType
+      p Student Type: #{item.studentType}
+    if item.teachingArea
+      p Teaching Area: #{item.teachingArea}
+
+    a.btn.btn-primary.mt-3(href='/facet/Job_Seekers') ← Back to List
