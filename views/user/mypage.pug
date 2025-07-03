@@ -12,44 +12,14 @@ block content
         p(style="font-size: 1.2rem;")
           strong Username:
           | #{user.username}
-
         p(style="font-size: 1.2rem;")
           strong Email:
           | #{user.email}
-
         p(style="font-size: 1.2rem;")
           strong Role:
           | #{displayRole}
 
-      if user.role === 'Employer'
-        h3.mt-4.mb-3 My Job Ads
-
-        if jobVacancies && jobVacancies.length
-          table.table.table-bordered
-            thead
-              tr
-                th Title
-                th Country
-                th Date Posted
-                th.text-center Actions
-            tbody
-              each job in jobVacancies
-                tr
-                  td= job.title
-                  td= job.country
-                  td= job.createdAt ? new Date(job.createdAt).toISOString().substring(0,10) : 'N/A'
-                  td.text-center
-                    a.btn.btn-outline-dark.btn-sm(href='/job-vacancies/' + job._id) View
-                    a.btn.btn-outline-dark.btn-sm(href='/job-vacancies/' + job._id + '/edit') Edit
-                    form.d-inline(method='POST', action='/job-vacancies/' + job._id + '?_method=DELETE')
-                      button.btn.btn-sm.btn-danger(type='submit', onclick='return confirm("Delete this ad?")') Delete
-        else
-          p.text-muted No job ads posted yet.
-
-        a.btn.btn-lg.btn-danger.mt-3.text-white(href='/job-vacancies/new_paid_user')
-          | ➕ Post Job (Paid User)
-
-      else if user.role === 'Job_Seeker'
+      if user.role === 'Job_Seeker'
         if jobSeekerData && jobSeekerData.resumeAccess
           - var startDate = new Date(jobSeekerData.resumeAccess.startDate)
           - var duration = jobSeekerData.resumeAccess.durationDays
@@ -58,19 +28,44 @@ block content
           - var remainingDays = Math.max(0, Math.ceil((endDate - now) / 86400000))
 
           h4.mt-4.text-success 🧭 Resume Visibility
-          p(style="font-size: 1.1rem;") 📅 Start: #{startDate.toISOString().substring(0,10)}
-          p(style="font-size: 1.1rem;") 🛑 End: #{endDate.toISOString().substring(0,10)}
-          p(style="font-size: 1.3rem; font-weight: bold; color: green;") ⏳ Remaining Days: #{remainingDays}
+          p 📅 Start: #{startDate.toISOString().substring(0,10)}
+          p 🛑 End: #{endDate.toISOString().substring(0,10)}
+          p(style="font-weight:bold; color:green; font-size:1.3rem;") ⏳ Remaining Days: #{remainingDays}
 
           a.btn.btn-lg.btn-primary.mt-3.text-white(href='/resume-access') 🔄 Extend Resume Access
-        else
-          p.text-muted.mt-4 No active resume access.
-          a.btn.btn-lg.btn-warning.mt-3.text-dark(href='/resume-access') 🧾 Purchase Resume Access
 
-      else if user.role === 'Online_Tutor'
-        // 비슷한 방식으로 Online Tutor visibility 출력
-        p.text-muted.mt-4 Visibility status coming soon...
-        a.btn.btn-lg.btn-warning.mt-3.text-dark(href='/tutor-access') 🧾 Purchase Tutor Visibility
+          hr
+
+          // ✅ 실제 작성한 이력서 출력
+          if myResumes && myResumes.length
+            h4.mt-4.text-info My Resumes
+            table.table.table-bordered
+              thead
+                tr
+                  th Name
+                  th Job Title
+                  th Preferred Location
+                  th Actions
+              tbody
+                each resume in myResumes
+                  tr
+                    td= resume.name
+                    td= resume.jobTitle || 'N/A'
+                    td= resume.preferredWorkLocation || 'N/A'
+                    td
+                      a.btn.btn-sm.btn-outline-dark(href='/job-seekers/' + resume._id + '/edit') Edit
+                      a.btn.btn-sm.btn-outline-danger(
+                        href='/job-seekers/' + resume._id + '/delete',
+                        onclick='return confirm("Delete this resume?")'
+                      ) Delete
+          else
+            p.text-muted.mt-3 No resumes posted yet.
+
+          if remainingDays > 0
+            a.btn.btn-lg.btn-danger.mt-4.text-white(href='/job-seekers/new') ➕ Post New Resume
+        else
+          p.text-muted.mt-3 No active resume access.
+          a.btn.btn-lg.btn-warning.mt-3.text-dark(href='/resume-access') 🧾 Purchase Resume Access
 
     else
       p.text-danger You must be logged in to view this page.
