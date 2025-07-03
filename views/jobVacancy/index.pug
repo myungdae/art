@@ -1,32 +1,31 @@
 extends ../layout
 
 block content
-  .container.mt-5
-    h2.text-center.mb-4 Job Vacancies
+  h1 Job Vacancies
 
-    if jobVacancies && jobVacancies.length === 0
-      p.text-muted.text-center No job postings available.
-
-    else
-      table.table.table-bordered.table-hover
-        thead.table-light
+  if jobVacancies.length
+    table.table.table-striped
+      thead
+        tr
+          th Title
+          th Country
+          th Posted At
+          th Actions
+      tbody
+        each job in jobVacancies
           tr
-            th Title
-            th Country
-            th Company
-            th Posted
-            th Actions
-        tbody
-          each job in jobVacancies
-            tr
-              td= job._label || job.title || 'Untitled'
-              td= job.country || 'N/A'
-              td= job.companyName || 'N/A'
-              td= job.datePosted ? new Date(job.datePosted).toLocaleDateString() : (job.createdAt ? new Date(job.createdAt).toLocaleDateString() : 'N/A')
-              td
-                a.btn.btn-sm.btn-outline-primary(href=`/job-vacancies/${job._id}`) View
-                a.btn.btn-sm.btn-outline-secondary.ms-2(href=`/job-vacancies/${job._id}/edit`) Edit
-
-    .mt-4.text-end
-      a.btn.btn-success.me-2(href='/job-vacancies/new') + Post Free Job
-      a.btn.btn-warning(href='/job-vacancies/new_paid_user') + Post Paid Job
+            td= job.title
+            td= job.country
+            td= job.createdAt.toISOString().split('T')[0]
+            td
+              if currentUser && String(job.createdBy) === String(currentUser._id)
+                a(href=`/job-vacancies/${job._id}`) View
+                |  
+                a(href=`/job-vacancies/${job._id}/edit`) Edit
+                |  
+                form(method="POST", action=`/job-vacancies/${job._id}?_method=DELETE`, style="display:inline")
+                  button.btn.btn-danger(type="submit") Delete
+              else
+                a(href=`/job-vacancies/${job._id}`) View
+  else
+    p.text-muted No job vacancies available.

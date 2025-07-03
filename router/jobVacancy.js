@@ -8,9 +8,13 @@ const { MongoClient } = require('mongodb');
 
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017';
 
-router.get('/', async (req, res) => {
-  const jobVacancies = await JobVacancy.find().sort({ createdAt: -1 });
-  res.render('jobVacancy/index', { jobVacancies });
+// ✅ /job-vacancies는 로그인 유도용
+router.get('/', (req, res) => {
+  if (!req.session.user) {
+    return res.redirect('/user/login');
+  }
+  // 로그인은 했지만, 일반 listing은 막음
+  return res.redirect('/facet/Job_Vacancies');
 });
 
 router.get('/new', requireLogin, (req, res) => {
@@ -55,14 +59,15 @@ async function saveJob(req, res) {
     await client.db('eventpool').collection('esl').insertOne(facetEntry);
     await client.close();
 
-    res.redirect('/job-vacancies');
+    // ✅ 무조건 facet로 이동
+    res.redirect('/facet/Job_Vacancies');
   } catch (err) {
     console.error("❌ Error saving job vacancy:", err.message || err);
     res.status(500).send(err.message || 'Error saving job vacancy');
   }
 }
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', requireLogin, async (req, res) => {
   const jobVacancy = await JobVacancy.findById(req.params.id);
   if (!jobVacancy) return res.status(404).send('Job not found');
   res.render('jobVacancy/show', { jobVacancy });
@@ -90,12 +95,12 @@ router.put('/:id', requireLogin, async (req, res) => {
     teachingArea: req.body.teachingArea,
     duration: req.body.duration
   });
-  res.redirect('/job-vacancies');
+  res.redirect('/facet/Job_Vacancies');
 });
 
 router.delete('/:id', requireLogin, async (req, res) => {
   await JobVacancy.findByIdAndDelete(req.params.id);
-  res.redirect('/job-vacancies');
+  res.redirect('/facet/Job_Vacancies');
 });
 
 module.exports = router;
