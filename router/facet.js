@@ -4,9 +4,9 @@ const { MongoClient } = require('mongodb');
 
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017';
 const DB_NAME = 'eventpool';
-const COLLECTION_NAME = process.env.COLLECTION || 'esl';
+const COLLECTION_NAME = 'esl'; // ✅ 실제 MongoDB 컬렉션 이름
+const BASE = 'http://esl.eventpool.kr/resource/';
 
-// ✅ Facet Navigation
 router.get('/:type', async (req, res) => {
   const facetType = req.params.type;
   const filter = req.query.filter;
@@ -16,75 +16,30 @@ router.get('/:type', async (req, res) => {
   const db = client.db(DB_NAME);
   const col = db.collection(COLLECTION_NAME);
 
-  let filterQuery = {
+  // ✅ 필터 쿼리
+  const filterQuery = {
     "@type": {
-      $in: [facetType, `http://esl.eventpool.kr/resource/${facetType}`]
+      $in: [facetType, `${BASE}${facetType}`]
     }
   };
-  let filter_item = [];
 
   if (filter) {
-    const filters = Array.isArray(filter) ? filter : [filter];
-    filters.forEach(f => {
-      const [key, val] = f.split(':');
-      if (key && val) {
-        if (!filterQuery[key]) filterQuery[key] = { $in: [] };
-        filterQuery[key].$in.push(val);
-        filter_item.push({ key, val });
-      }
-    });
+    // 💡 filter 파라미터가 있을 경우
+    filterQuery["rdfs:label.@value"] = { $regex: filter, $options: 'i' };
   }
 
-  console.log("📌 최종 요청 URL과 필터:", req.originalUrl, req.query.filter);
-  console.log("📌 최종 filterQuery:", JSON.stringify(filterQuery, null, 2));
+  console.log("📌 facetType:", facetType);
+  console.log("📌 filterQuery:", JSON.stringify(filterQuery, null, 2));
 
-  const data = await col.find(filterQuery).limit(100).toArray();
-  console.log("✅ 데이터 갯수:", data.length);
+  const data = await col.find(filterQuery).toArray();
 
-  data.forEach(item => {
-    item._label = item['rdfs:label']?.['@value'] || item['title'] || item['@id'] || 'No Title';
-    item._description = item['http://purl.org/dc/elements/1.1/description']?.['@value'] || item['description'] || 'No description';
-  });
-
-  // ✅ 필터용 필드 집계
-  const facetFields = ['country', 'studentType', 'teachingArea'];
-  const filtersData = [];
-
-  for (let field of facetFields) {
-    try {
-      const agg = await col.aggregate([
-        { $match: filterQuery },
-        { $group: { _id: `$${field}`, count: { $sum: 1 } } },
-        { $sort: { count: -1 } }
-      ]).toArray();
-
-      const values = agg
-        .filter(entry => typeof entry._id === 'string' && entry._id.trim())
-        .map(entry => ({
-          value: entry._id,
-          label: entry._id,
-          count: entry.count
-        }));
-
-      if (values.length > 0) {
-        filtersData.push({
-          key: field,
-          title: field.toUpperCase(),
-          values
-        });
-      }
-    } catch (err) {
-      console.error(`❌ Error processing facet field ${field}:`, err.message);
-    }
-  }
+  console.log(`✅ 데이터 갯수: ${data.length}`);
 
   res.render('facet', {
     data,
-    filters: filtersData,
-    filter_item
+    filters: [],  // 필요시 확장
+    type: facetType
   });
-
-  await client.close();
 });
 
 module.exports = router;

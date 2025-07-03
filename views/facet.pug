@@ -1,25 +1,24 @@
 extends layout
 
 block content
-  .container.mx-auto.px-4
-    .grid.grid-cols-4.gap-4
-      // 🔍 Filter 영역 (왼쪽)
-      .col-span-1
-        h3.text-xl.mb-2 Filters
-        each group in filters
-          if group.values.length
-            h5.mt-4.font-bold.text-sm= group.title
-            ul
-              each val in group.values
-                li
-                  a.text-blue-600(href=`?filter=${group.key}:${val.value}`)= `${val.label} (${val.count})`
+  h2.text-center.mb-4 Facet View
+  p.text-center.text-muted Total records found: #{data.length}
 
-      // 📋 카드 리스트 영역 (오른쪽)
-      .col-span-3
-        h2.text-2xl.font-bold.mb-6 ESL Resources
-        .grid(class="grid-cols-2 md:grid-cols-3 gap-6")
-          each doc in data
-            .card.shadow.p-4
-              h4.font-semibold.mb-2= (doc['rdfs:label'] && doc['rdfs:label']['@value']) ? doc['rdfs:label']['@value'] : (doc._label || 'No Title')
-              p.text-gray-600.mb-3= doc.description || doc["http://purl.org/dc/elements/1.1/description"] || 'No description'
-              a.btn.btn-outline-primary(href=`/resource/${encodeURIComponent(doc["@id"].split('/').pop())}`) View Details
+  if data.length === 0
+    p.text-center.text-danger No records found.
+  else
+    .container
+      .row
+        each item in data
+          .col-md-6.col-lg-4.mb-4
+            .card.p-3
+              - var label = (item['rdfs:label'] && item['rdfs:label']['@value']) || item['@id'] || 'No Title';
+              - var desc = (item['http://purl.org/dc/elements/1.1/description'] && item['http://purl.org/dc/elements/1.1/description']['@value']) || 'No description';
+
+              h4= label
+              p= desc
+
+              if item.resumeAccess
+                ul
+                  li 📅 Start: #{new Date(item.resumeAccess.startDate).toISOString().substring(0,10)}
+                  li ⏳ Duration: #{item.resumeAccess.durationDays} days
