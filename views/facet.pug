@@ -7,20 +7,24 @@ block content
         if filters && filters.length
           h3.mb-3 Facet Filters
           each filterGroup in filters
-            h5.mt-3= filterGroup.name
+            h5.mt-3= filterGroup.display
             each option in filterGroup.options
-              a.btn.btn-outline-secondary.btn-sm.mb-1(href=`?filter=${encodeURIComponent(option.value)}`)
+              a.btn.btn-outline-secondary.btn-sm.mb-1(
+                href=`?${filterGroup.name}=${encodeURIComponent(option.value)}`
+              )
                 = option.label
-                span.badge= option.count
+                span.badge.ms-1= option.count
 
-      .col-md-9.d-flex.flex-wrap.justify-content-center
+      .col-md-9
         if data.length
-          each item in data
-            - var title = (item['rdfs:label'] && item['rdfs:label']['@value']) ? item['rdfs:label']['@value'] : (item['@id'] || 'No Title');
-            - var desc = (item.description && item.description['@value']) ? item.description['@value'] : 'No description';
-            .card.mb-3.p-3(style="width: 18rem;")
-              h4= title
-              p= desc
-              a.btn.btn-primary.mt-2(href=`/detail/${item._id}`) View Details
+          .row.row-cols-1.row-cols-md-3.g-3
+            each item in data
+              .col
+                - var title = (item['rdfs:label'] && item['rdfs:label']['@value']) ? item['rdfs:label']['@value'] : (item['@id'] || 'No Title');
+                - var desc = (item.description && item.description['@value']) ? item.description['@value'] : 'No description';
+                .card.h-100.p-3
+                  h4= title
+                  p= desc
+                  a.btn.btn-primary.mt-2(href=`/detail/${item._id}`) View Details
         else
           p.text-muted No records found.
