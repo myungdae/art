@@ -354,10 +354,27 @@ a:active {
    color: white;
    background-color: #007bff;
    border: none;
- }
+ }
+
  /* Semantic UI 사용자 입력 추가 옵션 스타일 */
  .ui.dropdown .menu > .addition {
    font-weight: bold;
    color: #2185d0;
  }
 
+.btn-warning {
+   background-color: #f0ad4e !important;
+   border: none !important;
+ }
+ 
+ .btn-warning:hover {
+   background-color: #ec971f !important;
+ }
+ 
+ .btn-success {
+   background-color: #5cb85c !important;
+ }
+ 
+ .btn-success:hover {
+   background-color: #449d44 !important;
+ }

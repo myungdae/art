@@ -9,45 +9,78 @@ block content
       - var displayRole = roleMap[user.role] || user.role;
 
       .mb-4
-        p
+        p(style="font-size: 1.1rem;")
           strong Username:
           | #{user.username}
-        p
+
+        p(style="font-size: 1.1rem;")
           strong Email:
           | #{user.email}
-        p
+
+        p(style="font-size: 1.1rem;")
           strong Role:
           | #{displayRole}
-        p
+
+        p(style="font-size: 1.1rem;")
           strong Ads Available:
-          | #{(typeof user.adsAvailable === 'number') ? user.adsAvailable : 0}
+          span.text-dark.ms-2 #{(typeof user.adsAvailable === 'number') ? user.adsAvailable : 0}
 
       if user.role === 'Job_Seeker'
-        if jobSeeker && jobSeeker.resumeAccess
-          - var startDate = new Date(jobSeeker.resumeAccess.startDate);
-          - var duration = jobSeeker.resumeAccess.durationDays;
+        if seeker && seeker.resumeAccess
+          - var startDate = new Date(seeker.resumeAccess.startDate);
+          - var duration = seeker.resumeAccess.durationDays;
           - var endDate = new Date(startDate.getTime() + duration * 86400000);
           - var now = new Date();
-          - var remainingDays = Math.max(0, Math.ceil((endDate - now) / 86400000));
-          p.text-success.font-weight-bold
-            | 📅 Resume Access: #{remainingDays} days remaining (until #{endDate.toISOString().substring(0,10)})
-          if canPostResume
-            a.btn.btn-primary.mt-3(href='/job-seekers/new') ➕ Post Resume
+          - var diffTime = endDate - now;
+          - var remainingDays = Math.max(0, Math.ceil(diffTime / 86400000));
+          - var formatDate = function(date) { return date.toISOString().substring(0, 10); };
+
+          h4.text-center.text-primary.mt-4(style="font-weight: bold;") 🧭 Resume Access Status
+          .text-center.mt-2
+            p.mb-1(style="font-size: 1.05rem;")
+              | 📅 Start Date:
+              span.text-dark #{formatDate(startDate)}
+            p.mb-1(style="font-size: 1.05rem;")
+              | 🛑 End Date:
+              span.text-dark #{formatDate(endDate)}
+            p.mb-2(style="font-size: 1.1rem; font-weight: bold; color: #007bff")
+              | ⏳ Remaining Days: #{remainingDays}
+
+          .progress.mx-auto(style="height: 22px; max-width: 420px; margin-top: 10px;")
+            .progress-bar.bg-info(
+              role="progressbar",
+              style=`width: ${Math.min(100, Math.floor(((duration - remainingDays) / duration) * 100))}%`,
+              ariaValuenow=remainingDays,
+              ariaValuemin="0",
+              ariaValuemax=duration
+            ) #{100 - Math.floor(((duration - remainingDays) / duration) * 100)}%
+
+          .d-flex.justify-content-center.mt-4
+            a.btn.btn-success.btn-lg.text-white(
+              href='/resume-access/extend',
+              style='padding: 18px 40px; font-size: 1.4rem; font-weight: bold;'
+            ) 🔄 Extend Resume Access
         else
-          p.text-muted No active resume access
-          a.btn.btn-warning.mt-2(href='/resume-access') 🧾 Purchase Resume Access
+          p.text-muted.text-center No active resume access
+          .d-flex.justify-content-center.mt-4
+            a.btn.btn-warning.btn-lg.text-white(
+              href='/resume-access',
+              style='padding: 20px 40px; font-size: 1.5rem; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;'
+            ) 🧾 PURCHASE RESUME ACCESS
 
       else if user.role === 'Employer'
-        h3 My Job Ads
-        if jobVacancies.length
-          ul
-            each ad in jobVacancies
-              li= ad.title
-        else
-          p.text-muted You have no job ads
+        h3.mt-4.text-center(style="font-size: 1.5rem; font-weight: bold;") My Job Ads
+        p.text-muted.text-center You can manage your posted job vacancies here.
 
       else if user.role === 'Online_Tutor'
-        p Online Tutor features coming soon!
+        h3.text-center.mt-5 Tutor Visibility
+        p.text-center.mt-2(style='color: #343a40; font-size: 1.15rem; font-weight: 600;')
+          | Gain visibility and connect with students worldwide.
+        .d-flex.justify-content-center.mt-4
+          a.btn.btn-warning.btn-lg.text-white(
+            href='/tutor-access',
+            style='padding: 20px 40px; font-size: 1.5rem; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;'
+          ) 🧾 PURCHASE TUTOR VISIBILITY
 
     else
       p.text-danger You must be logged in to view this page.
