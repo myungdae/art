@@ -378,3 +378,29 @@ a:active {
  .btn-success:hover {
    background-color: #449d44 !important;
  }
+
+.btn {
+   display: inline-block;
+   font-size: 1.2rem;
+   padding: 10px 20px;
+   border-radius: 8px;
+   text-decoration: none;
+   color: white;
+   margin: 5px;
+ }
+ 
+ .btn-success {
+   background-color: #28a745;
+ }
+ 
+ .btn-orange {
+   background-color: #fd7e14;
+ }
+ 
+ .btn-gray {
+   background-color: #6c757d;
+ }
+ 
+ .btn-blue {
+   background-color: #007bff;
+ }

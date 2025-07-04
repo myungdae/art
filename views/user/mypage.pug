@@ -19,6 +19,24 @@ block content
           strong Role:
           | #{displayRole}
 
+      // ✅ 버튼 영역
+      .mt-4.d-flex.flex-wrap.gap-2
+        a.btn.text-white.bg-success.px-4.py-2.rounded.shadow(href='/job-vacancies/new') ➕ Post New Job Vacancy
+        a.btn.text-white.bg-orange-600.px-4.py-2.rounded.shadow(href='/job-vacancies/new_paid_user') 💼 Post Paid Job Ad
+        a.btn.text-white.bg-gray-700.px-4.py-2.rounded.shadow(href='/payments') 💳 Make Payment
+        a.btn.text-white.bg-blue-600.px-4.py-2.rounded.shadow(href='/payments/history') 📜 View Payment History
+
+      // ✅ Job Vacancies
+      if jobVacancies && jobVacancies.length
+        h4.mt-4.text-info My Job Vacancies
+        ul
+          each job in jobVacancies
+            li
+              a(href=`/job-vacancies/${job._id}`)= job.title
+      else
+        p.text-muted.mt-3 No job vacancies posted yet.
+
+      // ✅ Job Seeker Resumes
       if user.role === 'Job_Seeker'
         if jobSeekerData && jobSeekerData.resumeAccess
           - var startDate = new Date(jobSeekerData.resumeAccess.startDate)
@@ -32,40 +50,18 @@ block content
           p 🛑 End: #{endDate.toISOString().substring(0,10)}
           p(style="font-weight:bold; color:green; font-size:1.3rem;") ⏳ Remaining Days: #{remainingDays}
 
-          a.btn.btn-lg.btn-primary.mt-3.text-white(href='/resume-access') 🔄 Extend Resume Access
-
-          hr
-
-          // ✅ 실제 작성한 이력서 출력
           if myResumes && myResumes.length
-            h4.mt-4.text-info My Resumes
-            table.table.table-bordered
-              thead
-                tr
-                  th Name
-                  th Job Title
-                  th Preferred Location
-                  th Actions
-              tbody
-                each resume in myResumes
-                  tr
-                    td= resume.name
-                    td= resume.jobTitle || 'N/A'
-                    td= resume.preferredWorkLocation || 'N/A'
-                    td
-                      a.btn.btn-sm.btn-outline-dark(href='/job-seekers/' + resume._id + '/edit') Edit
-                      a.btn.btn-sm.btn-outline-danger(
-                        href='/job-seekers/' + resume._id + '/delete',
-                        onclick='return confirm("Delete this resume?")'
-                      ) Delete
+            h4.mt-3.text-info My Resumes
+            ul
+              each resume in myResumes
+                li
+                  a(href=`/job-seekers/${resume._id}`)= resume.name
           else
             p.text-muted.mt-3 No resumes posted yet.
 
-          if remainingDays > 0
-            a.btn.btn-lg.btn-danger.mt-4.text-white(href='/job-seekers/new') ➕ Post New Resume
+          a.btn.btn-primary.mt-3(href='/job-seekers/new') ➕ Post New Resume
         else
           p.text-muted.mt-3 No active resume access.
-          a.btn.btn-lg.btn-warning.mt-3.text-dark(href='/resume-access') 🧾 Purchase Resume Access
-
+          a.btn.btn-warning.mt-3.text-dark(href='/resume-access') 🧾 Purchase Resume Access
     else
       p.text-danger You must be logged in to view this page.
