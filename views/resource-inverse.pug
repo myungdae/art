@@ -1,0 +1,15 @@
+extends layout
+
+block content
+  .container.mt-5
+    h2.mb-4.text-primary= `Jobs in ${title}`
+    if jobs.length
+      ul.list-group
+        each job in jobs
+          - var label = 'Untitled';
+          if job['http://www.w3.org/2000/01/rdf-schema#label'] && job['http://www.w3.org/2000/01/rdf-schema#label']['@value']
+            - label = job['http://www.w3.org/2000/01/rdf-schema#label']['@value']
+          li.list-group-item
+            a(href=`/resource/${encodeURIComponent(job['@id'].split('/').pop())}`)= label
+    else
+      p.text-muted No related jobs found.
