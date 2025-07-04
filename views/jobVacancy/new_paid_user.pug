@@ -14,8 +14,6 @@ block content
                 label(for="title") Job Title
                 input.form-control#title(type="text", name="title", required, placeholder="Job Title", oninput="validateTitle(this)")
                 small.text-danger#title-error(style="display:none") ❌ Emojis or Korean characters are not allowed.
-
-                // ✅ Hidden label (auto-generated from title)
                 input(type="hidden", name="_label", id="_label")
 
               .form-group.mb-4
@@ -24,7 +22,7 @@ block content
 
               .form-group.mb-3
                 label(for="country") Host Country
-                select.form-control#countrySelect(name="country")
+                select.form-control#countrySelect(name="country" required)
                   option(disabled selected value='') Select Country
                   each v in countries
                     option(value=v)= v
@@ -33,7 +31,7 @@ block content
 
               .form-group.mb-3
                 label(for="studentType") Student Type
-                select.form-control#studentTypeSelect(name="studentType")
+                select.form-control#studentTypeSelect(name="studentType" required)
                   option(disabled selected value='') Select Student Type
                   each v in studentTypes
                     option(value=v)= v
@@ -42,7 +40,7 @@ block content
 
               .form-group.mb-3
                 label(for="teachingArea") Teaching Area
-                select.form-control#teachingArea(name="teachingArea")
+                select.form-control#teachingAreaSelect(name="teachingArea" required)
                   option(disabled selected value='') Select Teaching Area
                   each v in teachingAreas
                     option(value=v)= v
@@ -123,7 +121,7 @@ block append_js
       } else {
         errorElem.style.display = 'none';
         input.classList.remove('is-invalid');
-        labelField.value = input.value.trim().replace(/\s+/g, '_');  // auto-generate _label
+        labelField.value = input.value.trim().replace(/\s+/g, '_');
       }
     }
 
@@ -136,34 +134,37 @@ block append_js
 
       const countrySelect = document.getElementById('countrySelect');
       const studentTypeSelect = document.getElementById('studentTypeSelect');
-      const teachingSelect = document.getElementById('teachingArea');
+      const teachingSelect = document.getElementById('teachingAreaSelect');
 
-      if (customCountry && countrySelect.value === '') {
+      // ✅ Add hidden inputs if custom entered
+      if (customCountry && !countrySelect.value) {
         const input = document.createElement('input');
         input.type = 'hidden';
         input.name = 'country';
         input.value = customCountry;
         form.appendChild(input);
-        countrySelect.disabled = true;
       }
 
-      if (customStudent && studentTypeSelect.value === '') {
+      if (customStudent && !studentTypeSelect.value) {
         const input = document.createElement('input');
         input.type = 'hidden';
         input.name = 'studentType';
         input.value = customStudent;
         form.appendChild(input);
-        studentTypeSelect.disabled = true;
       }
 
-      if (customTeaching && teachingSelect.value === '') {
+      if (customTeaching && !teachingSelect.value) {
         const input = document.createElement('input');
         input.type = 'hidden';
         input.name = 'teachingArea';
         input.value = customTeaching;
         form.appendChild(input);
-        teachingSelect.disabled = true;
       }
+
+      // ✅ Make sure selects stay enabled
+      countrySelect.disabled = false;
+      studentTypeSelect.disabled = false;
+      teachingSelect.disabled = false;
 
       return true;
     }
