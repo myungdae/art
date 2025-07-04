@@ -1,30 +1,28 @@
 extends layout
 
 block content
-  .container
+  .container.mt-4
     .row
       .col-md-3
-        if filters && filters.length
-          h3.mb-3 Facet Filters
-          each filterGroup in filters
-            h5.mt-3= filterGroup.display
-            each option in filterGroup.options
-              a.btn.btn-outline-secondary.btn-sm.mb-1(
-                href=`?${filterGroup.name}=${encodeURIComponent(option.value)}`
-              )
-                = option.label
-                span.badge.ms-1= option.count
+        h3 Filters
+        each filter in filters
+          h4= filter.display
+          ul.list-unstyled
+            each opt in filter.options
+              li
+                a(href=`?${filter.name}=${encodeURIComponent(opt.value)}` class="text-decoration-none")
+                  | #{opt.label} (#{opt.count})
 
       .col-md-9
-        if data.length
-          .row.row-cols-1.row-cols-md-3.g-3
-            each item in data
-              .col
-                - var title = (item['rdfs:label'] && item['rdfs:label']['@value']) ? item['rdfs:label']['@value'] : (item['@id'] || 'No Title');
-                - var desc = (item.description && item.description['@value']) ? item.description['@value'] : 'No description';
-                .card.h-100.p-3
-                  h4= title
-                  p= desc
-                  a.btn.btn-primary.mt-2(href=`/detail/${item._id}`) View Details
+        if data && data.length
+          each item in data
+            .card.mb-3
+              .card-body
+                a(href=`/resource/${item['@id'].split('/').pop()}` class="fw-bold text-primary")
+                  = item['@id']
+                if item['http://purl.org/dc/elements/1.1/description']
+                  p.text-secondary= item['http://purl.org/dc/elements/1.1/description']['@value']
+                else
+                  p.text-muted No description available
         else
-          p.text-muted No records found.
+          p.text-muted No data found.
