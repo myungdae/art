@@ -1,33 +1,36 @@
 extends layout
 
 block content
-  .container.mt-4
+  .container.mt-5
+    h2.text-center.mb-4 Job Vacancies
+
     .row
+      // 왼쪽 Facet
       .col-md-3
-        h3 Filters
         each filter in filters
-          h4= filter.display
-          ul.list-unstyled
-            each opt in filter.options
-              li
-                a(
-                  href=`?${filter.name}=${encodeURIComponent(opt.value)}`
-                  class="text-decoration-none"
-                )
-                  | #{opt.label} (#{opt.count})
+          .mb-4
+            h5= filter.display
+            ul.list-unstyled
+              each opt in filter.options
+                li
+                  a(href=`?${filter.name}=${encodeURIComponent(opt.value)}`)= `${opt.label} (${opt.count})`
+
+      // 오른쪽 카드
       .col-md-9
         if data && data.length
-          each item in data
-            .card.mb-3
-              .card-body
-                a(
-                  href=`/resource/${item['@id'].split('/').pop()}`
-                  class="fw-bold text-primary"
-                )
-                  = item['@id'].split('/').pop()
-                if item['http://purl.org/dc/elements/1.1/description']
-                  p.text-secondary= item['http://purl.org/dc/elements/1.1/description']['@value']
-                else
-                  p.text-muted No description available
+          each doc in data
+            .card.shadow-sm.mb-4.p-3
+              h4
+                - var resourceId = (doc["@id"] || '').split('/').pop();
+                a(href=`/resource/${resourceId}`)
+                  = (doc["http://www.w3.org/2000/01/rdf-schema#label"] && doc["http://www.w3.org/2000/01/rdf-schema#label"]["@value"]) || 'No Title'
+
+              p= (doc["http://purl.org/dc/elements/1.1/description"] && doc["http://purl.org/dc/elements/1.1/description"]["@value"]) || 'No Description'
+
+              if user && (user._id == doc.ownerId || user.username == doc.ownerUsername)
+                .mt-3
+                  a.btn.btn-sm.btn-primary(href=`/job-vacancies/${doc.mongoId}/edit`) Edit
+                  form(method="POST", action=`/job-vacancies/${doc.mongoId}?_method=DELETE`, style="display:inline;", onsubmit="return confirm('Are you sure you want to delete this job?')")
+                    button.btn.btn-sm.btn-danger(type="submit") Delete
         else
-          p.text-muted No data found.
+          p.text-muted No job vacancies found.
