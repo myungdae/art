@@ -2,12 +2,16 @@ extends layout
 
 block content
   .container.mt-5
-    if jobs.length
-      h3.text-primary Related Jobs
+    h2.mb-4.text-primary Inverse Relation Results for "#{value}"
+
+    if data.length
       ul.list-group
-        each job in jobs
+        each job in data
           li.list-group-item
             a(href=`/resource/${encodeURIComponent(job['@id'].split('/').pop())}`)
-              = job['http://www.w3.org/2000/01/rdf-schema#label'] && job['http://www.w3.org/2000/01/rdf-schema#label']['@value'] ? job['http://www.w3.org/2000/01/rdf-schema#label']['@value'] : 'Untitled'
+              if job['http://www.w3.org/2000/01/rdf-schema#label'] && job['http://www.w3.org/2000/01/rdf-schema#label']['@value']
+                = job['http://www.w3.org/2000/01/rdf-schema#label']['@value']
+              else
+                | Untitled
     else
-      p.text-muted No related jobs found.
+      p.text-muted No related jobs found for "#{value}"

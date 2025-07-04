@@ -4,39 +4,66 @@ const { MongoClient } = require('mongodb');
 
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017';
 const DB_NAME = 'eventpool';
-const COLLECTION = 'esl';
+const COLLECTION_NAME = 'esl';
 
+// 리소스 상세
 router.get('/:name', async (req, res) => {
   const name = decodeURIComponent(req.params.name);
   const fullId = `http://esl.eventpool.kr/resource/${name}`;
+
   const client = new MongoClient(MONGO_URI);
-  
-  try {
-    await client.connect();
-    const db = client.db(DB_NAME);
-    const col = db.collection(COLLECTION);
+  await client.connect();
+  const db = client.db(DB_NAME);
+  const col = db.collection(COLLECTION_NAME);
 
-    // 1️⃣ 먼저 정확한 리소스를 찾음
-    const doc = await col.findOne({ "@id": fullId });
-    if (doc) {
-      return res.render('resource', { doc });
-    }
+  const doc = await col.findOne({ '@id': fullId });
 
-    // 2️⃣ 정확한 리소스가 없으면 owl:inverseOf 처럼 hostCountry가 name인 Job 검색
-    const relatedJobs = await col.find({ hostCountry: name }).toArray();
-    if (relatedJobs.length > 0) {
-      return res.render('resource-inverse', { title: name, jobs: relatedJobs });
-    }
-
-    // 3️⃣ 아무것도 없으면 404
-    res.status(404).send(`No resource or related jobs found for: ${name}`);
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Internal Server Error');
-  } finally {
-    await client.close();
+  if (!doc) {
+    return res.status(404).send(`Resource not found: ${fullId}`);
   }
+
+  // Prepare related fields
+  const fieldMap = [
+    { key: 'Duration', label: 'Duration' },
+    { key: 'Pay', label: 'Pay' },
+    { key: 'Housing', label: 'Housing' },
+    { key: 'Email', label: 'Email' },
+    { key: 'Company Name', label: 'Company Name' },
+    { key: 'Job Location', label: 'Job Location' },
+    { key: 'Cellphone Number', label: 'Cellphone Number' },
+    { key: 'Skype ID', label: 'Skype ID' },
+    { key: 'WeChat ID', label: 'WeChat ID' },
+    { key: 'Homepage', label: 'Homepage' }
+  ];
+
+  const relatedFields = fieldMap
+    .filter(f => doc[f.key])
+    .map(f => ({
+      label: f.label,
+      value: doc[f.key]
+    }));
+
+  res.render('resource', { doc, relatedFields });
+});
+
+// INVERSE RELATION 검색
+router.get('/inverse/:value', async (req, res) => {
+  const value = decodeURIComponent(req.params.value);
+
+  const client = new MongoClient(MONGO_URI);
+  await client.connect();
+  const db = client.db(DB_NAME);
+  const col = db.collection(COLLECTION_NAME);
+
+  const data = await col.find({
+    $or: [
+      { hostCountry: value },
+      { studentType: value },
+      { teachingArea: value }
+    ]
+  }).toArray();
+
+  res.render('resource-inverse', { value, data });
 });
 
 module.exports = router;
