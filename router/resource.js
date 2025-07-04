@@ -6,9 +6,9 @@ const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017';
 const DB_NAME = 'eventpool';
 const COLLECTION = 'esl';
 
-router.get('/resource/:name', async (req, res) => {
-  const name = decodeURIComponent(req.params.name);  
-  const fullId = `http://esl.eventpool.kr/resource/${name}`;  
+router.get('/:name', async (req, res) => {
+  const name = decodeURIComponent(req.params.name);
+  const fullId = `http://esl.eventpool.kr/resource/${name}`;
 
   const client = new MongoClient(MONGO_URI);
   try {
