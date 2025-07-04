@@ -3,93 +3,47 @@ extends layout
 block content
   .container.mt-5
     if doc
-      - var jobTitle = (doc['http://www.w3.org/2000/01/rdf-schema#label'] && doc['http://www.w3.org/2000/01/rdf-schema#label']['@value']) || 'Untitled'
-      - var jobDesc = (doc['http://purl.org/dc/elements/1.1/description'] && doc['http://purl.org/dc/elements/1.1/description']['@value']) || ''
-
       .card.shadow.p-4
         // 1️⃣ JOB TITLE
-        h2.mb-3.text-primary= jobTitle
+        h2.mb-3.text-primary= doc['http://www.w3.org/2000/01/rdf-schema#label'] && doc['http://www.w3.org/2000/01/rdf-schema#label']['@value'] ? doc['http://www.w3.org/2000/01/rdf-schema#label']['@value'] : 'Untitled'
 
         // 2️⃣ DESCRIPTION
-        if jobDesc
-          p.lead.text-secondary= jobDesc
-        else
-          p.text-muted No description provided.
-
+        if doc['http://purl.org/dc/elements/1.1/description'] && doc['http://purl.org/dc/elements/1.1/description']['@value']
+          p.lead.text-secondary= doc['http://purl.org/dc/elements/1.1/description']['@value']
+        
         hr
 
         // 3️⃣ INVERSE RELATION
-        h4.mt-4.text-dark INVERSE RELATION
-        ul
-          li
-            strong Host Country:
-            if doc.hostCountry
-              a(href=`/resource/${encodeURIComponent(doc.hostCountry)}`)= doc.hostCountry
-            else
-              | N/A
-          li
-            strong Student Type:
-            if doc.studentType
-              a(href=`/resource/${encodeURIComponent(doc.studentType)}`)= doc.studentType
-            else
-              | N/A
-          li
-            strong Teaching Area:
-            if doc.teachingArea
-              a(href=`/resource/${encodeURIComponent(doc.teachingArea)}`)= doc.teachingArea
-            else
-              | N/A
+        h4.text-dark.mt-4 INVERSE RELATION
+        p
+          strong Host Country:
+          if doc.hostCountry
+            a(href=`/resource/${encodeURIComponent(doc.hostCountry)}`)= doc.hostCountry
+          else
+            | N/A
+        p
+          strong Student Type:
+          if doc.studentType
+            = doc.studentType
+          else
+            | N/A
+        p
+          strong Teaching Area:
+          if doc.teachingArea
+            = doc.teachingArea
+          else
+            | N/A
+
+        hr
 
         // 4️⃣ RELATED INFORMATION
-        - var hasInfo = doc.Duration || doc.Pay || doc.Housing || doc.Email || doc['Company Name'] || doc['Job Location'] || doc['Cellphone Number'] || doc['Skype ID'] || doc['WeChat ID'] || doc.Homepage
-
-        if hasInfo
-          hr
-          h4.mt-4.text-dark RELATED INFORMATION
-          table.table.table-sm.table-bordered
-            tbody
-              if doc.Duration
+        - const fields = ['Duration', 'Pay', 'Housing', 'Email', 'Company Name', 'Job Location', 'Cellphone Number', 'Skype ID', 'WeChat ID', 'Homepage']
+        table.table.table-bordered
+          tbody
+            each field in fields
+              if doc[field]
                 tr
-                  td.fw-bold Duration
-                  td= doc.Duration
-              if doc.Pay
-                tr
-                  td.fw-bold Pay
-                  td= doc.Pay
-              if doc.Housing
-                tr
-                  td.fw-bold Housing
-                  td= doc.Housing
-              if doc.Email
-                tr
-                  td.fw-bold Email
-                  td= doc.Email
-              if doc['Company Name']
-                tr
-                  td.fw-bold Company Name
-                  td= doc['Company Name']
-              if doc['Job Location']
-                tr
-                  td.fw-bold Job Location
-                  td= doc['Job Location']
-              if doc['Cellphone Number']
-                tr
-                  td.fw-bold Cellphone Number
-                  td= doc['Cellphone Number']
-              if doc['Skype ID']
-                tr
-                  td.fw-bold Skype ID
-                  td= doc['Skype ID']
-              if doc['WeChat ID']
-                tr
-                  td.fw-bold WeChat ID
-                  td= doc['WeChat ID']
-              if doc.Homepage
-                tr
-                  td.fw-bold Homepage
-                  td= doc.Homepage
-
+                  td= field
+                  td= doc[field]
     else
-      .alert.alert-danger.mt-5
-        strong Error:
-        | Resource not found or invalid.
+      .alert.alert-danger Resource not found.
