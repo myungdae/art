@@ -30,15 +30,15 @@ router.get('/:type', async (req, res) => {
       $facet: {
         hostCountry: [
           { $group: { _id: "$hostCountry", count: { $sum: 1 } } },
-          { $sort: { _id: 1 } }
+          { $sort: { count: -1 } }
         ],
         studentType: [
           { $group: { _id: "$studentType", count: { $sum: 1 } } },
-          { $sort: { _id: 1 } }
+          { $sort: { count: -1 } }
         ],
         teachingArea: [
           { $group: { _id: "$teachingArea", count: { $sum: 1 } } },
-          { $sort: { _id: 1 } }
+          { $sort: { count: -1 } }
         ]
       }
     }
@@ -49,10 +49,10 @@ router.get('/:type', async (req, res) => {
     filters: [
       {
         name: 'hostCountry',
-        display: 'Country',
+        display: 'Host Country',
         options: facets[0].hostCountry.map(f => ({
           label: f._id || 'N/A',
-          value: f._id,
+          value: f._id || '',
           count: f.count
         }))
       },
@@ -61,7 +61,7 @@ router.get('/:type', async (req, res) => {
         display: 'Student Type',
         options: facets[0].studentType.map(f => ({
           label: f._id || 'N/A',
-          value: f._id,
+          value: f._id || '',
           count: f.count
         }))
       },
@@ -70,12 +70,13 @@ router.get('/:type', async (req, res) => {
         display: 'Teaching Area',
         options: facets[0].teachingArea.map(f => ({
           label: f._id || 'N/A',
-          value: f._id,
+          value: f._id || '',
           count: f.count
         }))
       }
     ]
   });
-});
+
+});  // router.get 닫는 중괄호 추가
 
 module.exports = router;

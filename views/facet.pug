@@ -3,6 +3,7 @@ extends layout
 block content
   .container.mt-4
     .row
+      // 좌측 패싯
       .col-md-3
         h3 Filters
         each filter in filters
@@ -16,19 +17,17 @@ block content
                 )
                   | #{opt.label} (#{opt.count})
 
+      // 우측 데이터 카드
       .col-md-9
         if data && data.length
           each item in data
             .card.mb-3
               .card-body
-                // 리소스명 링크
                 a(
                   href=`/resource/${item['@id'].split('/').pop()}`
                   class="fw-bold text-primary"
                 )
                   = item['@id'].split('/').pop()
-
-                // Description만 출력
                 if item['http://purl.org/dc/elements/1.1/description']
                   p.text-secondary= item['http://purl.org/dc/elements/1.1/description']['@value']
                 else
