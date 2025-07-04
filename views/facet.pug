@@ -3,7 +3,6 @@ extends layout
 block content
   .container.mt-4
     .row
-      // 좌측 패싯
       .col-md-3
         h3 Filters
         each filter in filters
@@ -16,8 +15,6 @@ block content
                   class="text-decoration-none"
                 )
                   | #{opt.label} (#{opt.count})
-
-      // 우측 데이터 카드
       .col-md-9
         if data && data.length
           each item in data

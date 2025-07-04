@@ -4,23 +4,110 @@ block content
   .container.mt-5
     if doc
       .card.shadow.p-4
-        h2.mb-4.text-primary= (doc['rdfs:label'] && doc['rdfs:label']['@value']) || 'Untitled'
+        // 1️⃣ JOB TITLE
+        h2.mb-3.text-primary= (doc['http://www.w3.org/2000/01/rdf-schema#label'] && doc['http://www.w3.org/2000/01/rdf-schema#label']['@value']) || 'Untitled'
 
+        // 2️⃣ DESCRIPTION
         if doc['http://purl.org/dc/elements/1.1/description']
           p.lead.text-secondary= doc['http://purl.org/dc/elements/1.1/description']['@value']
         else
-          p.text-muted No description provided.
+          p.text-muted No description available.
 
         hr
-        h5.text-dark.mt-4 Metadata
-        ul
-          each val, key in doc
-            if key !== '_id' && key !== '__v'
-              li
-                strong= key + ': '
-                | #{JSON.stringify(val)}
 
-      a.btn.btn-outline-primary.mt-4(href='/') ← Back to Home
+        // 3️⃣ INVERSE RELATION
+        h4.mt-4.text-dark INVERSE RELATION
+        ul
+          li
+            strong Host Country:
+            if doc.hostCountry
+              a(href=`/facet/Job_Vacancies?hostCountry=${encodeURIComponent(doc.hostCountry)}`)= doc.hostCountry
+            else
+              | N/A
+          li
+            strong Student Type:
+            if doc.studentType
+              a(href=`/facet/Job_Vacancies?studentType=${encodeURIComponent(doc.studentType)}`)= doc.studentType
+            else
+              | N/A
+          li
+            strong Teaching Area:
+            if doc.teachingArea
+              a(href=`/facet/Job_Vacancies?teachingArea=${encodeURIComponent(doc.teachingArea)}`)= doc.teachingArea
+            else
+              | N/A
+
+        // 4️⃣ RELATED INFORMATION
+        if doc.Duration
+          - var hasInfo = true
+        else if doc.Pay
+          - hasInfo = true
+        else if doc.Housing
+          - hasInfo = true
+        else if doc.Email
+          - hasInfo = true
+        else if doc['Company Name']
+          - hasInfo = true
+        else if doc['Job Location']
+          - hasInfo = true
+        else if doc['Cellphone Number']
+          - hasInfo = true
+        else if doc['Skype ID']
+          - hasInfo = true
+        else if doc['WeChat ID']
+          - hasInfo = true
+        else if doc.Homepage
+          - hasInfo = true
+        else
+          - hasInfo = false
+
+        if hasInfo
+          hr
+          h4.mt-4.text-dark RELATED INFORMATION
+          table.table.table-sm.table-bordered
+            tbody
+              if doc.Duration
+                tr
+                  td.fw-bold Duration
+                  td= doc.Duration
+              if doc.Pay
+                tr
+                  td.fw-bold Pay
+                  td= doc.Pay
+              if doc.Housing
+                tr
+                  td.fw-bold Housing
+                  td= doc.Housing
+              if doc.Email
+                tr
+                  td.fw-bold Email
+                  td= doc.Email
+              if doc['Company Name']
+                tr
+                  td.fw-bold Company Name
+                  td= doc['Company Name']
+              if doc['Job Location']
+                tr
+                  td.fw-bold Job Location
+                  td= doc['Job Location']
+              if doc['Cellphone Number']
+                tr
+                  td.fw-bold Cellphone Number
+                  td= doc['Cellphone Number']
+              if doc['Skype ID']
+                tr
+                  td.fw-bold Skype ID
+                  td= doc['Skype ID']
+              if doc['WeChat ID']
+                tr
+                  td.fw-bold WeChat ID
+                  td= doc['WeChat ID']
+              if doc.Homepage
+                tr
+                  td.fw-bold Homepage
+                  td= doc.Homepage
+
+      a.btn.btn-outline-secondary.mt-4(href='/') ← Back to Home
     else
       .alert.alert-danger.mt-5
         strong Error:
