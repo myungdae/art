@@ -4,10 +4,10 @@ block content
   .container.mt-5
     if doc
       .card.shadow.p-4
-        h2.mb-4.text-primary= doc['rdfs:label'] || 'Untitled'
+        h2.mb-4.text-primary= doc['rdfs:label']?.['@value'] || 'Untitled'
 
         if doc['http://purl.org/dc/elements/1.1/description']
-          p.lead.text-secondary= doc['http://purl.org/dc/elements/1.1/description']
+          p.lead.text-secondary= doc['http://purl.org/dc/elements/1.1/description']['@value']
         else
           p.text-muted No description provided.
 
