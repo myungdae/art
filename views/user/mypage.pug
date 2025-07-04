@@ -20,7 +20,9 @@ block content
           | #{displayRole}
 
       // ✅ Remaining Tokens 표시 (아직 결제 전이면 0)
-      p.mt-3(style="font-weight: bold; font-size: 1.3rem; color: red;") 🔑 Remaining Tokens: 0
+      p.mt-3(style="font-weight: bold; font-size: 1.3rem; color: red;")
+      | 🔑 Remaining Tokens: #{user.adsAvailable}
+
 
       // ✅ 버튼: Post Paid Job Ad + Make Payment
       .mt-4.d-flex.flex-wrap.gap-2
