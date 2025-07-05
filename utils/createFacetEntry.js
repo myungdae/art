@@ -20,3 +20,6 @@ function createFacetEntryFromCRUD(job) {
     teachingArea: job.teachingArea || 'N/A'
   };
 }
+
+module.exports = { createFacetEntryFromCRUD };
+
