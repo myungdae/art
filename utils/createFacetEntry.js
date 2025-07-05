@@ -4,8 +4,6 @@ function createFacetEntryFromCRUD(job) {
   const id = `http://esl.eventpool.kr/resource/${idSuffix}`;
   const type = "Job_Vacancies";
 
-  const descriptionValue = job._description || '';  // 사용자 작성 진짜 description
-
   return {
     "@id": id,
     "@type": type,
@@ -13,7 +11,7 @@ function createFacetEntryFromCRUD(job) {
       "@value": label
     },
     "http://purl.org/dc/elements/1.1/description": {
-      "@value": descriptionValue
+      "@value": job._description || ''  // ✅ CKEditor raw HTML 그대로 facetEntry에 저장
     },
     hostCountry: job.country || 'N/A',
     studentType: job.studentType || 'N/A',
@@ -22,4 +20,3 @@ function createFacetEntryFromCRUD(job) {
 }
 
 module.exports = { createFacetEntryFromCRUD };
-

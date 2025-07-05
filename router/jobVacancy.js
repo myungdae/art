@@ -8,12 +8,11 @@ const { MongoClient } = require('mongodb');
 
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017';
 
-// ✅ /job-vacancies는 로그인 유도용
+// ✅ /job-vacancies 는 로그인 유도용
 router.get('/', (req, res) => {
   if (!req.session.user) {
     return res.redirect('/user/login');
   }
-  // 로그인은 했지만, 일반 listing은 막음
   return res.redirect('/facet/Job_Vacancies');
 });
 
@@ -43,6 +42,11 @@ async function saveJob(req, res) {
     const sanitizedTitle = sanitizeHtml(req.body.title || '').trim();
     if (!sanitizedTitle) throw new Error('❌ Job Title is required');
 
+    const cleanDescription = sanitizeHtml(req.body._description || '', {
+      allowedTags: ['p', 'strong', 'em', 'ul', 'li', 'ol', 'br'],
+      allowedAttributes: {}
+    });
+
     const newJob = new JobVacancy({
       title: sanitizedTitle,
       _label: sanitizedTitle,
@@ -50,8 +54,9 @@ async function saveJob(req, res) {
       studentType: req.body.studentType,
       teachingArea: req.body.teachingArea,
       duration: req.body.duration,
-      _description: req.body._description
+      _description: cleanDescription
     });
+
     await newJob.save();
 
     const facetEntry = createFacetEntryFromCRUD(newJob);
@@ -60,7 +65,6 @@ async function saveJob(req, res) {
     await client.db('eventpool').collection('esl').insertOne(facetEntry);
     await client.close();
 
-    // ✅ 무조건 facet로 이동
     res.redirect('/facet/Job_Vacancies');
   } catch (err) {
     console.error("❌ Error saving job vacancy:", err.message || err);
@@ -71,7 +75,14 @@ async function saveJob(req, res) {
 router.get('/:id', requireLogin, async (req, res) => {
   const jobVacancy = await JobVacancy.findById(req.params.id);
   if (!jobVacancy) return res.status(404).send('Job not found');
-  res.render('jobVacancy/show', { jobVacancy });
+
+  // ✅ plain text 변환
+  const stripped = sanitizeHtml(jobVacancy._description || '', {
+    allowedTags: [],
+    allowedAttributes: {}
+  });
+
+  res.render('jobVacancy/show', { jobVacancy, stripped });
 });
 
 router.get('/:id/edit', requireLogin, async (req, res) => {
@@ -88,14 +99,21 @@ router.put('/:id', requireLogin, async (req, res) => {
   const sanitizedTitle = sanitizeHtml(req.body.title || '').trim();
   if (!sanitizedTitle) return res.status(400).send('Job Title is required');
 
+  const cleanDescription = sanitizeHtml(req.body._description || '', {
+    allowedTags: ['p', 'strong', 'em', 'ul', 'li', 'ol', 'br'],
+    allowedAttributes: {}
+  });
+
   await JobVacancy.findByIdAndUpdate(req.params.id, {
     title: sanitizedTitle,
     _label: sanitizedTitle,
     country: req.body.country,
     studentType: req.body.studentType,
     teachingArea: req.body.teachingArea,
-    duration: req.body.duration
+    duration: req.body.duration,
+    _description: cleanDescription
   });
+
   res.redirect('/facet/Job_Vacancies');
 });
 
