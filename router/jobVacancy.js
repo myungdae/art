@@ -49,7 +49,8 @@ async function saveJob(req, res) {
       country: req.body.country,
       studentType: req.body.studentType,
       teachingArea: req.body.teachingArea,
-      duration: req.body.duration
+      duration: req.body.duration,
+      _description: req.body._description
     });
     await newJob.save();
 

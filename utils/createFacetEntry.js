@@ -3,9 +3,8 @@ function createFacetEntryFromCRUD(job) {
   const idSuffix = label.replace(/\s+/g, '_');
   const id = `http://esl.eventpool.kr/resource/${idSuffix}`;
   const type = "Job_Vacancies";
-  const descriptionParts = [job.country, job.studentType, job.teachingArea]
-    .filter(Boolean)
-    .join(', ');
+
+  const descriptionValue = job._description || '';  // 사용자 작성 진짜 description
 
   return {
     "@id": id,
@@ -14,12 +13,10 @@ function createFacetEntryFromCRUD(job) {
       "@value": label
     },
     "http://purl.org/dc/elements/1.1/description": {
-      "@value": descriptionParts
+      "@value": descriptionValue
     },
-    "hostCountry": job.country || 'N/A',
-    "studentType": job.studentType || 'N/A',
-    "teachingArea": job.teachingArea || 'N/A'
+    hostCountry: job.country || 'N/A',
+    studentType: job.studentType || 'N/A',
+    teachingArea: job.teachingArea || 'N/A'
   };
 }
-
-module.exports = { createFacetEntryFromCRUD };
