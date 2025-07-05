@@ -25,16 +25,14 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
-  
   adsAvailable: {
     type: Number,
     default: 0
   },
   resumeAccess: {
-    type: Boolean,
-    default: false
+    startDate: { type: Date },
+    durationDays: { type: Number }
   }
-
 });
 
 module.exports = mongoose.model('User', userSchema);

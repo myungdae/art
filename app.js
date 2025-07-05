@@ -15,16 +15,21 @@ const adminRouter = require('./router/admin');
 const jobVacancyRouter = require('./router/jobVacancy');
 const jobSeekerRouter = require('./router/jobSeeker');
 const paypalRoutes = require('./router/paypal');
-const resumeAccessRouter = require('./router/resumeAccess');
 const onlineTutorRouter = require('./router/onlineTutor');
 const tutorAccessRouter = require('./router/tutorAccess');
 const rdfResourceRouter = require('./router/rdf-resource');
 const resourceRouter = require('./router/resource');
+const resumeAccessRouter = require('./router/resume-access');
 
 console.log("📌 app.js 시작됨");
 require('./router/config');
 connect();
 console.log("✅ DB 연결 시도");
+
+app.get('/login', (req, res) => {
+  return res.redirect('/user/login');
+});
+
 
 // 📌 view 설정
 app.set('views', path.join(__dirname, 'views'));

@@ -1,0 +1,42 @@
+extends ../layout
+
+block content
+  .container.mt-5
+    h2.text-center.mb-4 Purchase Resume Visibility
+
+    p.mb-3 Select Resume Access Plan:
+
+    each pkg in packages
+      .form-check.mb-2
+        input.form-check-input(type="radio", name="planId", id=`plan-${pkg.value}`, value=pkg.value required)
+        label.form-check-label(for=`plan-${pkg.value}`)= `${pkg.label} — $${pkg.price}`
+
+    button.btn.btn-primary.mt-3#proceedButton(type="button") Proceed to PayPal
+
+  script.
+    document.getElementById('proceedButton').addEventListener('click', async () => {
+      const selectedPlan = document.querySelector('input[name="planId"]:checked');
+      if (!selectedPlan) {
+        alert('Please select a plan.');
+        return;
+      }
+
+      try {
+        const res = await fetch('/paypal/create-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ planId: selectedPlan.value })
+        });
+        const data = await res.json();
+
+        if (data.id) {
+          // Redirect to PayPal checkout page
+          window.location.href = `https://www.paypal.com/checkoutnow?token=${data.id}`;
+        } else {
+          alert('Failed to create PayPal order');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('An error occurred while creating the order.');
+      }
+    });

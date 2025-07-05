@@ -24,7 +24,7 @@ async function getAccessToken() {
   return res.data.access_token;
 }
 
-// ✅ [GET] Job Vacancy Checkout 페이지
+// ✅ [GET] Job Vacancy Checkout
 router.get('/checkout', requireLogin, (req, res) => {
   const packages = [
     { value: '1', label: '1 Ad — $30' },
@@ -33,84 +33,91 @@ router.get('/checkout', requireLogin, (req, res) => {
     { value: '24', label: '24 Ads — $450 (Save $270)' },
   ];
 
-  if (!req.session.userId && req.user && req.user._id) {
-    req.session.userId = req.user._id;
-    console.log('🆔 Set req.session.userId =', req.user._id);
-  }
-
   res.render('paypal/checkout', {
     user: req.user,
     packages
   });
 });
 
-// ✅ [POST] tutor-access or resume-access에서 role 전달 시 처리
-router.post('/checkout', requireLogin, async (req, res) => {
-  const { role, planId } = req.body;
+// ✅ [GET] Resume Access Checkout
+router.get('/checkout-resume', requireLogin, (req, res) => {
+  const packages = resumePriceConfig.map(p => ({
+    value: p.id,
+    label: p.label,
+    price: p.price
+  }));
 
-  if (role === 'Job_Seeker') {
-    const selected = resumePriceConfig.find(p => p.id === planId);
-    if (!selected) return res.status(400).send('Invalid plan for resume access');
-    req.session.resumePlan = planId;
-    return res.redirect('/resume-access/confirm');
-  }
-
-  if (role === 'Online_Tutor') {
-    const selected = tutorPriceConfig.find(p => p.id === planId);
-    if (!selected) return res.status(400).send('Invalid plan for tutor access');
-    req.session.tutorPlan = planId;
-    return res.redirect('/tutor-access/confirm');
-  }
-
-  return res.status(400).send('Invalid role');
+  res.render('paypal/checkout_resume', {
+    user: req.user,
+    packages
+  });
 });
 
 // ✅ [POST] Create PayPal Order
-router.post('/create-order', async (req, res) => {
+router.post('/create-order', requireLogin, async (req, res) => {
   try {
-    const selectedPackage = req.body.package || '1';
-    const packagePrices = {
-      '1': '30.00',
-      '4': '100.00',
-      '12': '250.00',
-      '24': '450.00',
-    };
+    const { planId, adPackage } = req.body;
+
+    let purchaseUnit = null;
+
+    if (planId) {
+      const selected = resumePriceConfig.find(p => p.id === planId);
+      if (!selected) return res.status(400).json({ error: 'Invalid resume plan' });
+
+      req.session.resumePlan = planId;
+      purchaseUnit = {
+        amount: {
+          currency_code: 'USD',
+          value: selected.price.toFixed(2),
+        },
+        description: selected.label,
+      };
+    } else if (adPackage) {
+      const prices = {
+        '1': 30,
+        '4': 100,
+        '12': 250,
+        '24': 450
+      };
+      purchaseUnit = {
+        amount: {
+          currency_code: 'USD',
+          value: (prices[adPackage] || 30).toFixed(2),
+        },
+        description: `${adPackage} Job Vacancy Ads`,
+      };
+      req.session.adPackage = adPackage;
+    } else {
+      return res.status(400).json({ error: 'No valid purchase data' });
+    }
 
     const accessToken = await getAccessToken();
     const order = await axios.post(
       `${PAYPAL_API}/v2/checkout/orders`,
       {
         intent: 'CAPTURE',
-        purchase_units: [
-          {
-            amount: {
-              currency_code: 'USD',
-              value: packagePrices[selectedPackage] || '30.00',
-            },
-            description: `${selectedPackage} Job Vacancy Ads`,
-          },
-        ],
+        purchase_units: [purchaseUnit],
       },
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
-        },
+        }
       }
     );
 
     res.json({ id: order.data.id });
+
   } catch (error) {
     console.error('❌ create-order error:', error.response?.data || error.message);
-    res.status(500).json({ error: 'Failed to create PayPal order' });
+    res.status(500).json({ error: 'Failed to create order' });
   }
 });
 
 // ✅ [POST] Capture PayPal Order
-router.post('/capture-order/:orderID', async (req, res) => {
+router.post('/capture-order/:orderID', requireLogin, async (req, res) => {
   try {
     const { orderID } = req.params;
-    const { package: adCount } = req.body;
     const accessToken = await getAccessToken();
 
     const capture = await axios.post(
@@ -124,56 +131,22 @@ router.post('/capture-order/:orderID', async (req, res) => {
       }
     );
 
-    // ✅ Job Vacancy 광고권 처리
-    if (req.session.userId && adCount) {
-      const updatedUser = await User.findByIdAndUpdate(
-        req.session.userId,
-        { $inc: { adsAvailable: parseInt(adCount, 10) } },
-        { new: true }
-      );
-
-      if (updatedUser) {
-        req.session.user.adsAvailable = updatedUser.adsAvailable;
-      }
-
+    if (req.session.adPackage) {
+      const count = parseInt(req.session.adPackage, 10);
+      await User.findByIdAndUpdate(req.session.userId, { $inc: { adsAvailable: count } });
       return res.json({ status: 'redirect', url: '/job-vacancies/new_paid_user' });
     }
 
-    // ✅ Online Tutor 처리
-    if (req.session.userId && req.session.tutorPlan) {
-      const tutorPlanId = req.session.tutorPlan;
-      const selected = tutorPriceConfig.find(p => p.id === tutorPlanId);
-
+    if (req.session.resumePlan) {
+      const selected = resumePriceConfig.find(p => p.id === req.session.resumePlan);
       if (selected) {
-        const durationDays = selected.days;
-
         await User.findByIdAndUpdate(req.session.userId, {
           resumeAccess: {
             startDate: new Date(),
-            durationDays,
+            durationDays: selected.days,
           }
         });
-
-        return res.json({ status: 'redirect', url: '/user/mypage' });
-      }
-    }
-
-    // ✅ Resume Access 처리
-    if (req.session.userId && req.session.resumePlan) {
-      const resumePlanId = req.session.resumePlan;
-      const selected = resumePriceConfig.find(p => p.id === resumePlanId);
-
-      if (selected) {
-        const durationDays = selected.days;
-
-        await User.findByIdAndUpdate(req.session.userId, {
-          resumeAccess: {
-            startDate: new Date(),
-            durationDays,
-          }
-        });
-
-        return res.json({ status: 'redirect', url: '/user/mypage' });
+        return res.json({ status: 'redirect', url: '/resume-access/confirm' });
       }
     }
 
@@ -181,7 +154,7 @@ router.post('/capture-order/:orderID', async (req, res) => {
 
   } catch (error) {
     console.error('❌ capture-order error:', error.response?.data || error.message);
-    res.status(500).json({ error: 'Failed to capture PayPal payment' });
+    res.status(500).json({ error: 'Failed to capture payment' });
   }
 });
 

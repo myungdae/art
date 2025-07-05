@@ -13,8 +13,6 @@ router.get('/register', (req, res) => {
 // ✅ 회원가입 처리
 router.post('/register', async (req, res) => {
   let { username, email, password, role } = req.body;
-
-  // 역할 표준화
   if (role === 'JobSeeker' || role === 'Job Seeker') role = 'Job_Seeker';
   else if (role === 'OnlineTutor' || role === 'Online Tutor') role = 'Online_Tutor';
 
@@ -43,13 +41,6 @@ router.get('/login', (req, res) => {
   res.render('user/login');
 });
 
-router.post('/job-seekers/resume-access', requireLogin, (req, res) => {
-  console.log('✅ Resume Access POST hit:', req.body);
-  // 여기에 PayPal 처리나 DB update 로직 추가
-  res.send(`Received POST for resume access: ${req.body.accessPeriod}`);
-});
-
-
 // ✅ 로그인 처리
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
@@ -75,7 +66,7 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// ✅ 마이페이지: 역할별 분기
+// ✅ 마이페이지 분기
 router.get('/mypage', requireLogin, async (req, res) => {
   try {
     const user = await User.findById(req.session.user._id).lean();
@@ -114,9 +105,37 @@ router.get('/mypage-jobseeker', requireLogin, async (req, res) => {
   res.render('user/mypage-jobseeker', { user, remainingDays, purchaseLink: '/user/job-seekers/resume-access' });
 });
 
-// ✅ Job Seeker 결제 화면
+// ✅ Job Seeker 결제 GET
 router.get('/job-seekers/resume-access', requireLogin, (req, res) => {
   res.render('jobSeeker/resumeAccess');
+});
+
+// ✅ Job Seeker 결제 POST (console.log 추가 + 안전 처리)
+router.post('/job-seekers/resume-access', requireLogin, async (req, res) => {
+  try {
+    console.log('📝 POST body:', req.body);
+    const { accessPeriod } = req.body;
+    const periodDays = parseInt(accessPeriod);
+    console.log('📝 Parsed periodDays:', periodDays);
+
+    if (![30, 90, 365].includes(periodDays)) {
+      console.warn('❗ Invalid access period received:', periodDays);
+      return res.status(400).send('❌ Invalid access period');
+    }
+
+    await User.findByIdAndUpdate(req.session.user._id, {
+      resumeAccess: {
+        startDate: new Date(),
+        durationDays: periodDays
+      }
+    });
+
+    console.log(`✅ Resume access updated: ${periodDays} days for user ${req.session.user._id}`);
+    res.redirect(`/paypal/checkout?accessPeriod=${periodDays}`);
+  } catch (err) {
+    console.error('❌ Failed to process resume access:', err.message);
+    res.status(500).send('❌ Failed to process resume access');
+  }
 });
 
 // ✅ Online Tutor 전용 마이페이지
