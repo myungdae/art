@@ -1,0 +1,17 @@
+extends ../layout
+
+block content
+  .container.mt-5
+    h2.text-center.mb-4 My Page (Job Seeker)
+
+    p Username: #{user.username}
+    p Email: #{user.email}
+    p Role: Job Seeker
+
+    p.mt-3
+      span 🔑 Remaining Days of Resume Access: 
+      strong= remainingDays
+
+    .mt-4
+      a.btn.btn-primary(href='/job-seekers/new') Register Resume
+      a.btn.btn-secondary(href='/user/job-seekers/resume-access') Purchase Resume Visibility

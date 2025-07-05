@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
-
 const User = require('../model/user');
 const JobVacancy = require('../model/jobVacancy');
 const { requireLogin } = require('../middleware/auth');
@@ -14,7 +13,7 @@ router.get('/register', (req, res) => {
 // ✅ 회원가입 처리
 router.post('/register', async (req, res) => {
   let { username, email, password, role } = req.body;
-  // role 보정
+  // 역할 보정 (통일된 값 저장)
   if (role === 'JobSeeker' || role === 'Job Seeker') role = 'Job_Seeker';
   else if (role === 'OnlineTutor' || role === 'Online Tutor') role = 'Online_Tutor';
 
@@ -54,6 +53,7 @@ router.post('/login', async (req, res) => {
                 New here? <a href="/user/register" style="color:gold;text-decoration:underline;">Register</a> and choose your role.`
       });
     }
+
     req.session.user = {
       _id: user._id,
       username: user.username,
@@ -67,23 +67,63 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// ✅ 마이페이지
+// ✅ 마이페이지 → 역할별 전용 마이페이지로 리다이렉트
 router.get('/mypage', requireLogin, async (req, res) => {
   try {
-    const ObjectId = mongoose.Types.ObjectId;
-    const userId = ObjectId.isValid(req.session.user._id) ? new ObjectId(req.session.user._id) : req.session.user._id;
+    const user = await User.findById(req.session.user._id).lean();
+    if (!user) return res.status(404).send('User not found');
 
-    const fullUser = await User.findById(userId).lean();
-    const jobVacancies = await JobVacancy.find({ user: userId }).lean();
+    // 역할에 따라 분기
+    if (user.role === 'Employer') {
+      return res.redirect('/user/mypage-employer');
+    }
+    if (user.role === 'Job_Seeker') {
+      return res.redirect('/user/mypage-jobseeker');
+    }
+    if (user.role === 'Online_Tutor') {
+      return res.redirect('/user/mypage-tutor');
+    }
 
-    res.render('user/mypage', {
-      user: fullUser,
-      jobVacancies
-    });
+    res.send('Unknown role');
   } catch (err) {
     console.error('❌ Failed to load mypage:', err.message);
     res.status(500).send('❌ Error loading My Page');
   }
+});
+
+// ✅ Employer 전용 마이페이지
+router.get('/mypage-employer', requireLogin, async (req, res) => {
+  const jobVacancies = await JobVacancy.find({ user: req.session.user._id }).lean();
+  const user = await User.findById(req.session.user._id).lean();
+  res.render('user/mypage-employer', { user, jobVacancies });
+});
+
+// ✅ Job Seeker 전용 마이페이지
+router.get('/mypage-jobseeker', requireLogin, async (req, res) => {
+  const user = await User.findById(req.session.user._id).lean();
+  let remainingDays = 0;
+  if (user.resumeAccess && user.resumeAccess.startDate && user.resumeAccess.durationDays) {
+    const start = new Date(user.resumeAccess.startDate);
+    const durationMs = user.resumeAccess.durationDays * 86400000;
+    const diff = start.getTime() + durationMs - Date.now();
+    remainingDays = diff > 0 ? Math.ceil(diff / 86400000) : 0;
+  }
+
+  // ✅ Pug에 Purchase URL을 명시적으로 전달
+  const purchaseLink = '/user/job-seekers/resume-access';
+
+  res.render('user/mypage-jobseeker', { user, remainingDays, purchaseLink });
+});
+
+router.get('/job-seekers/resume-access', requireLogin, (req, res) => {
+  res.render('jobSeeker/resumeAccess'); 
+});
+
+
+// ✅ Online Tutor 전용 마이페이지
+router.get('/mypage-tutor', requireLogin, async (req, res) => {
+  const user = await User.findById(req.session.user._id).lean();
+  res.render('user/mypage-tutor', { user });
 });
 
 // ✅ 로그아웃

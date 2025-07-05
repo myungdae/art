@@ -1,0 +1,15 @@
+extends ../layout
+
+block content
+  .container.mt-5
+    h2.text-center.mb-4 Employer Dashboard
+    p Username: #{user.username}
+    p Email: #{user.email}
+    h4.mt-4 My Job Vacancies
+    ul
+      if jobVacancies.length
+        each job in jobVacancies
+          li
+            a(href=`/job-vacancies/${job._id}`)= job.title
+      else
+        li.text-muted No job vacancies posted yet.
