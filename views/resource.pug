@@ -2,53 +2,79 @@ extends layout
 
 block content
   .container.mt-5
-    .card.shadow.p-4
+    .card.shadow
+      .card-header.bg-light
+        - var label = (doc["http://www.w3.org/2000/01/rdf-schema#label"] && doc["http://www.w3.org/2000/01/rdf-schema#label"]["@value"]) ? doc["http://www.w3.org/2000/01/rdf-schema#label"]["@value"] : 'Untitled'
+        h4.mb-0.text-dark= label
 
-      // 1️⃣ JOB TITLE
-      h2.mb-3.text-primary
-        if doc['http://www.w3.org/2000/01/rdf-schema#label'] && doc['http://www.w3.org/2000/01/rdf-schema#label']['@value']
-          = doc['http://www.w3.org/2000/01/rdf-schema#label']['@value']
-        else
-          | Untitled
+      .card-body
+        // ✅ Description
+        h5.mb-3 📝 Description
+        .border.p-3.bg-light
+          - var desc = (doc["http://purl.org/dc/elements/1.1/description"] && doc["http://purl.org/dc/elements/1.1/description"]["@value"]) ? doc["http://purl.org/dc/elements/1.1/description"]["@value"].replace(/<[^>]+>/g, '') : 'No description provided.'
+          = desc
 
-      // 2️⃣ DESCRIPTION
-      if doc['http://purl.org/dc/elements/1.1/description'] && doc['http://purl.org/dc/elements/1.1/description']['@value']
-        p.lead.text-secondary= doc['http://purl.org/dc/elements/1.1/description']['@value']
+        hr
 
-      hr
+        // ✅ INVERSE RELATION
+        h5.mb-3 INVERSE RELATION
+        ul.list-unstyled
+          li
+            strong Host Country:
+            if doc.hostCountry
+              a(href=`/resource/inverse/${encodeURIComponent(doc.hostCountry)}`)= doc.hostCountry
+            else
+              | N/A
+          li
+            strong Student Type:
+            if doc.studentType
+              a(href=`/resource/inverse/${encodeURIComponent(doc.studentType)}`)= doc.studentType
+            else
+              | N/A
+          li
+            strong Teaching Area:
+            if doc.teachingArea
+              a(href=`/resource/inverse/${encodeURIComponent(doc.teachingArea)}`)= doc.teachingArea
+            else
+              | N/A
 
-      // 3️⃣ INVERSE RELATION
-      h4.mt-4.mb-2 INVERSE RELATION
+        hr
 
-      p
-        strong Host Country:
-        if doc.hostCountry
-          a(href=`/resource/inverse/${encodeURIComponent(doc.hostCountry)}`)= doc.hostCountry
-        else
-          | N/A
-
-      p
-        strong Student Type:
-        if doc.studentType
-          a(href=`/resource/inverse/${encodeURIComponent(doc.studentType)}`)= doc.studentType
-        else
-          | N/A
-
-      p
-        strong Teaching Area:
-        if doc.teachingArea
-          a(href=`/resource/inverse/${encodeURIComponent(doc.teachingArea)}`)= doc.teachingArea
-        else
-          | N/A
-
-      hr
-
-      // 4️⃣ RELATED INFORMATION
-      if relatedFields.length
-        h4.mt-4.mb-2 RELATED INFORMATION
+        // ✅ RELATED INFORMATION
+        h5.mb-3 RELATED INFORMATION
         table.table.table-bordered
           tbody
-            each item in relatedFields
-              tr
-                th= item.label
-                td= item.value
+            tr
+              th Duration
+              td= doc.duration || 'N/A'
+            tr
+              th Pay
+              td= doc.pay || 'N/A'
+            tr
+              th Housing
+              td= doc.housing || 'N/A'
+            tr
+              th Email
+              td= doc.email || 'N/A'
+            tr
+              th Company Name
+              td= doc.companyName || 'N/A'
+            tr
+              th Job Location
+              td= doc.jobLocation || 'N/A'
+            tr
+              th Cellphone Number
+              td= doc.cellphoneNumber || 'N/A'
+            tr
+              th Skype ID
+              td= doc.skypeId || 'N/A'
+            tr
+              th WeChat ID
+              td= doc.wechatId || 'N/A'
+            tr
+              th Homepage
+              td
+                if doc.homepage && doc.homepage !== 'N/A'
+                  a(href=doc.homepage target="_blank")= doc.homepage
+                else
+                  | N/A

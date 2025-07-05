@@ -1,3 +1,5 @@
+const sanitizeHtml = require('sanitize-html');
+
 function createFacetEntryFromCRUD(job) {
   const label = job.title?.trim() || 'No Title';
   const idSuffix = label.replace(/\s+/g, '_');
@@ -11,11 +13,26 @@ function createFacetEntryFromCRUD(job) {
       "@value": label
     },
     "http://purl.org/dc/elements/1.1/description": {
-      "@value": job._description || ''  // ✅ CKEditor raw HTML 그대로 facetEntry에 저장
+      "@value": sanitizeHtml(job._description || '', {
+        allowedTags: ['p', 'strong', 'em', 'ul', 'li', 'ol', 'br'],
+        allowedAttributes: {}
+      })
     },
     hostCountry: job.country || 'N/A',
     studentType: job.studentType || 'N/A',
-    teachingArea: job.teachingArea || 'N/A'
+    teachingArea: job.teachingArea || 'N/A',
+    duration: job.duration || 'N/A',
+    pay: job.pay || 'N/A',
+    housing: job.housing || 'N/A',
+    email: job.email || 'N/A',
+    companyName: job.companyName || 'N/A',
+    jobLocation: job.jobLocation || 'N/A',
+    cellphoneNumber: job.cellphoneNumber || 'N/A',
+    skypeId: job.skypeId || 'N/A',
+    wechatId: job.wechatId || 'N/A',
+    homepage: job.homepage || 'N/A',
+    adPackage: job.adPackage || 'N/A',
+    addResumeAccess: job.addResumeAccess ? 'Yes' : 'No'
   };
 }
 

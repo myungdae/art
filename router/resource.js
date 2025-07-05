@@ -17,33 +17,11 @@ router.get('/:name', async (req, res) => {
   const col = db.collection(COLLECTION_NAME);
 
   const doc = await col.findOne({ '@id': fullId });
-
   if (!doc) {
     return res.status(404).send(`Resource not found: ${fullId}`);
   }
 
-  // Prepare related fields
-  const fieldMap = [
-    { key: 'Duration', label: 'Duration' },
-    { key: 'Pay', label: 'Pay' },
-    { key: 'Housing', label: 'Housing' },
-    { key: 'Email', label: 'Email' },
-    { key: 'Company Name', label: 'Company Name' },
-    { key: 'Job Location', label: 'Job Location' },
-    { key: 'Cellphone Number', label: 'Cellphone Number' },
-    { key: 'Skype ID', label: 'Skype ID' },
-    { key: 'WeChat ID', label: 'WeChat ID' },
-    { key: 'Homepage', label: 'Homepage' }
-  ];
-
-  const relatedFields = fieldMap
-    .filter(f => doc[f.key])
-    .map(f => ({
-      label: f.label,
-      value: doc[f.key]
-    }));
-
-  res.render('resource', { doc, relatedFields });
+  res.render('resource', { doc });
 });
 
 // INVERSE RELATION 검색

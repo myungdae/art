@@ -12,81 +12,55 @@ block content
               h4.mb-0.text-dark= jobVacancy._label || jobVacancy.title || 'Untitled'
               a.btn.btn-outline-primary(href='/job-vacancies') ← Back to List
 
-          .card-body
-            h5.mb-3 📝 Job Description
-            .job-description.border.p-3.bg-light
-              if stripped
-                div= stripped
-              else
-                p.text-muted No description provided.
-
-            hr
-
-            h5.mb-3 📌 Basic Info
-            ul.list-unstyled
-              li
-                strong Host Country: 
-                | #{jobVacancy.country || 'N/A'}
-              li
-                strong Student Type: 
-                | #{jobVacancy.studentType || 'N/A'}
-              li
-                strong Teaching Area: 
-                | #{jobVacancy.teachingArea || 'N/A'}
-              li
-                strong Duration: 
-                | #{jobVacancy.duration || 'N/A'}
-              li
-                strong Pay: 
-                | #{jobVacancy.pay || 'N/A'}
-              li
-                strong Housing: 
-                | #{jobVacancy.housing || 'N/A'}
-              li
-                strong Ad Package: 
-                | #{jobVacancy.adPackage || 'N/A'}
-              li
-                strong Resume Access: 
-                | #{jobVacancy.addResumeAccess ? 'Yes' : 'No'}
-
-            hr
-
-            h5.mb-3 🏢 Company Info
-            ul.list-unstyled
-              li
-                strong Company Name: 
-                | #{jobVacancy.companyName || 'N/A'}
-              li
-                strong Job Location: 
-                | #{jobVacancy.jobLocation || 'N/A'}
-              li
-                strong Date Posted: 
-                | #{jobVacancy.datePosted ? new Date(jobVacancy.datePosted).toLocaleDateString() : 'N/A'}
-
-            hr
-
-            h5.mb-3 💬 Contact Info
-            ul.list-unstyled
-              li
-                strong Email: 
-                | #{jobVacancy.email || 'N/A'}
-              li
-                strong Cellphone: 
-                | #{jobVacancy.cellphoneNumber || 'N/A'}
-              li
-                strong Skype ID: 
-                | #{jobVacancy.skypeId || 'N/A'}
-              li
-                strong WeChat ID: 
-                | #{jobVacancy.wechatId || 'N/A'}
-              li
-                strong Homepage: 
-                if jobVacancy.homepage
-                  a(href=jobVacancy.homepage, target="_blank")= jobVacancy.homepage
+            .card-body
+              h5.mb-3 📝 Job Description
+              .job-description.border.p-3.bg-light
+                if stripped
+                  div= stripped
                 else
-                  | N/A
+                  p.text-muted No description provided.
 
-            .mt-4.d-flex.justify-content-end
-              a.btn.btn-secondary.me-2(href=`/job-vacancies/${jobVacancy._id}/edit`) Edit
-              form(method="POST", action=`/job-vacancies/${jobVacancy._id}?_method=DELETE`)
-                button.btn.btn-danger(type="submit" onclick="return confirm('Are you sure you want to delete this ad?')") Delete
+              hr
+
+              h5.mb-3 RELATED INFORMATION
+              table.table.table-bordered
+                tbody
+                  tr
+                    th Duration
+                    td= jobVacancy.duration && jobVacancy.duration.trim() !== '' ? jobVacancy.duration : 'N/A'
+                  tr
+                    th Pay
+                    td= jobVacancy.pay && jobVacancy.pay.trim() !== '' ? jobVacancy.pay : 'N/A'
+                  tr
+                    th Housing
+                    td= jobVacancy.housing && jobVacancy.housing.trim() !== '' ? jobVacancy.housing : 'N/A'
+                  tr
+                    th Email
+                    td= jobVacancy.email && jobVacancy.email.trim() !== '' ? jobVacancy.email : 'N/A'
+                  tr
+                    th Company Name
+                    td= jobVacancy.companyName && jobVacancy.companyName.trim() !== '' ? jobVacancy.companyName : 'N/A'
+                  tr
+                    th Job Location
+                    td= jobVacancy.jobLocation && jobVacancy.jobLocation.trim() !== '' ? jobVacancy.jobLocation : 'N/A'
+                  tr
+                    th Cellphone Number
+                    td= jobVacancy.cellphoneNumber && jobVacancy.cellphoneNumber.trim() !== '' ? jobVacancy.cellphoneNumber : 'N/A'
+                  tr
+                    th Skype ID
+                    td= jobVacancy.skypeId && jobVacancy.skypeId.trim() !== '' ? jobVacancy.skypeId : 'N/A'
+                  tr
+                    th WeChat ID
+                    td= jobVacancy.wechatId && jobVacancy.wechatId.trim() !== '' ? jobVacancy.wechatId : 'N/A'
+                  tr
+                    th Homepage
+                    td
+                      if jobVacancy.homepage && jobVacancy.homepage.trim() !== ''
+                        a(href=jobVacancy.homepage, target="_blank")= jobVacancy.homepage
+                      else
+                        | N/A
+
+              .mt-4.d-flex.justify-content-end
+                a.btn.btn-secondary.me-2(href=`/job-vacancies/${jobVacancy._id}/edit`) Edit
+                form(method="POST", action=`/job-vacancies/${jobVacancy._id}?_method=DELETE`)
+                  button.btn.btn-danger(type="submit" onclick="return confirm('Are you sure you want to delete this ad?')") Delete

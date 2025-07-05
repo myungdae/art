@@ -23,8 +23,6 @@ const jobVacancySchema = new mongoose.Schema({
   companyName: { type: String },
   jobLocation: { type: String },
   cellphoneNumber: { type: String },
-  skypeId: { type: String },
-  wechatId: { type: String },
   homepage: { type: String },
   adPackage: { type: String },
   addResumeAccess: { type: Boolean },

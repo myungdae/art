@@ -54,6 +54,17 @@ async function saveJob(req, res) {
       studentType: req.body.studentType,
       teachingArea: req.body.teachingArea,
       duration: req.body.duration,
+      pay: req.body.pay,
+      housing: req.body.housing,
+      email: req.body.email,
+      companyName: req.body.companyName,
+      jobLocation: req.body.jobLocation,
+      cellphoneNumber: req.body.cellphoneNumber,
+      skypeId: req.body.skypeId,
+      wechatId: req.body.wechatId,
+      homepage: req.body.homepage,
+      adPackage: req.body.adPackage,
+      addResumeAccess: req.body.addResumeAccess === 'yes',
       _description: cleanDescription
     });
 
@@ -76,7 +87,6 @@ router.get('/:id', requireLogin, async (req, res) => {
   const jobVacancy = await JobVacancy.findById(req.params.id);
   if (!jobVacancy) return res.status(404).send('Job not found');
 
-  // ✅ plain text 변환
   const stripped = sanitizeHtml(jobVacancy._description || '', {
     allowedTags: [],
     allowedAttributes: {}
@@ -111,6 +121,15 @@ router.put('/:id', requireLogin, async (req, res) => {
     studentType: req.body.studentType,
     teachingArea: req.body.teachingArea,
     duration: req.body.duration,
+    pay: req.body.pay,
+    housing: req.body.housing,
+    email: req.body.email,
+    companyName: req.body.companyName,
+    jobLocation: req.body.jobLocation,
+    cellphoneNumber: req.body.cellphoneNumber,
+    homepage: req.body.homepage,
+    adPackage: req.body.adPackage,
+    addResumeAccess: req.body.addResumeAccess === 'yes',
     _description: cleanDescription
   });
 
