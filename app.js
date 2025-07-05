@@ -53,6 +53,11 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(methodOverride('_method'));
 
 // 📌 라우터 등록 (순서 주의)
+app.use((req, res, next) => {
+  console.log(`🔹 ${req.method} ${req.url}`);
+  next();
+});
+
 app.use('/resource', resourceRouter);        // 리소스 기반 URL 최우선
 app.use('/rdf-resource', rdfResourceRouter);
 app.use('/job-seekers', jobSeekerRouter);

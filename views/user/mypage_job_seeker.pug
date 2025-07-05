@@ -1,15 +1,22 @@
-.block-content
-.container.mt-5
-  h2.text-center.mb-4 My Page (Job Seeker)
+extends ../layout
 
-  p Username: #{user.username}
-  p Email: #{user.email}
-  p Role: Job Seeker
+block content
+  .container.mt-5
+    h2.text-center.mb-4 My Page (Job Seeker)
 
-  p.mt-3
-    | 🔑 Remaining Days of Resume Access:
-    strong= remainingDays
+    p
+      strong Username:
+      | #{user.username}
+    p
+      strong Email:
+      | #{user.email}
+    p
+      strong Role:
+      | Job Seeker
+    p.mt-3
+      strong 🔑 Remaining Days of Resume Access:
+      | #{remainingDays}
 
-  .mt-4.d-flex.flex-wrap.gap-2
-    a.btn.text-white.bg-orange-600.px-4.py-2.rounded.shadow(href='/job-seekers/new') Register Resume
-    a.btn.btn-secondary.px-4.py-2.rounded.shadow(href='/user/job-seekers/resume-access') Purchase Resume Visibility
+    .mt-4.d-flex.flex-wrap.gap-2
+      a.btn.btn-primary(href='/job-seekers/new') Register Resume
+      a.btn.btn-secondary(href=purchaseLink) Purchase Resume Visibility
