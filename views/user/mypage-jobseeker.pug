@@ -3,29 +3,37 @@ extends ../layout
 block content
   .container.mt-5
     .text-center
-      h2.mb-4(style="font-size: 3rem; font-weight: 900; color: #212529; text-shadow: 1px 1px 2px rgba(0,0,0,0.1);") My Page (Job Seeker)
+      h2.mb-4(
+        style="font-size: 2.5rem; font-weight: bold; color: #333;"
+      ) My Page (Job Seeker)
 
-    .card.shadow-lg.p-4(style="max-width: 600px; margin: 0 auto; border-radius: 1.5rem; background: #fff; border: 2px solid #007bff;")
-      p.mb-2(style="font-size: 1.4rem; color: #343a40;") 
+    .card.shadow.p-4(
+      style="max-width: 500px; margin: 0 auto; border-radius: 1rem; background: #f9f9f9;"
+    )
+      p.mb-2(style="font-size: 1.2rem;")
         strong Username:
         |  #{user.username}
 
-      p.mb-2(style="font-size: 1.4rem; color: #343a40;")
+      p.mb-2(style="font-size: 1.2rem;")
         strong Email:
         |  #{user.email}
 
-      p.mb-2(style="font-size: 1.4rem; color: #343a40;")
+      p.mb-2(style="font-size: 1.2rem;")
         strong Role:
         |  #{user.role}
 
-      p.mb-4(style="font-size: 1.5rem; color: #28a745; font-weight: bold;")
-        span 🔑 
-        | Remaining Days of Resume Access: 
+      p.mb-4(style="font-size: 1.3rem; color: #28a745;")
+        span 🔑
+        | Remaining Days of Resume Access:
         strong #{remainingDays}
 
       .d-flex.justify-content-center.gap-3
-        a.btn.btn-lg(style="background: #28a745; color: #fff; font-weight: bold; padding: 0.75rem 2rem; border-radius: 0.5rem;" href="/resume/register") Register Resume
+        a.btn.btn-lg.btn-success(
+          href="/job-seekers/new"
+        ) Register Resume
         if remainingDays <= 0
-          a.btn.btn-lg(style="background: #fd7e14; color: #fff; font-weight: bold; padding: 0.75rem 2rem; border-radius: 0.5rem;" href="/paypal/checkout-resume") Purchase Resume Visibility
+          a.btn.btn-lg.btn-primary(
+            href="/paypal/checkout-resume"
+          ) Purchase Resume Visibility
         else
-          a.btn.btn-lg.disabled(style="background: #fd7e14; opacity: 0.6; color: #fff; font-weight: bold; padding: 0.75rem 2rem; border-radius: 0.5rem;") Purchase Resume Visibility
+          a.btn.btn-lg.btn-secondary.disabled Purchase Resume Visibility

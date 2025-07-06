@@ -30,7 +30,6 @@ app.get('/login', (req, res) => {
   return res.redirect('/user/login');
 });
 
-
 // 📌 view 설정
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
@@ -42,7 +41,7 @@ app.use(session({
   secret: 'esl-secret-key',
   resave: false,
   saveUninitialized: true,
-  cookie: { maxAge: 1000 * 60 * 60 } // 1시간
+  cookie: { maxAge: 1000 * 60 * 60 }
 }));
 app.use(flash());
 app.use((req, res, next) => {
@@ -57,15 +56,16 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(methodOverride('_method'));
 
-// 📌 라우터 등록 (순서 주의)
+// 요청 로깅
 app.use((req, res, next) => {
   console.log(`🔹 ${req.method} ${req.url}`);
   next();
 });
 
-app.use('/resource', resourceRouter);        // 리소스 기반 URL 최우선
+// 📌 라우터 등록
+app.use('/resource', resourceRouter);
 app.use('/rdf-resource', rdfResourceRouter);
-app.use('/job-seekers', jobSeekerRouter);
+app.use('/job-seekers', jobSeekerRouter);     // ✅ JobSeeker router는 /job-seekers 접두사
 app.use('/job-vacancies', jobVacancyRouter);
 app.use('/paypal', paypalRoutes);
 app.use('/resume-access', resumeAccessRouter);
