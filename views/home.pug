@@ -1,28 +1,23 @@
-//- views/home.pug  — 중복 검색/버튼 제거한 미니멀 홈
+//- views/home.pug
 extends layout
 
 block content
   .container.mt-5
 
-    //- ✔ 상단(헤더)의 검색창을 메인 진입점으로 사용합니다.
-    //-    여기(home 본문)에는 중복 검색 UI를 두지 않습니다.
-
-    // 🎉 간단한 환영 메시지
+    // 🎉 메인 환영 메시지 (헤더 타이틀과 중복되는 큰 타이틀 제거)
     .text-center.mb-5
-      h1(style="font-size: 2.4rem; font-weight: 800;") ESL · SMTP
-      p.text-muted.mt-3(style="font-size: 1.15rem; max-width: 900px; margin: 0 auto;")
-        | A semantic matching platform for language education.
+      h3(style="font-size: 1.75rem; font-weight: 700;") Welcome to the ESL Semantic Platform!
+      p.text-muted.mt-3(style="font-size: 1.1rem; max-width: 900px; margin: 0 auto;")
+        | Discover job opportunities, connect with qualified tutors, or showcase your talent to language institutions worldwide.
 
-    // 🧠 RDF 메시지 박스 (간결화)
-    .card.shadow-sm.mb-5
+    // 🧠 RDF 메시지 박스
+    .card.shadow.mb-5
       .card-body
-        h4.text-center.mb-3(style="font-size: 1.25rem; font-weight: 700; color: #dc3545;")
+        h4.text-danger.text-center.mb-3(style="font-size: 1.2rem; font-weight: 800;")
           | RDF-Compliant · Semantically-Driven · Facet-Linked
-        p.mb-0.text-center(style="font-size: 1rem;")
-          | Your ESL platform is a 
-          strong semantic knowledge interface 
-          | with RDF-compliant data and facet-based navigation.
+        p.text-center(style="font-size: 1rem;")
+          | Your ESL platform is a semantic knowledge interface with RDF-compliant data and facet-based navigation.
 
-    // ℹ️ 가이드 문구 (선택)
-    .text-center.text-muted(style="font-size: .95rem;")
+    // ℹ️ 안내 문구
+    p.text-center.text-muted.mt-4
       | Use the search bar above or the navigation menu to get started.
