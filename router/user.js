@@ -1,18 +1,27 @@
+// router/user.js
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
+
 const User = require('../model/user');
 const JobVacancy = require('../model/jobVacancy');
+const OnlineTutor = require('../model/onlineTutor');   // added
+const Thread = require('../model/thread');             // added
+const { logThread } = require('../utils/threadLog');   // added
+const JobSeeker = require('../model/jobSeeker');
+
 const { requireLogin } = require('../middleware/auth');
 
-// ✅ 회원가입 폼
+// ---------------------------------------------------------------------
+// Register
+// ---------------------------------------------------------------------
 router.get('/register', (req, res) => {
   res.render('user/register');
 });
 
-// ✅ 회원가입 처리
 router.post('/register', async (req, res) => {
   let { username, email, password, role } = req.body;
+  // normalize role values
   if (role === 'JobSeeker' || role === 'Job Seeker') role = 'Job_Seeker';
   else if (role === 'OnlineTutor' || role === 'Online Tutor') role = 'Online_Tutor';
 
@@ -36,12 +45,13 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// ✅ 로그인 폼
+// ---------------------------------------------------------------------
+// Login / Logout
+// ---------------------------------------------------------------------
 router.get('/login', (req, res) => {
   res.render('user/login');
 });
 
-// ✅ 로그인 처리
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
   try {
@@ -59,6 +69,21 @@ router.post('/login', async (req, res) => {
       email: user.email,
       role: user.role
     };
+
+    // activity log (non-blocking)
+    try {
+      await logThread(req, {
+        type: 'auth',
+        action: 'login',
+        source: 'auth',
+        sourceId: String(user._id),
+        title: 'Login',
+        summary: `user=${user.email}`
+      });
+    } catch (e) {
+      console.error('[thread] login log failed:', e.message || e);
+    }
+
     res.redirect('/user/mypage');
   } catch (err) {
     console.error('❌ Login error:', err.message);
@@ -66,7 +91,13 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// ✅ 마이페이지 분기
+router.get('/logout', (req, res) => {
+  req.session.destroy(() => res.redirect('/'));
+});
+
+// ---------------------------------------------------------------------
+// Mypage router (role switch)
+// ---------------------------------------------------------------------
 router.get('/mypage', requireLogin, async (req, res) => {
   try {
     const user = await User.findById(req.session.user._id).lean();
@@ -83,14 +114,18 @@ router.get('/mypage', requireLogin, async (req, res) => {
   }
 });
 
-// ✅ Employer 전용 마이페이지
+// ---------------------------------------------------------------------
+// Employer mypage
+// ---------------------------------------------------------------------
 router.get('/mypage-employer', requireLogin, async (req, res) => {
   const jobVacancies = await JobVacancy.find({ user: req.session.user._id }).lean();
   const user = await User.findById(req.session.user._id).lean();
   res.render('user/mypage-employer', { user, jobVacancies });
 });
 
-// ✅ Job Seeker 전용 마이페이지
+// ---------------------------------------------------------------------
+// Job Seeker mypage + payments
+// ---------------------------------------------------------------------
 router.get('/mypage-jobseeker', requireLogin, async (req, res) => {
   const user = await User.findById(req.session.user._id).lean();
   let remainingDays = 0;
@@ -105,12 +140,11 @@ router.get('/mypage-jobseeker', requireLogin, async (req, res) => {
   res.render('user/mypage-jobseeker', { user, remainingDays, purchaseLink: '/user/job-seekers/resume-access' });
 });
 
-// ✅ Job Seeker 결제 GET
+// payments (job seeker)
 router.get('/job-seekers/resume-access', requireLogin, (req, res) => {
   res.render('jobSeeker/resumeAccess');
 });
 
-// ✅ Job Seeker 결제 POST (console.log 추가 + 안전 처리)
 router.post('/job-seekers/resume-access', requireLogin, async (req, res) => {
   try {
     console.log('📝 POST body:', req.body);
@@ -138,15 +172,40 @@ router.post('/job-seekers/resume-access', requireLogin, async (req, res) => {
   }
 });
 
-// ✅ Online Tutor 전용 마이페이지
+// ---------------------------------------------------------------------
+// Online Tutor mypage (dashboard)
+// - Shows tutor profile matched by logged-in user's email
+// - Loads recent activity logs (source: 'online_tutors')
+// ---------------------------------------------------------------------
 router.get('/mypage-tutor', requireLogin, async (req, res) => {
-  const user = await User.findById(req.session.user._id).lean();
-  res.render('user/mypage-tutor', { user });
-});
+  try {
+    const user = await User.findById(req.session.user._id).lean();
+    const email = user?.email;
 
-// ✅ 로그아웃
-router.get('/logout', (req, res) => {
-  req.session.destroy(() => res.redirect('/'));
+    // find my tutor profile (by email)
+    const tutor = email
+      ? await OnlineTutor.findOne({ email }).sort({ updatedAt: -1 }).lean()
+      : null;
+
+    // recent activity from threads
+    let threads = [];
+    try {
+      threads = await Thread.find({
+        userId: String(req.session.user._id),
+        source: 'online_tutors'
+      })
+        .sort({ createdAt: -1 })
+        .limit(10)
+        .lean();
+    } catch (e) {
+      console.error('[thread] list failed:', e.message || e);
+    }
+
+    res.render('user/mypage-tutor', { user, tutor, threads });
+  } catch (err) {
+    console.error('❌ Tutor mypage error:', err.message);
+    res.status(500).send('❌ Failed to load Tutor Dashboard');
+  }
 });
 
 module.exports = router;

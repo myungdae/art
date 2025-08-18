@@ -20,6 +20,7 @@ const tutorAccessRouter = require('./router/tutorAccess');
 const rdfResourceRouter = require('./router/rdf-resource');
 const resourceRouter = require('./router/resource');
 const resumeAccessRouter = require('./router/resume-access');
+const threadRouter = require('./router/thread');
 
 console.log("📌 app.js 시작됨");
 require('./router/config');
@@ -85,6 +86,7 @@ app.use('/data', require('./router/data'));
 app.use('/user', userRoutes);
 app.use('/', require('./router/index'));
 app.use('/', require('./router/public'));
+app.use('/thread', threadRouter);
 
 // 📌 404 핸들링
 app.use((req, res, next) => {

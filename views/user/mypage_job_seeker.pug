@@ -1,44 +1,123 @@
+//- views/user/mypage-jobseeker.pug
 extends ../layout
 
 block content
-  .container.mt-5
-    .text-center
-      h2.mb-4(
-        style="font-size: 3rem; font-weight: 900; color: #212529; text-shadow: 1px 1px 2px rgba(0,0,0,0.1);"
-      ) My Page (Job Seeker)
+  .mypage-scope
+    .container
+      // Header
+      .d-flex.align-items-baseline.justify-content-between.mb-3
+        h1.mp-title-xl.mb-0 Job Seeker Dashboard
+        if user
+          span.mp-muted.fs-6 #{user.email}
 
-    .card.shadow-lg.p-4(
-      style="max-width: 600px; margin: 0 auto; border-radius: 1.5rem; background: #fff; border: 2px solid #007bff;"
-    )
-      p.mb-2(style="font-size: 1.4rem; color: #343a40;")
-        strong Username:
-        |  #{user.username}
+      p.mp-subtext.mb-4 Manage your resume, access options, and recent activity.
 
-      p.mb-2(style="font-size: 1.4rem; color: #343a40;")
-        strong Email:
-        |  #{user.email}
+      .row.gap-6
+        // LEFT: Account, resume access, quick actions
+        .col-lg-4
+          .mp-card.mb-3
+            .card-header
+              strong Account
+            .card-body
+              ul.mp-list
+                li
+                  .mp-list-title Username
+                  .mp-list-sub #{user && user.username || '—'}
+                li
+                  .mp-list-title Email
+                  .mp-list-sub #{user && user.email || '—'}
+                li
+                  .mp-list-title Role
+                  .mp-list-sub Job Seeker
 
-      p.mb-2(style="font-size: 1.4rem; color: #343a40;")
-        strong Role:
-        |  #{user.role}
+          .mp-card.mb-3
+            .card-header
+              strong Resume Access
+            .card-body
+              if remainingDays && remainingDays > 0
+                p.mb-2 You have resume access for
+                  strong &nbsp;#{remainingDays} day(s)
+                a.btn.btn-outline-dark.w-100(href=purchaseLink) Extend access
+              else
+                p.mp-muted.mb-2 You do not have an active resume access plan.
+                a.btn.btn-primary.w-100(href=purchaseLink) Purchase access
 
-      p.mb-4(style="font-size: 1.5rem; color: #28a745; font-weight: bold;")
-        span 🔑 
-        | Remaining Days of Resume Access: 
-        strong #{remainingDays}
+          .mp-card.mb-3
+            .card-header
+              strong Quick actions
+            .card-body.btn-block-mobile
+              if seeker
+                a.btn.btn-primary.w-100.mb-2(href=`/job-seekers/${seeker._id}/edit`) Edit resume
+                a.btn.btn-outline-dark.w-100.mb-2(href=`/facet/Job_Seekers?q=${encodeURIComponent(seeker.name || seeker.jobTitle || '')}`) View in directory
+                a.btn.btn-outline-secondary.w-100(href='/job-seekers') View all (internal)
+              else
+                a.btn.btn-primary.w-100(href='/job-seekers/new') Create resume
 
-      .d-flex.justify-content-center.gap-3
-        a.btn.btn-lg(
-          style="background: #28a745; color: #fff; font-weight: bold; padding: 0.75rem 2rem; border-radius: 0.5rem;"
-          href="/jobSeeker/new"
-        ) Register Resume
+          .mp-card
+            .card-header
+              strong Tools & Logs
+            .card-body
+              ul.mp-list
+                li
+                  a(href='/thread/my') View my recent activity
+                li
+                  a(href='/facet/Job_Seekers') Browse Job Seekers
 
-        if remainingDays <= 0
-          a.btn.btn-lg(
-            style="background: #fd7e14; color: #fff; font-weight: bold; padding: 0.75rem 2rem; border-radius: 0.5rem;"
-            href="/paypal/checkout-resume"
-          ) Purchase Resume Visibility
-        else
-          a.btn.btn-lg.disabled(
-            style="background: #fd7e14; opacity: 0.6; color: #fff; font-weight: bold; padding: 0.75rem 2rem; border-radius: 0.5rem;"
-          ) Purchase Resume Visibility
+        // RIGHT: Resume card + recent activity
+        .col-lg-8
+          if seeker
+            .mp-card.mb-3
+              .card-header
+                strong Your Resume
+              .card-body
+                h3.mb-1 #{seeker.name}
+                if seeker.jobTitle
+                  .mp-muted.mb-2 #{seeker.jobTitle}
+
+                // badges
+                .mb-2
+                  if seeker.nationality
+                    span.badge.bg-secondary.me-2 Nationality: #{seeker.nationality}
+                  if seeker.preferredWorkLocation
+                    span.badge.bg-primary.me-2 Location: #{seeker.preferredWorkLocation}
+                  if seeker.major
+                    span.badge.bg-info.text-dark.me-2 Major: #{seeker.major}
+                  if seeker.email
+                    span.badge.bg-light.text-dark Email: #{seeker.email}
+
+                hr.mp-divider
+
+                if seeker.description
+                  .mb-3 !{seeker.description}
+                else
+                  p.mp-muted No description provided.
+
+                .d-flex.justify-content-between.mt-3
+                  small.mp-muted Created: #{new Date(seeker.createdAt).toLocaleString('en-US')}
+                  small.mp-muted Updated: #{new Date(seeker.updatedAt).toLocaleString('en-US')}
+
+                .mt-3.btn-block-mobile
+                  a.btn.btn-primary.me-2(href=`/job-seekers/${seeker._id}/edit`) Edit
+                  form.d-inline(method='POST', action=`/job-seekers/${seeker._id}?_method=DELETE`)
+                    button.btn.btn-outline-danger(type='submit', onclick="return confirm('Delete this resume?')") Delete
+          else
+            .mp-card.mb-3
+              .card-header
+                strong Your Resume
+              .card-body
+                h4.mb-2 No resume yet
+                p.mp-muted Create your public resume so employers can discover you.
+                a.btn.btn-primary.mt-2(href='/job-seekers/new') Create resume
+
+          .mp-card
+            .card-header
+              strong Recent Activity
+            .card-body
+              if threads && threads.length
+                ul.mp-list
+                  each t in threads
+                    li
+                      .mp-list-title #{t.title || (t.action + ' ' + t.source)}
+                      .mp-list-sub #{t.summary || ''} · #{new Date(t.createdAt).toLocaleString('en-US')}
+              else
+                p.mp-muted No recent activity.

@@ -1,8 +1,106 @@
+//- views/user/mypage_tutor.pug
 extends ../layout
 
 block content
-  .container.mt-5
-    h2.text-center.mb-4 Online Tutor Dashboard
-    p Username: #{user.username}
-    p Email: #{user.email}
-    p Your Tutor Profile coming soon...
+  .mypage-scope
+    .container
+      // Header
+      .d-flex.align-items-baseline.justify-content-between.mb-3
+        h1.mp-title-xl.mb-0 Online Tutor Dashboard
+        if user
+          span.mp-muted.fs-6 #{user.email}
+
+      p.mp-subtext.mb-4 Manage your online tutor profile and recent activity.
+
+      // Grid
+      .row.gap-6
+        // LEFT: Account & quick actions
+        .col-lg-4
+          .mp-card.mb-3
+            .card-header
+              strong Account
+            .card-body
+              ul.mp-list
+                li
+                  div.mp-list-title Username
+                  div.mp-list-sub #{user && user.username || '—'}
+                li
+                  div.mp-list-title Email
+                  div.mp-list-sub #{user && user.email || '—'}
+                li
+                  div.mp-list-title Role
+                  div.mp-list-sub Tutor
+
+          .mp-card.mb-3
+            .card-header
+              strong Quick actions
+            .card-body.btn-block-mobile
+              if tutor
+                a.btn.btn-primary.w-100.mb-2(href=`/online-tutor/${tutor._id}/edit`) Edit tutor profile
+                a.btn.btn-outline-dark.w-100.mb-2(href=`/facet/Online_Tutors?q=${encodeURIComponent(tutor.name || '')}`) View in directory
+                a.btn.btn-outline-secondary.w-100(href='/online-tutor') View all (internal list)
+              else
+                a.btn.btn-primary.w-100(href='/online-tutor/new') Create tutor profile
+
+          .mp-card
+            .card-header
+              strong Tools & Logs
+            .card-body
+              ul.mp-list
+                li
+                  a(href='/thread/my') View my recent activity
+                li
+                  a(href='/facet/Online_Tutors') Browse Online Tutors
+
+        // RIGHT: Tutor profile / empty state + recent activity
+        .col-lg-8
+          if tutor
+            .mp-card.mb-3
+              .card-header
+                strong Your Tutor Profile
+              .card-body
+                h3.mb-2 #{tutor.name}
+                if tutor.subject
+                  span.badge.bg-primary.me-2 #{tutor.subject}
+                if tutor.email
+                  span.badge.bg-secondary #{tutor.email}
+                hr.mp-divider
+
+                if tutor.description
+                  .mb-3 !{tutor.description}
+                else
+                  p.mp-muted No description provided.
+
+                .d-flex.justify-content-between.mt-3
+                  small.mp-muted Created: #{new Date(tutor.createdAt).toLocaleString('en-US')}
+                  small.mp-muted Updated: #{new Date(tutor.updatedAt).toLocaleString('en-US')}
+
+                // Actions
+                .mt-3.btn-block-mobile
+                  a.btn.btn-primary.me-2(href=`/online-tutor/${tutor._id}/edit`) Edit
+                  form.d-inline(method='POST', action=`/online-tutor/${tutor._id}?_method=DELETE`)
+                    button.btn.btn-outline-danger(type='submit', onclick="return confirm('Delete this profile?')") Delete
+          else
+            .mp-card.mb-3
+              .card-header
+                strong Your Tutor Profile
+              .card-body
+                h4.mb-2 No profile yet
+                p.mp-muted Create your public tutor card so schools can find you.
+                a.btn.btn-primary.mt-2(href='/online-tutor/new') Create tutor profile
+
+          // Recent activity
+          .mp-card
+            .card-header
+              strong Recent Activity
+            .card-body
+              if threads && threads.length
+                ul.mp-list
+                  each t in threads
+                    li
+                      div.mp-list-title #{t.title || (t.action + ' ' + t.source)}
+                      div.mp-list-sub
+                        | #{t.summary || ''} · 
+                        | #{new Date(t.createdAt).toLocaleString('en-US')}
+              else
+                p.mp-muted No recent activity.
