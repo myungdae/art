@@ -1,0 +1,27 @@
+//- views/facet_generic.pug
+extends layout
+
+block content
+  .container
+    .d-flex.align-items-center.mb-4
+      h2.mb-0= facet.replace('_',' ')
+      if q
+        span.badge.bg-secondary.ms-3 #{q}
+
+    if !items || items.length === 0
+      .alert.alert-light.border
+        | No results yet. Try a different keyword above.
+
+    .row.row-cols-1.row-cols-sm-2.row-cols-lg-3.g-4
+      each item in items
+        .col
+          .card.h-100.shadow-sm
+            if item.image
+              img.card-img-top(src=item.image, alt=item.title, onerror="this.style.display='none'")
+            .card-body
+              h5.card-title.mb-2= item.title
+              if item.desc
+                p.card-text.text-muted= item.desc
+            if item.link
+              .card-footer.bg-white.border-0.pt-0
+                a.btn.btn-outline-primary.btn-sm(href=item.link) View
