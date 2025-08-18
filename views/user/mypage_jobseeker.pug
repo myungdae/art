@@ -1,31 +1,190 @@
+//- views/user/mypage-jobseeker.pug
 extends ../layout
 
 block content
-  .container.mt-5
-    .text-center
-      h2.mb-4(style="font-size: 2.5rem; font-weight: bold; color: #333;") My Page (Job Seeker)
+  .mypage-scope
+    .container.mt-5.mb-5
+      // ===== 헤더 =====
+      .d-flex.flex-column.align-items-center.text-center.mb-4
+        h2.mp-title-xl.mb-2 My Page (Job Seeker)
+        p.mp-subtext Keep your profile updated to reach the right employers.
 
-    .card.shadow.p-4(style="max-width: 500px; margin: 0 auto; border-radius: 1rem; background: #f9f9f9;")
-      p.mb-2(style="font-size: 1.2rem;") 
-        strong Username:
-        |  #{user.username}
+      // ===== 상단 요약 카드 =====
+      .card.mp-card.shadow-sm.p-4(style="max-width: 720px; margin: 0 auto;")
+        .row.g-2
+          .col-12.col-md-6
+            p.mb-2
+              strong Username:
+              |  #{user?.username}
+          .col-12.col-md-6
+            p.mb-2
+              strong Email:
+              |  #{user?.email}
+          .col-12.col-md-6
+            p.mb-2
+              strong Role:
+              |  #{user?.role}
+          .col-12.col-md-6
+            p.mb-2
+              span.me-1 🔑
+              | Remaining Days of Resume Access:
+              strong.ms-1 #{remainingDays}
 
-      p.mb-2(style="font-size: 1.2rem;")
-        strong Email:
-        |  #{user.email}
+        // 버튼 (붙어 보이도록 btn-group, 모바일 100%폭)
+        .d-flex.justify-content-center.mt-3.btn-block-mobile
+          .btn-group.mp-btn-group.mp-btn-tight(role="group", aria-label="Resume actions")
+            a.btn.btn-success.btn-lg(href="/jobSeeker/new") Register Resume
+            if remainingDays <= 0
+              a.btn.btn-primary.btn-lg(href="/paypal/checkout-resume") Purchase Resume Visibility
+            else
+              a.btn.btn-outline-dark.btn-lg(aria-disabled="true") Purchase Resume Visibility
 
-      p.mb-2(style="font-size: 1.2rem;")
-        strong Role:
-        |  #{user.role}
+      // ===== 메인 그리드 =====
+      .row.mt-4
+        // --- 좌측: 프로필 편집 ---
+        .col-12.col-lg-7.mb-3
+          .card.mp-card.shadow-sm
+            .card-header
+              h5.mb-0 Profile
+            .card-body
+              form(method="POST", action="/user/mypage-jobseeker")
+                .mp-grid-2
+                  .mp-field
+                    label(for="fullName") Full Name
+                    input#fullName.form-control(
+                      type="text", name="fullName",
+                      value=profile?.fullName || user?.username,
+                      placeholder="Your full name", required
+                    )
+                  .mp-field
+                    label(for="email") Email
+                    input#email.form-control(
+                      type="email", name="email",
+                      value=profile?.email || user?.email,
+                      placeholder="name@example.com", required
+                    )
+                .mp-grid-2
+                  .mp-field
+                    label(for="country") Country
+                    input#country.form-control(
+                      type="text", name="country",
+                      value=profile?.country, placeholder="Korea, Republic of"
+                    )
+                  .mp-field
+                    label(for="city") City
+                    input#city.form-control(
+                      type="text", name="city",
+                      value=profile?.city, placeholder="Seoul"
+                    )
+                .mp-grid-2
+                  .mp-field
+                    label(for="targetRole") Target Role
+                    input#targetRole.form-control(
+                      type="text", name="targetRole",
+                      value=profile?.targetRole, placeholder="ESL Teacher, STEM Instructor, ..."
+                    )
+                  .mp-field
+                    label(for="studentType") Student Type
+                    select#studentType.form-select(name="studentType")
+                      option(value="") Select…
+                      - const ST = ['Kindergarten','Elementary','Middle','High','University','Adults'];
+                      each s in ST
+                        option(value=s, selected=profile?.studentType===s)= s
+                .mp-field
+                  label(for="teachingArea") Teaching Area (Subjects)
+                  input#teachingArea.form-control(
+                    type="text", name="teachingArea",
+                    value=profile?.teachingArea, placeholder="ESL, Conversation, TOEFL, STEM, ..."
+                  )
+                .mp-field
+                  label(for="headline") Headline
+                  input#headline.form-control(
+                    type="text", name="headline",
+                    value=profile?.headline, placeholder="Passionate ESL teacher with 5+ years experience"
+                  )
+                .mp-field
+                  label(for="summary") Summary
+                  textarea#summary.form-control(
+                    name="summary", rows="5",
+                    placeholder="Tell employers about your experience, certifications, and strengths."
+                  )= profile?.summary
 
-      p.mb-4(style="font-size: 1.3rem; color: #28a745;")
-        span 🔑 
-        | Remaining Days of Resume Access: 
-        strong #{remainingDays}
+                .mp-grid-2
+                  .mp-field
+                    label(for="availability") Availability
+                    select#availability.form-select(name="availability")
+                      - const AV = ['Immediately','Within 1 month','Within 3 months'];
+                      each a in AV
+                        option(value=a, selected=profile?.availability===a)= a
+                  .mp-field
+                    label(for="workType") Work Type
+                    select#workType.form-select(name="workType")
+                      - const WT = ['Full-time','Part-time','Contract','Remote'];
+                      each w in WT
+                        option(value=w, selected=profile?.workType===w)= w
 
-      .d-flex.justify-content-center.gap-3
-        a.btn.btn-lg.btn-success(href="/jobSeeker/new") Register Resume
-        if remainingDays <= 0
-          a.btn.btn-lg.btn-primary(href="/paypal/checkout-resume") Purchase Resume Visibility
-        else
-          a.btn.btn-lg.btn-secondary.disabled Purchase Resume Visibility
+                hr.mp-divider
+
+                .mp-grid-2
+                  .mp-field
+                    label(for="resumeFile") Resume (PDF)
+                    input#resumeFile.form-control(
+                      type="file", name="resume", accept=".pdf",
+                      onchange="previewFileName('resumeFile','resumeName')"
+                    )
+                    small#resumeName.mp-muted= profile?.resumeName || 'No file selected'
+                  .mp-field
+                    label(for="certifications") Certifications
+                    input#certifications.form-control(
+                      type="text", name="certifications",
+                      value=profile?.certifications, placeholder="TESOL, TEFL, CELTA ... (comma-separated)"
+                    )
+
+                .d-flex.justify-content-end.mt-3
+                  button.btn.btn-primary(type="submit") Save Changes
+
+        // --- 우측: 활동/저장/알림 ---
+        .col-12.col-lg-5
+          .card.mp-card.shadow-sm.mb-3
+            .card-header
+              h5.mb-0 Activity
+            .card-body
+              if applications && applications.length
+                ul.mp-list
+                  each app in applications
+                    li
+                      div.mp-list-title #{app.jobTitle}
+                      div.mp-list-sub #{app.school} · Applied on #{app.appliedAt}
+                      a(href=`/jobs/${app.jobId}`) View Job →
+              else
+                p.mp-muted No recent applications.
+
+          .card.mp-card.shadow-sm.mb-3
+            .card-header
+              h5.mb-0 Saved Jobs
+            .card-body
+              if saved && saved.length
+                ul.mp-list
+                  each s in saved
+                    li
+                      div.mp-list-title #{s.jobTitle}
+                      div.mp-list-sub #{s.school} · #{s.location}
+                      a(href=`/jobs/${s.jobId}`) View Job →
+              else
+                p.mp-muted You haven’t saved any jobs yet.
+
+          .card.mp-card.shadow-sm
+            .card-header
+              h5.mb-0 Notifications
+            .card-body
+              form(method="POST", action="/user/mypage-jobseeker/notifications")
+                .form-check.mb-2
+                  input#n1.form-check-input(type="checkbox", name="newJobs", checked=notifications?.newJobs)
+                  label.form-check-label(for="n1") Email me new jobs that match my profile
+                .form-check.mb-2
+                  input#n2.form-check-input(type="checkbox", name="message", checked=notifications?.message)
+                  label.form-check-label(for="n2") Notify me when employers message me
+                .form-check.mb-3
+                  input#n3.form-check-input(type="checkbox", name="newsletter", checked=notifications?.newsletter)
+                  label.form-check-label(for="n3") Receive product updates and tips
+                button.btn.btn-outline-dark(type="submit") Update Preferences

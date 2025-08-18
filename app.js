@@ -33,7 +33,7 @@ app.get('/login', (req, res) => {
 // 📌 view 설정
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
-app.set('port', process.env.SVR_BASE_PORT || 8608);
+app.set('port', process.env.SVR_BASE_PORT || process.env.PORT || 8608);
 app.set('view cache', false);
 
 // 📌 미들웨어
