@@ -1,6 +1,6 @@
 $(function() {
     const menus = ['Job_Vacancies', 'Job_Seekers', 'Online_Tutors']
-    const more_menus = ['임시메뉴']
+    const more_menus = []
     const ul_document = document.querySelector(".navbar-nav.justify-content-center");
     
     if (ul_document) {
@@ -53,7 +53,7 @@ $(function() {
                     const subMenuItem = document.createElement("a");
                         subMenuItem.className = "dropdown-item";
                         subMenuItem.href = `/facet/${menu}`;
-                        subMenuItem.textContent = "전체";  // 서브 메뉴 항목 이름
+                        subMenuItem.textContent = "All";  // 서브 메뉴 항목 이름
                         dropdownMenu.appendChild(subMenuItem);
 
                     data.map((d) => d._id.replace(_resource, '')).sort((a, b) => a.localeCompare(b)).forEach(subMenu => {

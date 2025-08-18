@@ -62,6 +62,11 @@ app.use((req, res, next) => {
   next();
 });
 
+app.use((req, res, next) => {
+  res.set('Content-Language', 'en');
+  next();
+});
+
 // 📌 라우터 등록
 app.use('/resource', resourceRouter);
 app.use('/rdf-resource', rdfResourceRouter);
