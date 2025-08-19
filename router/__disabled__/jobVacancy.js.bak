@@ -1,0 +1,9 @@
+// router/jobVacancy.js (STUB)
+'use strict';
+const express = require('express');
+const router = express.Router();
+
+router.get('/', (req, res) => res.send('job-vacancies alive'));
+router.get('/mine', (req, res) => res.json([])); // 뷰 대신 JSON
+
+module.exports = router;

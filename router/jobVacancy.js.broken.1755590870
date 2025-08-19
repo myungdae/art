@@ -1,0 +1,102 @@
+tee router/jobVacancy.js >/dev/null <<'JS'
+// router/jobVacancy.js (REAL)
+'use strict';
+
+const express = require('express');
+const router = express.Router();
+const JobVacancy = require('../model/jobVacancy');
+const sanitizeHtml = require('sanitize-html');
+const { requireLogin } = require('../middleware/auth');
+const { createFacetEntryFromCRUD } = require('../utils/createFacetEntry');
+const { MongoClient } = require('mongodb');
+
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017';
+
+function pickBody(req, keys, fallback='') {
+  for (const k of keys) {
+    if (req.body && typeof req.body[k] === 'string' && req.body[k].trim()) {
+      return req.body[k].trim();
+    }
+  }
+  return fallback;
+}
+
+// 목록 → 패싯으로 연결 (로그인 안 했으면 로그인 화면)
+router.get('/', (req, res) => {
+  if (!req.session.user) return res.redirect('/user/login');
+  return res.redirect('/facet/Job_Vacancies');
+});
+
+// 새 공고 폼 (드롭다운 프리셋 안전 제공)
+router.get('/new', requireLogin, async (req, res) => {
+  try {
+    const [studentTypes, countries, teachingAreas] = await Promise.all([
+      JobVacancy.distinct('studentType').catch(() => []),
+      JobVacancy.distinct('country').catch(() => []),
+      JobVacancy.distinct('teachingArea').catch(() => []),
+    ]);
+    res.render('jobVacancy/new', {
+      studentTypes: Array.isArray(studentTypes) ? studentTypes : [],
+      countries: Array.isArray(countries) ? countries : [],
+      teachingAreas: Array.isArray(teachingAreas) ? teachingAreas : [],
+    });
+  } catch (e) {
+    console.error('GET /job-vacancies/new error:', e);
+    res.render('jobVacancy/new', { studentTypes: [], countries: [], teachingAreas: [] });
+  }
+});
+
+// 저장
+router.post('/', requireLogin, async (req, res) => {
+  try {
+    // 제목(양식이 rdfs:label[@value]일 수도 있어 둘 다 수용)
+    const title = pickBody(req, ['title', 'rdfs:label[@value]']);
+    if (!title) throw new Error('❌ Job Title is required');
+
+    const cleanDescription = sanitizeHtml(
+      pickBody(req, ['_description', 'http://purl.org/dc/elements/1.1/description[@value]'], ''),
+      { allowedTags: ['p','strong','em','ul','li','ol','br'], allowedAttributes: {} }
+    );
+
+    const newJob = new JobVacancy({
+      title,
+      _label: title,
+      country: pickBody(req, ['country', 'hostCountry']),
+      studentType: pickBody(req, ['studentType']),
+      teachingArea: pickBody(req, ['teachingArea']),
+      duration: pickBody(req, ['duration']),
+      pay: pickBody(req, ['pay']),
+      housing: pickBody(req, ['housing']),
+      email: pickBody(req, ['email']),
+      companyName: pickBody(req, ['companyName']),
+      jobLocation: pickBody(req, ['jobLocation']),
+      cellphoneNumber: pickBody(req, ['cellphoneNumber']),
+      skypeId: pickBody(req, ['skypeId']),
+      wechatId: pickBody(req, ['wechatId']),
+      homepage: pickBody(req, ['homepage']),
+      adPackage: pickBody(req, ['adPackage']),
+      addResumeAccess: (pickBody(req, ['resumeAccess','addResumeAccess']).toLowerCase() === 'yes'),
+      _description: cleanDescription,
+    });
+
+    await newJob.save();
+
+    // 패싯 컬렉션에 인덱싱
+    const facetEntry = createFacetEntryFromCRUD(newJob);
+    const client = new MongoClient(MONGO_URI);
+    await client.connect();
+    await client.db('eventpool').collection('esl').insertOne(facetEntry);
+    await client.close();
+
+    return res.redirect('/facet/Job_Vacancies');
+  } catch (err) {
+    console.error('❌ Error saving job vacancy:', err?.message || err);
+    return res.status(500).send(err?.message || 'Error saving job vacancy');
+  }
+});
+
+// 내 공고 (뷰 없이 패싯으로 돌려보냄)
+router.get('/mine', requireLogin, (req, res) => res.redirect('/facet/Job_Vacancies'));
+
+module.exports = router;
+JS
