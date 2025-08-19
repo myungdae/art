@@ -60,7 +60,9 @@ block content
                 small.text-muted.mt-1 You can also add a new teaching area:
                 input.form-control.mt-1(type="text", id="customTeachingArea", placeholder="Or enter a new Teaching Area")
 
-              // 🔻 (기간 선택/Duration 필드 제거됨)
+              .form-group.mb-3
+                label(for="duration") Duration
+                input.form-control(type="text", name="duration", id="duration", placeholder="Duration")
 
               .form-group.mb-3
                 label(for="pay") Pay
@@ -109,14 +111,14 @@ block content
                   if adPlans && adPlans.length
                     each plan, idx in adPlans
                       .form-check.form-check-inline.me-3.mt-2
-                        input.form-check-input(type="radio", name="adCount", id=\`adCount-\${plan.ads}\`, value=plan.ads, required, checked=idx === 0)
-                        label.form-check-label(for=\`adCount-\${plan.ads}\`)= plan.label
+                        input.form-check-input(type="radio", name="adCount", id=`adCount-${plan.ads}`, value=plan.ads, required, checked=idx === 0)
+                        label.form-check-label(for=`adCount-${plan.ads}`)= plan.label
                   else
                     - const _plans = [1, 4, 12, 24]
                     each v, idx in _plans
                       .form-check.form-check-inline.me-3.mt-2
-                        input.form-check-input(type="radio", name="adCount", id=\`adCount-\${v}\`, value=v, required, checked=idx === 0)
-                        label.form-check-label(for=\`adCount-\${v}\`)= \`\${v} Ad\${v > 1 ? 's' : ''}\`
+                        input.form-check-input(type="radio", name="adCount", id=`adCount-${v}`, value=v, required, checked=idx === 0)
+                        label.form-check-label(for=`adCount-${v}`)= `${v} Ad${v > 1 ? 's' : ''}`
                 if typeof tokensLeft !== 'undefined' && tokensLeft !== null
                   small.text-muted.d-block.mt-1 You currently have #{tokensLeft} promotion tokens.
 
