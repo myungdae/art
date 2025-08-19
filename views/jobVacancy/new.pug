@@ -21,33 +21,42 @@ block content
                 label(for="description") Job Description
                 textarea.form-control(name="http://purl.org/dc/elements/1.1/description[@value]", id="description", rows="8")
 
-              // ✅ Host Country
+              // ✅ Host Country (널가드)
               .form-group.mb-3
                 label(for="country") Host Country
                 select.form-control#countrySelect(name="country")
                   option(disabled selected value='') Select Country
-                  each v in countries
-                    option(value=v)= v
+                  if countries && countries.length
+                    each v in countries
+                      option(value=v)= v
+                  else
+                    option(disabled value='') (no presets)
                 small.text-muted.mt-1 You can also add a new country:
                 input.form-control.mt-1(type="text", id="customCountry", placeholder="Or enter a new Country")
 
-              // ✅ Student Type
+              // ✅ Student Type (널가드)
               .form-group.mb-3
                 label(for="studentType") Student Type
                 select.form-control#studentTypeSelect(name="studentType")
                   option(disabled selected value='') Select Student Type
-                  each v in studentTypes
-                    option(value=v)= v
+                  if studentTypes && studentTypes.length
+                    each v in studentTypes
+                      option(value=v)= v
+                  else
+                    option(disabled value='') (no presets)
                 small.text-muted.mt-1 You can also add a new student type:
                 input.form-control.mt-1(type="text", id="customStudentType", placeholder="Or enter a new Student Type")
 
-              // ✅ Teaching Area
+              // ✅ Teaching Area (널가드)
               .form-group.mb-3
                 label(for="teachingArea") Teaching Area
                 select.form-control#teachingArea(name="teachingArea")
                   option(disabled selected value='') Select Teaching Area
-                  each v in teachingAreas
-                    option(value=v)= v
+                  if teachingAreas && teachingAreas.length
+                    each v in teachingAreas
+                      option(value=v)= v
+                  else
+                    option(disabled value='') (no presets)
                 small.text-muted.mt-1 You can also add a new teaching area:
                 input.form-control.mt-1(type="text", id="customTeachingArea", placeholder="Or enter a new Teaching Area")
 

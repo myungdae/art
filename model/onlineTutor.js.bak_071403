@@ -1,0 +1,65 @@
+const express = require('express');
+const router = express.Router();
+const OnlineTutor = require('../model/onlineTutors');
+
+// 신규 폼
+router.get('/new', async (req, res, next) => {
+  try {
+    res.render('onlineTutor/new', {
+      title: 'New Online Tutor',
+      genders: ['Male','Female','Other','Prefer not to say'],
+      tutoringExperiences: ['< 1 year','1-3 years','3-5 years','5+ years'],
+      form: {},
+      errors: null,
+    });
+  } catch (err) { next(err); }
+});
+
+// 생성
+router.post('/', async (req, res, next) => {
+  try {
+    const pick = (primary, fallback) =>
+      (primary && String(primary).trim()) ? String(primary).trim()
+      : (fallback && String(fallback).trim()) ? String(fallback).trim()
+      : undefined;
+
+    const toArrayCSV = v =>
+      !v ? [] : String(v).split(',').map(s => s.trim()).filter(Boolean);
+
+    const doc = new OnlineTutor({
+      name: req.body.name,
+      jobTitle: req.body.jobTitle,
+      description: req.body.description,
+
+      // 폼 커스텀 우선
+      gender: pick(req.body.customGender, req.body.gender),
+      tutoringExperience: pick(req.body.customExperience, req.body.tutoringExperience),
+
+      // 폼에서 제거됨 → 기본값 [] (스키마에서 처리)
+      expertise: [],
+      communicationMethods: [],
+
+      email: req.body.email,
+      skypeId: req.body.skypeId,
+      zoomId: req.body.zoomId,
+      hourlyRate: req.body.hourlyRate ? Number(req.body.hourlyRate) : undefined,
+      availableFrom: req.body.availableFrom || undefined,
+      availableTime: req.body.availableTime,
+      languagesSpoken: toArrayCSV(req.body.languagesSpoken),
+    });
+
+    await doc.save();
+    res.redirect('/online-tutor'); // 목록 페이지 경로에 맞게
+  } catch (err) {
+    console.error('Create OnlineTutor error:', err);
+    res.status(400).render('onlineTutor/new', {
+      title: 'New Online Tutor',
+      genders: ['Male','Female','Other','Prefer not to say'],
+      tutoringExperiences: ['< 1 year','1-3 years','3-5 years','5+ years'],
+      form: req.body,
+      errors: err.message || String(err),
+    });
+  }
+});
+
+module.exports = router;

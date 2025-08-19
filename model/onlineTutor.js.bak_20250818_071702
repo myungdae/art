@@ -1,0 +1,30 @@
+// ~/esl/model/onlineTutor.js
+const mongoose = require('mongoose');
+
+const onlineTutorSchema = new mongoose.Schema({
+  // Core
+  name: { type: String, required: true },
+  jobTitle: { type: String },
+  description: { type: String },
+
+  // Required minimal fields
+  gender: { type: String, required: true },              // enum 제거 (커스텀 허용)
+  tutoringExperience: { type: String, required: true },  // 문자열
+
+  // Optional arrays (폼에서 제거했으므로 기본값만 둠)
+  expertise: { type: [String], default: [] },
+  communicationMethods: { type: [String], default: [] },
+
+  // Others
+  email: { type: String },
+  skypeId: { type: String },
+  zoomId: { type: String },
+  hourlyRate: { type: Number },
+  availableFrom: { type: Date },
+  availableTime: { type: String },
+  languagesSpoken: { type: [String], default: [] },
+
+  '@type': { type: String, default: 'Online_Tutor' }
+});
+
+module.exports = mongoose.model('OnlineTutor', onlineTutorSchema);

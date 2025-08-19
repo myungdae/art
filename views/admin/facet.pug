@@ -1,0 +1,52 @@
+extends ../layout
+
+block content
+  .container.mt-5
+    h2.text-center.mb-4 #{pageTitle}
+
+    .row
+      .col-md-3
+        each filter in filters
+          .mb-4
+            h5= filter.display
+            ul.list-unstyled
+              each opt in filter.options
+                li
+                  a(href=`?${filter.name}=${encodeURIComponent(opt.value)}`)= `${opt.label} (${opt.count})`
+
+      .col-md-9
+        if data && data.length
+          each doc in data
+            - var idRaw = doc['@id'] || '';
+            - var resourceId = (idRaw || '').toString().split('/').pop();
+            - var rdfLabel = doc['http://www.w3.org/2000/01/rdf-schema#label'];
+            - var title =
+            -   (rdfLabel && rdfLabel['@value'])
+            -   || doc.title
+            -   || doc.position
+            -   || doc.organization
+            -   || 'No Title';
+
+            - var rdfDesc = doc['http://purl.org/dc/elements/1.1/description'];
+            - var desc =
+            -   (rdfDesc && rdfDesc['@value'])
+            -   || doc.description
+            -   || doc.bio
+            -   || '';
+
+            .card.shadow-sm.mb-4.p-3
+              h4
+                a(href=`/resource/${resourceId}`)= title
+
+              if desc
+                div!= desc
+              else
+                p.text-muted No Description
+
+              if activeType === 'Job_Vacancies' && user && (user._id == doc.ownerId || user.username == doc.ownerUsername)
+                .mt-3
+                  a.btn.btn-sm.btn-primary(href=`/job-vacancies/${doc.mongoId}/edit`) Edit
+                  form(method="POST", action=`/job-vacancies/${doc.mongoId}?_method=DELETE`, style="display:inline;", onsubmit="return confirm('Are you sure you want to delete this job?')")
+                    button.btn.btn-sm.btn-danger(type="submit") Delete
+        else
+          p.text-muted No results found.

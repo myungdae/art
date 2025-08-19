@@ -1,15 +1,33 @@
 extends ../layout
 
 block content
-  .container.mt-5
-    h2.text-center.mb-4 Employer Dashboard
-    p Username: #{user.username}
-    p Email: #{user.email}
-    h4.mt-4 My Job Vacancies
-    ul
-      if jobVacancies.length
-        each job in jobVacancies
-          li
-            a(href=`/job-vacancies/${job._id}`)= job.title
+  .container.mx-auto.px-4.py-10
+    h1.text-2xl.text-center.mb-8 Employer Dashboard
+
+    .max-w-xl.mx-auto.bg-white.rounded-xl.shadow.p-6
+      p Username: #{user.username}
+      p Email: #{user.email}
+      p Role: #{user.role}
+
+      if !paid
+        .mt-6.text-yellow-700
+          p.font-medium 🔒 결제 후에 채용공고를 등록할 수 있습니다.
+          if typeof employerDaysLeft !== 'undefined'
+            p 남은 이용일수: #{employerDaysLeft}
+        .flex.gap-3.mt-4
+          a.btn.btn-warning(href=purchaseLink) Purchase Employer Plan
       else
-        li.text-muted No job vacancies posted yet.
+        .mt-6.text-green-700
+          p.font-medium ✅ 구독이 활성화되었습니다.
+          if typeof employerDaysLeft !== 'undefined'
+            p 남은 이용일수: #{employerDaysLeft}
+        .flex.gap-3.mt-4
+          a.btn.btn-primary(href='/job-vacancies/new') Register Job Vacancy
+          a.btn(href='/job-vacancies/mine') My Job Vacancies
+
+    if jobVacancies && jobVacancies.length
+      ul.mt-6.max-w-xl.mx-auto.list-disc.pl-6
+        each j in jobVacancies
+          li #{j.title}
+    else
+      p.mt-6.text-gray-500.text-center No job vacancies posted yet.
