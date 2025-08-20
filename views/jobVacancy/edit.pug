@@ -1,4 +1,13 @@
+//- views/jobVacancies/edit.pug
 extends ../layout
+
+// 기본 프리셋: 서버에서 전달된 배열이 없을 때 사용
+- const _defaultCountries    = ['Korea','Japan','China','Malaysia','Thailand'];
+- const _defaultStudentTypes = ['Adults','Elementary','High School','Kindergarten','Middle'];
+- const _defaultTeaching     = ['Art','Biology','English','ESL','Social Studies','Spanish'];
+- const _countries     = (typeof countries !== 'undefined' && countries && countries.length) ? countries : _defaultCountries;
+- const _studentTypes  = (typeof studentTypes !== 'undefined' && studentTypes && studentTypes.length) ? studentTypes : _defaultStudentTypes;
+- const _teachingAreas = (typeof teachingAreas !== 'undefined' && teachingAreas && teachingAreas.length) ? teachingAreas : _defaultTeaching;
 
 block content
   .container.mt-5
@@ -10,48 +19,56 @@ block content
 
           .card-body
             form.form(method="POST", action="/job-vacancies/" + jobVacancy._id + "?_method=PUT", onsubmit="return handleCustomFields()")
+              // Title (_label 유지: 기존 서버 키와 호환)
               .form-group.mb-3
                 label(for="_label") Job Title
                 input.form-control#title(type="text", name="_label", required, value=jobVacancy._label || jobVacancy.title, oninput="validateTitle(this)")
                 small.text-danger#title-error(style="display:none") ❌ Emojis or Korean characters are not allowed.
 
+              // Description (_description 유지)
               .form-group.mb-4
                 label(for="_description") Job Description
                 textarea.form-control(name="_description", id="description", rows="8")= jobVacancy._description || ''
 
+              // Host Country (프리셋 + 현재값 유지 + 커스텀 입력 허용)
+              - const _jc = jobVacancy.country || '';
+              - const _jcInList = _jc && _countries.indexOf(_jc) !== -1;
               .form-group.mb-3
                 label(for="country") Host Country
-                select.form-control#countrySelect(name="country")
-                  option(disabled selected value='') Select Country
-                  each v in countries
-                    if jobVacancy.country === v
-                      option(value=v selected)= v
-                    else
-                      option(value=v)= v
+                select.form-control#countrySelect(name="country" required)
+                  option(disabled value='') Select Country
+                  each v in _countries
+                    option(value=v selected=(jobVacancy.country === v))= v
+                  if _jc && !_jcInList
+                    option(value=_jc selected)= _jc
                 small.text-muted.mt-1 You can also add a new country:
                 input.form-control.mt-1(type="text", id="customCountry", placeholder="Or enter a new Country")
 
+              // Student Type (프리셋 + 현재값 유지)
+              - const _js = jobVacancy.studentType || '';
+              - const _jsInList = _js && _studentTypes.indexOf(_js) !== -1;
               .form-group.mb-3
                 label(for="studentType") Student Type
-                select.form-control#studentTypeSelect(name="studentType")
-                  option(disabled selected value='') Select Student Type
-                  each v in studentTypes
-                    if jobVacancy.studentType === v
-                      option(value=v selected)= v
-                    else
-                      option(value=v)= v
+                select.form-control#studentTypeSelect(name="studentType" required)
+                  option(disabled value='') Select Student Type
+                  each v in _studentTypes
+                    option(value=v selected=(jobVacancy.studentType === v))= v
+                  if _js && !_jsInList
+                    option(value=_js selected)= _js
                 small.text-muted.mt-1 You can also add a new student type:
                 input.form-control.mt-1(type="text", id="customStudentType", placeholder="Or enter a new Student Type")
 
+              // Teaching Area (프리셋 + 현재값 유지)
+              - const _ta = jobVacancy.teachingArea || '';
+              - const _taInList = _ta && _teachingAreas.indexOf(_ta) !== -1;
               .form-group.mb-3
                 label(for="teachingArea") Teaching Area
-                select.form-control#teachingArea(name="teachingArea")
-                  option(disabled selected value='') Select Teaching Area
-                  each v in teachingAreas
-                    if jobVacancy.teachingArea === v
-                      option(value=v selected)= v
-                    else
-                      option(value=v)= v
+                select.form-control#teachingArea(name="teachingArea" required)
+                  option(disabled value='') Select Teaching Area
+                  each v in _teachingAreas
+                    option(value=v selected=(jobVacancy.teachingArea === v))= v
+                  if _ta && !_taInList
+                    option(value=_ta selected)= _ta
                 small.text-muted.mt-1 You can also add a new teaching area:
                 input.form-control.mt-1(type="text", id="customTeachingArea", placeholder="Or enter a new Teaching Area")
 
@@ -83,13 +100,7 @@ block content
                 label(for="cellphoneNumber") Cellphone Number
                 input.form-control(type="text", name="cellphoneNumber", id="cellphoneNumber", value=jobVacancy.cellphoneNumber || '')
 
-              .form-group.mb-3
-                label(for="skypeId") Skype ID
-                input.form-control(type="text", name="skypeId", id="skypeId", value=jobVacancy.skypeId || '')
-
-              .form-group.mb-3
-                label(for="wechatId") WeChat ID
-                input.form-control(type="text", name="wechatId", id="wechatId", value=jobVacancy.wechatId || '')
+              // 🔻 요청대로 Skype / WeChat 필드 제거
 
               .form-group.mb-3
                 label(for="homepage") Homepage
@@ -97,7 +108,9 @@ block content
 
               .form-group.mb-3
                 label(for="datePosted") Date Posted
-                input.form-control(type="date", name="datePosted", id="datePosted", value=jobVacancy.datePosted ? jobVacancy.datePosted.toISOString().substring(0,10) : '')
+                - const _dp = jobVacancy.datePosted;
+                - const _dpStr = (_dp && typeof _dp.toISOString === 'function') ? _dp.toISOString().substring(0,10) : (_dp || '');
+                input.form-control(type="date", name="datePosted", id="datePosted", value=_dpStr)
 
               .form-group
                 label.mb-2 Add Resume Access?
@@ -152,8 +165,8 @@ block append_js
 
       if (customStudent && studentTypeSelect.value === '') {
         const input = document.createElement('input');
-        input.type = 'hidden';
         input.name = 'studentType';
+        input.type = 'hidden';
         input.value = customStudent;
         form.appendChild(input);
         studentTypeSelect.disabled = true;

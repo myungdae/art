@@ -1,4 +1,4 @@
-// router/admin.js  (Full revised version)
+// router/admin.js  (FULL DROP-IN, dedupe + id 포함 + KST 포맷)
 const express = require('express');
 const router = express.Router();
 
@@ -21,13 +21,13 @@ const toKST = (d) => {
 const daysRemainingFromDoc = (doc) => {
   const now = new Date();
   // 1) resumeAccess { startDate, durationDays } 우선
-  if (doc?.resumeAccess?.startDate && doc?.resumeAccess?.durationDays) {
+  if (doc?.resumeAccess?.startDate && typeof doc?.resumeAccess?.durationDays === 'number') {
     const start = new Date(doc.resumeAccess.startDate);
     const end = new Date(start.getTime() + doc.resumeAccess.durationDays * 86400000);
     const diff = Math.ceil((end - now) / 86400000);
     return diff > 0 ? diff : 0;
   }
-  // 2) expiresAt (레거시/테스트 레코드)
+  // 2) expiresAt (레거시)
   if (doc?.expiresAt) {
     const end = new Date(doc.expiresAt);
     const diff = Math.ceil((end - now) / 86400000);
@@ -62,36 +62,51 @@ router.get('/logout', (req, res) => {
 /* ---------------------- Dashboard ---------------------- */
 router.get('/dashboard', requireAdmin, async (req, res) => {
   try {
-    /* ===== EMPLOYERS: dedup by email, newest wins; show all (no adsAvailable filter) ===== */
+    /* ===== EMPLOYERS: dedup by email (없으면 개별 문서), 최신 문서 기준 ===== */
     const rawEmployers = await User.aggregate([
-      { $match: { role: 'Employer' } },
-      { $sort: { email: 1, createdAt: -1 } },             // email 그룹 내부에서 최신 먼저
+      {
+        $addFields: {
+          _emailKey: {
+            $ifNull: ['$email', { $concat: ['ID:', { $toString: '$_id' }] }]
+          }
+        }
+      },
+      { $sort: { _emailKey: 1, createdAt: -1 } }, // 동일 이메일 내 최신 문서가 먼저
       {
         $group: {
-          _id: '$email',
+          _id: '$_emailKey',
+          firstId: { $first: '$_id' },
           username: { $first: '$username' },
           email: { $first: '$email' },
           adsAvailable: { $first: { $ifNull: ['$adsAvailable', 0] } },
           createdAt: { $first: '$createdAt' }
         }
       },
-      { $sort: { createdAt: -1 } }                         // 테이블 정렬: 최신 가입 순
+      { $sort: { createdAt: -1 } } // 테이블은 최신 가입순
     ]);
 
     const employers = rawEmployers.map(e => ({
+      id: e.firstId, // 필요 시 Edit 링크 등에 사용 가능
       username: e.username || '—',
       email: e.email || '—',
       remainingTokens: Number(e.adsAvailable || 0),
       createdAtDisplay: toKST(e.createdAt)
     }));
 
-    /* ===== JOB SEEKERS: dedup by email; support resumeAccess or expiresAt ===== */
+    /* ===== JOB SEEKERS: dedup by email (없으면 개별 문서), resumeAccess 지원 ===== */
     const rawSeekers = await JobSeeker.aggregate([
-      { $match: {} },
-      { $sort: { email: 1, createdAt: -1 } },
+      {
+        $addFields: {
+          _emailKey: {
+            $ifNull: ['$email', { $concat: ['ID:', { $toString: '$_id' }] }]
+          }
+        }
+      },
+      { $sort: { _emailKey: 1, createdAt: -1 } },
       {
         $group: {
-          _id: '$email',
+          _id: '$_emailKey',
+          firstId: { $first: '$_id' },
           username: { $first: '$username' },
           name: { $first: '$name' },
           email: { $first: '$email' },
@@ -104,6 +119,7 @@ router.get('/dashboard', requireAdmin, async (req, res) => {
     ]);
 
     const jobSeekers = rawSeekers.map(js => ({
+      id: js.firstId, // ← Edit 링크에 사용
       username: js.name || js.username || '—',
       email: js.email || '—',
       remainingDays: daysRemainingFromDoc(js),
@@ -111,13 +127,20 @@ router.get('/dashboard', requireAdmin, async (req, res) => {
       createdAtDisplay: toKST(js.createdAt)
     }));
 
-    /* ===== ONLINE TUTORS: same treatment ===== */
+    /* ===== ONLINE TUTORS: 동일 처리 ===== */
     const rawTutors = await OnlineTutor.aggregate([
-      { $match: {} },
-      { $sort: { email: 1, createdAt: -1 } },
+      {
+        $addFields: {
+          _emailKey: {
+            $ifNull: ['$email', { $concat: ['ID:', { $toString: '$_id' }] }]
+          }
+        }
+      },
+      { $sort: { _emailKey: 1, createdAt: -1 } },
       {
         $group: {
-          _id: '$email',
+          _id: '$_emailKey',
+          firstId: { $first: '$_id' },
           username: { $first: '$username' },
           name: { $first: '$name' },
           email: { $first: '$email' },
@@ -130,6 +153,7 @@ router.get('/dashboard', requireAdmin, async (req, res) => {
     ]);
 
     const onlineTutors = rawTutors.map(ot => ({
+      id: ot.firstId, // ← Edit 링크에 사용
       username: ot.username || ot.name || '—',
       email: ot.email || '—',
       remainingDays: daysRemainingFromDoc(ot),

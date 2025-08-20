@@ -1,126 +1,166 @@
+//- views/jobSeeker/edit.pug
 extends ../layout
+
+// 템플릿 기본 프리셋 (서버 미전달 시 사용)
+- const _defNat  = ['Korean','Japanese','Chinese','Malaysian','Thai','American','British'];
+- const _defLoc  = ['Korea','Japan','China','Malaysia','Thailand','Remote'];
+- const _defMaj  = ['English','ESL','Education','Art','Biology','Social Studies','Spanish'];
+- const _defLang = ['English','Korean','Japanese','Chinese','Spanish','French','German'];
+
+- const _nationalities = (typeof nationalities !== 'undefined' && nationalities && nationalities.length) ? nationalities : _defNat;
+- const _prefLocs      = (typeof preferredWorkLocations !== 'undefined' && preferredWorkLocations && preferredWorkLocations.length) ? preferredWorkLocations : _defLoc;
+- const _majors        = (typeof majors !== 'undefined' && majors && majors.length) ? majors : _defMaj;
+- const _languages     = (typeof languages !== 'undefined' && languages && languages.length) ? languages : _defLang;
+
+- const _nat = jobSeeker.nationality || '';
+- const _natInList = _nat && _nationalities.indexOf(_nat) !== -1;
+- const _loc = jobSeeker.preferredWorkLocation || '';
+- const _locInList = _loc && _prefLocs.indexOf(_loc) !== -1;
+- const _maj = jobSeeker.major || '';
+- const _majInList = _maj && _majors.indexOf(_maj) !== -1;
+- const _langsStr = Array.isArray(jobSeeker.languageSpoken) ? jobSeeker.languageSpoken.join(', ') : (jobSeeker.languageSpoken || '');
 
 block content
   .container.mt-5
     .row.justify-content-center
       .col-md-10
         .card.shadow
-          .card-header.bg-info.text-white.text-center
-            h4.mb-0 Edit Resume
+          .card-header.bg-warning.text-white.text-center
+            h4.mb-0 Edit Job Seeker
 
           .card-body
-            form(method="POST", action="/job-seekers/" + jobSeeker._id + "?_method=PUT", onsubmit="return handleCustomFields()")
+            if errors && Object.keys(errors).length
+              .alert.alert-danger Please fix the highlighted errors.
 
+            form.form(method="POST", action="/job-seekers/" + jobSeeker._id + "?_method=PUT", onsubmit="return handleCustomFields()")
+              // ===== Job Title (semantic: rdfs:label) =====
               .form-group.mb-3
-                label(for="name") Name
-                input.form-control(type="text", name="name", id="name", required, value=jobSeeker.name)
+                label(for="jsTitle") Job Title
+                input.form-control#jsTitle(
+                  type="text",
+                  name="rdfs:label[@value]",
+                  value=jobSeeker['rdfs:label[@value]'] || jobSeeker.title || ""
+                )
 
-              .form-group.mb-3
-                label(for="jobTitle") Job Title
-                input.form-control#jobTitle(type="text", name="jobTitle", required, value=jobSeeker.jobTitle, oninput="validateJobTitle(this)")
-                small.text-danger#title-error(style="display:none") ❌ Emojis or Korean characters are not allowed.
-
+              // ===== Description (CKEditor, semantic: dc:description) =====
               .form-group.mb-4
-                label(for="description") Self Introduction
-                textarea.form-control(name="description", id="description", rows="8")= jobSeeker.description
+                label(for="description") Description
+                textarea.form-control(
+                  name="http://purl.org/dc/elements/1.1/description[@value]",
+                  id="description",
+                  rows="8"
+                )= jobSeeker['http://purl.org/dc/elements/1.1/description[@value]'] || jobSeeker.description || ''
 
+              // ===== Email =====
               .form-group.mb-3
-                label(for="nationality") Nationality
-                select.form-control#nationalitySelect(name="nationality")
-                  option(disabled value='') Select Nationality
-                  each v in countries
-                    option(value=v selected=(v === jobSeeker.nationality))= v
+                label(for="email") Email *
+                input.form-control#email(type="email", name="email", required, value=jobSeeker.email || '')
+                if errors && errors.email
+                  small.text-danger #{errors.email}
+
+              // ===== Languages =====
+              .form-group.mb-3
+                label(for="languageSpoken") Languages Spoken
+                .d-flex.gap-2.flex-wrap.mb-2
+                  each lang in _languages
+                    - const _checked = _langsStr.split(',').map(s=>s.trim()).includes(lang)
+                    .form-check.form-check-inline.me-3
+                      input.form-check-input(type="checkbox", id=`lang-${lang}`, value=lang, onchange="toggleLang(this)" checked=_checked)
+                      label.form-check-label(for=`lang-${lang}`)= lang
+                input.form-control#languageSpoken(type="text", name="languageSpoken", value=_langsStr)
+
+              // ===== Date Available =====
+              .form-group.mb-3
+                label(for="dateAvailable") Date Available
+                - const _da = jobSeeker.dateAvailable;
+                - const _daStr = (_da && typeof _da.toISOString === 'function') ? _da.toISOString().substring(0,10) : (_da || '');
+                input.form-control#dateAvailable(type="date", name="dateAvailable", value=_daStr)
+
+              // ===== Semantic: Nationality / Preferred Work Location / Major =====
+              .form-group.mb-3
+                label(for="nationality") Nationality (semantic)
+                select.form-control#nationalitySelect(name="http://schema.org/nationality[@value]")
+                  option(disabled value="") Select Nationality
+                  each v in _nationalities
+                    option(value=v selected=(_nat === v))= v
+                  if _nat && !_natInList
+                    option(value=_nat selected)= _nat
                 small.text-muted.mt-1 You can also add a new nationality:
                 input.form-control.mt-1(type="text", id="customNationality", placeholder="Or enter a new Nationality")
 
               .form-group.mb-3
-                label(for="preferredWorkLocation") Preferred Work Location
-                select.form-control#locationSelect(name="preferredWorkLocation")
-                  option(disabled value='') Select Location
-                  each v in locations
-                    option(value=v selected=(v === jobSeeker.preferredWorkLocation))= v
+                label(for="preferredWorkLocation") Preferred Work Location (semantic)
+                select.form-control#prefLocSelect(name="esl:preferredWorkLocation[@value]")
+                  option(disabled value="") Select Preferred Work Location
+                  each v in _prefLocs
+                    option(value=v selected=(_loc === v))= v
+                  if _loc && !_locInList
+                    option(value=_loc selected)= _loc
                 small.text-muted.mt-1 You can also add a new location:
-                input.form-control.mt-1(type="text", id="customLocation", placeholder="Or enter a new Location")
+                input.form-control.mt-1(type="text", id="customPrefLoc", placeholder="Or enter a new Location")
 
               .form-group.mb-3
-                label(for="major") Major
-                select.form-control#majorSelect(name="major")
-                  option(disabled value='') Select Major
-                  each v in majors
-                    option(value=v selected=(v === jobSeeker.major))= v
+                label(for="major") Major (semantic)
+                select.form-control#majorSelect(name="esl:major[@value]")
+                  option(disabled value="") Select Major
+                  each v in _majors
+                    option(value=v selected=(_maj === v))= v
+                  if _maj && !_majInList
+                    option(value=_maj selected)= _maj
                 small.text-muted.mt-1 You can also add a new major:
                 input.form-control.mt-1(type="text", id="customMajor", placeholder="Or enter a new Major")
 
-              .form-group.mb-3
-                label(for="languageSpoken") Language(s) Spoken
-                input.form-control(type="text", name="languageSpoken", value=jobSeeker.languageSpoken)
-
-              .form-group.mb-3
-                label(for="educationBackground") Education Background
-                input.form-control(type="text", name="educationBackground", value=jobSeeker.educationBackground)
-
-              .form-group.mb-3
-                label(for="availableFrom") Available From
-                input.form-control(type="date", name="availableFrom", value=availableFormatted)
-
-              .form-group.mb-3
-                label(for="email") Email
-                input.form-control(type="email", name="email", value=jobSeeker.email)
-
-              button.btn.btn-info.btn-block.mt-4(type="submit") Update Resume
+              button.btn.btn-warning.btn-block.mt-3(type="submit") Update
 
 block append_js
+  // CKEditor 5
   script(src="https://cdn.ckeditor.com/ckeditor5/41.0.0/classic/ckeditor.js")
   script.
-    ClassicEditor
-      .create(document.querySelector('#description'))
-      .catch(error => console.error(error));
+    ClassicEditor.create(document.querySelector('#description')).catch(console.error);
 
-    function validateJobTitle(input) {
-      const emojiRegex = /[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu;
-      const koreanRegex = /[\u3131-\uD79D]/;
-      const errorElem = document.getElementById('title-error');
-      if (emojiRegex.test(input.value) || koreanRegex.test(input.value)) {
-        errorElem.style.display = 'block';
-        input.classList.add('is-invalid');
-      } else {
-        errorElem.style.display = 'none';
-        input.classList.remove('is-invalid');
-      }
+    function toggleLang(cb){
+      const input = document.getElementById('languageSpoken');
+      const current = input.value ? input.value.split(',').map(s=>s.trim()).filter(Boolean) : [];
+      const idx = current.indexOf(cb.value);
+      if (cb.checked && idx === -1) current.push(cb.value);
+      if (!cb.checked && idx !== -1) current.splice(idx, 1);
+      input.value = current.join(', ');
     }
 
     function handleCustomFields() {
       const form = document.querySelector('form');
 
-      const customNationality = document.getElementById('customNationality')?.value.trim();
-      const customLocation = document.getElementById('customLocation')?.value.trim();
-      const customMajor = document.getElementById('customMajor')?.value.trim();
-
-      if (customNationality) {
+      const natSel = document.getElementById('nationalitySelect');
+      const nat = document.getElementById('customNationality')?.value.trim();
+      if (nat && natSel.value === '') {
         const input = document.createElement('input');
         input.type = 'hidden';
-        input.name = 'nationality';
-        input.value = customNationality;
+        input.name = 'http://schema.org/nationality[@value]';
+        input.value = nat;
         form.appendChild(input);
-        document.getElementById('nationalitySelect').disabled = true;
+        natSel.disabled = true;
       }
 
-      if (customLocation) {
+      const locSel = document.getElementById('prefLocSelect');
+      const loc = document.getElementById('customPrefLoc')?.value.trim();
+      if (loc && locSel.value === '') {
         const input = document.createElement('input');
         input.type = 'hidden';
-        input.name = 'preferredWorkLocation';
-        input.value = customLocation;
+        input.name = 'esl:preferredWorkLocation[@value]';
+        input.value = loc;
         form.appendChild(input);
-        document.getElementById('locationSelect').disabled = true;
+        locSel.disabled = true;
       }
 
-      if (customMajor) {
+      const majSel = document.getElementById('majorSelect');
+      const maj = document.getElementById('customMajor')?.value.trim();
+      if (maj && majSel.value === '') {
         const input = document.createElement('input');
         input.type = 'hidden';
-        input.name = 'major';
-        input.value = customMajor;
+        input.name = 'esl:major[@value]';
+        input.value = maj;
         form.appendChild(input);
-        document.getElementById('majorSelect').disabled = true;
+        majSel.disabled = true;
       }
-
       return true;
+    }

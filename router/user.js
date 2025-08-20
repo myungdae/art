@@ -10,6 +10,9 @@ const Thread = require('../model/thread');
 const { logThread } = require('../utils/threadLog');
 const JobSeeker = require('../model/jobSeeker');
 
+const methodOverride = require('method-override');
+const requireAdmin = require('../middleware/requireAdmin');
+
 const { requireLogin, requireRole, requirePaidEmployer } = require('../middleware/auth');
 
 /* --------------------------- Register --------------------------- */

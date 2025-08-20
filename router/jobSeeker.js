@@ -1,495 +1,201 @@
-// router/jobSeeker.js
+// router/jobSeeker.js  (FULL DROP-IN)
 const express = require('express');
 const router = express.Router();
+const methodOverride = require('method-override');
 const JobSeeker = require('../model/jobSeeker');
-const sanitizeHtml = require('sanitize-html');
-const { requireLogin } = require('../middleware/auth');
-const { MongoClient } = require('mongodb');
-const { logThread } = require('../utils/threadLog'); // <-- thread logging
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017';
-const DB_NAME = 'eventpool';
-const FACET_COLL = 'esl';
-const { profileDurations } = require('../config/plans');
+// query ?_method=PUT 지원 (app.js에서 이미 했다면 이 줄은 중복 가능)
+router.use(methodOverride('_method'));
 
+/* -------------------- Presets (서버에서 뷰로 전달) -------------------- */
+const defaultNationalities = ['Korean','Japanese','Chinese','Malaysian','Thai','American','British'];
+const defaultPrefWorkLocs  = ['Korea','Japan','China','Malaysia','Thailand','Remote'];
+const defaultMajors        = ['English','ESL','Education','Art','Biology','Social Studies','Spanish'];
+const defaultLanguages     = ['English','Korean','Japanese','Chinese','Spanish','French','German'];
 
-/* ─────────────────────────────────────────────────────────────
-   Facet (esl) sync helpers
-   - Upsert/delete an entry in `eventpool.esl` for Job_Seekers
-   - We also persist userId/userEmail to enable "my activity" views
-   ───────────────────────────────────────────────────────────── */
-async function upsertFacetFromSeeker(seeker, sessionUser) {
-  const client = new MongoClient(MONGO_URI, { ignoreUndefined: true });
-  await client.connect();
-  try {
-    const col = client.db(DB_NAME).collection(FACET_COLL);
-    const filter = { source: 'job_seekers', sourceId: String(seeker._id) };
-
-    const doc = {
-      '@id': `esl:job_seeker:${seeker._id}`,          // unique @id
-      '@type': 'Job_Seekers',
-      source: 'job_seekers',
-      sourceId: String(seeker._id),
-
-      label: seeker.name || 'Untitled',
-      title: seeker.jobTitle || seeker.name || 'Untitled',
-      description: seeker.description || '',
-
-      hostCountry: seeker.preferredWorkLocation || seeker.nationality || '',
-      studentType: undefined,
-      teachingArea: seeker.major || '',
-      email: seeker.email || '',
-
-      // who did this (for dashboards / activity)
-      userId: sessionUser ? String(sessionUser._id) : undefined,
-      userEmail: sessionUser ? sessionUser.email : undefined,
-
-      updatedAt: new Date()
-    };
-
-    await col.updateOne(filter, { $set: doc }, { upsert: true });
-    console.log('[facet] upsert job_seeker → esl:', seeker._id);
-  } finally {
-    await client.close();
-  }
+/* -------------------- Utilities -------------------- */
+function parseDate(v) {
+  if (!v) return null;
+  const d = new Date(v);
+  return isNaN(d.getTime()) ? null : d;
 }
 
-async function removeFacetForSeeker(id) {
-  const client = new MongoClient(MONGO_URI, { ignoreUndefined: true });
-  await client.connect();
-  try {
-    await client
-      .db(DB_NAME)
-      .collection(FACET_COLL)
-      .deleteOne({ source: 'job_seekers', sourceId: String(id) });
-    console.log('[facet] delete job_seeker in esl:', id);
-  } finally {
-    await client.close();
+/** 요청 바디 → 표준 필드로 정규화 (시맨틱/일반 키 모두 흡수) */
+function normalizePayload(body) {
+  // Title / Description (CKEditor HTML 허용)
+  const title =
+    body['rdfs:label[@value]'] ??
+    body._label ??
+    body.title ??
+    '';
+
+  const description =
+    body['http://purl.org/dc/elements/1.1/description[@value]'] ??
+    body._description ??
+    body.description ??
+    '';
+
+  // 시맨틱 3종
+  const nationality =
+    body['http://schema.org/nationality[@value]'] ??
+    body['schema:nationality[@value]'] ??
+    body.Nationality ??
+    body.nationality ??
+    '';
+
+  const preferredWorkLocation =
+    body['esl:preferredWorkLocation[@value]'] ??
+    body.Preferred_Work_Location ??
+    body.preferred_work_location ??
+    body.preferredWorkLocation ??
+    '';
+
+  const major =
+    body['esl:major[@value]'] ??
+    body.Major ??
+    body.major ??
+    '';
+
+  // 언어: 콤마 구분 문자열 또는 체크박스 배열 모두 허용
+  let languageSpoken =
+    body['schema:knowsLanguage[@value]'] ??
+    body.languageSpoken ??
+    body.languages ??
+    '';
+  if (Array.isArray(languageSpoken)) {
+    languageSpoken = languageSpoken
+      .flatMap(v => String(v).split(','))
+      .map(s => s.trim())
+      .filter(Boolean);
+  } else {
+    languageSpoken = String(languageSpoken || '')
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean);
   }
+
+  return {
+    // 기본 프로필
+    fullName: body.fullName ?? body.name ?? '',
+    email: body.email ?? '',
+
+    // 제목/설명
+    title,
+    description, // CKEditor HTML 그대로 저장 (렌더 시 sanitize 권장)
+
+    // 시맨틱 3종
+    nationality,
+    preferredWorkLocation,
+    major,
+
+    // 기타
+    languageSpoken,                       // 스키마가 String이면 .join(', ')로 바꿔서 저장하세요.
+    dateAvailable: parseDate(body.dateAvailable),
+  };
 }
 
-/* ─────────────────────────────────────────────────────────────
-   Pages
-   ───────────────────────────────────────────────────────────── */
-
-// internal list (login required)
-router.get('/', requireLogin, async (req, res) => {
-  try {
-    const seekers = await JobSeeker.find().sort({ createdAt: -1 });
-    res.render('jobSeeker/index', { seekers });
-  } catch (err) {
-    console.error('❌ Error fetching job seekers:', err.message);
-    res.status(500).send('❌ Error fetching job seekers');
-  }
-});
-
-// new form
-router.get('/new', requireLogin, async (req, res) => {
-  try {
-    const [countries, majors, locations] = await Promise.all([
-      JobSeeker.distinct('nationality'),
-      JobSeeker.distinct('major'),
-      JobSeeker.distinct('preferredWorkLocation')
-    ]);
-    res.render('jobSeeker/new', { countries, majors, locations });
-  } catch (err) {
-    console.error('❌ Error loading form:', err.message);
-    res.status(500).send('❌ Error loading form');
-  }
-});
-
-// create
-router.post('/', requireLogin, async (req, res) => {
-  try {
-    const data = {
-      name: req.body.name,
-      jobTitle: sanitizeHtml(req.body.jobTitle || ''),
-      description: sanitizeHtml(req.body.description || '', { allowedTags: [], allowedAttributes: {} }),
-      email: req.body.email || (req.session.user && req.session.user.email) || '', // fallback to logged-in email
-      nationality: req.body.nationality || req.body.customNationality,
-      preferredWorkLocation: req.body.preferredWorkLocation || req.body.customPreferredWorkLocation,
-      major: req.body.major || req.body.customMajor,
-      languageSpoken: req.body.languageSpoken,
-      educationBackground: req.body.educationBackground,
-      availableFrom: req.body.availableFrom
-    };// router/jobSeeker.js
-    const express = require('express');
-    const router = express.Router();
-    const JobSeeker = require('../model/jobSeeker');
-    const sanitizeHtml = require('sanitize-html');
-    const { requireLogin } = require('../middleware/auth');
-    const { MongoClient } = require('mongodb');
-    const { logThread } = require('../utils/threadLog'); // <-- thread logging
-    
-    const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017';
-    const DB_NAME = 'eventpool';
-    const FACET_COLL = 'esl';
-    
-    // ✅ 30/90/365 허용값 (config)
-    const { profileDurations } = require('../config/plans');
-    
-    /* ─────────────────────────────────────────────────────────────
-       planDays 정규화: 폼에서 넘어온 값이 30/90/365 중 하나만 통과
-       없거나 이상하면 기본값(profileDurations[0] → 대개 30)
-       ───────────────────────────────────────────────────────────── */
-    function getPlanDaysFromBody(body) {
-      const v = Number(body?.planDays);
-      if (Number.isFinite(v) && profileDurations.includes(v)) return v;
-      return profileDurations?.[0] ?? 30;
-    }
-    
-    /* ─────────────────────────────────────────────────────────────
-       Facet (esl) sync helpers
-       ───────────────────────────────────────────────────────────── */
-    async function upsertFacetFromSeeker(seeker, sessionUser) {
-      const client = new MongoClient(MONGO_URI, { ignoreUndefined: true });
-      await client.connect();
-      try {
-        const col = client.db(DB_NAME).collection(FACET_COLL);
-        const filter = { source: 'job_seekers', sourceId: String(seeker._id) };
-    
-        const doc = {
-          '@id': `esl:job_seeker:${seeker._id}`,
-          '@type': 'Job_Seekers',
-          source: 'job_seekers',
-          sourceId: String(seeker._id),
-    
-          label: seeker.name || 'Untitled',
-          title: seeker.jobTitle || seeker.name || 'Untitled',
-          description: seeker.description || '',
-    
-          hostCountry: seeker.preferredWorkLocation || seeker.nationality || '',
-          studentType: undefined,
-          teachingArea: seeker.major || '',
-          email: seeker.email || '',
-    
-          userId: sessionUser ? String(sessionUser._id) : undefined,
-          userEmail: sessionUser ? sessionUser.email : undefined,
-    
-          updatedAt: new Date()
-        };
-    
-        await col.updateOne(filter, { $set: doc }, { upsert: true });
-        console.log('[facet] upsert job_seeker → esl:', seeker._id);
-      } finally {
-        await client.close();
-      }
-    }
-    
-    async function removeFacetForSeeker(id) {
-      const client = new MongoClient(MONGO_URI, { ignoreUndefined: true });
-      await client.connect();
-      try {
-        await client
-          .db(DB_NAME)
-          .collection(FACET_COLL)
-          .deleteOne({ source: 'job_seekers', sourceId: String(id) });
-        console.log('[facet] delete job_seeker in esl:', id);
-      } finally {
-        await client.close();
-      }
-    }
-    
-    /* ─────────────────────────────────────────────────────────────
-       Pages
-       ───────────────────────────────────────────────────────────── */
-    
-    // internal list (login required)
-    router.get('/', requireLogin, async (req, res) => {
-      try {
-        const seekers = await JobSeeker.find().sort({ createdAt: -1 });
-        res.render('jobSeeker/index', { seekers });
-      } catch (err) {
-        console.error('❌ Error fetching job seekers:', err.message);
-        res.status(500).send('❌ Error fetching job seekers');
-      }
-    });
-    
-    // new form
-    router.get('/new', requireLogin, async (req, res) => {
-      try {
-        const [countries, majors, locations] = await Promise.all([
-          JobSeeker.distinct('nationality'),
-          JobSeeker.distinct('major'),
-          JobSeeker.distinct('preferredWorkLocation')
-        ]);
-        // ⬇️ 뷰에서 planDays 라디오를 그릴 수 있게 옵션 전달(선택사항, 있어도 무해)
-        res.render('jobSeeker/new', {
-          countries,
-          majors,
-          locations,
-          planOptions: profileDurations
-        });
-      } catch (err) {
-        console.error('❌ Error loading form:', err.message);
-        res.status(500).send('❌ Error loading form');
-      }
-    });
-    
-    // create
-    router.post('/', requireLogin, async (req, res) => {
-      try {
-        // ⬇️ 저장 데이터 구성
-        const data = {
-          name: req.body.name,
-          jobTitle: sanitizeHtml(req.body.jobTitle || ''),
-          description: sanitizeHtml(req.body.description || '', { allowedTags: [], allowedAttributes: {} }),
-          email: req.body.email || (req.session.user && req.session.user.email) || '',
-          nationality: req.body.nationality || req.body.customNationality,
-          preferredWorkLocation: req.body.preferredWorkLocation || req.body.customPreferredWorkLocation,
-          major: req.body.major || req.body.customMajor,
-          languageSpoken: req.body.languageSpoken,
-          educationBackground: req.body.educationBackground,
-          availableFrom: req.body.availableFrom
-        };
-    
-        // ✅ 만료일/플랜 박기
-        const days = getPlanDaysFromBody(req.body);
-        const now  = new Date();
-        data.createdAt = data.createdAt || now;
-        data.expiresAt = new Date(now.getTime() + days * 86400000); // days → ms
-        data.planDays  = days; // (선택 저장)
-    
-        const newSeeker = await new JobSeeker(data).save();
-    
-        // facet sync
-        await upsertFacetFromSeeker(newSeeker, req.session.user);
-    
-        // activity log
-        await logThread(req, {
-          type: 'crud',
-          action: 'create',
-          source: 'job_seekers',
-          sourceId: String(newSeeker._id),
-          title: `Create Job Seeker: ${newSeeker.name || newSeeker.jobTitle || ''}`,
-          summary: `email=${newSeeker.email || ''}`
-        });
-    
-        res.redirect('/facet/Job_Seekers');
-      } catch (err) {
-        console.error('❌ Error saving job seeker:', err.message);
-        res.status(500).send('❌ Error saving job seeker');
-      }
-    });
-    
-    // edit form
-    router.get('/:id/edit', requireLogin, async (req, res) => {
-      try {
-        const seeker = await JobSeeker.findById(req.params.id);
-        if (!seeker) return res.status(404).send('❌ Job Seeker not found');
-    
-        const [countries, majors, locations] = await Promise.all([
-          JobSeeker.distinct('nationality'),
-          JobSeeker.distinct('major'),
-          JobSeeker.distinct('preferredWorkLocation')
-        ]);
-    
-        res.render('jobSeeker/edit', {
-          jobSeeker: seeker,
-          countries,
-          majors,
-          locations,
-          planOptions: profileDurations // 수정 폼에도 전달(선택사항)
-        });
-      } catch (err) {
-        console.error('❌ Error loading edit form:', err.message);
-        res.status(500).send('❌ Error loading edit form');
-      }
-    });
-    
-    // update (PUT /:id) — 수정 시 planDays가 오면 그때만 만료일 재계산
-    router.put('/:id', requireLogin, async (req, res) => {
-      try {
-        const seeker = await JobSeeker.findById(req.params.id);
-        if (!seeker) return res.status(404).send('❌ Job Seeker not found');
-    
-        seeker.name = req.body.name;
-        seeker.jobTitle = sanitizeHtml(req.body.jobTitle || '');
-        seeker.description = sanitizeHtml(req.body.description || '', { allowedTags: [], allowedAttributes: {} });
-        seeker.email = req.body.email || seeker.email || (req.session.user && req.session.user.email) || '';
-        seeker.nationality = req.body.nationality || req.body.customNationality;
-        seeker.preferredWorkLocation = req.body.preferredWorkLocation || req.body.customPreferredWorkLocation;
-        seeker.major = req.body.major || req.body.customMajor;
-        seeker.languageSpoken = req.body.languageSpoken;
-        seeker.educationBackground = req.body.educationBackground;
-        seeker.availableFrom = req.body.availableFrom;
-    
-        // ✅ planDays가 있을 때만 만료일 갱신
-        if (typeof req.body.planDays !== 'undefined') {
-          const days = getPlanDaysFromBody(req.body);
-          const now  = new Date();
-          seeker.expiresAt = new Date(now.getTime() + days * 86400000);
-          seeker.planDays  = days; // (선택 저장)
-        }
-    
-        await seeker.save();
-    
-        // facet sync
-        await upsertFacetFromSeeker(seeker, req.session.user);
-    
-        // activity log
-        await logThread(req, {
-          type: 'crud',
-          action: 'update',
-          source: 'job_seekers',
-          sourceId: String(seeker._id),
-          title: `Update Job Seeker: ${seeker.name || seeker.jobTitle || ''}`,
-          summary: `email=${seeker.email || ''}`
-        });
-    
-        res.redirect('/facet/Job_Seekers');
-      } catch (err) {
-        console.error('❌ Error updating job seeker:', err.message);
-        res.status(500).send('❌ Error updating job seeker');
-      }
-    });
-    
-    // delete
-    router.delete('/:id', requireLogin, async (req, res) => {
-      try {
-        const id = req.params.id;
-        const seeker = await JobSeeker.findById(id).lean();
-    
-        await JobSeeker.findByIdAndDelete(id);
-        await removeFacetForSeeker(id);
-    
-        // activity log
-        await logThread(req, {
-          type: 'crud',
-          action: 'delete',
-          source: 'job_seekers',
-          sourceId: String(id),
-          title: `Delete Job Seeker`,
-          summary: `email=${(seeker && seeker.email) || ''}`
-        });
-    
-        res.redirect('/facet/Job_Seekers');
-      } catch (err) {
-        console.error('❌ Error deleting job seeker:', err.message);
-        res.status(500).send('❌ Error deleting job seeker');
-      }
-    });
-    
-    module.exports = router;
-
-    
-    const days = getPlanDaysFromBody(req.body);
-    const now  = new Date();
-    doc.createdAt = doc.createdAt || now;
-    doc.expiresAt = new Date(now.getTime() + days * 86400000);  // days → ms
-
-
-    const newSeeker = await new JobSeeker(data).save();
-
-    // facet sync
-    await upsertFacetFromSeeker(newSeeker, req.session.user);
-
-    // activity log
-    await logThread(req, {
-      type: 'crud',
-      action: 'create',
-      source: 'job_seekers',
-      sourceId: String(newSeeker._id),
-      title: `Create Job Seeker: ${newSeeker.name || newSeeker.jobTitle || ''}`,
-      summary: `email=${newSeeker.email || ''}`
-    });
-
-    res.redirect('/facet/Job_Seekers');
-  } catch (err) {
-    console.error('❌ Error saving job seeker:', err.message);
-    res.status(500).send('❌ Error saving job seeker');
-  }
-});
-
-// edit form
-router.get('/:id/edit', requireLogin, async (req, res) => {
-  try {
-    const seeker = await JobSeeker.findById(req.params.id);
-    if (!seeker) return res.status(404).send('❌ Job Seeker not found');
-
-    const [countries, majors, locations] = await Promise.all([
-      JobSeeker.distinct('nationality'),
-      JobSeeker.distinct('major'),
-      JobSeeker.distinct('preferredWorkLocation')
-    ]);
-
-    res.render('jobSeeker/edit', { jobSeeker: seeker, countries, majors, locations });
-  } catch (err) {
-    console.error('❌ Error loading edit form:', err.message);
-    res.status(500).send('❌ Error loading edit form');
-  }
-});
-
-// 추가: planDays 정규화 헬퍼 (30/90/365 중 하나, 없으면 기본 30)
-function getPlanDaysFromBody(body) {
-  const v = Number(body?.planDays);
-  if (Number.isFinite(v) && profileDurations.includes(v)) return v;
-  // 기본값 (config에 30이 들어있다면 그 첫 값 사용, 없으면 30)
-  return profileDurations?.[0] ?? 30;
+/** 최소 서버 검증 */
+function validatePayload(p) {
+  const errors = {};
+  if (!p.email) errors.email = 'Email is required.';
+  // 필요시 title/nationality 등 추가 검증 가능
+  return errors;
 }
 
-// update
-router.put('/:id', requireLogin, async (req, res) => {
+/* -------------------- NEW -------------------- */
+// GET /job-seekers/new
+router.get('/job-seekers/new', (req, res) => {
+  res.render('jobSeeker/new', {
+    nationalities: defaultNationalities,
+    preferredWorkLocations: defaultPrefWorkLocs,
+    majors: defaultMajors,
+    languages: defaultLanguages,
+    values: {},
+    errors: {}
+  });
+});
+
+/* -------------------- CREATE -------------------- */
+// POST /job-seekers
+router.post('/job-seekers', async (req, res) => {
   try {
-    const seeker = await JobSeeker.findById(req.params.id);
-    if (!seeker) return res.status(404).send('❌ Job Seeker not found');
+    const payload = normalizePayload(req.body);
+    const errors = validatePayload(payload);
+    if (Object.keys(errors).length) {
+      return res.status(422).render('jobSeeker/new', {
+        nationalities: defaultNationalities,
+        preferredWorkLocations: defaultPrefWorkLocs,
+        majors: defaultMajors,
+        languages: defaultLanguages,
+        values: req.body,
+        errors
+      });
+    }
 
-    seeker.name = req.body.name;
-    seeker.jobTitle = sanitizeHtml(req.body.jobTitle || '');
-    seeker.description = sanitizeHtml(req.body.description || '', { allowedTags: [], allowedAttributes: {} });
-    seeker.email = req.body.email || seeker.email || (req.session.user && req.session.user.email) || '';
-    seeker.nationality = req.body.nationality || req.body.customNationality;
-    seeker.preferredWorkLocation = req.body.preferredWorkLocation || req.body.customPreferredWorkLocation;
-    seeker.major = req.body.major || req.body.customMajor;
-    seeker.languageSpoken = req.body.languageSpoken;
-    seeker.educationBackground = req.body.educationBackground;
-    seeker.availableFrom = req.body.availableFrom;
+    // 🔧 만약 model이 languageSpoken:String 이라면:
+    // payload.languageSpoken = Array.isArray(payload.languageSpoken) ? payload.languageSpoken.join(', ') : String(payload.languageSpoken || '');
 
-    await seeker.save();
+    const doc = new JobSeeker(payload);
+    await doc.save();
 
-    // facet sync
-    await upsertFacetFromSeeker(seeker, req.session.user);
-
-    // activity log
-    await logThread(req, {
-      type: 'crud',
-      action: 'update',
-      source: 'job_seekers',
-      sourceId: String(seeker._id),
-      title: `Update Job Seeker: ${seeker.name || seeker.jobTitle || ''}`,
-      summary: `email=${seeker.email || ''}`
-    });
-
-    res.redirect('/facet/Job_Seekers');
+    req.flash?.('success', 'JobSeeker profile created.');
+    return res.redirect('/admin/dashboard'); // 필요시 목록 페이지로 변경
   } catch (err) {
-    console.error('❌ Error updating job seeker:', err.message);
-    res.status(500).send('❌ Error updating job seeker');
+    console.error('[JobSeeker CREATE] error:', err);
+    return res.status(500).render('error', { message: 'Failed to create job seeker', error: err });
   }
 });
 
-// delete
-router.delete('/:id', requireLogin, async (req, res) => {
+/* -------------------- EDIT -------------------- */
+// GET /job-seekers/:id/edit
+router.get('/job-seekers/:id/edit', async (req, res) => {
   try {
-    const id = req.params.id;
-    const seeker = await JobSeeker.findById(id).lean();
+    const { id } = req.params;
+    const jobSeeker = await JobSeeker.findById(id);
+    if (!jobSeeker) return res.status(404).send('Not found');
 
-    await JobSeeker.findByIdAndDelete(id);
-    await removeFacetForSeeker(id);
-
-    // activity log
-    await logThread(req, {
-      type: 'crud',
-      action: 'delete',
-      source: 'job_seekers',
-      sourceId: String(id),
-      title: `Delete Job Seeker`,
-      summary: `email=${(seeker && seeker.email) || ''}`
+    res.render('jobSeeker/edit', {
+      jobSeeker,
+      nationalities: defaultNationalities,
+      preferredWorkLocations: defaultPrefWorkLocs,
+      majors: defaultMajors,
+      languages: defaultLanguages,
+      errors: {}
     });
-
-    res.redirect('/facet/Job_Seekers');
   } catch (err) {
-    console.error('❌ Error deleting job seeker:', err.message);
-    res.status(500).send('❌ Error deleting job seeker');
+    console.error('[JobSeeker EDIT] error:', err);
+    return res.status(500).render('error', { message: 'Failed to open job seeker', error: err });
+  }
+});
+
+/* -------------------- UPDATE -------------------- */
+// PUT /job-seekers/:id
+router.put('/job-seekers/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const payload = normalizePayload(req.body);
+    const errors = validatePayload(payload);
+    if (Object.keys(errors).length) {
+      const jobSeeker = await JobSeeker.findById(id);
+      return res.status(422).render('jobSeeker/edit', {
+        jobSeeker: jobSeeker ? { ...jobSeeker.toObject(), ...payload } : payload,
+        nationalities: defaultNationalities,
+        preferredWorkLocations: defaultPrefWorkLocs,
+        majors: defaultMajors,
+        languages: defaultLanguages,
+        errors
+      });
+    }
+
+    // 🔧 model이 languageSpoken:String 이라면 동일하게 join 처리
+    // payload.languageSpoken = Array.isArray(payload.languageSpoken) ? payload.languageSpoken.join(', ') : String(payload.languageSpoken || '');
+
+    await JobSeeker.findByIdAndUpdate(id, payload, { new: true });
+    req.flash?.('success', 'JobSeeker profile updated.');
+    return res.redirect('/admin/dashboard'); // 필요시 목록 페이지로 변경
+  } catch (err) {
+    console.error('[JobSeeker UPDATE] error:', err);
+    return res.status(500).render('error', { message: 'Failed to update job seeker', error: err });
   }
 });
 

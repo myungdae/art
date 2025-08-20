@@ -1,144 +1,156 @@
-// router/jobVacancy.js (save + expiresAt + token decrement)
-'use strict';
 const express = require('express');
 const router = express.Router();
+const methodOverride = require('method-override');
+const JobVacancy = require('../model/jobVacancy');
 
-const { employerAdPlans, defaultJobAdLifetimeDays } = require('../config/plans');
+// 프리셋(서버에서 안 넘길 때 폼이 자체 기본값을 쓰지만, 넘겨두면 더 확실)
+const defaultCountries    = ['Korea','Japan','China','Malaysia','Thailand'];
+const defaultStudentTypes = ['Adults','Elementary','High School','Kindergarten','Middle'];
+const defaultTeaching     = ['Art','Biology','English','ESL','Social Studies','Spanish'];
 
-let JobVacancy = null;
-try {
-  JobVacancy = require('../model/jobVacancy');
-} catch (e) {
-  console.warn('⚠️ model/jobVacancy 가 없어 POST 저장은 비활성 상태입니다.');
+// method-override (app.js에서 이미 했다면 생략)
+router.use(methodOverride('_method'));
+
+/** 공통: 요청 바디를 표준 필드로 정규화 */
+function normalizePayload(body) {
+  // Title / Description: 두 가지 네이밍 모두 지원
+  const title =
+    body['rdfs:label[@value]'] ??
+    body._label ??
+    body.title ??
+    '';
+
+  const description =
+    body['http://purl.org/dc/elements/1.1/description[@value]'] ??
+    body._description ??
+    body.description ??
+    '';
+
+  // 날짜 문자열 정규화(YYYY-MM-DD만 들어오면 그대로)
+  const datePosted = body.datePosted ? new Date(body.datePosted) : null;
+
+  // 커스텀 입력 우선(폼에서 handleCustomFields로 hidden을 붙이지만, 방어적으로 한 번 더)
+  const country = body.country ?? '';
+  const studentType = body.studentType ?? '';
+  const teachingArea = body.teachingArea ?? '';
+
+  return {
+    title,
+    description,
+    country,
+    studentType,
+    teachingArea,
+    duration: body.duration ?? '',
+    pay: body.pay ?? '',
+    housing: body.housing ?? '',
+    email: body.email ?? '',
+    companyName: body.companyName ?? '',
+    jobLocation: body.jobLocation ?? '',
+    cellphoneNumber: body.cellphoneNumber ?? '',
+    homepage: body.homepage ?? '',
+    datePosted,
+    // yes/no 라디오 값 그대로 저장(스키마가 boolean이면 여기서 boolean 변환)
+    resumeAccess: body.resumeAccess === 'yes' ? 'yes' : 'no'
+  };
 }
 
-let User = null;
-try {
-  User = require('../models/User');
-} catch (e) {
-  console.warn('⚠️ models/User 를 찾지 못했습니다. 토큰 차감은 세션 값만 갱신됩니다.');
+/** 간단한 서버측 검증(이모지/한글 금지 규칙이 있다면 반영) */
+function validatePayload(p) {
+  const errors = {};
+  if (!p.title || typeof p.title !== 'string') {
+    errors.title = 'Title is required.';
+  } else {
+    const emojiRegex = /[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu;
+    const koreanRegex = /[ㄱ-ㅎㅏ-ㅣ가-힣]/;
+    if (emojiRegex.test(p.title) || koreanRegex.test(p.title)) {
+      errors.title = 'Emojis or Korean are not allowed in title.';
+    }
+  }
+  if (!p.country) errors.country = 'Host Country is required.';
+  if (!p.studentType) errors.studentType = 'Student Type is required.';
+  if (!p.teachingArea) errors.teachingArea = 'Teaching Area is required.';
+  return errors;
 }
 
-console.log('### LOADED REAL jobVacancy.js ###', __filename);
-
-// 목록 → 패싯으로
-router.get('/', (req, res) => res.redirect('/facet/Job_Vacancies'));
-
-// 새 공고 폼
-router.get('/new', (req, res) => {
-  const tokensLeft =
-    req.user && typeof req.user.adTokens === 'number' ? req.user.adTokens : null;
-
-  res.render('jobVacancy/new', {
-    countries: [],
-    studentTypes: [],
-    teachingAreas: [],
-    adPlans: employerAdPlans,
-    tokensLeft
+/* ------------------ NEW ------------------ */
+router.get('/job-vacancies/new', (req, res) => {
+  res.render('jobVacancies/new', {
+    // new.pug에서는 내부 프리셋을 갖고 있지만, 서버에서 넘겨주면 그 값을 우선 사용
+    countries: defaultCountries,
+    studentTypes: defaultStudentTypes,
+    teachingAreas: defaultTeaching,
+    adPlans: req.adPlans || null,       // 있으면 표시(없다면 템플릿에서 기본 플랜)
+    tokensLeft: req.tokensLeft ?? null, // 있으면 안내
   });
 });
 
-// 저장 (expiresAt 자동 세팅 + 토큰 차감)
-router.post('/', async (req, res) => {
-  if (!JobVacancy) {
-    return res.status(501).send('JobVacancy model missing. Create model/jobVacancy.js first.');
-  }
-
-  // 1) 사전 체크: adTokens가 0 이하면 결제 페이지로
-  if (req.user && typeof req.user.adTokens === 'number') {
-    if (req.user.adTokens <= 0) {
-      return res.redirect('/payment/employer');
-    }
-  }
-
+/* ------------------ CREATE ------------------ */
+router.post('/job-vacancies', async (req, res) => {
   try {
-    const now = new Date();
-
-    // 특수 네임(Key)로 들어오는 필드들 안전 추출
-    const title =
-      req.body['rdfs:label[@value]'] ||
-      req.body['rdfs:label'] ||
-      req.body.title ||
-      '';
-
-    const description =
-      req.body['http://purl.org/dc/elements/1.1/description[@value]'] ||
-      req.body.description ||
-      '';
-
-    const adCount = parseInt(req.body.adCount, 10) || 1;
-
-    const doc = {
-      title,
-      description,
-      country: req.body.country || '',
-      studentType: req.body.studentType || '',
-      teachingArea: req.body.teachingArea || '',
-      duration: req.body.duration || '',
-      pay: req.body.pay || '',
-      housing: req.body.housing || '',
-      email: req.body.email || '',
-      companyName: req.body.companyName || '',
-      jobLocation: req.body.jobLocation || '',
-      cellphoneNumber: req.body.cellphoneNumber || '',
-      skypeId: req.body.skypeId || '',
-      wechatId: req.body.wechatId || '',
-      homepage: req.body.homepage || '',
-      datePosted: req.body.datePosted ? new Date(req.body.datePosted) : now,
-
-      adCount,                     // 선택한 광고 수
-      createdBy: req.user?._id,
-      createdAt: now,
-      expiresAt: new Date(now.getTime() + defaultJobAdLifetimeDays * 86400000),
-      status: 'active',
-    };
-
-    // 2) 공고 저장
-    const saved = await JobVacancy.create(doc);
-    console.log('💾 Saved JobVacancy:', saved._id, 'expiresAt=', saved.expiresAt.toISOString());
-
-    // 3) 토큰 차감 (가능할 때만)
-    if (req.user && typeof req.user.adTokens === 'number') {
-      if (User) {
-        // adTokens >= 1 일 때만 -1 (원자적 조건 갱신)
-        const r = await User.updateOne(
-          { _id: req.user._id, adTokens: { $gte: 1 } },
-          { $inc: { adTokens: -1 } }
-        );
-
-        if (!r || r.modifiedCount !== 1) {
-          // 차감 실패(경쟁 등). 저장한 공고를 롤백하고 결제 페이지로 유도
-          await JobVacancy.deleteOne({ _id: saved._id });
-          console.warn('⚠️ Token decrement failed. Rolled back vacancy:', saved._id);
-          return res.redirect('/payment/employer');
-        }
-
-        // 세션/req.user 동기화 (있을 때만)
-        if (req.session && req.session.user && typeof req.session.user.adTokens === 'number') {
-          req.session.user.adTokens = Math.max(0, req.session.user.adTokens - 1);
-        }
-        if (typeof req.user.adTokens === 'number') {
-          req.user.adTokens = Math.max(0, req.user.adTokens - 1);
-        }
-      } else {
-        // User 모델이 없으면 세션 값만 감소(영속 X)
-        if (req.session && req.session.user && typeof req.session.user.adTokens === 'number') {
-          req.session.user.adTokens = Math.max(0, req.session.user.adTokens - 1);
-        }
-        if (typeof req.user.adTokens === 'number') {
-          req.user.adTokens = Math.max(0, req.user.adTokens - 1);
-        }
-      }
+    const payload = normalizePayload(req.body);
+    const errors = validatePayload(payload);
+    if (Object.keys(errors).length) {
+      // 폼은 new.pug(부트스트랩) 버전이므로, 값/에러를 넘기려면 변수명을 맞춰야 합니다.
+      return res.status(422).render('jobVacancies/new', {
+        countries: defaultCountries,
+        studentTypes: defaultStudentTypes,
+        teachingAreas: defaultTeaching,
+        adPlans: req.adPlans || null,
+        tokensLeft: req.tokensLeft ?? null,
+        // new.pug는 `values`/`errors`를 안 쓰고 직접 name 바인딩이라면 생략 가능
+        // 필요시 new.pug에 values/errors 바인딩 추가 후 아래 객체를 전달하세요.
+        values: req.body,
+        errors,
+      });
     }
 
-    return res.redirect('/facet/Job_Vacancies');
+    const doc = new JobVacancy(payload);
+    await doc.save();
+    req.flash?.('success', 'Job vacancy created.');
+    res.redirect('/job-vacancies');
   } catch (err) {
-    console.error('❌ Failed to save JobVacancy', err);
-    return res.status(500).send('Failed to save job vacancy');
+    console.error('[CREATE] job-vacancy error:', err);
+    res.status(500).render('error', { message: 'Failed to create job vacancy', error: err });
   }
 });
 
-// 내 공고 리스트(임시)
-router.get('/mine', (req, res) => res.json([]));
+/* ------------------ EDIT ------------------ */
+router.get('/job-vacancies/:id/edit', async (req, res) => {
+  const { id } = req.params;
+  const jobVacancy = await JobVacancy.findById(id);
+  if (!jobVacancy) return res.status(404).send('Not found');
+  res.render('jobVacancies/edit', {
+    jobVacancy,
+    countries: defaultCountries,
+    studentTypes: defaultStudentTypes,
+    teachingAreas: defaultTeaching
+  });
+});
+
+/* ------------------ UPDATE ------------------ */
+router.put('/job-vacancies/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const payload = normalizePayload(req.body);
+    const errors = validatePayload(payload);
+    if (Object.keys(errors).length) {
+      const jobVacancy = await JobVacancy.findById(id);
+      return res.status(422).render('jobVacancies/edit', {
+        jobVacancy: { ...jobVacancy.toObject(), ...payload }, // 사용자가 입력한 값 반영
+        countries: defaultCountries,
+        studentTypes: defaultStudentTypes,
+        teachingAreas: defaultTeaching,
+        errors
+      });
+    }
+
+    await JobVacancy.findByIdAndUpdate(id, payload, { new: true });
+    req.flash?.('success', 'Job vacancy updated.');
+    res.redirect('/job-vacancies');
+  } catch (err) {
+    console.error('[UPDATE] job-vacancy error:', err);
+    res.status(500).render('error', { message: 'Failed to update job vacancy', error: err });
+  }
+});
 
 module.exports = router;

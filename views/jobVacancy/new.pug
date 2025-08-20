@@ -1,4 +1,13 @@
+//- views/jobVacancies/new.pug
 extends ../layout
+
+// 기본 프리셋: 서버에서 전달된 배열이 없을 때 사용
+- const _defaultCountries    = ['Korea','Japan','China','Malaysia','Thailand'];
+- const _defaultStudentTypes = ['Adults','Elementary','High School','Kindergarten','Middle'];
+- const _defaultTeaching     = ['Art','Biology','English','ESL','Social Studies','Spanish'];
+- const _countries     = (typeof countries !== 'undefined' && countries && countries.length) ? countries : _defaultCountries;
+- const _studentTypes  = (typeof studentTypes !== 'undefined' && studentTypes && studentTypes.length) ? studentTypes : _defaultStudentTypes;
+- const _teachingAreas = (typeof teachingAreas !== 'undefined' && teachingAreas && teachingAreas.length) ? teachingAreas : _defaultTeaching;
 
 block content
   .container.mt-5
@@ -21,42 +30,33 @@ block content
                 label(for="description") Job Description
                 textarea.form-control(name="http://purl.org/dc/elements/1.1/description[@value]", id="description", rows="8")
 
-              // ✅ Host Country (널가드)
+              // ✅ Host Country (프리셋 + 커스텀)
               .form-group.mb-3
                 label(for="country") Host Country
-                select.form-control#countrySelect(name="country")
+                select.form-control#countrySelect(name="country" required)
                   option(disabled selected value='') Select Country
-                  if countries && countries.length
-                    each v in countries
-                      option(value=v)= v
-                  else
-                    option(disabled value='') (no presets)
+                  each v in _countries
+                    option(value=v)= v
                 small.text-muted.mt-1 You can also add a new country:
                 input.form-control.mt-1(type="text", id="customCountry", placeholder="Or enter a new Country")
 
-              // ✅ Student Type (널가드)
+              // ✅ Student Type (프리셋 + 커스텀)
               .form-group.mb-3
                 label(for="studentType") Student Type
-                select.form-control#studentTypeSelect(name="studentType")
+                select.form-control#studentTypeSelect(name="studentType" required)
                   option(disabled selected value='') Select Student Type
-                  if studentTypes && studentTypes.length
-                    each v in studentTypes
-                      option(value=v)= v
-                  else
-                    option(disabled value='') (no presets)
+                  each v in _studentTypes
+                    option(value=v)= v
                 small.text-muted.mt-1 You can also add a new student type:
                 input.form-control.mt-1(type="text", id="customStudentType", placeholder="Or enter a new Student Type")
 
-              // ✅ Teaching Area (널가드)
+              // ✅ Teaching Area (프리셋 + 커스텀)
               .form-group.mb-3
                 label(for="teachingArea") Teaching Area
-                select.form-control#teachingArea(name="teachingArea")
+                select.form-control#teachingArea(name="teachingArea" required)
                   option(disabled selected value='') Select Teaching Area
-                  if teachingAreas && teachingAreas.length
-                    each v in teachingAreas
-                      option(value=v)= v
-                  else
-                    option(disabled value='') (no presets)
+                  each v in _teachingAreas
+                    option(value=v)= v
                 small.text-muted.mt-1 You can also add a new teaching area:
                 input.form-control.mt-1(type="text", id="customTeachingArea", placeholder="Or enter a new Teaching Area")
 
@@ -88,13 +88,7 @@ block content
                 label(for="cellphoneNumber") Cellphone Number
                 input.form-control(type="text", name="cellphoneNumber", id="cellphoneNumber", placeholder="Cellphone Number")
 
-              .form-group.mb-3
-                label(for="skypeId") Skype ID
-                input.form-control(type="text", name="skypeId", id="skypeId", placeholder="Skype ID")
-
-              .form-group.mb-3
-                label(for="wechatId") WeChat ID
-                input.form-control(type="text", name="wechatId", id="wechatId", placeholder="WeChat ID")
+              // 🔻 요청대로 Skype ID / WeChat ID 제거
 
               .form-group.mb-3
                 label(for="homepage") Homepage
@@ -108,35 +102,18 @@ block content
               .form-group.mb-3
                 label(for="adCount") Advertisement Plan
                 .d-flex.flex-wrap
-                  if adPlans && adPlans.length
+                  if typeof adPlans !== 'undefined' && adPlans && adPlans.length
                     each plan, idx in adPlans
-                      - var rid = 'adCount-' + plan.ads
                       .form-check.form-check-inline.me-3.mt-2
-                        input.form-check-input(
-                          type='radio'
-                          name='adCount'
-                          id=rid
-                          value=plan.ads
-                          required
-                          checked=(idx === 0)
-                        )
-                        label.form-check-label(for=rid)= plan.label
+                        input.form-check-input(type="radio", name="adCount", id=`adCount-${plan.ads}`, value=plan.ads, required, checked=idx === 0)
+                        label.form-check-label(for=`adCount-${plan.ads}`)= plan.label
                   else
-                    - var _plans = [1, 4, 12, 24]
+                    - const _plans = [1, 4, 12, 24]
                     each v, idx in _plans
-                      - var rid2 = 'adCount-' + v
                       .form-check.form-check-inline.me-3.mt-2
-                        input.form-check-input(
-                          type='radio'
-                          name='adCount'
-                          id=rid2
-                          value=v
-                          required
-                          checked=(idx === 0)
-                        )
-                        label.form-check-label(for=rid2)= v + ' Ad' + (v > 1 ? 's' : '')
-
-                if (typeof tokensLeft !== 'undefined' && tokensLeft !== null)
+                        input.form-check-input(type="radio", name="adCount", id=`adCount-${v}`, value=v, required, checked=idx === 0)
+                        label.form-check-label(for=`adCount-${v}`)= `${v} Ad${v > 1 ? 's' : ''}`
+                if typeof tokensLeft !== 'undefined' && tokensLeft !== null
                   small.text-muted.d-block.mt-1 You currently have #{tokensLeft} promotion tokens.
 
               .form-group
@@ -158,7 +135,7 @@ block append_js
       .catch(error => console.error(error));
 
     function validateTitle(input) {
-      const emojiRegex = /[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu;
+      const emojiRegex = /[\\p{Emoji_Presentation}\\p{Extended_Pictographic}]/gu;
       const koreanRegex = /[ㄱ-ㅎㅏ-ㅣ가-힣]/;
       const errorElem = document.getElementById('title-error');
       if (emojiRegex.test(input.value) || koreanRegex.test(input.value)) {
@@ -173,8 +150,8 @@ block append_js
     function handleCustomFields() {
       const form = document.querySelector('form');
 
-      const customCountry = document.getElementById('customCountry')?.value.trim();
-      const customStudent = document.getElementById('customStudentType')?.value.trim();
+      const customCountry  = document.getElementById('customCountry')?.value.trim();
+      const customStudent  = document.getElementById('customStudentType')?.value.trim();
       const customTeaching = document.getElementById('customTeachingArea')?.value.trim();
 
       const countrySelect = document.getElementById('countrySelect');

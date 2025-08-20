@@ -1,170 +1,150 @@
 // router/onlineTutor.js
 const express = require('express');
 const router = express.Router();
+const methodOverride = require('method-override');
 const OnlineTutor = require('../model/onlineTutor');
-const sanitizeHtml = require('sanitize-html');
-const { requireLogin } = require('../middleware/auth');
-const { MongoClient } = require('mongodb');
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017';
-const DB_NAME = 'eventpool';
-const FACET_COLL = 'esl';
+router.use(methodOverride('_method'));
 
-// ✅ 30/90/365 허용값 (config에서 관리)
-const { profileDurations } = require('../config/plans');
+/* 프리셋(뷰로 전달) */
+const defaultExpertise = [
+  'ESL', 'Conversation', 'Grammar', 'Business English', 'Kids English', 'Test Prep (TOEIC/IELTS)'
+];
+const defaultTutoringExp = ['0-1 year', '1-3 years', '3-5 years', '5+ years'];
+const defaultGenders = ['Male', 'Female', 'Non-binary', 'Prefer not to say'];
 
-/* ─────────────────────────────────────────────────────────────
-   planDays 정규화: 폼에서 넘어온 값이 30/90/365 중 하나만 통과
-   없거나 이상하면 기본값(profileDurations[0] → 대개 30)
-   ───────────────────────────────────────────────────────────── */
-function getPlanDaysFromBody(body) {
-  const v = Number(body?.planDays);
-  if (Number.isFinite(v) && profileDurations.includes(v)) return v;
-  return profileDurations?.[0] ?? 30;
+/* 정규화 */
+function normalizePayload(body) {
+  const description =
+    body['http://purl.org/dc/elements/1.1/description[@value]'] ??
+    body._description ??
+    body.description ??
+    '';
+
+  const expertise =
+    body['esl:expertise[@value]'] ??
+    body.Expertise ??
+    body.expertise ??
+    '';
+
+  const tutoringExperience =
+    body['esl:tutoringExperience[@value]'] ??
+    body.Tutoring_Experience ??
+    body.tutoring_experience ??
+    body.tutoringExperience ??
+    '';
+
+  // 오탈자 Gendder도 수용
+  const gender =
+    body['esl:gender[@value]'] ??
+    body.Gender ??
+    body.gender ??
+    body.Gendder ??
+    '';
+
+  const skypeId =
+    body['Skype_ID'] ??
+    body.skypeId ??
+    body.skype_id ??
+    '';
+
+  return {
+    fullName: body.fullName ?? body.name ?? '',
+    email: body.email ?? '',
+    description,
+    expertise,
+    tutoringExperience,
+    gender,
+    skypeId,
+  };
 }
 
-// ── facet(esl) 동기화 유틸 ──────────────────────────────────────────────
-async function upsertFacetFromTutor(tutor) {
-  const client = new MongoClient(MONGO_URI, { ignoreUndefined: true });
-  await client.connect();
-  try {
-    const col = client.db(DB_NAME).collection(FACET_COLL);
-    const filter = { source: 'online_tutors', sourceId: String(tutor._id) };
-    const doc = {
-      '@id': `esl:online_tutor:${tutor._id}`,          // ✅ 고유 @id
-      '@type': 'Online_Tutors',
-      source: 'online_tutors',
-      sourceId: String(tutor._id),
-
-      label: tutor.name || 'Untitled',
-      title: tutor.name ? (tutor.subject ? `${tutor.name} · ${tutor.subject}` : tutor.name) : 'Untitled',
-      description: tutor.description || '',
-      teachingArea: tutor.subject || '',
-      hostCountry: '',
-      studentType: undefined,
-      email: tutor.email || '',
-
-      updatedAt: new Date()
-    };
-    await col.updateOne(filter, { $set: doc }, { upsert: true });
-    console.log('[facet] upsert online_tutor → esl:', tutor._id);
-  } finally {
-    await client.close();
-  }
+function validatePayload(p) {
+  const errors = {};
+  if (!p.email) errors.email = 'Email is required.';
+  // 필요 시 다른 필수값도 추가
+  return errors;
 }
 
-async function removeFacetForTutor(id) {
-  const client = new MongoClient(MONGO_URI, { ignoreUndefined: true });
-  await client.connect();
-  try {
-    await client
-      .db(DB_NAME)
-      .collection(FACET_COLL)
-      .deleteOne({ source: 'online_tutors', sourceId: String(id) });
-    console.log('[facet] delete online_tutor in esl:', id);
-  } finally {
-    await client.close();
-  }
-}
-// ───────────────────────────────────────────────────────────────────────
-
-// 내부 목록(로그인)
-router.get('/', requireLogin, async (req, res) => {
-  try {
-    const tutors = await OnlineTutor.find().sort({ createdAt: -1 });
-    res.render('onlineTutor/index', { tutors });
-  } catch (err) {
-    console.error('❌ Error fetching tutors:', err.message);
-    res.status(500).send('❌ Error fetching tutors');
-  }
+/* NEW */
+router.get('/online-tutors/new', (req, res) => {
+  res.render('onlineTutor/new', {
+    expertiseList: defaultExpertise,
+    tutoringExpList: defaultTutoringExp,
+    genderList: defaultGenders,
+    values: {},
+    errors: {}
+  });
 });
 
-// 새 튜터 폼
-router.get('/new', requireLogin, async (req, res) => {
+/* CREATE */
+router.post('/online-tutors', async (req, res) => {
   try {
-    // ⬇️ 뷰에서 30/90/365를 그릴 수 있게 옵션 전달(선택사항)
-    res.render('onlineTutor/new', { planOptions: profileDurations });
-  } catch (err) {
-    console.error('❌ Error loading form:', err.message);
-    res.status(500).send('❌ Error loading form');
-  }
-});
-
-// 생성
-router.post('/', requireLogin, async (req, res) => {
-  try {
-    const data = {
-      name: req.body.name,
-      subject: sanitizeHtml(req.body.subject || ''),
-      description: sanitizeHtml(req.body.description || '', { allowedTags: [], allowedAttributes: {} }),
-      email: req.body.email
-    };
-
-    // ✅ 만료일/플랜 박기
-    const days = getPlanDaysFromBody(req.body);
-    const now  = new Date();
-    data.createdAt = data.createdAt || now;
-    data.expiresAt = new Date(now.getTime() + days * 86400000); // days → ms
-    data.planDays  = days; // (선택 저장)
-
-    const newTutor = await new OnlineTutor(data).save();
-    await upsertFacetFromTutor(newTutor);               // ✅ facet 반영
-    res.redirect('/facet/Online_Tutors');
-  } catch (err) {
-    console.error('❌ Error saving tutor:', err.message);
-    res.status(500).send('❌ Error saving tutor');
-  }
-});
-
-// 수정 폼
-router.get('/:id/edit', requireLogin, async (req, res) => {
-  try {
-    const tutor = await OnlineTutor.findById(req.params.id);
-    if (!tutor) return res.status(404).send('❌ Tutor not found');
-    res.render('onlineTutor/edit', { tutor, planOptions: profileDurations });
-  } catch (err) {
-    console.error('❌ Error loading edit form:', err.message);
-    res.status(500).send('❌ Error loading edit form');
-  }
-});
-
-// 수정
-router.put('/:id', requireLogin, async (req, res) => {
-  try {
-    const tutor = await OnlineTutor.findById(req.params.id);
-    if (!tutor) return res.status(404).send('❌ Tutor not found');
-
-    tutor.name = req.body.name;
-    tutor.subject = sanitizeHtml(req.body.subject || '');
-    tutor.description = sanitizeHtml(req.body.description || '', { allowedTags: [], allowedAttributes: {} });
-    tutor.email = req.body.email;
-
-    // ✅ planDays가 넘어온 경우에만 만료일 갱신
-    if (typeof req.body.planDays !== 'undefined') {
-      const days = getPlanDaysFromBody(req.body);
-      const now  = new Date();
-      tutor.expiresAt = new Date(now.getTime() + days * 86400000);
-      tutor.planDays  = days;
+    const payload = normalizePayload(req.body);
+    const errors = validatePayload(payload);
+    if (Object.keys(errors).length) {
+      return res.status(422).render('onlineTutor/new', {
+        expertiseList: defaultExpertise,
+        tutoringExpList: defaultTutoringExp,
+        genderList: defaultGenders,
+        values: req.body,
+        errors
+      });
     }
 
-    await tutor.save();
-    await upsertFacetFromTutor(tutor);                  // ✅ facet 반영
-    res.redirect('/facet/Online_Tutors');
+    const doc = new OnlineTutor(payload);
+    await doc.save();
+    req.flash?.('success', 'Online Tutor profile created.');
+    return res.redirect('/admin/dashboard');
   } catch (err) {
-    console.error('❌ Error updating tutor:', err.message);
-    res.status(500).send('❌ Error updating tutor');
+    console.error('[OnlineTutor CREATE] error:', err);
+    return res.status(500).render('error', { message: 'Failed to create online tutor', error: err });
   }
 });
 
-// 삭제
-router.delete('/:id', requireLogin, async (req, res) => {
+/* EDIT */
+router.get('/online-tutors/:id/edit', async (req, res) => {
   try {
-    await OnlineTutor.findByIdAndDelete(req.params.id);
-    await removeFacetForTutor(req.params.id);           // ✅ facet 삭제
-    res.redirect('/facet/Online_Tutors');
+    const { id } = req.params;
+    const onlineTutor = await OnlineTutor.findById(id);
+    if (!onlineTutor) return res.status(404).send('Not found');
+
+    res.render('onlineTutor/edit', {
+      onlineTutor,
+      expertiseList: defaultExpertise,
+      tutoringExpList: defaultTutoringExp,
+      genderList: defaultGenders,
+      errors: {}
+    });
   } catch (err) {
-    console.error('❌ Error deleting tutor:', err.message);
-    res.status(500).send('❌ Error deleting tutor');
+    console.error('[OnlineTutor EDIT] error:', err);
+    return res.status(500).render('error', { message: 'Failed to open online tutor', error: err });
+  }
+});
+
+/* UPDATE */
+router.put('/online-tutors/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const payload = normalizePayload(req.body);
+    const errors = validatePayload(payload);
+    if (Object.keys(errors).length) {
+      const onlineTutor = await OnlineTutor.findById(id);
+      return res.status(422).render('onlineTutor/edit', {
+        onlineTutor: onlineTutor ? { ...onlineTutor.toObject(), ...payload } : payload,
+        expertiseList: defaultExpertise,
+        tutoringExpList: defaultTutoringExp,
+        genderList: defaultGenders,
+        errors
+      });
+    }
+
+    await OnlineTutor.findByIdAndUpdate(id, payload, { new: true });
+    req.flash?.('success', 'Online Tutor profile updated.');
+    return res.redirect('/admin/dashboard');
+  } catch (err) {
+    console.error('[OnlineTutor UPDATE] error:', err);
+    return res.status(500).render('error', { message: 'Failed to update online tutor', error: err });
   }
 });
 

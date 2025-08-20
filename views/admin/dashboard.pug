@@ -39,6 +39,7 @@ block content
               th(data-key="email" class="sortable border px-3 py-2 text-left cursor-pointer select-none") Email
               th(data-key="remainingTokens" class="sortable border px-3 py-2 text-right cursor-pointer select-none") Remaining Tokens
               th(data-key="createdAtDisplay" class="sortable border px-3 py-2 text-left cursor-pointer select-none") Created At (KST)
+              th(class="border px-3 py-2 text-left select-none") Actions
           tbody
             each emp in employers
               tr
@@ -46,11 +47,18 @@ block content
                 td(class="border px-3 py-2") #{emp.email}
                 td(class="border px-3 py-2 text-right") #{emp.remainingTokens}
                 td(class="border px-3 py-2") #{emp.createdAtDisplay}
-      else
-        .text-sm.text-gray-500.border.rounded.p-4.bg-white No employers found.
+                td(class="border px-3 py-2")
+                  if emp.id
+                    // NOTE: 사용자 편집 라우트 경로는 프로젝트에 맞게 조정하세요.
+                    // 통상 /users/:id/edit 를 사용합니다.
+                    a(href=`/users/${emp.id}/edit` class="text-blue-600 hover:underline") Edit
+                  else
+                    span.text-gray-400 —
 
     // ==================== Job Seekers ====================
-    h2(class="text-2xl font-semibold mb-3 text-green-700") Job Seekers
+    .flex.items-center.justify-between.mb-3
+      h2(class="text-2xl font-semibold text-green-700") Job Seekers
+      a(href="/job-seekers/new" class="px-3 py-1 rounded bg-blue-600 text-white hover:bg-blue-700") New
     div(class="flex items-center gap-3 mb-3")
       input#jsSearch(
         type="text"
@@ -68,6 +76,7 @@ block content
               th(data-key="remainingDays" class="sortable border px-3 py-2 text-right cursor-pointer select-none") Remaining Days
               th(data-key="expiresAtDisplay" class="sortable border px-3 py-2 text-left cursor-pointer select-none") Expires At (KST)
               th(data-key="createdAtDisplay" class="sortable border px-3 py-2 text-left cursor-pointer select-none") Created At (KST)
+              th(class="border px-3 py-2 text-left select-none") Actions
           tbody
             each js in jobSeekers
               tr
@@ -76,12 +85,17 @@ block content
                 td(class="border px-3 py-2 text-right") #{js.remainingDays}
                 td(class="border px-3 py-2") #{js.expiresAtDisplay}
                 td(class="border px-3 py-2") #{js.createdAtDisplay}
-      else
-        .text-sm.text-gray-500.border.rounded.p-4.bg-white No job seekers found.
+                td(class="border px-3 py-2")
+                  if js.id
+                    a(href=`/job-seekers/${js.id}/edit` class="text-blue-600 hover:underline") Edit
+                  else
+                    span.text-gray-400 —
 
     // ==================== Online Tutors ====================
-    h2(class="text-2xl font-semibold mb-3 text-blue-700") Online Tutors
-    div(class="flex items-center gap-3 mb-3")
+    .flex.items-center.justify-between.mb-3
+      h2(class="text-2xl font-semibold text-blue-700") Online Tutors
+      a(href="/online-tutors/new" class="px-3 py-1 rounded bg-blue-600 text-white hover:bg-blue-700") New
+    div(class="flex.items-center gap-3 mb-3")
       input#otSearch(
         type="text"
         placeholder="Search by username, email, remaining days, expires..."
@@ -98,6 +112,7 @@ block content
               th(data-key="remainingDays" class="sortable border px-3 py-2 text-right cursor-pointer select-none") Remaining Days
               th(data-key="expiresAtDisplay" class="sortable border px-3 py-2 text-left cursor-pointer select-none") Expires At (KST)
               th(data-key="createdAtDisplay" class="sortable border px-3 py-2 text-left cursor-pointer select-none") Created At (KST)
+              th(class="border px-3 py-2 text-left select-none") Actions
           tbody
             each ot in onlineTutors
               tr
@@ -106,8 +121,11 @@ block content
                 td(class="border px-3 py-2 text-right") #{ot.remainingDays}
                 td(class="border px-3 py-2") #{ot.expiresAtDisplay}
                 td(class="border px-3 py-2") #{ot.createdAtDisplay}
-      else
-        .text-sm.text-gray-500.border.rounded.p-4.bg-white No online tutors found.
+                td(class="border px-3 py-2")
+                  if ot.id
+                    a(href=`/online-tutors/${ot.id}/edit` class="text-blue-600 hover:underline") Edit
+                  else
+                    span.text-gray-400 —
 
     // Footer note
     p(class="text-xs text-gray-400 mt-6")
