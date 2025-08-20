@@ -1,3 +1,4 @@
+// router/onlineTutor.js
 const express = require('express');
 const router = express.Router();
 const OnlineTutor = require('../model/onlineTutor');
@@ -8,6 +9,19 @@ const { MongoClient } = require('mongodb');
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017';
 const DB_NAME = 'eventpool';
 const FACET_COLL = 'esl';
+
+// ✅ 30/90/365 허용값 (config에서 관리)
+const { profileDurations } = require('../config/plans');
+
+/* ─────────────────────────────────────────────────────────────
+   planDays 정규화: 폼에서 넘어온 값이 30/90/365 중 하나만 통과
+   없거나 이상하면 기본값(profileDurations[0] → 대개 30)
+   ───────────────────────────────────────────────────────────── */
+function getPlanDaysFromBody(body) {
+  const v = Number(body?.planDays);
+  if (Number.isFinite(v) && profileDurations.includes(v)) return v;
+  return profileDurations?.[0] ?? 30;
+}
 
 // ── facet(esl) 동기화 유틸 ──────────────────────────────────────────────
 async function upsertFacetFromTutor(tutor) {
@@ -21,6 +35,7 @@ async function upsertFacetFromTutor(tutor) {
       '@type': 'Online_Tutors',
       source: 'online_tutors',
       sourceId: String(tutor._id),
+
       label: tutor.name || 'Untitled',
       title: tutor.name ? (tutor.subject ? `${tutor.name} · ${tutor.subject}` : tutor.name) : 'Untitled',
       description: tutor.description || '',
@@ -28,6 +43,7 @@ async function upsertFacetFromTutor(tutor) {
       hostCountry: '',
       studentType: undefined,
       email: tutor.email || '',
+
       updatedAt: new Date()
     };
     await col.updateOne(filter, { $set: doc }, { upsert: true });
@@ -41,7 +57,9 @@ async function removeFacetForTutor(id) {
   const client = new MongoClient(MONGO_URI, { ignoreUndefined: true });
   await client.connect();
   try {
-    await client.db(DB_NAME).collection(FACET_COLL)
+    await client
+      .db(DB_NAME)
+      .collection(FACET_COLL)
       .deleteOne({ source: 'online_tutors', sourceId: String(id) });
     console.log('[facet] delete online_tutor in esl:', id);
   } finally {
@@ -64,7 +82,8 @@ router.get('/', requireLogin, async (req, res) => {
 // 새 튜터 폼
 router.get('/new', requireLogin, async (req, res) => {
   try {
-    res.render('onlineTutor/new');
+    // ⬇️ 뷰에서 30/90/365를 그릴 수 있게 옵션 전달(선택사항)
+    res.render('onlineTutor/new', { planOptions: profileDurations });
   } catch (err) {
     console.error('❌ Error loading form:', err.message);
     res.status(500).send('❌ Error loading form');
@@ -80,6 +99,14 @@ router.post('/', requireLogin, async (req, res) => {
       description: sanitizeHtml(req.body.description || '', { allowedTags: [], allowedAttributes: {} }),
       email: req.body.email
     };
+
+    // ✅ 만료일/플랜 박기
+    const days = getPlanDaysFromBody(req.body);
+    const now  = new Date();
+    data.createdAt = data.createdAt || now;
+    data.expiresAt = new Date(now.getTime() + days * 86400000); // days → ms
+    data.planDays  = days; // (선택 저장)
+
     const newTutor = await new OnlineTutor(data).save();
     await upsertFacetFromTutor(newTutor);               // ✅ facet 반영
     res.redirect('/facet/Online_Tutors');
@@ -94,7 +121,7 @@ router.get('/:id/edit', requireLogin, async (req, res) => {
   try {
     const tutor = await OnlineTutor.findById(req.params.id);
     if (!tutor) return res.status(404).send('❌ Tutor not found');
-  res.render('onlineTutor/edit', { tutor });
+    res.render('onlineTutor/edit', { tutor, planOptions: profileDurations });
   } catch (err) {
     console.error('❌ Error loading edit form:', err.message);
     res.status(500).send('❌ Error loading edit form');
@@ -111,8 +138,16 @@ router.put('/:id', requireLogin, async (req, res) => {
     tutor.subject = sanitizeHtml(req.body.subject || '');
     tutor.description = sanitizeHtml(req.body.description || '', { allowedTags: [], allowedAttributes: {} });
     tutor.email = req.body.email;
-    await tutor.save();
 
+    // ✅ planDays가 넘어온 경우에만 만료일 갱신
+    if (typeof req.body.planDays !== 'undefined') {
+      const days = getPlanDaysFromBody(req.body);
+      const now  = new Date();
+      tutor.expiresAt = new Date(now.getTime() + days * 86400000);
+      tutor.planDays  = days;
+    }
+
+    await tutor.save();
     await upsertFacetFromTutor(tutor);                  // ✅ facet 반영
     res.redirect('/facet/Online_Tutors');
   } catch (err) {

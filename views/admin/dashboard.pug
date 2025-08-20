@@ -1,64 +1,198 @@
+//- views/admin/dashboard.pug
 extends ../layout
 
 block content
-  h1.text-center.mb-4 Admin Dashboard
+  .max-w-7xl.mx-auto.px-4.py-8
+    // Header
+    .flex.items-center.justify-between.mb-8
+      h1.text-3xl.font-bold Admin Dashboard
+      span.text-sm.text-gray-500 Last updated (KST): #{new Date(Date.now() + 9*60*60*1000).toISOString().replace('T',' ').slice(0,16)}
 
-  // ✅ Employers
-  h2.text-danger.mt-4 Employers
-  if employers && employers.length
-    table.table.table-striped
-      thead
-        tr
-          th Username
-          th Email
-          th Remaining Tokens
-          th Created At
-      tbody
-        each emp in employers
-          tr
-            td= emp.username || 'N/A'
-            td= emp.email || 'N/A'
-            td= emp.adsAvailable !== undefined ? emp.adsAvailable : 'N/A'
-            td= emp.createdAt || 'N/A'
-  else
-    p.text-muted No active Employers found
+    // Summary cards
+    div(class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8")
+      .rounded-xl.shadow.p-5.bg-white
+        div.text-gray-500.text-sm Employers
+        div.text-3xl.font-bold #{employers && employers.length || 0}
+      .rounded-xl.shadow.p-5.bg-white
+        div.text-gray-500.text-sm Job Seekers
+        div.text-3xl.font-bold #{jobSeekers && jobSeekers.length || 0}
+      .rounded-xl.shadow.p-5.bg-white
+        div.text-gray-500.text-sm Online Tutors
+        div.text-3xl.font-bold #{onlineTutors && onlineTutors.length || 0}
 
-  // ✅ Job Seekers
-  h2.text-success.mt-5 Job Seekers
-  if jobSeekers && jobSeekers.length
-    table.table.table-striped
-      thead
-        tr
-          th Username
-          th Email
-          th Remaining Days
-          th Created At
-      tbody
-        each js in jobSeekers
-          tr
-            td= js.username || 'N/A'
-            td= js.email || 'N/A'
-            td= js.remainingDays !== undefined ? js.remainingDays : 'N/A'
-            td= js.createdAt || 'N/A'
-  else
-    p.text-muted No active Job Seekers found
+    // ==================== Employers ====================
+    h2(class="text-2xl font-semibold mb-3 text-red-600") Employers
+    // Search bar
+    div(class="flex items-center gap-3 mb-3")
+      input#empSearch(
+        type="text"
+        placeholder="Search by username or email..."
+        class="w-full md:w-96 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring"
+      )
+      span#empCount(class="text-sm text-gray-500") #{employers && employers.length || 0} rows
+    .overflow-x-auto.mb-10
+      if employers && employers.length
+        table#empTable(class="table-auto min-w-full border rounded bg-white")
+          thead(class="bg-gray-100")
+            tr
+              th(data-key="username" class="sortable border px-3 py-2 text-left cursor-pointer select-none") Username
+              th(data-key="email" class="sortable border px-3 py-2 text-left cursor-pointer select-none") Email
+              th(data-key="remainingTokens" class="sortable border px-3 py-2 text-right cursor-pointer select-none") Remaining Tokens
+              th(data-key="createdAtDisplay" class="sortable border px-3 py-2 text-left cursor-pointer select-none") Created At (KST)
+          tbody
+            each emp in employers
+              tr
+                td(class="border px-3 py-2") #{emp.username}
+                td(class="border px-3 py-2") #{emp.email}
+                td(class="border px-3 py-2 text-right") #{emp.remainingTokens}
+                td(class="border px-3 py-2") #{emp.createdAtDisplay}
+      else
+        .text-sm.text-gray-500.border.rounded.p-4.bg-white No employers found.
 
-  // ✅ Online Tutors
-  h2.text-primary.mt-5 Online Tutors
-  if onlineTutors && onlineTutors.length
-    table.table.table-striped
-      thead
-        tr
-          th Username
-          th Email
-          th Remaining Days
-          th Created At
-      tbody
-        each ot in onlineTutors
-          tr
-            td= ot.username || 'N/A'
-            td= ot.email || 'N/A'
-            td= ot.remainingDays !== undefined ? ot.remainingDays : 'N/A'
-            td= ot.createdAt || 'N/A'
-  else
-    p.text-muted No active Online Tutors found
+    // ==================== Job Seekers ====================
+    h2(class="text-2xl font-semibold mb-3 text-green-700") Job Seekers
+    div(class="flex items-center gap-3 mb-3")
+      input#jsSearch(
+        type="text"
+        placeholder="Search by username, email, remaining days, expires..."
+        class="w-full md:w-96 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring"
+      )
+      span#jsCount(class="text-sm text-gray-500") #{jobSeekers && jobSeekers.length || 0} rows
+    .overflow-x-auto.mb-10
+      if jobSeekers && jobSeekers.length
+        table#jsTable(class="table-auto min-w-full border rounded bg-white")
+          thead(class="bg-gray-100")
+            tr
+              th(data-key="username" class="sortable border px-3 py-2 text-left cursor-pointer select-none") Username
+              th(data-key="email" class="sortable border px-3 py-2 text-left cursor-pointer select-none") Email
+              th(data-key="remainingDays" class="sortable border px-3 py-2 text-right cursor-pointer select-none") Remaining Days
+              th(data-key="expiresAtDisplay" class="sortable border px-3 py-2 text-left cursor-pointer select-none") Expires At (KST)
+              th(data-key="createdAtDisplay" class="sortable border px-3 py-2 text-left cursor-pointer select-none") Created At (KST)
+          tbody
+            each js in jobSeekers
+              tr
+                td(class="border px-3 py-2") #{js.username}
+                td(class="border px-3 py-2") #{js.email}
+                td(class="border px-3 py-2 text-right") #{js.remainingDays}
+                td(class="border px-3 py-2") #{js.expiresAtDisplay}
+                td(class="border px-3 py-2") #{js.createdAtDisplay}
+      else
+        .text-sm.text-gray-500.border.rounded.p-4.bg-white No job seekers found.
+
+    // ==================== Online Tutors ====================
+    h2(class="text-2xl font-semibold mb-3 text-blue-700") Online Tutors
+    div(class="flex items-center gap-3 mb-3")
+      input#otSearch(
+        type="text"
+        placeholder="Search by username, email, remaining days, expires..."
+        class="w-full md:w-96 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring"
+      )
+      span#otCount(class="text-sm text-gray-500") #{onlineTutors && onlineTutors.length || 0} rows
+    .overflow-x-auto.mb-4
+      if onlineTutors && onlineTutors.length
+        table#otTable(class="table-auto min-w-full border rounded bg-white")
+          thead(class="bg-gray-100")
+            tr
+              th(data-key="username" class="sortable border px-3 py-2 text-left cursor-pointer select-none") Username
+              th(data-key="email" class="sortable border px-3 py-2 text-left cursor-pointer select-none") Email
+              th(data-key="remainingDays" class="sortable border px-3 py-2 text-right cursor-pointer select-none") Remaining Days
+              th(data-key="expiresAtDisplay" class="sortable border px-3 py-2 text-left cursor-pointer select-none") Expires At (KST)
+              th(data-key="createdAtDisplay" class="sortable border px-3 py-2 text-left cursor-pointer select-none") Created At (KST)
+          tbody
+            each ot in onlineTutors
+              tr
+                td(class="border px-3 py-2") #{ot.username}
+                td(class="border px-3 py-2") #{ot.email}
+                td(class="border px-3 py-2 text-right") #{ot.remainingDays}
+                td(class="border px-3 py-2") #{ot.expiresAtDisplay}
+                td(class="border px-3 py-2") #{ot.createdAtDisplay}
+      else
+        .text-sm.text-gray-500.border.rounded.p-4.bg-white No online tutors found.
+
+    // Footer note
+    p(class="text-xs text-gray-400 mt-6")
+      | * Click column headers to sort. Type in the search boxes to filter rows (client-side). All times are KST (UTC+9).
+
+  // =============== Client-side Search & Sort Script ===============
+  script.
+    (function(){
+      function text(row, idx){
+        const cell = row.children[idx];
+        return (cell ? cell.textContent : '').trim();
+      }
+      function parseNumber(v){
+        const n = Number(String(v).replace(/[^0-9.-]/g,''));
+        return isNaN(n) ? null : n;
+      }
+      function compare(a, b, keyIdx, numeric){
+        const av = text(a, keyIdx);
+        const bv = text(b, keyIdx);
+        if (numeric){
+          const an = parseNumber(av), bn = parseNumber(bv);
+          if (an === null && bn === null) return 0;
+          if (an === null) return -1;
+          if (bn === null) return 1;
+          return an - bn;
+        }
+        return av.localeCompare(bv);
+      }
+      function applySort(tableId, th, dir){
+        const table = document.getElementById(tableId);
+        const thead = table.querySelector('thead tr');
+        const headers = Array.from(thead.children);
+        const keyIdx = headers.indexOf(th);
+        const numeric = /(Remaining|Days|Tokens)/i.test(th.textContent);
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.children);
+        rows.sort((r1, r2) => {
+          const c = compare(r1, r2, keyIdx, numeric);
+          return dir === 'asc' ? c : -c;
+        });
+        rows.forEach(r => tbody.appendChild(r));
+        headers.forEach(h => h.classList.remove('bg-gray-200'));
+        th.classList.add('bg-gray-200');
+      }
+      function applyFilter(tableId, inputId, countId){
+        const q = (document.getElementById(inputId).value || '').toLowerCase();
+        const table = document.getElementById(tableId);
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.children);
+        let shown = 0;
+        rows.forEach(row => {
+          const cells = Array.from(row.children).map(td => td.textContent.toLowerCase());
+          const hit = cells.some(v => v.includes(q));
+          row.style.display = hit ? '' : 'none';
+          if (hit) shown++;
+        });
+        if (countId){
+          const el = document.getElementById(countId);
+          if (el) el.textContent = shown + ' rows';
+        }
+      }
+      function wire(tableId, inputId, countId){
+        // sort
+        const thead = document.getElementById(tableId)?.querySelector('thead');
+        if (thead){
+          Array.from(thead.querySelectorAll('th.sortable')).forEach(th => {
+            let dir = 'asc';
+            th.addEventListener('click', () => {
+              applySort(tableId, th, dir);
+              dir = (dir === 'asc') ? 'desc' : 'asc';
+            });
+          });
+        }
+        // filter (debounced)
+        const input = document.getElementById(inputId);
+        if (input){
+          let t;
+          input.addEventListener('input', () => {
+            clearTimeout(t);
+            t = setTimeout(() => applyFilter(tableId, inputId, countId), 160);
+          });
+        }
+      }
+      // wire all three tables
+      wire('empTable', 'empSearch', 'empCount');
+      wire('jsTable', 'jsSearch', 'jsCount');
+      wire('otTable', 'otSearch', 'otCount');
+    })();
