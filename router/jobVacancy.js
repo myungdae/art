@@ -74,7 +74,7 @@ function validatePayload(p) {
 
 /* ------------------ NEW ------------------ */
 router.get('/job-vacancies/new', (req, res) => {
-  res.render('jobVacancies/new', {
+  res.render('jobVacancy/new', {
     // new.pug에서는 내부 프리셋을 갖고 있지만, 서버에서 넘겨주면 그 값을 우선 사용
     countries: defaultCountries,
     studentTypes: defaultStudentTypes,
@@ -91,7 +91,7 @@ router.post('/job-vacancies', async (req, res) => {
     const errors = validatePayload(payload);
     if (Object.keys(errors).length) {
       // 폼은 new.pug(부트스트랩) 버전이므로, 값/에러를 넘기려면 변수명을 맞춰야 합니다.
-      return res.status(422).render('jobVacancies/new', {
+      return res.status(422).render('jobVacancy/new', {
         countries: defaultCountries,
         studentTypes: defaultStudentTypes,
         teachingAreas: defaultTeaching,
@@ -119,7 +119,7 @@ router.get('/job-vacancies/:id/edit', async (req, res) => {
   const { id } = req.params;
   const jobVacancy = await JobVacancy.findById(id);
   if (!jobVacancy) return res.status(404).send('Not found');
-  res.render('jobVacancies/edit', {
+  res.render('jobVacancy/edit', {
     jobVacancy,
     countries: defaultCountries,
     studentTypes: defaultStudentTypes,
@@ -135,7 +135,7 @@ router.put('/job-vacancies/:id', async (req, res) => {
     const errors = validatePayload(payload);
     if (Object.keys(errors).length) {
       const jobVacancy = await JobVacancy.findById(id);
-      return res.status(422).render('jobVacancies/edit', {
+      return res.status(422).render('jobVacancy/edit', {
         jobVacancy: { ...jobVacancy.toObject(), ...payload }, // 사용자가 입력한 값 반영
         countries: defaultCountries,
         studentTypes: defaultStudentTypes,

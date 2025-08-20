@@ -6,7 +6,6 @@ const flash = require('connect-flash');
 require('dotenv').config();
 const methodOverride = require('method-override');
 
-
 const connect = require('./model');
 const app = express();
 
@@ -15,7 +14,6 @@ const userRoutes = require('./router/user');
 const adminRouter = require('./router/admin');
 const jobVacancyRouter = require('./router/jobVacancy');
 const jobSeekerRouter = require('./router/jobSeeker');
-
 const paypalRoutes = require('./router/paypal');
 const onlineTutorRouter = require('./router/onlineTutor');
 const tutorAccessRouter = require('./router/tutorAccess');
@@ -24,14 +22,13 @@ const resourceRouter = require('./router/resource');
 const resumeAccessRouter = require('./router/resume-access');
 const threadRouter = require('./router/thread');
 
-console.log("📌 app.js 시작됨");
+console.log('📌 app.js 시작됨');
 require('./router/config');
 connect();
-console.log("✅ DB 연결 시도");
+console.log('✅ DB 연결 시도');
 
-app.get('/login', (req, res) => {
-  return res.redirect('/user/login');
-});
+// 📌 로그인 바로가기
+app.get('/login', (req, res) => res.redirect('/user/login'));
 
 // 📌 view 설정
 app.set('views', path.join(__dirname, 'views'));
@@ -54,9 +51,14 @@ app.use((req, res, next) => {
   res.locals.showPayment = req.flash('showPayment')[0] === 'true';
   next();
 });
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
+// ✅ CKEditor 본문 대비 용량 살짝 상향
+app.use(express.json({ limit: '2mb' }));
+app.use(express.urlencoded({ extended: true, limit: '2mb' }));
+
 app.use(express.static(path.join(__dirname, 'public')));
+
+// ✅ 전역 method-override (폼에서 ?_method=PUT/DELETE 지원)
 app.use(methodOverride('_method'));
 
 // 요청 로깅
@@ -65,6 +67,7 @@ app.use((req, res, next) => {
   next();
 });
 
+// 기본 응답 언어
 app.use((req, res, next) => {
   res.set('Content-Language', 'en');
   next();
@@ -73,11 +76,14 @@ app.use((req, res, next) => {
 // 📌 라우터 등록
 app.use('/resource', resourceRouter);
 app.use('/rdf-resource', rdfResourceRouter);
-app.use('/job-seekers', jobSeekerRouter);     // ✅ JobSeeker router는 /job-seekers 접두사
-app.use('/job-vacancies', jobVacancyRouter);
+
+// 🔧 중요: 우리가 만든 라우터는 "절대 경로"를 사용하므로 베이스 없이 붙입니다.
+app.use(jobSeekerRouter);         // /job-seekers/...
+app.use(jobVacancyRouter);        // /job-vacancies/...
+app.use(onlineTutorRouter);       // /online-tutors/...
+
 app.use('/paypal', paypalRoutes);
 app.use('/resume-access', resumeAccessRouter);
-app.use('/online-tutor', onlineTutorRouter);
 app.use('/tutor-access', tutorAccessRouter);
 app.use('/admin', adminRouter);
 app.use('/facet', require('./router/facet'));

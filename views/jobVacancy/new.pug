@@ -1,15 +1,12 @@
-//- views/jobVacancies/new.pug
+//- views/jobVacancy/new.pug
 extends ../layout
 
-// 기본 프리셋: 서버에서 전달된 배열이 없을 때 사용
-- const _defaultCountries    = ['Korea','Japan','China','Malaysia','Thailand'];
-- const _defaultStudentTypes = ['Adults','Elementary','High School','Kindergarten','Middle'];
-- const _defaultTeaching     = ['Art','Biology','English','ESL','Social Studies','Spanish'];
-- const _countries     = (typeof countries !== 'undefined' && countries && countries.length) ? countries : _defaultCountries;
-- const _studentTypes  = (typeof studentTypes !== 'undefined' && studentTypes && studentTypes.length) ? studentTypes : _defaultStudentTypes;
-- const _teachingAreas = (typeof teachingAreas !== 'undefined' && teachingAreas && teachingAreas.length) ? teachingAreas : _defaultTeaching;
-
 block content
+  // 프리셋은 block 안에서 선언해야 합니다 (top-level 금지)
+  - const _countries     = (typeof countries !== 'undefined' && countries && countries.length) ? countries : ['Korea','Japan','China','Malaysia','Thailand'];
+  - const _studentTypes  = (typeof studentTypes !== 'undefined' && studentTypes && studentTypes.length) ? studentTypes : ['Adults','Elementary','High School','Kindergarten','Middle School'];
+  - const _teachingAreas = (typeof teachingAreas !== 'undefined' && teachingAreas && teachingAreas.length) ? teachingAreas : ['Art','Biology','English','ESL','Social Studies','Spanish'];
+
   .container.mt-5
     .row.justify-content-center
       .col-md-10
@@ -30,36 +27,37 @@ block content
                 label(for="description") Job Description
                 textarea.form-control(name="http://purl.org/dc/elements/1.1/description[@value]", id="description", rows="8")
 
-              // ✅ Host Country (프리셋 + 커스텀)
+              // ✅ Host Country (널가드 + 프리셋)
               .form-group.mb-3
                 label(for="country") Host Country
-                select.form-control#countrySelect(name="country" required)
+                select.form-control#countrySelect(name="country")
                   option(disabled selected value='') Select Country
                   each v in _countries
                     option(value=v)= v
                 small.text-muted.mt-1 You can also add a new country:
                 input.form-control.mt-1(type="text", id="customCountry", placeholder="Or enter a new Country")
 
-              // ✅ Student Type (프리셋 + 커스텀)
+              // ✅ Student Type
               .form-group.mb-3
                 label(for="studentType") Student Type
-                select.form-control#studentTypeSelect(name="studentType" required)
+                select.form-control#studentTypeSelect(name="studentType")
                   option(disabled selected value='') Select Student Type
                   each v in _studentTypes
                     option(value=v)= v
                 small.text-muted.mt-1 You can also add a new student type:
                 input.form-control.mt-1(type="text", id="customStudentType", placeholder="Or enter a new Student Type")
 
-              // ✅ Teaching Area (프리셋 + 커스텀)
+              // ✅ Teaching Area
               .form-group.mb-3
                 label(for="teachingArea") Teaching Area
-                select.form-control#teachingArea(name="teachingArea" required)
+                select.form-control#teachingArea(name="teachingArea")
                   option(disabled selected value='') Select Teaching Area
                   each v in _teachingAreas
                     option(value=v)= v
                 small.text-muted.mt-1 You can also add a new teaching area:
                 input.form-control.mt-1(type="text", id="customTeachingArea", placeholder="Or enter a new Teaching Area")
 
+              // 기타 필드
               .form-group.mb-3
                 label(for="duration") Duration
                 input.form-control(type="text", name="duration", id="duration", placeholder="Duration")
@@ -88,7 +86,7 @@ block content
                 label(for="cellphoneNumber") Cellphone Number
                 input.form-control(type="text", name="cellphoneNumber", id="cellphoneNumber", placeholder="Cellphone Number")
 
-              // 🔻 요청대로 Skype ID / WeChat ID 제거
+              // (요청대로) Skype / WeChat 제거
 
               .form-group.mb-3
                 label(for="homepage") Homepage
@@ -102,7 +100,7 @@ block content
               .form-group.mb-3
                 label(for="adCount") Advertisement Plan
                 .d-flex.flex-wrap
-                  if typeof adPlans !== 'undefined' && adPlans && adPlans.length
+                  if adPlans && adPlans.length
                     each plan, idx in adPlans
                       .form-check.form-check-inline.me-3.mt-2
                         input.form-check-input(type="radio", name="adCount", id=`adCount-${plan.ads}`, value=plan.ads, required, checked=idx === 0)
@@ -150,8 +148,8 @@ block append_js
     function handleCustomFields() {
       const form = document.querySelector('form');
 
-      const customCountry  = document.getElementById('customCountry')?.value.trim();
-      const customStudent  = document.getElementById('customStudentType')?.value.trim();
+      const customCountry = document.getElementById('customCountry')?.value.trim();
+      const customStudent = document.getElementById('customStudentType')?.value.trim();
       const customTeaching = document.getElementById('customTeachingArea')?.value.trim();
 
       const countrySelect = document.getElementById('countrySelect');

@@ -1,22 +1,29 @@
 //- views/onlineTutor/edit.pug
 extends ../layout
 
-- const _defExpertise = ['ESL','Conversation','Grammar','Business English','Kids English','Test Prep (TOEIC/IELTS)'];
-- const _defExp       = ['0-1 year','1-3 years','3-5 years','5+ years'];
-- const _defGender    = ['Male','Female','Non-binary','Prefer not to say'];
-
-- const _expertiseList = (typeof expertiseList !== 'undefined' && expertiseList && expertiseList.length) ? expertiseList : _defExpertise;
-- const _tutoringExp   = (typeof tutoringExpList !== 'undefined' && tutoringExpList && tutoringExpList.length) ? tutoringExpList : _defExp;
-- const _genderList    = (typeof genderList !== 'undefined' && genderList && genderList.length) ? genderList : _defGender;
-
-- const _ex  = onlineTutor.expertise || '';
-- const _te  = onlineTutor.tutoringExperience || '';
-- const _gd  = onlineTutor.gender || '';
-- const _exIn = _ex && _expertiseList.indexOf(_ex) !== -1;
-- const _teIn = _te && _tutoringExp.indexOf(_te) !== -1;
-- const _gdIn = _gd && _genderList.indexOf(_gd) !== -1;
-
 block content
+  // 프리셋(블록 안)
+  - const _defExpertise = ['ESL','Conversation','Grammar','Business English','Kids English','Test Prep (TOEIC/IELTS)'];
+  - const _defExp       = ['0-1 year','1-3 years','3-5 years','5+ years'];
+  - const _defGender    = ['Male','Female','Non-binary','Prefer not to say'];
+
+  - const _expertiseList = (typeof expertiseList !== 'undefined' && expertiseList?.length) ? expertiseList : _defExpertise;
+  - const _tutoringExp   = (typeof tutoringExpList !== 'undefined' && tutoringExpList?.length) ? tutoringExpList : _defExp;
+  - const _genderList    = (typeof genderList !== 'undefined' && genderList?.length) ? genderList : _defGender;
+
+  // 현재 값
+  - const _email = onlineTutor?.email || '';
+  - const _skype = onlineTutor?.skypeId || onlineTutor?.Skype_ID || '';
+  - const _desc  = onlineTutor?.description || onlineTutor?.['http://purl.org/dc/elements/1.1/description[@value]'] || '';
+
+  - const _ex = onlineTutor?.expertise || '';
+  - const _te = onlineTutor?.tutoringExperience || '';
+  - const _gd = onlineTutor?.gender || '';
+
+  - const _exIn = _ex && _expertiseList.indexOf(_ex) !== -1;
+  - const _teIn = _te && _tutoringExp.indexOf(_te) !== -1;
+  - const _gdIn = _gd && _genderList.indexOf(_gd) !== -1;
+
   .container.mt-5
     .row.justify-content-center
       .col-md-10
@@ -28,23 +35,11 @@ block content
             if errors && Object.keys(errors).length
               .alert.alert-danger Please fix the highlighted errors.
 
-            form.form(method="POST", action="/online-tutors/" + onlineTutor._id + "?_method=PUT", onsubmit="return handleCustomFields()")
-              // ===== Email =====
-              .form-group.mb-3
-                label(for="email") Email *
-                input.form-control#email(type="email", name="email", required, value=onlineTutor.email || '')
-                if errors && errors.email
-                  small.text-danger #{errors.email}
-
-              // ===== Skype ID =====
-              .form-group.mb-3
-                label(for="skypeId") Skype ID
-                input.form-control#skypeId(type="text", name="Skype_ID", value=onlineTutor.skypeId || '')
-
-              // ===== Description =====
+            form.form(method="POST", action=`/online-tutors/${onlineTutor._id}?_method=PUT`, onsubmit="return handleCustomFields()")
+              // ===== Description (CKEditor)
               .form-group.mb-4
                 label(for="description") Description
-                textarea.form-control(name="http://purl.org/dc/elements/1.1/description[@value]", id="description", rows="8")= onlineTutor.description || onlineTutor['http://purl.org/dc/elements/1.1/description[@value]'] || ''
+                textarea.form-control(name="http://purl.org/dc/elements/1.1/description[@value]", id="description", rows="8")= _desc
 
               // ===== Expertise / Tutoring Experience / Gender
               .form-group.mb-3
@@ -52,7 +47,7 @@ block content
                 select.form-control#expertiseSelect(name="esl:expertise[@value]")
                   option(disabled value="") Select Expertise
                   each v in _expertiseList
-                    option(value=v selected=(_ex === v))= v
+                    option(value=v selected=(_ex===v))= v
                   if _ex && !_exIn
                     option(value=_ex selected)= _ex
                 small.text-muted.mt-1 You can also add a new expertise:
@@ -63,7 +58,7 @@ block content
                 select.form-control#tutoringExpSelect(name="esl:tutoringExperience[@value]")
                   option(disabled value="") Select Tutoring Experience
                   each v in _tutoringExp
-                    option(value=v selected=(_te === v))= v
+                    option(value=v selected=(_te===v))= v
                   if _te && !_teIn
                     option(value=_te selected)= _te
                 small.text-muted.mt-1 You can also add a new item:
@@ -74,11 +69,22 @@ block content
                 select.form-control#genderSelect(name="esl:gender[@value]")
                   option(disabled value="") Select Gender
                   each v in _genderList
-                    option(value=v selected=(_gd === v))= v
+                    option(value=v selected=(_gd===v))= v
                   if _gd && !_gdIn
                     option(value=_gd selected)= _gd
                 small.text-muted.mt-1 You can also add a new gender value:
                 input.form-control.mt-1(type="text", id="customGender", placeholder="Or enter a new Gender")
+
+              // ===== Contact (맨 아래): Email / Skype ID
+              .form-group.mb-3.mt-4
+                label(for="email") Email *
+                input.form-control#email(type="email", name="email", required, value=_email)
+                if errors && errors.email
+                  small.text-danger #{errors.email}
+
+              .form-group.mb-3
+                label(for="skypeId") Skype ID
+                input.form-control#skypeId(type="text", name="Skype_ID", value=_skype)
 
               button.btn.btn-warning.btn-block.mt-3(type="submit") Update
 
@@ -92,7 +98,7 @@ block append_js
 
       const ex = document.getElementById('customExpertise')?.value.trim();
       const exSel = document.getElementById('expertiseSelect');
-      if (ex && exSel.value === '') {
+      if (ex && exSel && exSel.value === '') {
         const input = document.createElement('input');
         input.type = 'hidden';
         input.name = 'esl:expertise[@value]';
@@ -103,7 +109,7 @@ block append_js
 
       const te = document.getElementById('customTutoringExp')?.value.trim();
       const teSel = document.getElementById('tutoringExpSelect');
-      if (te && teSel.value === '') {
+      if (te && teSel && teSel.value === '') {
         const input = document.createElement('input');
         input.type = 'hidden';
         input.name = 'esl:tutoringExperience[@value]';
@@ -114,7 +120,7 @@ block append_js
 
       const gd = document.getElementById('customGender')?.value.trim();
       const gdSel = document.getElementById('genderSelect');
-      if (gd && gdSel.value === '') {
+      if (gd && gdSel && gdSel.value === '') {
         const input = document.createElement('input');
         input.type = 'hidden';
         input.name = 'esl:gender[@value]';
