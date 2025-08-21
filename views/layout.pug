@@ -113,7 +113,7 @@ html(lang='en')
     header.main-search-header.search-header
       .container-fluid
 
-        // 데스크탑: 우상단 계정 링크 (Inquiry 항상 노출 / Admin은 관리자만)
+        // 데스크탑: 우상단 계정 링크
         .menu-top.d-none.d-md-flex
           if session && session.user
             a(href="/user/mypage") Mypage
@@ -130,7 +130,7 @@ html(lang='en')
             a(href="/admin/dashboard") Admin
             a(href="/admin/logout").logout Logout
 
-        // 모바일: 우상단 계정 토글 (Inquiry 항상 노출 / Admin은 관리자만)
+        // 모바일: 우상단 계정 토글
         .menu-top-mob.d-md-none
           button#topMenuToggle.btn.btn-outline-dark.btn-sm(type="button", aria-label="Account")
             i.fa.fa-user
@@ -152,8 +152,6 @@ html(lang='en')
 
         // 중앙 타이틀 + 검색
         .text-center
-          // 👇 반영 확인용 마킹
-          // INQUIRY-MARK
           h2(style="font-weight: bold; font-size: 28px; margin-bottom: 25px;") ESL · SMTP
           - if (!searchKeyword) searchKeyword = "Enter keyword..."
           .input-group.justify-content-center
@@ -179,7 +177,15 @@ html(lang='en')
           ul.navbar-nav.justify-content-center.w-100
             li.nav-item.text-nowrap
               a.nav-link.h5.my-0(class=(currentPage==='/' ? 'active' : ''), href='/') HOME
-          // NOTE: 카테고리 메뉴는 menu.js가 주입
+            li.nav-item.text-nowrap
+              - const activeJV = (currentPage && (currentPage.indexOf('/facet/Job_Vacancies')===0 || currentPage.indexOf('/job-vacancies')===0)) ? 'active' : ''
+              a.nav-link.h5.my-0(class=activeJV, href='/facet/Job_Vacancies') JOB VACANCIES
+            li.nav-item.text-nowrap
+              - const activeJS = (currentPage && currentPage.indexOf('/job-seekers')===0) ? 'active' : ''
+              a.nav-link.h5.my-0(class=activeJS, href='/job-seekers') JOB SEEKERS
+            li.nav-item.text-nowrap
+              - const activeOT = (currentPage && currentPage.indexOf('/online-tutors')===0) ? 'active' : ''
+              a.nav-link.h5.my-0(class=activeOT, href='/online-tutors') ONLINE TUTORS
 
     // 메인
     main.main-content
