@@ -6,6 +6,11 @@ const OnlineTutor = require('../model/onlineTutor');
 
 router.use(methodOverride('_method'));
 
+const validateObjectId = require('../middleware/validateObjectId');   // ✅ 추가
+
+router.param('id', validateObjectId('id'));                           // ✅ 추가
+
+
 /* 프리셋(뷰로 전달) */
 const defaultExpertise = [
   'ESL', 'Conversation', 'Grammar', 'Business English', 'Kids English', 'Test Prep (TOEIC/IELTS)'

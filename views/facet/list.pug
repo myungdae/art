@@ -1,0 +1,22 @@
+//- views/facet/list.pug
+extends ../layout
+
+block content
+  .container.py-6
+    h1.text-2xl.font-bold.mb-6= `${klass} (${(items && items.length) || 0})`
+
+    if items && items.length
+      ul.space-y-3
+        each it in items
+          - const posted = (it.datePosted && new Date(it.datePosted).toISOString().slice(0,10)) || '-'
+          - const ta = (Array.isArray(it.teachingArea) ? it.teachingArea.join(', ') : (it.teachingArea || ''))
+          li.border.rounded.p-3
+            h2.text-lg.font-semibold= it._label || it.title || '(no title)'
+            p.text-sm.text-gray-600 #{it.country || '-'} · #{it.studentType || '-'} · #{ta}
+            if it._description
+              .prose.mt-2 !{it._description}  //- HTML 허용 (CKEditor)
+            else if it.description
+              p.mt-2= it.description
+            p.text-xs.mt-1 Posted: #{posted}
+    else
+      p.text-gray-500 No items.

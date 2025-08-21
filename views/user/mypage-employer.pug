@@ -4,27 +4,29 @@ block content
   .container.mx-auto.px-4.py-10
     h1.text-2xl.text-center.mb-8 Employer Dashboard
 
+    // User info
     .max-w-xl.mx-auto.bg-white.rounded-xl.shadow.p-6
       p Username: #{user.username}
       p Email: #{user.email}
       p Role: #{user.role}
 
-      if !paid
-        .mt-6.text-yellow-700
-          p.font-medium 🔒 결제 후에 채용공고를 등록할 수 있습니다.
-          if typeof employerDaysLeft !== 'undefined'
-            p 남은 이용일수: #{employerDaysLeft}
-        .flex.gap-3.mt-4
-          a.btn.btn-warning(href=purchaseLink) Purchase Employer Plan
-      else
-        .mt-6.text-green-700
-          p.font-medium ✅ 구독이 활성화되었습니다.
-          if typeof employerDaysLeft !== 'undefined'
-            p 남은 이용일수: #{employerDaysLeft}
-        .flex.gap-3.mt-4
+    // Slots card
+    .max-w-xl.mx-auto.mt-6.bg-gray-50.rounded-xl.shadow.p-6
+      p Current postings: #{activeJobs} / #{totalSlots}
+      p Remaining slots: #{remainingSlots}
+      if nextExpireAt
+        p Soonest expiration: #{nextExpireTitle ? `${nextExpireTitle} — ` : ''}#{nextExpireAt} (#{expireTag})
+
+      // Actions
+      .flex.gap-3.mt-4
+        if canPost
           a.btn.btn-primary(href='/job-vacancies/new') Register Job Vacancy
           a.btn(href='/job-vacancies/mine') My Job Vacancies
+        else
+          button.btn.btn-secondary(disabled) Register Job Vacancy (No Slots)
+          a.btn(href='/job-vacancies/mine') My Job Vacancies
 
+    // Job list
     if jobVacancies && jobVacancies.length
       ul.mt-6.max-w-xl.mx-auto.list-disc.pl-6
         each j in jobVacancies

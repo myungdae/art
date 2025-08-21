@@ -1,31 +1,29 @@
 extends ../layout
 
 block content
-  h1 Job Vacancies
+  .container.py-6
+    .flex.items-center.justify-between.mb-6
+      h1.text-2xl.font-bold Job Vacancies
+      // New Job 버튼: 로그인 + Employer 인 경우만
+      if session && session.user && session.user.role === 'Employer'
+        a(href="/job-vacancies/new" class="px-4 py-2 rounded bg-blue-600 text-white") New Job
 
-  if jobVacancies.length
-    table.table.table-striped
-      thead
-        tr
-          th Title
-          th Country
-          th Posted At
-          th Actions
-      tbody
-        each job in jobVacancies
-          tr
-            td= job.title
-            td= job.country
-            td= job.createdAt.toISOString().split('T')[0]
-            td
-              if currentUser && String(job.createdBy) === String(currentUser._id)
-                a(href=`/job-vacancies/${job._id}`) View
-                |  
-                a(href=`/job-vacancies/${job._id}/edit`) Edit
-                |  
-                form(method="POST", action=`/job-vacancies/${job._id}?_method=DELETE`, style="display:inline")
-                  button.btn.btn-danger(type="submit") Delete
-              else
-                a(href=`/job-vacancies/${job._id}`) View
-  else
-    p.text-muted No job vacancies available.
+    if jobs && jobs.length
+      ul.space-y-3
+        each j in jobs
+          - // KST yyyy-MM-dd
+          - var posted = (j.datePosted ? new Date(new Date(j.datePosted).getTime() + 9*60*60*1000).toISOString().slice(0,10) : '-');
+
+          li.border.rounded.p-4
+            .flex.items-start.justify-between.gap-4
+              .min-w-0
+                h2.font-semibold.text-lg.truncate= j.title
+                // ⚠️ 여기만 속성 class로 작성 (mt-0.5)
+                p.text-sm.text-gray-600(class="mt-0.5")
+                  | #{j.country || '-'} · #{j.studentType || '-'} · #{j.teachingArea || '-'}
+                p.text-sm.mt-1 Posted: #{posted}
+              if session && session.user && session.user.role === 'Employer' && String(j.user) === String(session.user._id)
+                .shrink-0
+                  a(href=`/job-vacancies/${j._id}/edit` class="px-3 py-1 rounded border") Edit
+    else
+      p.text-gray-500 No job vacancies found.

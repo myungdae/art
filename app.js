@@ -6,8 +6,15 @@ const flash = require('connect-flash');
 require('dotenv').config();
 const methodOverride = require('method-override');
 
+
+
 const connect = require('./model');
 const app = express();
+
+const mailer = require('./utils/mailer');
+mailer.verify(); // ✅ 부팅 시 SMTP 연결 확인 로그
+
+const homeRouter = require('./router/home');
 
 // 📌 라우터
 const userRoutes = require('./router/user');
@@ -21,6 +28,9 @@ const rdfResourceRouter = require('./router/rdf-resource');
 const resourceRouter = require('./router/resource');
 const resumeAccessRouter = require('./router/resume-access');
 const threadRouter = require('./router/thread');
+
+// ✅ [ADD] Inquiry 라우터
+const inquiryRouter = require('./router/inquiry');
 
 console.log('📌 app.js 시작됨');
 require('./router/config');
@@ -56,6 +66,7 @@ app.use((req, res, next) => {
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 
+// 정적
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ✅ 전역 method-override (폼에서 ?_method=PUT/DELETE 지원)
@@ -95,6 +106,10 @@ app.use('/user', userRoutes);
 app.use('/', require('./router/index'));
 app.use('/', require('./router/public'));
 app.use('/thread', threadRouter);
+app.use('/', homeRouter);
+
+// ✅ [ADD] Inquiry 라우터 등록 (GET /inquiry, POST /inquiry, GET /inquiry/sent)
+app.use('/', inquiryRouter);
 
 // 📌 404 핸들링
 app.use((req, res, next) => {

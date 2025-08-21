@@ -109,42 +109,88 @@ router.get('/mypage', requireLogin, async (req, res) => {
   }
 });
 
-/* --------------------------- Employer mypage (with payment branch) --------------------------- */
+/* --------------------------- Employer mypage (slot-based) --------------------------- */
 router.get('/mypage-employer',
   requireLogin,
   requireRole('Employer'),
-  async (req, res) => {
-    const user = await User.findById(req.session.user._id).lean();
+  async (req, res, next) => {
+    try {
+      const user = await User.findById(req.session.user._id).lean();
+      if (!user) return res.status(404).send('User not found');
 
-    // 결제 여부(둘 중 하나라도 true면 OK)
-    const isPaidFlag  = !!user?.isPaidEmployer;
-    const isPaidByDate = user?.paidUntil && new Date(user.paidUntil).getTime() > Date.now();
-    const paid = isPaidFlag || isPaidByDate;
+      // List data
+      const jobVacancies = await JobVacancy.find({ user: req.session.user._id }).lean();
 
-    // 남은 일수
-    let employerDaysLeft = 0;
-    if (user?.paidUntil) {
-      const diff = new Date(user.paidUntil).getTime() - Date.now();
-      employerDaysLeft = diff > 0 ? Math.ceil(diff / 86400000) : 0;
+      // Slots (Admin “tokens” ≈ remaining slots)
+      const now = new Date();
+      const TOTAL_SLOTS = parseInt(process.env.JOB_POST_QUOTA ?? '16', 10);
+
+      const idOrEmail = user.email
+        ? [{ user: user._id }, { email: user.email }]
+        : [{ user: user._id }];
+
+      const activeQuery = {
+        $and: [
+          { $or: idOrEmail },
+          { $or: [ { expiresAt: { $gte: now } }, { expiresAt: { $exists: false } } ] }
+        ]
+      };
+
+      const activeJobs = await JobVacancy.countDocuments(activeQuery);
+      const remainingSlots = Math.max(0, TOTAL_SLOTS - activeJobs);
+      const canPost = remainingSlots > 0;
+
+      // Soonest expiration (for reference)
+      const soonest = await JobVacancy.findOne({
+        $or: idOrEmail,
+        expiresAt: { $exists: true }
+      }).sort({ expiresAt: 1 }).select('expiresAt title').lean();
+
+      let nextExpireAt = null;       // "yyyy-MM-dd" (KST)
+      let nextExpireTitle = null;    // string
+      let expireTag = null;          // "D-7" | "Today" | "Expired"
+
+      if (soonest && soonest.expiresAt) {
+        const expireDate = new Date(soonest.expiresAt);
+        const kst = new Date(expireDate.getTime() + 9 * 60 * 60 * 1000);
+        nextExpireAt = kst.toISOString().slice(0, 10); // yyyy-MM-dd (KST)
+
+        const msDiff = expireDate.getTime() - now.getTime();
+        if (msDiff <= 0) {
+          expireTag = 'Expired';
+        } else {
+          const daysLeft = Math.ceil(msDiff / 86400000);
+          expireTag = daysLeft === 0 ? 'Today' : `D-${daysLeft}`;
+        }
+        nextExpireTitle = soonest.title || null;
+      }
+
+      return res.render('user/mypage-employer', {
+        user,
+        jobVacancies,
+
+        totalSlots: TOTAL_SLOTS,
+        activeJobs,
+        remainingSlots,
+        canPost,
+
+        nextExpireAt,
+        nextExpireTitle,
+        expireTag
+      });
+    } catch (err) {
+      console.error('Employer mypage error:', err.message);
+      return next(err);
     }
-
-    const jobVacancies = await JobVacancy.find({ user: req.session.user._id }).lean();
-
-    // 뷰에서 사용할 결제링크
-    const purchaseLink = '/user/employer/plan';
-
-    // (선택) 디버그
-    // console.log('[mypage-employer]', { paid, employerDaysLeft });
-
-    return res.render('user/mypage-employer', {
-      user,
-      jobVacancies,
-      paid,
-      employerDaysLeft,
-      purchaseLink
-    });
   }
 );
+
+/* ============================================================
+   REMOVED: duplicate Job Vacancy create routes
+   (now handled exclusively in router/jobVacancy.js)
+   - GET  /job-vacancies/new
+   - POST /job-vacancies
+   ============================================================ */
 
 /* --------------------------- Employer plan (purchase entry) --------------------------- */
 router.get('/employer/plan',

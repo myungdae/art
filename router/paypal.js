@@ -12,6 +12,10 @@ const PAYPAL_API = process.env.PAYPAL_API;
 const CLIENT_ID = process.env.PAYPAL_CLIENT_ID;
 const SECRET = process.env.PAYPAL_SECRET;
 
+const validateObjectId = require('../middleware/validateObjectId');
+
+router.param('id', validateObjectId('id'));
+
 // ✅ PayPal Access Token
 async function getAccessToken() {
   const auth = Buffer.from(`${CLIENT_ID}:${SECRET}`).toString('base64');

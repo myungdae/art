@@ -2,186 +2,203 @@
 extends ../layout
 
 block content
-  // 프리셋은 block 안에서 선언해야 합니다 (top-level 금지)
-  - const _countries     = (typeof countries !== 'undefined' && countries && countries.length) ? countries : ['Korea','Japan','China','Malaysia','Thailand'];
-  - const _studentTypes  = (typeof studentTypes !== 'undefined' && studentTypes && studentTypes.length) ? studentTypes : ['Adults','Elementary','High School','Kindergarten','Middle School'];
-  - const _teachingAreas = (typeof teachingAreas !== 'undefined' && teachingAreas && teachingAreas.length) ? teachingAreas : ['Art','Biology','English','ESL','Social Studies','Spanish'];
+  .container.py-6
+    h1.text-2xl.font-bold.mb-6 New Job Vacancy
 
-  .container.mt-5
-    .row.justify-content-center
-      .col-md-10
-        .card.shadow
-          .card-header.bg-primary.text-white.text-center
-            h4.mb-0 Post a Job Ad
+    if errors && Object.keys(errors).length
+      .max-w-2xl.mx-auto.bg-red-50.border.border-red-200.rounded.p-3.mb-5
+        ul
+          each val, key in errors
+            li #[strong #{key}] #{val}
 
-          .card-body
-            form(method="POST", action="/job-vacancies", onsubmit="return handleCustomFields()")
-              // ✅ Job Title → rdfs:label
-              .form-group.mb-3
-                label(for="title") Job Title
-                input.form-control#title(type="text", name="rdfs:label[@value]", required, placeholder="Job Title", oninput="validateTitle(this)")
-                small.text-danger#title-error(style="display:none") ❌ Emojis or Korean characters are not allowed.
+    //- CKEditor textarea 값을 폼 제출 전에 반영
+    form(method="POST", action="/job-vacancies", onsubmit="if(window.CKEDITOR){for (var n in CKEDITOR.instances){CKEDITOR.instances[n].updateElement();}} return true;")
+      .max-w-2xl.mx-auto.space-y-5
 
-              // ✅ Description → dc:description
-              .form-group.mb-4
-                label(for="description") Job Description
-                textarea.form-control(name="http://purl.org/dc/elements/1.1/description[@value]", id="description", rows="8")
+        // Title
+        .space-y-1
+          label.block(for="title") Title
+          input#title(
+            type="text"
+            name="title"
+            required
+            class="w-full border rounded px-3 py-2"
+            placeholder="e.g., English Teacher (Full-time)"
+            value=(values && values.title) || ""
+          )
 
-              // ✅ Host Country (널가드 + 프리셋)
-              .form-group.mb-3
-                label(for="country") Host Country
-                select.form-control#countrySelect(name="country")
-                  option(disabled selected value='') Select Country
-                  each v in _countries
-                    option(value=v)= v
-                small.text-muted.mt-1 You can also add a new country:
-                input.form-control.mt-1(type="text", id="customCountry", placeholder="Or enter a new Country")
+        // Description (CKEditor)
+        .space-y-1
+          label.block(for="description") Description
+          textarea#description(
+            name="description"
+            rows="8"
+            class="w-full border rounded px-3 py-2"
+            placeholder="Role summary, requirements, salary, benefits, how to apply..."
+          )= (values && values.description) || ""
 
-              // ✅ Student Type
-              .form-group.mb-3
-                label(for="studentType") Student Type
-                select.form-control#studentTypeSelect(name="studentType")
-                  option(disabled selected value='') Select Student Type
-                  each v in _studentTypes
-                    option(value=v)= v
-                small.text-muted.mt-1 You can also add a new student type:
-                input.form-control.mt-1(type="text", id="customStudentType", placeholder="Or enter a new Student Type")
+        // Host Country
+        .space-y-1
+          label.block(for="country") Host Country
+          select#country(
+            name="country"
+            required
+            class="w-full border rounded px-3 py-2"
+          )
+            option(value="") -- Select host country --
+            each c in (countries || [])
+              option(value=c, selected=(values && values.country === c))= c
 
-              // ✅ Teaching Area
-              .form-group.mb-3
-                label(for="teachingArea") Teaching Area
-                select.form-control#teachingArea(name="teachingArea")
-                  option(disabled selected value='') Select Teaching Area
-                  each v in _teachingAreas
-                    option(value=v)= v
-                small.text-muted.mt-1 You can also add a new teaching area:
-                input.form-control.mt-1(type="text", id="customTeachingArea", placeholder="Or enter a new Teaching Area")
+        // Student Type
+        .space-y-1
+          label.block(for="studentType") Student Type
+          select#studentType(
+            name="studentType"
+            required
+            class="w-full border rounded px-3 py-2"
+          )
+            option(value="") -- Select student type --
+            each s in (studentTypes || [])
+              option(value=s, selected=(values && values.studentType === s))= s
 
-              // 기타 필드
-              .form-group.mb-3
-                label(for="duration") Duration
-                input.form-control(type="text", name="duration", id="duration", placeholder="Duration")
+        //- Teaching Area (checkbox grid)
+        .space-y-1
+          label(for="teachingArea") Teaching Area
+          .grid.grid-cols-2.gap-2(class="md:grid-cols-3")
+            each t in (teachingAreas || [])
+              - const picked = Array.isArray(values && values.teachingArea)
+              -   ? values.teachingArea.includes(t)
+              -   : ((values && values.teachingArea) ? values.teachingArea === t : false)
+              label.flex.items-center.gap-2
+                input(type="checkbox", name="teachingArea", value=t, checked=picked)
+                | #{t}
+          p.text-xs.text-gray-500 Select one or more.
+        
+        .space-y-1
+          label(for="extraTeachingArea") Extra Teaching Areas (comma-separated)
+          input#extraTeachingArea(type="text", name="extraTeachingArea", placeholder="e.g., Seoul, Busan, Incheon", value=(values && values.extraTeachingArea) || "")
+        
+        //- Advanced (RDF) — optional overrides
+        details.mt-6
+          summary.cursor-pointer.font-medium Advanced (RDF) options
+          .mt-3.space-y-3
+            .space-y-1
+              label(for="_labelOverride") Title (rdfs:label override)
+              input#_labelOverride(type="text", name="_labelOverride", placeholder="Leave blank to use Title", value=(values && values._labelOverride) || "")
+              p.text-xs.text-gray-500 If provided, this will be used as RDF label.
+            .space-y-1
+              label(for="_descriptionOverride") Description (dc:description override)
+              textarea#_descriptionOverride(name="_descriptionOverride", rows="3", placeholder="Leave blank to use Description")= (values && values._descriptionOverride) || ""
+              p.text-xs.text-gray-500 If provided, this will be used as RDF description.
 
-              .form-group.mb-3
-                label(for="pay") Pay
-                input.form-control(type="text", name="pay", id="pay", placeholder="Pay")
 
-              .form-group.mb-3
-                label(for="housing") Housing
-                input.form-control(type="text", name="housing", id="housing", placeholder="Housing")
 
-              .form-group.mb-3
-                label(for="email") Email
-                input.form-control(type="email", name="email", id="email", placeholder="Email")
 
-              .form-group.mb-3
-                label(for="companyName") Company Name
-                input.form-control(type="text", name="companyName", id="companyName", placeholder="Company Name")
+        // Date Posted
+        .space-y-1
+          label.block(for="datePosted") Date Posted
+          input#datePosted(
+            type="date"
+            name="datePosted"
+            class="w-full border rounded px-3 py-2"
+            placeholder="YYYY-MM-DD"
+            value=(values && values.datePosted) || ""
+          )
 
-              .form-group.mb-3
-                label(for="jobLocation") Job Location
-                input.form-control(type="text", name="jobLocation", id="jobLocation", placeholder="Job Location")
+        // Contact Email
+        .space-y-1
+          label.block(for="email") Contact Email
+          input#email(
+            type="email"
+            name="email"
+            class="w-full border rounded px-3 py-2"
+            placeholder="name@example.com"
+            value=(values && values.email) || ""
+          )
 
-              .form-group.mb-3
-                label(for="cellphoneNumber") Cellphone Number
-                input.form-control(type="text", name="cellphoneNumber", id="cellphoneNumber", placeholder="Cellphone Number")
+        // Company Name
+        .space-y-1
+          label.block(for="companyName") Company Name
+          input#companyName(
+            type="text"
+            name="companyName"
+            class="w-full border rounded px-3 py-2"
+            placeholder="School or Organization"
+            value=(values && values.companyName) || ""
+          )
 
-              // (요청대로) Skype / WeChat 제거
+        // Job Location
+        .space-y-1
+          label.block(for="jobLocation") Job Location
+          input#jobLocation(
+            type="text"
+            name="jobLocation"
+            class="w-full border rounded px-3 py-2"
+            placeholder="City, State/Province"
+            value=(values && values.jobLocation) || ""
+          )
 
-              .form-group.mb-3
-                label(for="homepage") Homepage
-                input.form-control(type="text", name="homepage", id="homepage", placeholder="Homepage")
+        // Pay
+        .space-y-1
+          label.block(for="pay") Pay
+          input#pay(
+            type="text"
+            name="pay"
+            class="w-full border rounded px-3 py-2"
+            placeholder="e.g., 2.3M KRW/month or 30,000 KRW/hour"
+            value=(values && values.pay) || ""
+          )
 
-              .form-group.mb-3
-                label(for="datePosted") Date Posted
-                input.form-control(type="date", name="datePosted", id="datePosted")
+        // Housing
+        .space-y-1
+          label.block(for="housing") Housing
+          input#housing(
+            type="text"
+            name="housing"
+            class="w-full border rounded px-3 py-2"
+            placeholder="e.g., Provided / Allowance / Not provided"
+            value=(values && values.housing) || ""
+          )
 
-              // === Advertisement Plan (Employer) ===
-              .form-group.mb-3
-                label(for="adCount") Advertisement Plan
-                .d-flex.flex-wrap
-                  if adPlans && adPlans.length
-                    each plan, idx in adPlans
-                      .form-check.form-check-inline.me-3.mt-2
-                        input.form-check-input(type="radio", name="adCount", id=`adCount-${plan.ads}`, value=plan.ads, required, checked=idx === 0)
-                        label.form-check-label(for=`adCount-${plan.ads}`)= plan.label
-                  else
-                    - const _plans = [1, 4, 12, 24]
-                    each v, idx in _plans
-                      .form-check.form-check-inline.me-3.mt-2
-                        input.form-check-input(type="radio", name="adCount", id=`adCount-${v}`, value=v, required, checked=idx === 0)
-                        label.form-check-label(for=`adCount-${v}`)= `${v} Ad${v > 1 ? 's' : ''}`
-                if typeof tokensLeft !== 'undefined' && tokensLeft !== null
-                  small.text-muted.d-block.mt-1 You currently have #{tokensLeft} promotion tokens.
+        // Cellphone
+        .space-y-1
+          label.block(for="cellphoneNumber") Cellphone
+          input#cellphoneNumber(
+            type="text"
+            name="cellphoneNumber"
+            class="w-full border rounded px-3 py-2"
+            placeholder="+82-10-1234-5678"
+            value=(values && values.cellphoneNumber) || ""
+          )
 
-              .form-group
-                label.mb-2 Add Resume Access?
-                .form-check.form-check-inline
-                  input.form-check-input(type="radio", name="resumeAccess", id="resumeYes", value="yes", checked)
-                  label.form-check-label(for="resumeYes") Yes
-                .form-check.form-check-inline
-                  input.form-check-input(type="radio", name="resumeAccess", id="resumeNo", value="no")
-                  label.form-check-label(for="resumeNo") No
+        // Homepage
+        .space-y-1
+          label.block(for="homepage") Homepage
+          input#homepage(
+            type="url"
+            name="homepage"
+            class="w-full border rounded px-3 py-2"
+            placeholder="https://example.com"
+            value=(values && values.homepage) || ""
+          )
 
-              button.btn.btn-primary.btn-block.mt-4(type="submit") Submit
+      .max-w-2xl.mx-auto.mt-6.flex.gap-3
+        button(type="submit" class="px-4 py-2 rounded bg-blue-600 text-white") Save
+        a(href="/job-vacancies" class="px-4 py-2 rounded border") Cancel
 
-block append_js
-  script(src="https://cdn.ckeditor.com/ckeditor5/41.0.0/classic/ckeditor.js")
+  //- CKEditor 4 LTS
+  script(src="https://cdn.ckeditor.com/4.22.1/standard/ckeditor.js")
   script.
-    ClassicEditor
-      .create(document.querySelector('#description'))
-      .catch(error => console.error(error));
-
-    function validateTitle(input) {
-      const emojiRegex = /[\\p{Emoji_Presentation}\\p{Extended_Pictographic}]/gu;
-      const koreanRegex = /[ㄱ-ㅎㅏ-ㅣ가-힣]/;
-      const errorElem = document.getElementById('title-error');
-      if (emojiRegex.test(input.value) || koreanRegex.test(input.value)) {
-        errorElem.style.display = 'block';
-        input.classList.add('is-invalid');
-      } else {
-        errorElem.style.display = 'none';
-        input.classList.remove('is-invalid');
+    (function () {
+      function init() {
+        if (window.CKEDITOR && document.getElementById('description')) {
+          CKEDITOR.replace('description', {
+            removePlugins: 'cloudservices,easyimage',
+            height: 260
+          });
+        }
       }
-    }
-
-    function handleCustomFields() {
-      const form = document.querySelector('form');
-
-      const customCountry = document.getElementById('customCountry')?.value.trim();
-      const customStudent = document.getElementById('customStudentType')?.value.trim();
-      const customTeaching = document.getElementById('customTeachingArea')?.value.trim();
-
-      const countrySelect = document.getElementById('countrySelect');
-      const studentTypeSelect = document.getElementById('studentTypeSelect');
-      const teachingSelect = document.getElementById('teachingArea');
-
-      if (customCountry && countrySelect.value === '') {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'country';
-        input.value = customCountry;
-        form.appendChild(input);
-        countrySelect.disabled = true;
-      }
-
-      if (customStudent && studentTypeSelect.value === '') {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'studentType';
-        input.value = customStudent;
-        form.appendChild(input);
-        studentTypeSelect.disabled = true;
-      }
-
-      if (customTeaching && teachingSelect.value === '') {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'teachingArea';
-        input.value = customTeaching;
-        form.appendChild(input);
-        teachingSelect.disabled = true;
-      }
-
-      return true;
-    }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else { init(); }
+    })();

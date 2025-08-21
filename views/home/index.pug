@@ -1,0 +1,86 @@
+//- views/home/index.pug
+extends ../layout
+
+block content
+  // ✅ Top Blue Nav
+  nav(class="bg-blue-600 text-white")
+    .max-w-6xl.mx-auto.flex.items-center.justify-between.py-3.px-4
+      // Left: Logo
+      a(href="/", class="text-xl font-bold tracking-wide") Edu Bridge
+
+      // Center: Main Nav
+      ul(class="hidden md:flex items-center gap-6 text-sm font-medium")
+        li: a(href="/facet/Job_Vacancies", class="hover:opacity-90") JOB VACANCIES
+        li: a(href="/facet/Job_Seekers", class="hover:opacity-90") JOB SEEKERS
+        li: a(href="/facet/Online_Tutor", class="hover:opacity-90") ONLINE TUTOR
+
+      // Right: Actions
+      .flex items-center.gap-4
+        a(href="/inquiry", class="text-sm underline underline-offset-4 hover:opacity-90") Inquiry
+        if !locals.user
+          a(href="/user/register", class="text-sm hover:opacity-90") Register
+          a(href="/user/login", class="rounded-md bg-white text-blue-600 px-3 py-1.5 text-sm font-semibold hover:bg-gray-100") Login
+        else
+          a(href="/user/mypage", class="rounded-md bg-white text-blue-600 px-3 py-1.5 text-sm font-semibold hover:bg-gray-100") My Page
+
+        // Admin (hidden for non-admin)
+        if locals.user && locals.user.role === 'admin'
+          // dropdown or simple link
+          a(href="/admin", class="ml-2 text-sm bg-blue-500 hover:bg-blue-400 px-3 py-1.5 rounded") Admin
+
+    // Mobile center nav (stack)
+    .md:hidden.border-t.border-blue-500.py-2
+      .max-w-6xl.mx-auto.px-4
+        ul(class="flex flex-wrap gap-4 text-sm")
+          li: a(href="/facet/Job_Vacancies", class="hover:opacity-90") JOB VACANCIES
+          li: a(href="/facet/Job_Seekers", class="hover:opacity-90") JOB SEEKERS
+          li: a(href="/facet/Online_Tutor", class="hover:opacity-90") ONLINE TUTOR
+
+  // ✅ Hero
+  header(class="bg-white")
+    .max-w-6xl.mx-auto.flex flex-col items-center text-center py-12 px-4
+      h1(class="text-3xl md:text-5xl font-extrabold tracking-tight") Teach Beyond Borders
+      p(class="mt-4 text-gray-600 max-w-2xl")
+        | From ESL to STEM — your classroom could be anywhere. Find global opportunities for teachers and schools.
+      .mt-6.flex.flex-wrap.justify-center.gap-3
+        a(href="/jobs/new", class="px-5 py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-500") Post a Job
+        a(href="/search/jobs", class="px-5 py-3 rounded-xl border border-gray-300 text-gray-800 font-semibold hover:bg-gray-50") Find a Job
+        a(href="/search/tutors", class="px-5 py-3 rounded-xl border border-gray-300 text-gray-800 font-semibold hover:bg-gray-50") Hire a Tutor
+
+  // ✅ Three Cards
+  section(class="max-w-6xl mx-auto px-4 py-10 grid md:grid-cols-3 gap-6")
+    // Employers
+    .rounded-2xl shadow p-6 bg-white
+      h3(class="text-lg font-bold mb-2") Employers
+      p(class="text-sm text-gray-600 mb-4") Post vacancies, reach verified candidates, and manage applicants securely.
+      a(href="/jobs/new", class="inline-block text-blue-600 font-semibold underline underline-offset-4") Post a Job →
+    // Job Seekers
+    .rounded-2xl shadow p-6 bg-white
+      h3(class="text-lg font-bold mb-2") Job Seekers
+      p(class="text-sm text-gray-600 mb-4") Build your profile, explore global roles, and apply in minutes.
+      a(href="/search/jobs", class="inline-block text-blue-600 font-semibold underline underline-offset-4") Browse Jobs →
+    // Online Tutors
+    .rounded-2xl shadow p-6 bg-white
+      h3(class="text-lg font-bold mb-2") Online Tutor
+      p(class="text-sm text-gray-600 mb-4") Offer 1:1 classes, get discovered by schools & learners worldwide.
+      a(href="/search/tutors", class="inline-block text-blue-600 font-semibold underline underline-offset-4") Find Tutors →
+
+  // ✅ Trust strip (optional)
+  section(class="bg-gray-50 border-y")
+    .max-w-6xl.mx-auto.py-6.px-4.flex.flex-wrap.justify-center.items-center.gap-6 text-sm text-gray-600
+      span +120 Countries
+      span • Verified Tutors
+      span • Secure Payments
+
+  // ✅ Footer
+  footer(class="max-w-6xl mx-auto py-10 px-4 text-sm text-gray-500")
+    .flex.flex-wrap.justify-between.gap-4
+      .space-y-2
+        div © #{new Date().getFullYear()} Edu Bridge
+        div All rights reserved.
+      .space-y-2
+        a(href="/terms", class="hover:underline") Terms
+        br
+        a(href="/privacy", class="hover:underline") Privacy
+        br
+        a(href="/inquiry", class="hover:underline") Contact / Inquiry

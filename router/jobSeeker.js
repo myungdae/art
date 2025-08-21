@@ -3,6 +3,9 @@ const express = require('express');
 const router = express.Router();
 const methodOverride = require('method-override');
 const JobSeeker = require('../model/jobSeeker');
+const validateObjectId = require('../middleware/validateObjectId');   // ✅ 추가
+
+router.param('id', validateObjectId('id'));                           // ✅ 추가
 
 // query ?_method=PUT 지원 (app.js에서 이미 했다면 이 줄은 중복 가능)
 router.use(methodOverride('_method'));

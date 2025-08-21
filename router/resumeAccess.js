@@ -5,6 +5,10 @@ const { createOrder } = require('../config/paypal');
 const resumePrices = require('../config/resumePriceConfig.js');
 const ResumeAccess = require('../model/resumeAccess');
 
+const validateObjectId = require('../middleware/validateObjectId');   // ✅ 추가
+
+router.param('id', validateObjectId('id'));                           // ✅ 추가
+
 // ✅ 옵션 목록 보여주는 페이지
 router.get('/', (req, res) => {
   res.render('paypal/resumeAccess', { resumeOptions: resumePrices });

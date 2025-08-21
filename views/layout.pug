@@ -4,7 +4,10 @@ html(lang='en')
   head
     meta(http-equiv='Content-Type', content='text/html; charset=utf-8')
     meta(name='viewport', content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0')
-    title ESL · SMTP
+
+    // 👇 레이아웃 반영 확인용 마킹
+    title ESL · SMTP (LAYOUT-TEST)
+
     link(rel='shortcut icon', href='/assets/img/favicon.ico', type='image/x-icon')
 
     // CSS
@@ -60,9 +63,9 @@ html(lang='en')
 
       /* 모바일 레이아웃 스위치 */
       @media (max-width: 767.98px) {
-        .menu-top { display:none; }                /* 데스크탑용 계정 링크 숨김 */
-        .menu-top-mob { display:block; }           /* 모바일 계정 토글 표시 */
-        .search-header { padding: 56px 0 56px 0; } /* 헤더 여백 조금 줄임 */
+        .menu-top { display:none; }
+        .menu-top-mob { display:block; }
+        .search-header { padding: 56px 0 56px 0; }
       }
 
     // My Page 스코프 (원본 유지)
@@ -110,21 +113,24 @@ html(lang='en')
     header.main-search-header.search-header
       .container-fluid
 
-        // 데스크탑: 우상단 계정 링크
+        // 데스크탑: 우상단 계정 링크 (Inquiry 항상 노출 / Admin은 관리자만)
         .menu-top.d-none.d-md-flex
           if session && session.user
             a(href="/user/mypage") Mypage
             if session.user.adsAvailable !== undefined
               | (#{session.user.adsAvailable} left)
+            a(href="/inquiry") Inquiry
             a.logout(href="/user/logout") Logout
           else
             a(href="/user/register") Membership
             a(href="/user/login") Login
-          a(href="/admin/login") Admin
-          if session && session.isAdmin
-            a.logout(href="/admin/logout") Logout
+            a(href="/inquiry") Inquiry
 
-        // 모바일: 우상단 계정 토글
+          if session && session.isAdmin
+            a(href="/admin/dashboard") Admin
+            a(href="/admin/logout").logout Logout
+
+        // 모바일: 우상단 계정 토글 (Inquiry 항상 노출 / Admin은 관리자만)
         .menu-top-mob.d-md-none
           button#topMenuToggle.btn.btn-outline-dark.btn-sm(type="button", aria-label="Account")
             i.fa.fa-user
@@ -133,16 +139,21 @@ html(lang='en')
               a(href="/user/mypage") Mypage
               if session.user.adsAvailable !== undefined
                 a(href="javascript:void(0)") (#{session.user.adsAvailable} left)
-              a.logout(href="/user/logout") Logout
+              a(href="/inquiry") Inquiry
+              a(href="/user/logout").logout Logout
             else
               a(href="/user/register") Membership
               a(href="/user/login") Login
-            a(href="/admin/login") Admin
-            if session && session.isAdmin
-              a.logout(href="/admin/logout") Logout
+              a(href="/inquiry") Inquiry
 
-        // 중앙 타이틀 + 검색 (항상)
+            if session && session.isAdmin
+              a(href="/admin/dashboard") Admin
+              a(href="/admin/logout").logout Logout
+
+        // 중앙 타이틀 + 검색
         .text-center
+          // 👇 반영 확인용 마킹
+          // INQUIRY-MARK
           h2(style="font-weight: bold; font-size: 28px; margin-bottom: 25px;") ESL · SMTP
           - if (!searchKeyword) searchKeyword = "Enter keyword..."
           .input-group.justify-content-center
@@ -159,21 +170,16 @@ html(lang='en')
               )
                 img(src="/assets/img/main/icon-search.png", alt="Search", width="30px")
 
-    // ───────── GNB (부트스트랩 햄버거) ─────────
+    // ───────── GNB (부트스트랩 햄버거)
     nav.navbar.navbar-expand-md.main_nav_bar
       .container
-        // 토글 버튼 (≤md에서 보임)
         button.navbar-toggler(type="button", data-bs-toggle="collapse", data-bs-target="#mainNav", aria-controls="mainNav", aria-expanded="false", aria-label="Toggle navigation")
           i.fa.fa-bars
-    
-        // 접히는 컨테이너
         #mainNav.collapse.navbar-collapse
-          // ⬅️ menu.js가 여기를 대상으로 항목을 동적으로 추가합니다
           ul.navbar-nav.justify-content-center.w-100
             li.nav-item.text-nowrap
               a.nav-link.h5.my-0(class=(currentPage==='/' ? 'active' : ''), href='/') HOME
-          // NOTE: JOB_VACANCIES / JOB_SEEKERS / ONLINE_TUTORS 등은 menu.js가 위 UL에 주입
-
+          // NOTE: 카테고리 메뉴는 menu.js가 주입
 
     // 메인
     main.main-content
