@@ -3,165 +3,132 @@
 
 const express = require('express');
 const mongoose = require('mongoose');
+
 const router = express.Router();
 
-// ---- 유틸 ----
+// helpers
 const toArray = (v) => Array.isArray(v) ? v.filter(Boolean) : (v ? [v] : []);
 const sanitizeRegex = (s) => String(s || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-// 클래스별 후보 컬렉션 (앞에 있을수록 우선)
-const COLL_MAP = {
-  Job_Vacancies: ['Job_Vacancies_RDF', 'Job_Vacancies', 'jobvacancies'],
-  Job_Seekers:   ['Job_Seekers_RDF',   'Job_Seekers',   'jobseekers', 'job_seekers'],
-  Online_Tutors: ['Online_Tutors_RDF', 'Online_Tutors', 'online_tutors', 'onlinetutors'],
+// ✅ 클래스별 패싯 설정
+//   - key: 컬렉션 필드명
+//   - label: 좌측 패싯 제목
+//   - array: 배열 필드라면 true (unwind 필요)
+const FACET_MAP = {
+  Job_Vacancies: {
+    groups: [
+      { key: 'country',      label: 'Country' },
+      { key: 'studentType',  label: 'Student Type' },
+      { key: 'teachingArea', label: 'Teaching Area', array: true },
+    ],
+    searchFields: ['_label', 'title', '_description'],
+    coll: (klass) => `${klass}_RDF`,
+  },
+  Job_Seekers: {
+    groups: [
+      { key: 'Nationality',             label: 'Nationality' },
+      { key: 'Preferred_Work_Location', label: 'Preferred Work Location' },
+      { key: 'Major',                   label: 'Major' },
+    ],
+    searchFields: ['_label', 'title', '_description'],
+    coll: (klass) => `${klass}_RDF`,
+  },
+  Online_Tutors: {
+    groups: [
+      { key: 'Expertise',            label: 'Expertise', array: true },
+      { key: 'Tutoring_Experience',  label: 'Tutoring Experience' },
+      { key: 'Gender',               label: 'Gender' },
+    ],
+    searchFields: ['_label', 'title', '_description'],
+    coll: (klass) => `${klass}_RDF`,
+  },
 };
 
-async function pickExistingCollection(db, candidates) {
-  for (const name of (candidates || [])) {
-    const meta = await db.listCollections({ name }).toArray();
-    if (meta.length) {
-      const cnt = await db.collection(name).estimatedDocumentCount();
-      if (cnt > 0) return name;
-    }
-  }
-  return null;
-}
-
-// 공통 정규화 + 검색/필터 스테이지
-function facetStages({ q, selected, enforceClass }) {
-  const match = {};
-  if (enforceClass) match._class = enforceClass;
-
-  if (q && q.trim()) {
-    const rx = new RegExp(sanitizeRegex(q.trim()), 'i');
-    match.$or = [
-      { _label: rx },
-      { title: rx },
-      { _description: rx },
-      { description: rx },
-    ];
-  }
-  if (selected?.country?.length)     match.country = { $in: selected.country };
-  if (selected?.studentType?.length) match.studentType = { $in: selected.studentType };
-  if (selected?.teachingArea?.length) match.teachingArea = { $in: selected.teachingArea };
-
-  return [
-    // 필드 정규화
-    { $addFields: {
-        country:     { $ifNull: ['$country', ''] },
-        studentType: { $ifNull: ['$studentType', ''] },
-        teachingArea: {
-          $cond: [
-            { $eq: [ { $type: '$teachingArea' }, 'array' ] }, '$teachingArea',
-            {
-              $cond: [
-                { $eq: [ { $type: '$teachingArea' }, 'string' ] },
-                { $let: {
-                    vars: { parts: { $split: ['$teachingArea', ','] } },
-                    in: {
-                      $filter: {
-                        input: { $map: { input: '$$parts', as: 's', in: { $trim: { input: '$$s' } } } },
-                        as: 'x', cond: { $ne: ['$$x', ''] }
-                      }
-                    }
-                  }},
-                []
-              ]
-            }
-          ]
-        },
-        title:        { $ifNull: ['$title', ''] },
-        _label:       { $ifNull: ['$_label', ''] },
-        description:  { $ifNull: ['$description', ''] },
-        _description: { $ifNull: ['$_description', ''] },
-        datePosted:   { $ifNull: ['$datePosted', '$createdAt'] },
-        updatedAt:    { $ifNull: ['$updatedAt', '$$NOW'] },
-      }
-    },
-    ...(Object.keys(match).length ? [{ $match: match }] : []),
-  ];
-}
-
-// ---- 라우트 ----
 router.get('/:klass', async (req, res, next) => {
   try {
-    const klass = req.params.klass;
+    const klass = req.params.klass;               // ex) "Job_Vacancies"
+    const spec  = FACET_MAP[klass] || FACET_MAP.Job_Vacancies;
+    const coll  = spec.coll ? spec.coll(klass) : `${klass}_RDF`;
+
     const db = mongoose.connection.db;
 
-    // ✅ 공고는 RDF 컬렉션을 강제로 사용 (안정)
-    let collectionName = (klass === 'Job_Vacancies')
-      ? 'Job_Vacancies_RDF'
-      : await pickExistingCollection(db, COLL_MAP[klass] || [klass]);
+    // 선택된 필터 파싱 (클래스별 key 사용)
+    const selected = {};
+    for (const g of spec.groups) {
+      selected[g.key] = toArray(req.query[g.key]);
+    }
 
-    const limit = Math.max(1, Math.min(parseInt(req.query.limit || '20', 10), 100));
-    const page  = Math.max(1, parseInt(req.query.page || '1', 10));
+    const qText = (req.query.q || '').trim();
+    const limit = Math.min(parseInt(req.query.limit || '50', 10), 5000);
+    const page  = Math.max(parseInt(req.query.page  || '1', 10), 1);
     const skip  = (page - 1) * limit;
 
-    const selected = {
-      country:      toArray(req.query.country),
-      studentType:  toArray(req.query.studentType),
-      teachingArea: toArray(req.query.teachingArea),
-    };
-    const q = (req.query.q || '').trim();
+    // 매치
+    const match = { _class: klass };
+    if (qText) {
+      const rx = new RegExp(sanitizeRegex(qText), 'i');
+      match.$or = (spec.searchFields || ['_label','title','_description']).map(f => ({ [f]: rx }));
+    }
+    // 필터 반영
+    for (const g of spec.groups) {
+      if (selected[g.key] && selected[g.key].length) {
+        match[g.key] = { $in: selected[g.key] };
+      }
+    }
 
-    let docs = [];
-    let total = 0;
-    let facets = { country: [], studentType: [], teachingArea: [] };
-
-    if (collectionName) {
-      const coll = db.collection(collectionName);
-
-      // RDF 계열이면 _class=klass 필터 강제, 비-RDF면 생략
-      const enforceClass = collectionName.endsWith('_RDF') ? klass : null;
-
-      // 총 개수
-      const cnt = await coll.aggregate([
-        ...facetStages({ q, selected, enforceClass }),
-        { $count: 'c' }
-      ]).toArray();
-      total = cnt.length ? cnt[0].c : 0;
-
-      // 리스트
-      docs = await coll.aggregate([
-        ...facetStages({ q, selected, enforceClass }),
+    // 동적 facet 빌드
+    const facetStages = {
+      items: [
         { $sort: { datePosted: -1, updatedAt: -1, _id: -1 } },
         { $skip: skip },
         { $limit: limit },
-        { $project: {
-            _id: 1,
-            '@id': 1,
-            _label: 1,
-            _description: 1,
-            title: 1,
-            country: 1,
-            studentType: 1,
-            teachingArea: 1,
-            datePosted: 1,
-            updatedAt: 1
-        }}
-      ]).toArray();
-
-      // 패싯
-      const fac = await coll.aggregate([
-        ...facetStages({ q, selected, enforceClass }),
         {
-          $facet: {
-            country:     [{ $group: { _id: '$country',     c: { $sum: 1 } } }, { $sort: { c: -1, _id: 1 } }],
-            studentType: [{ $group: { _id: '$studentType', c: { $sum: 1 } } }, { $sort: { c: -1, _id: 1 } }],
-            teachingArea:[
-              { $unwind: { path: '$teachingArea', preserveNullAndEmptyArrays: false } },
-              { $group: { _id: '$teachingArea', c: { $sum: 1 } } },
-              { $sort: { c: -1, _id: 1 } },
-              { $limit: 200 }
-            ],
-          }
+          $project: Object.fromEntries([
+            ['_id', 1],
+            ['@id', 1],
+            ['_label', 1],
+            ['_description', 1],
+            ['title', 1],
+            ['datePosted', 1],
+            ['updatedAt', 1],
+            // 결과 카드에 쓸 수 있도록 모든 facet key도 project
+            ...spec.groups.map(g => [g.key, 1]),
+          ])
         }
-      ]).toArray();
-      if (fac.length) facets = fac[0];
-      // null/빈값 제거
-      facets.country      = (facets.country || []).filter(x => x && x._id);
-      facets.studentType  = (facets.studentType || []).filter(x => x && x._id);
-      facets.teachingArea = (facets.teachingArea || []).filter(x => x && x._id);
+      ],
+      count: [{ $count: 'total' }]
+    };
+
+    // 그룹별 카운트 서브파이프라인
+    for (const g of spec.groups) {
+      const name = `by_${g.key}`;
+      const arr = [];
+      if (g.array) {
+        arr.push({ $unwind: { path: `$${g.key}`, preserveNullAndEmptyArrays: false } });
+      }
+      arr.push(
+        { $match: { [g.key]: { $ne: null, $ne: '' } } },
+        { $group: { _id: `$${g.key}`, c: { $sum: 1 } } },
+        { $sort: { c: -1, _id: 1 } },
+        { $limit: 400 }
+      );
+      facetStages[name] = arr;
+    }
+
+    const pipeline = [
+      { $match: match },
+      { $facet: facetStages }
+    ];
+
+    const [agg] = await db.collection(coll).aggregate(pipeline).toArray();
+    const docs   = (agg && agg.items) || [];
+    const total  = (agg && agg.count && agg.count[0] && agg.count[0].total) || 0;
+
+    // 템플릿으로 넘길 facets: { [key]: [{_id, c}, ...] }
+    const facets = {};
+    for (const g of spec.groups) {
+      const name = `by_${g.key}`;
+      facets[g.key] = ((agg && agg[name]) || []).filter(x => x._id);
     }
 
     res.render('facet/list', {
@@ -170,9 +137,10 @@ router.get('/:klass', async (req, res, next) => {
       total,
       page,
       limit,
-      q,
+      q: qText,
       selected,
-      facets
+      facets,
+      facetCfg: { groups: spec.groups }  // 👈 Pug에서 어떤 그룹을 그릴지 알 수 있게 전달
     });
   } catch (e) {
     console.error('[FACET] error:', e);

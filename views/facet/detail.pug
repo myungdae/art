@@ -1,0 +1,22 @@
+//- views/facet/detail.pug
+extends ../layout
+
+block content
+  .container.mx-auto.py-6
+    a(href=`/facet/${klass}` class="text-blue-700 underline") ← Back to list
+
+    h1.text-2xl.font-bold.mt-2= doc._label || doc.title || '(no title)'
+
+    p.text-sm.text-gray-600.mt-1
+      | #{doc.country || '-'} · #{doc.studentType || '-'} ·
+      | #{(doc.teachingArea && doc.teachingArea.length) ? doc.teachingArea.join(', ') : '-'}
+
+    p.text-sm.mt-1 Posted: #{posted}
+
+    .mt-6
+      if doc._description
+        != doc._description
+      else if doc.description
+        != doc.description
+      else
+        p No description.

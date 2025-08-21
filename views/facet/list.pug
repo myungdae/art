@@ -10,70 +10,43 @@ block content
         if typeof total !== 'undefined'
           span.text-gray-500.text-base (#{total})
 
+      // 검색창 (현재 선택된 facet 보존)
       form(method="GET", action=`/facet/${klass}`, class="flex gap-2")
         input(type="text", name="q", value=q || "", placeholder="Search title/description...", class="border rounded px-3 py-2")
-        //- 선택된 필터 유지
-        if selected && selected.country
-          - const selHoldCountry = Array.isArray(selected.country) ? selected.country : [selected.country]
-          each v in selHoldCountry
-            input(type="hidden", name="country", value=v)
-        if selected && selected.studentType
-          - const selHoldST = Array.isArray(selected.studentType) ? selected.studentType : [selected.studentType]
-          each v in selHoldST
-            input(type="hidden", name="studentType", value=v)
-        if selected && selected.teachingArea
-          - const selHoldTA = Array.isArray(selected.teachingArea) ? selected.teachingArea : [selected.teachingArea]
-          each v in selHoldTA
-            input(type="hidden", name="teachingArea", value=v)
+        if facetCfg && facetCfg.groups
+          each g in facetCfg.groups
+            if selected && selected[g.key]
+              each v in selected[g.key]
+                input(type="hidden", name=g.key, value=v)
         input(type="hidden", name="limit", value=limit)
         button(type="submit", class="px-4 py-2 rounded bg-blue-600 text-white") Search
 
     .grid.grid-cols-12.gap-6
       // 좌측: 패싯
       div(class="col-span-12 md:col-span-3")
-        form(method="GET", action=`/facet/${klass}`, class="space-y-6 border rounded p-3")
+        form#facetForm(method="GET", action=`/facet/${klass}`, class="space-y-6 border rounded p-3")
           input(type="hidden", name="q", value=q || "")
           input(type="hidden", name="limit", value=limit)
 
-          // Country
-          .space-y-2
-            h3.font-semibold.text-gray-700 Country
-            .space-y-1.max-h-64.overflow-auto.pr-1
-              - const selCountry = (selected && selected.country) ? (Array.isArray(selected.country) ? selected.country : [selected.country]) : []
-              each f in ((facets && facets.country) || [])
-                - const checkedC = selCountry.includes(f._id)
-                label.flex.items-center.gap-2
-                  input(type="checkbox", name="country", value=f._id, checked=checkedC)
-                  span.flex-1.truncate= f._id
-                  span.text-xs.text-gray-500 (#{f.c})
+          if facetCfg && facetCfg.groups && facetCfg.groups.length
+            each g in facetCfg.groups
+              .space-y-2
+                h3.font-semibold.text-gray-700= g.label
+                .space-y-1.max-h-64.overflow-auto.pr-1
+                  - const facetList = (facets && facets[g.key]) || []
+                  - const selList = (selected && selected[g.key]) || []
+                  if facetList.length
+                    each f in facetList
+                      - const checked = selList.includes(f._id)
+                      label.flex.items-center.gap-2
+                        input(type="checkbox", name=g.key, value=f._id, checked=checked)
+                        span.flex-1.truncate= f._id
+                        span.text-xs.text-gray-500 (#{f.c})
+                  else
+                    p.text-sm.text-gray-400 No values
 
-          // Student Type
-          .space-y-2
-            h3.font-semibold.text-gray-700 Student Type
-            .space-y-1.max-h-64.overflow-auto.pr-1
-              - const selST = (selected && selected.studentType) ? (Array.isArray(selected.studentType) ? selected.studentType : [selected.studentType]) : []
-              each f in ((facets && facets.studentType) || [])
-                - const checkedS = selST.includes(f._id)
-                label.flex.items-center.gap-2
-                  input(type="checkbox", name="studentType", value=f._id, checked=checkedS)
-                  span.flex-1.truncate= f._id
-                  span.text-xs.text-gray-500 (#{f.c})
-
-          // Teaching Area
-          .space-y-2
-            h3.font-semibold.text-gray-700 Teaching Area
-            .space-y-1.max-h-64.overflow-auto.pr-1
-              - const selTA = (selected && selected.teachingArea) ? (Array.isArray(selected.teachingArea) ? selected.teachingArea : [selected.teachingArea]) : []
-              each f in ((facets && facets.teachingArea) || [])
-                - const checkedT = selTA.includes(f._id)
-                label.flex.items-center.gap-2
-                  input(type="checkbox", name="teachingArea", value=f._id, checked=checkedT)
-                  span.flex-1.truncate= f._id
-                  span.text-xs.text-gray-500 (#{f.c})
-
-          .flex.gap-2.pt-2
-            button(type="submit", class="px-3 py-2 rounded bg-blue-600 text-white") Apply
-            a(href=`/facet/${klass}`, class="px-3 py-2 rounded border") Clear
+          .pt-2
+            a(href=`/facet/${klass}`, class="px-3 py-2 rounded border inline-block") Clear
 
       // 우측: 리스트
       div(class="col-span-12 md:col-span-9")
@@ -82,39 +55,53 @@ block content
         else
           ul.space-y-3
             each d in docs
-              - if (!d) continue
-              - const label = (d && (d._label || d.title)) || '(no title)'
-              - const country = (d && d.country) ? d.country : '-'
-              - const studentType = (d && d.studentType) ? d.studentType : '-'
-              - const areas = (d && Array.isArray(d.teachingArea)) ? d.teachingArea.join(', ') : ((d && d.teachingArea) ? d.teachingArea : '-')
-              - const posted = (d && (d.datePosted || d.createdAt)) ? new Date(d.datePosted || d.createdAt).toISOString().slice(0,10) : '-'
+              - const posted = (d.datePosted && new Date(d.datePosted).toISOString().slice(0,10)) || '-'
+              // 카드
               li.border.rounded.p-3
                 .flex.items-center.gap-3
                   .min-w-0.flex-1
                     h2.font-semibold.text-lg.truncate
-                      a(href=`/rdf-resource/${klass}/${d && d._id ? d._id : ''}`)= label
-                    // 소수점 유틸은 class 속성으로 넣기
-                    p.text-sm.text-gray-600(class="mt-0.5")
-                      | #{country} · #{studentType} · #{areas}
+                      a(href=`/rdf-resource/${klass}/${d._id}`)= d._label || d.title || '(no title)'
+
+                    // 항목 하부 메타: 가능한 필드를 자동으로 모아 표시
+                    - const parts = []
+                    - const fieldsForMeta = ['country','studentType','teachingArea','Nationality','Preferred_Work_Location','Major','Expertise','Tutoring_Experience','Gender']
+                    - fieldsForMeta.forEach(function(k){
+                    -   if (Array.isArray(d[k]) && d[k].length) parts.push(d[k].join(', '))
+                    -   else if (d[k]) parts.push(d[k])
+                    - })
+                    p.text-sm.text-gray-600(class="mt-0.5") #{(parts && parts.length) ? parts.join(' · ') : '-'}
+
                     p.text-sm.mt-1 Posted: #{posted}
                   .shrink-0
-                    a(href=`/rdf-resource/${klass}/${d && d._id ? d._id : ''}`, class="text-blue-700 underline") View
+                    a(href=`/rdf-resource/${klass}/${d._id}`, class="text-blue-700 underline") View
 
         // 페이지네이션
         if typeof total !== 'undefined' && total > limit
-          - const totalPages = Math.max(1, Math.ceil(total / (limit || 1)));
-          - const curPage = Math.max(1, parseInt(page || '1', 10));
-          - const selQCountry = (selected && selected.country) ? (Array.isArray(selected.country) ? selected.country : [selected.country]) : [];
-          - const selQST = (selected && selected.studentType) ? (Array.isArray(selected.studentType) ? selected.studentType : [selected.studentType]) : [];
-          - const selQTA = (selected && selected.teachingArea) ? (Array.isArray(selected.teachingArea) ? selected.teachingArea : [selected.teachingArea]) : [];
-          - const qsBase =
-          -   (q ? '&q=' + encodeURIComponent(q) : '') +
-          -   selQCountry.map(v => '&country=' + encodeURIComponent(v)).join('') +
-          -   selQST.map(v => '&studentType=' + encodeURIComponent(v)).join('') +
-          -   selQTA.map(v => '&teachingArea=' + encodeURIComponent(v)).join('');
+          - const totalPages = Math.ceil(total / limit);
+          - const buildQs = () => {
+          -   let s = ''
+          -   if (q) s += '&q=' + encodeURIComponent(q)
+          -   if (facetCfg && facetCfg.groups) {
+          -     facetCfg.groups.forEach(g => {
+          -       (selected[g.key] || []).forEach(v => { s += '&' + encodeURIComponent(g.key) + '=' + encodeURIComponent(v) })
+          -     })
+          -   }
+          -   return s
+          - }
           nav.mt-6.flex.items-center.gap-2.flex-wrap
-            if curPage > 1
-              a(href=`/facet/${klass}?page=${curPage-1}&limit=${limit}${qsBase}`, class="px-3 py-1 border rounded") Prev
-            span.text-sm Page #{curPage} / #{totalPages}
-            if curPage < totalPages
-              a(href=`/facet/${klass}?page=${curPage+1}&limit=${limit}${qsBase}`, class="px-3 py-1 border rounded") Next
+            if page > 1
+              a(href=`/facet/${klass}?page=${page-1}&limit=${limit}${buildQs()}`, class="px-3 py-1 border rounded") Prev
+            span.text-sm Page #{page} / #{totalPages}
+            if page < totalPages
+              a(href=`/facet/${klass}?page=${page+1}&limit=${limit}${buildQs()}`, class="px-3 py-1 border rounded") Next
+
+  // 체크박스 변경 즉시 적용
+  script.
+    (function(){
+      var f = document.getElementById('facetForm');
+      if(!f) return;
+      f.querySelectorAll('input[type="checkbox"]').forEach(function(cb){
+        cb.addEventListener('change', function(){ f.submit(); });
+      });
+    })();

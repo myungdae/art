@@ -1,145 +1,45 @@
-$(function() {
-    const menus = ['Job_Vacancies', 'Job_Seekers', 'Online_Tutors']
-    const more_menus = []
-    const ul_document = document.querySelector(".navbar-nav.justify-content-center");
-    
-    if (ul_document) {
-       
-        createMenus();
-        createMoreMenu();
+// public/assets/js/custom/menu.js
+(function () {
+  // ✅ 주입 가드: 이미 실행됐다면 종료
+  if (window.__MENU_INJECTED__) return;
+  window.__MENU_INJECTED__ = true;
+
+  var nav = document.querySelector('#mainNav .navbar-nav');
+  if (!nav) return;
+
+  // ✅ 혹시 기존에 우리가 붙인 항목이 있으면 제거 (안전장치)
+  nav.querySelectorAll('[data-menu-injected="1"]').forEach(function (n) { n.remove(); });
+
+  var items = [
+    { href: '/facet/Job_Vacancies', text: 'JOB VACANCIES' },
+    { href: '/facet/Job_Seekers',  text: 'JOB SEEKERS'  },
+    { href: '/facet/Online_Tutors', text: 'ONLINE TUTORS' }
+  ];
+
+  // ✅ 항목 주입
+  items.forEach(function (it) {
+    var li = document.createElement('li');
+    li.className = 'nav-item text-nowrap';
+    li.setAttribute('data-menu-injected', '1');
+
+    var a = document.createElement('a');
+    a.className = 'nav-link h5 my-0';
+    a.href = it.href;
+    a.textContent = it.text;
+
+    li.appendChild(a);
+    nav.appendChild(li);
+  });
+
+  // ✅ 최종 중복 제거(동일 href가 둘 이상이면 뒤쪽 것을 제거)
+  var seen = new Set();
+  Array.from(nav.querySelectorAll('.nav-link')).forEach(function (a) {
+    var href = a.getAttribute('href') || '';
+    if (seen.has(href)) {
+      var li = a.closest('li');
+      if (li) li.remove();
+    } else {
+      seen.add(href);
     }
-
-    function createMenus() {
-        menus.forEach(menu => {
-            // 메뉴 이름을 영어로 변환 (클래스에 적용하기 위해)
-            // const menuClass = translateToEnglish(menu);
-
-            // li 요소 생성
-            const li = document.createElement("li");
-            li.className = "nav-item text-nowrap";
-
-            // a 요소 생성
-            const a = document.createElement("a");
-            a.href = "#";
-            a.className = "nav-link text-dark";
-            a.setAttribute("aria-haspopup", "true");
-            a.setAttribute("aria-expanded", "false");
-            a.style.lineHeight = "inherit";
-
-            // h5 요소 추가
-            const h5 = document.createElement("h5");
-            h5.className = "my-0 d-inline";
-            h5.textContent = menu;
-
-            // 요소 연결
-            a.appendChild(h5);
-            li.appendChild(a);
-            ul_document.appendChild(li);
-
-            // sub-menu 처리
-            // .dropdown-menu 생성
-            getData(menu).then((data) => {
-                if(data.length > 1) {
-                    a.setAttribute("data-toggle", "dropdown");
-                    a.classList.add("dropdown-toggle");
-                    const dropdownMenu = document.createElement("div");
-                    dropdownMenu.className = `dropdown-menu`;
-                    dropdownMenu.setAttribute("aria-labelledby", `navbarDropdown-`);
-                    dropdownMenu.style.left = "inherit";
-                    dropdownMenu.style.maxHeight = "350px";
-                    dropdownMenu.style.overflow = "scroll";
-                    li.appendChild(dropdownMenu);
-
-                    const subMenuItem = document.createElement("a");
-                        subMenuItem.className = "dropdown-item";
-                        subMenuItem.href = `/facet/${menu}`;
-                        subMenuItem.textContent = "All";  // 서브 메뉴 항목 이름
-                        dropdownMenu.appendChild(subMenuItem);
-
-                    data.map((d) => d._id.replace(_resource, '')).sort((a, b) => a.localeCompare(b)).forEach(subMenu => {
-                        const subMenuItem = document.createElement("a");
-                        subMenuItem.className = "dropdown-item";
-                        subMenuItem.href = `/facet/${menu}/${subMenu}`;
-                        subMenuItem.textContent = subMenu;  // 서브 메뉴 항목 이름
-                        dropdownMenu.appendChild(subMenuItem);
-                    });
-                } else {
-                    a.href = `/facet/${menu}`;
-                }
-            });
-        });
-    }
-
-    function createMoreMenu() {
-         // li 요소 생성
-         const li = document.createElement("li");
-         li.className = "nav-item text-nowrap";
- 
-         // a 요소 생성
-         const a = document.createElement("a");
-         a.href = "#";
-         a.className = "nav-link dropdown-toggle text-dark";
-         a.setAttribute("id", "navbarDropdownAchieve");
-         a.setAttribute("data-toggle", "dropdown");
-         a.setAttribute("aria-haspopup", "true");
-         a.setAttribute("aria-expanded", "false");
-         a.style.lineHeight = "inherit";
- 
-         // h5 요소 추가
-         const h5 = document.createElement("h5");
-         h5.className = "my-0 d-inline font-weight-bold";
-         h5.textContent = "+ more";
- 
-         // .dropdown-menu 생성
-         const dropdownMenu = document.createElement("div");
-         dropdownMenu.className = "dropdown-menu";
-         dropdownMenu.setAttribute("aria-labelledby", "navbarDropdownAchieve");
-         dropdownMenu.style.left = "inherit";
-         dropdownMenu.style.maxHeight = "350px";
-         dropdownMenu.style.overflow = "scroll";
- 
-         // more_menus 배열을 순회하면서 a 요소 추가
-         more_menus.forEach(menu => {
-             const menuItem = document.createElement("a");
-             menuItem.className = "dropdown-item";
-             menuItem.href = `/facet/${menu}`;
-             menuItem.textContent = menu;
-             dropdownMenu.appendChild(menuItem);
-         });
- 
-         // 요소 연결
-         a.appendChild(h5);
-         li.appendChild(a);
-         li.appendChild(dropdownMenu);
-         ul_document.appendChild(li);
-    }
-
-    function getData(menu) {
-        return fetch(`/data/subMenu/${menu}`)
-            .then(response => {
-                const reader = response.body.getReader();
-                const decoder = new TextDecoder();
-                let chunks = '';
-    
-                function readStream() {
-                    return reader.read().then(({ done, value }) => {
-                        if (done) {
-                            const data = JSON.parse(chunks);
-                            return data;  // 데이터를 반환
-                        }
-    
-                        chunks += decoder.decode(value, { stream: true });
-                        return readStream();
-                    });
-                }
-    
-                return readStream();
-            })
-            .catch(error => {
-                console.error('API 요청 실패:', error);
-                return [];  // 요청 실패 시 빈 배열 반환
-            });
-    }
-    
-
-});
+  });
+})();
