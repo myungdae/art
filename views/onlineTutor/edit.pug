@@ -2,146 +2,137 @@
 extends ../layout
 
 block content
-  // 프리셋(블록 안)
-  - const _defExpertise = ['ESL','Conversation','Grammar','Business English','Kids English','Test Prep (TOEIC/IELTS)'];
-  - const _defExp       = ['0-1 year','1-3 years','3-5 years','5+ years'];
-  - const _defGender    = ['Male','Female','Non-binary','Prefer not to say'];
+  .container.my-5
+    h2.text-center.mb-4 Edit Online Tutor
 
-  - const _expertiseList = (typeof expertiseList !== 'undefined' && expertiseList?.length) ? expertiseList : _defExpertise;
-  - const _tutoringExp   = (typeof tutoringExpList !== 'undefined' && tutoringExpList?.length) ? tutoringExpList : _defExp;
-  - const _genderList    = (typeof genderList !== 'undefined' && genderList?.length) ? genderList : _defGender;
-
-  // 현재 값
-  - const _email = onlineTutor?.email || '';
-  - const _skype = onlineTutor?.skypeId || onlineTutor?.Skype_ID || '';
-  - const _desc  = onlineTutor?.description || onlineTutor?.['http://purl.org/dc/elements/1.1/description[@value]'] || '';
-
-  - const _ex = onlineTutor?.expertise || '';
-  - const _te = onlineTutor?.tutoringExperience || '';
-  - const _gd = onlineTutor?.gender || '';
-
-  - const _exIn = _ex && _expertiseList.indexOf(_ex) !== -1;
-  - const _teIn = _te && _tutoringExp.indexOf(_te) !== -1;
-  - const _gdIn = _gd && _genderList.indexOf(_gd) !== -1;
-
-  .container.mt-5
     .row.justify-content-center
-      .col-md-10
-        .card.shadow
-          .card-header.bg-warning.text-white.text-center
-            h4.mb-0 Edit Online Tutor
+      .col-lg-9
+        if success
+          .alert.alert-success.mb-3= success
+        if error
+          .alert.alert-danger.mb-3= error
+        if errors && Object.keys(errors).length
+          .alert.alert-danger.mb-3
+            strong Please fix the following:
+            ul.mb-0.mt-2
+              each msg, key in errors
+                li #{msg}
 
-          .card-body
-            if errors && Object.keys(errors).length
-              .alert.alert-danger Please fix the highlighted errors.
+        form#tutorForm(action=`/online-tutors/${onlineTutor && onlineTutor._id}` method="POST" novalidate)
+          // PUT 오버라이드
+          input(type="hidden" name="_method" value="PUT")
 
-            form.form(method="POST", action=`/online-tutors/${onlineTutor._id}?_method=PUT`, onsubmit="return handleCustomFields()")
-            
-            // Title
-            .space-y-1
-              label.block(for="title") Title
-              input#title(
-                type="text"
-                name="title"
-                class="w-full border rounded px-3 py-2"
-                placeholder="e.g., Online English Tutor"
-                value=(values && values.title) || (onlineTutor && onlineTutor.title) || ""
-              )
-            
-              // ===== Description (CKEditor)
-              .form-group.mb-4
+          // 기본 정보
+          .card.mb-3.border-0.shadow-sm
+            .card-header.bg-white
+              h5.mb-0 Basic Info
+            .card-body
+              .form-row
+                .form-group.col-md-6
+                  label(for="title") Title
+                  input#title.form-control(
+                    type="text"
+                    name="title"
+                    value=(onlineTutor && onlineTutor.title) || ''
+                    placeholder="e.g., Friendly IELTS Coach"
+                  )
+                .form-group.col-md-6
+                  label(for="email") Email *
+                  input#email.form-control(
+                    type="email"
+                    name="email"
+                    required
+                    value=( (onlineTutor && onlineTutor.email) || (session && session.user && session.user.email) || '' )
+                    placeholder="your@email.com"
+                  )
+                  if errors && errors.email
+                    .invalid-feedback.d-block= errors.email
+                  else
+                    small.form-text.text-muted Keep this up to date.
+
+              .form-group
                 label(for="description") Description
-                textarea.form-control(name="http://purl.org/dc/elements/1.1/description[@value]", id="description", rows="8")= _desc
-                
-              
+                textarea#description.form-control(
+                  name="description"
+                  rows="5"
+                  placeholder="Write a short intro, specialties, and availability."
+                ) #{(onlineTutor && onlineTutor.description) || ''}
 
+          // 전문 분야
+          .card.mb-3.border-0.shadow-sm
+            .card-header.bg-white.d-flex.align-items-center
+              h5.mb-0.flex-grow-1 Expertise
+              small.text-muted Choose at least one
+            .card-body
+              .row
+                each item, idx in expertiseList
+                  - const checked = (onlineTutor && onlineTutor.Expertise && onlineTutor.Expertise.includes(item))
+                  .col-md-4.mb-2
+                    .custom-control.custom-checkbox
+                      input.custom-control-input(
+                        type="checkbox"
+                        id=`exp_${idx}`
+                        name="Expertise"
+                        value=item
+                        checked=checked
+                      )
+                      label.custom-control-label(for=`exp_${idx}`)= item
+              if errors && errors.Expertise
+                .invalid-feedback.d-block.mt-2= errors.Expertise
 
-              // ===== Expertise / Tutoring Experience / Gender
-              .form-group.mb-3
-                label(for="expertise") Expertise (semantic)
-                select.form-control#expertiseSelect(name="esl:expertise[@value]")
-                  option(disabled value="") Select Expertise
-                  each v in _expertiseList
-                    option(value=v selected=(_ex===v))= v
-                  if _ex && !_exIn
-                    option(value=_ex selected)= _ex
-                small.text-muted.mt-1 You can also add a new expertise:
-                input.form-control.mt-1(type="text", id="customExpertise", placeholder="Or enter a new Expertise")
+              .form-group.mt-3
+                label(for="extraExpertise") Extra expertise (comma-separated)
+                input#extraExpertise.form-control(
+                  type="text"
+                  name="extraExpertise"
+                  value=""
+                  placeholder="e.g., Conversation for travel, TOEIC"
+                )
+                small.form-text.text-muted Optional. Will be merged with selected tags.
 
-              .form-group.mb-3
-                label(for="tutoringExperience") Tutoring Experience (semantic)
-                select.form-control#tutoringExpSelect(name="esl:tutoringExperience[@value]")
-                  option(disabled value="") Select Tutoring Experience
-                  each v in _tutoringExp
-                    option(value=v selected=(_te===v))= v
-                  if _te && !_teIn
-                    option(value=_te selected)= _te
-                small.text-muted.mt-1 You can also add a new item:
-                input.form-control.mt-1(type="text", id="customTutoringExp", placeholder="Or enter a new Tutoring Experience")
+          // 상세 정보
+          .card.mb-4.border-0.shadow-sm
+            .card-header.bg-white
+              h5.mb-0 Profile Details
+            .card-body
+              .form-row
+                .form-group.col-md-6
+                  label(for="Tutoring_Experience") Tutoring Experience *
+                  select#Tutoring_Experience.form-control(name="Tutoring_Experience" required)
+                    option(value="") Select...
+                    each item in expList
+                      - const sel = (onlineTutor && onlineTutor.Tutoring_Experience === item)
+                      option(value=item selected=sel)= item
+                  if errors && errors.Tutoring_Experience
+                    .invalid-feedback.d-block= errors.Tutoring_Experience
 
-              .form-group.mb-3
-                label(for="gender") Gender (semantic)
-                select.form-control#genderSelect(name="esl:gender[@value]")
-                  option(disabled value="") Select Gender
-                  each v in _genderList
-                    option(value=v selected=(_gd===v))= v
-                  if _gd && !_gdIn
-                    option(value=_gd selected)= _gd
-                small.text-muted.mt-1 You can also add a new gender value:
-                input.form-control.mt-1(type="text", id="customGender", placeholder="Or enter a new Gender")
+                .form-group.col-md-6
+                  label(for="Gender") Gender *
+                  select#Gender.form-control(name="Gender" required)
+                    option(value="") Select...
+                    each g in genderList
+                      - const selG = (onlineTutor && onlineTutor.Gender === g)
+                      option(value=g selected=selG)= g
+                  if errors && errors.Gender
+                    .invalid-feedback.d-block= errors.Gender
 
-              // ===== Contact (맨 아래): Email / Skype ID
-              .form-group.mb-3.mt-4
-                label(for="email") Email *
-                input.form-control#email(type="email", name="email", required, value=_email)
-                if errors && errors.email
-                  small.text-danger #{errors.email}
+          // 액션바
+          .d-flex.justify-content-between.align-items-center.bg-white.py-3
+            small.text-muted * Required fields
+            .text-right
+              a.btn.btn-light.mr-2(href="/facet/Online_Tutors") Cancel
+              button.btn.btn-primary(type="submit") Save changes
 
-              .form-group.mb-3
-                label(for="skypeId") Skype ID
-                input.form-control#skypeId(type="text", name="Skype_ID", value=_skype)
-
-              button.btn.btn-warning.btn-block.mt-3(type="submit") Update
-
-block append_js
-  script(src="https://cdn.ckeditor.com/ckeditor5/41.0.0/classic/ckeditor.js")
+  // 중복 제출 방지 UX
   script.
-    ClassicEditor.create(document.querySelector('#description')).catch(console.error);
-
-    function handleCustomFields() {
-      const form = document.querySelector('form');
-
-      const ex = document.getElementById('customExpertise')?.value.trim();
-      const exSel = document.getElementById('expertiseSelect');
-      if (ex && exSel && exSel.value === '') {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'esl:expertise[@value]';
-        input.value = ex;
-        form.appendChild(input);
-        exSel.disabled = true;
-      }
-
-      const te = document.getElementById('customTutoringExp')?.value.trim();
-      const teSel = document.getElementById('tutoringExpSelect');
-      if (te && teSel && teSel.value === '') {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'esl:tutoringExperience[@value]';
-        input.value = te;
-        form.appendChild(input);
-        teSel.disabled = true;
-      }
-
-      const gd = document.getElementById('customGender')?.value.trim();
-      const gdSel = document.getElementById('genderSelect');
-      if (gd && gdSel && gdSel.value === '') {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'esl:gender[@value]';
-        input.value = gd;
-        form.appendChild(input);
-        gdSel.disabled = true;
-      }
-      return true;
-    }
+    (function(){
+      var form = document.getElementById('tutorForm');
+      if(!form) return;
+      var submitting = false;
+      form.addEventListener('submit', function(e){
+        if(submitting){ e.preventDefault(); return; }
+        submitting = true;
+        var btn = form.querySelector('button[type="submit"]');
+        if(btn){ btn.disabled = true; btn.innerText = 'Saving...'; }
+      });
+    })();

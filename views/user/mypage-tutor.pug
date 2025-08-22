@@ -2,111 +2,57 @@
 extends ../layout
 
 block content
-  .mypage-scope
-    .container
-      // Header
-      .d-flex.align-items-baseline.justify-content-between.mb-3
-        h1.mp-title-xl.mb-0 Online Tutor Dashboard
-        if user
-          span.mp-muted.fs-6 #{user.email}
+  .container.my-5
+    // 헤더 (Job Seeker 페이지와 동일한 배치/타이포)
+    h2.text-center.mb-4 My Page (Online Tutor)
 
-      p.mp-subtext.mb-4 Manage your online tutor profile and recent activity.
+    // 정보 카드
+    .row.justify-content-center
+      .col-lg-8.col-md-10
+        .card.border-0.shadow-lg.rounded-xl
+          .card-body.p-4
+            .row
+              // 좌측: 사용자 기본 정보
+              .col-md-7
+                p.mb-2
+                  strong Username:
+                  |  #{(user && user.username) || (session && session.user && session.user.username) || '-'}
+                p.mb-2
+                  strong Email:
+                  |  #{(user && user.email) || (session && session.user && session.user.email) || '-'}
+                p.mb-0
+                  strong Role:
+                  |  #{(user && user.role) || (session && session.user && session.user.role) || '-'}
 
-      .row.gap-6
-        // LEFT: Account & quick actions
-        .col-lg-4
-          .mp-card.mb-3
-            .card-header
-              strong Account
-            .card-body
-              ul.mp-list
-                li
-                  div.mp-list-title Username
-                  div.mp-list-sub #{(user && user.username) || '—'}
-                li
-                  div.mp-list-title Email
-                  div.mp-list-sub #{(user && user.email) || '—'}
-                li
-                  div.mp-list-title Role
-                  div.mp-list-sub Tutor
-
-          .mp-card.mb-3
-            .card-header
-              strong Quick actions
-            .card-body.btn-block-mobile
-              if tutor
-                a.btn.btn-primary.w-100.mb-2(href=`/online-tutors/${tutor._id}/edit`) Edit tutor profile
-                a.btn.btn-outline-dark.w-100(href='/facet/Online_Tutors') Browse directory
-              else
-                a.btn.btn-primary.w-100(href='/online-tutors/new') Create tutor profile
-
-          .mp-card
-            .card-header
-              strong Tools & Logs
-            .card-body
-              ul.mp-list
-                li
-                  a(href='/thread/my') View my recent activity
-                li
-                  a(href='/facet/Online_Tutors') Browse Online Tutors
-
-        // RIGHT: Tutor profile / empty state + recent activity
-        .col-lg-8
-          if tutor
-            .mp-card.mb-3
-              .card-header
-                strong Your Tutor Profile
-              .card-body
-                - const headline = tutor._label || tutor.title || tutor.name || '(no name)';
-                h3.mb-2= headline
-
-                // 작은 메타칩 (있을 때만)
-                .mb-2
-                  if Array.isArray(tutor.Expertise) && tutor.Expertise.length
-                    each tag in tutor.Expertise
-                      span.badge.bg-primary.me-1 #{tag}
-                  if tutor.Tutoring_Experience
-                    span.badge.bg-secondary.ms-1 #{tutor.Tutoring_Experience}
-                  if tutor.Gender
-                    span.badge.bg-light.text-dark.ms-1 #{tutor.Gender}
-                  if tutor.email
-                    span.badge.bg-light.text-dark.ms-1 #{tutor.email}
-
-                hr.mp-divider
-
-                if tutor.description
-                  .mb-3 !{tutor.description}
-                else if tutor._description
-                  .mb-3 !{tutor._description}
+                // 상태 라인 (Job Seeker의 “Remaining Days…” 자리에 해당)
+                if onlineTutor
+                  p.mt-3.mb-0.text-success
+                    | ✅ Tutor Profile: Active
                 else
-                  p.mp-muted No description provided.
+                  p.mt-3.mb-0.text-warning
+                    | ⚠️ Tutor Profile: Not Created
 
-                .d-flex.justify-content-between.mt-3
-                  small.mp-muted Created: #{tutor.createdAt ? new Date(tutor.createdAt).toLocaleString('en-US') : '-'}
-                  small.mp-muted Updated: #{tutor.updatedAt ? new Date(tutor.updatedAt).toLocaleString('en-US') : '-'}
+              // 우측: 액션 버튼(정렬/간격 Job Seeker와 동일 스타일)
+              .col-md-5.mt-3.mt-md-0.d-flex.align-items-center
+                .w-100
+                  if onlineTutor
+                    .d-flex.flex-column.flex-sm-row
+                      a.btn.btn-success.mb-2.mb-sm-0.mr-sm-2.w-100(href=`/online-tutors/${onlineTutor._id}/edit`)
+                        | Edit Profile
+                      a.btn.btn-outline-primary.w-100(href=`/rdf-resource/Online_Tutors/${onlineTutor._id}`)
+                        | View Public Page
+                    // 삭제 버튼은 한 줄 아래로 분리(실수 방지)
+                    form.mt-2(method="POST", action=`/online-tutors/${onlineTutor._id}`)
+                      input(type="hidden", name="_method", value="DELETE")
+                      button.btn.btn-outline-danger.btn-block(type="submit", onclick="return confirm('Delete this profile?')")
+                        | Delete Profile
+                  else
+                    .d-flex.flex-column.flex-sm-row
+                      a.btn.btn-success.mb-2.mb-sm-0.mr-sm-2.w-100(href="/online-tutors/new")
+                        | Create Tutor Profile
+                      a.btn.btn-outline-secondary.w-100(href="/facet/Online_Tutors")
+                        | Browse Tutors
 
-                // Actions
-                .mt-3.btn-block-mobile
-                  a.btn.btn-primary.me-2(href=`/online-tutors/${tutor._id}/edit`) Edit
-          else
-            .mp-card.mb-3
-              .card-header
-                strong Your Tutor Profile
-              .card-body
-                h4.mb-2 No profile yet
-                p.mp-muted Create your public tutor card so schools can find you.
-                a.btn.btn-primary.mt-2(href='/online-tutors/new') Create tutor profile
-
-          // Recent activity
-          .mp-card
-            .card-header
-              strong Recent Activity
-            .card-body
-              if threads && threads.length
-                ul.mp-list
-                  each t in threads
-                    li
-                      div.mp-list-title #{t.title || (t.action + ' ' + t.source)}
-                      div.mp-list-sub #{t.summary || ''} · #{new Date(t.createdAt).toLocaleString('en-US')}
-              else
-                p.mp-muted No recent activity.
+    // 하단 보조 네비(옵션, Job Seeker 페이지의 흐름과 맞춤)
+    .text-center.mt-4
+      a.btn.btn-light.px-4(href="/") ← Back to Home

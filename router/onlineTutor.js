@@ -13,8 +13,6 @@ const { requireLogin, requireRole } = require('../middleware/auth');
 router.use(methodOverride('_method'));
 router.param('id', validateObjectId('id'));
 
-
-
 /* -------------------- Presets -------------------- */
 const defaultExpertise = [
   'Conversation', 'Grammar', 'BusinessEnglish', 'ExamPrep',
@@ -71,13 +69,16 @@ function normalizePayload(body) {
     body['schema:gender[@value]'] ??
     '';
 
+  // email: trim + lowercase
+  const email = String((body.email || '').trim().toLowerCase());
+
   return {
     title,
     description,
     Expertise: expertise,                 // array<string>
     Tutoring_Experience: String(tutoringExperience || ''),
     Gender: String(gender || ''),
-    email: body.email || '',              // 선택
+    email,                                // required (서버 검증)
   };
 }
 
@@ -86,6 +87,8 @@ function validatePayload(p) {
   if (!p.Expertise || !p.Expertise.length) errors.Expertise = 'Select at least one expertise.';
   if (!p.Tutoring_Experience) errors.Tutoring_Experience = 'Tutoring experience is required.';
   if (!p.Gender) errors.Gender = 'Gender is required.';
+  if (!p.email) errors.email = 'Email is required.';
+  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.email)) errors.email = 'Please enter a valid email.';
   return errors;
 }
 
@@ -154,9 +157,11 @@ router.post('/online-tutors',
       const _label = (req.body._labelOverride || title).trim();
       const _description = (req.body._descriptionOverride || payload.description || '').trim();
 
+      const userId = String(req.user?._id || req.session?.user?._id || '');
+
       const doc = new OnlineTutor({
         ...payload,
-        user: req.session.user._id,
+        user: userId,
         title,
         _label,
         _description,
@@ -170,6 +175,24 @@ router.post('/online-tutors',
       return res.redirect('/facet/Online_Tutors');
     } catch (err) {
       console.error('[ONLINE-TUTOR CREATE] error:', err);
+
+      // DB 스키마 검증 실패는 같은 폼으로 되돌려 UX 개선
+      if (err?.name === 'ValidationError') {
+        const payload = normalizePayload(req.body);
+        const valErrs = {};
+        for (const k in err.errors) {
+          valErrs[k] = err.errors[k].message || `Invalid ${k}`;
+        }
+        return res.status(422).render('onlineTutor/new', {
+          expertiseList: defaultExpertise,
+          expList: defaultExperiences,
+          genderList: defaultGenders,
+          values: { ...payload, extraExpertise: req.body.extraExpertise || '' },
+          errors: valErrs
+        });
+      }
+
+      // 그 외 예외만 에러 페이지
       return res.status(500).render('error', { message: 'Failed to create tutor profile', error: err });
     }
   }
@@ -184,8 +207,9 @@ router.get('/online-tutors/:id/edit',
     const onlineTutor = await OnlineTutor.findById(id);
     if (!onlineTutor) return res.status(404).send('Not found');
 
-    // (선택) 본인 소유만 수정 허용
-    if (String(onlineTutor.user || '') !== String(req.session.user._id || '')) {
+    // 본인 소유만 수정 허용
+    const userId = String(req.user?._id || req.session?.user?._id || '');
+    if (String(onlineTutor.user || '') !== userId) {
       return res.status(403).send('Forbidden: not owner');
     }
 
@@ -199,7 +223,7 @@ router.get('/online-tutors/:id/edit',
   }
 );
 
-// router/onlineTutor.js
+/* -------------------- Delete -------------------- */
 router.delete('/online-tutors/:id',
   requireLogin,
   requireRole(['Online_Tutor','Tutor','Admin']),
@@ -209,7 +233,8 @@ router.delete('/online-tutors/:id',
     if (!doc) return res.status(404).send('Not found');
 
     // 본인 소유 or Admin
-    const isOwner = String(doc.user || '') === String(req.session.user._id || '');
+    const userId = String(req.user?._id || req.session?.user?._id || '');
+    const isOwner = String(doc.user || '') === userId;
     const isAdmin = (req.user?.role || '').toLowerCase() === 'admin';
     if (!isOwner && !isAdmin) return res.status(403).send('Forbidden: not owner');
 
@@ -219,7 +244,6 @@ router.delete('/online-tutors/:id',
     return res.redirect('/facet/Online_Tutors');
   }
 );
-
 
 /* -------------------- Update -------------------- */
 router.put('/online-tutors/:id',
@@ -264,6 +288,24 @@ router.put('/online-tutors/:id',
       return res.redirect('/facet/Online_Tutors');
     } catch (err) {
       console.error('[ONLINE-TUTOR UPDATE] error:', err);
+
+      // 검증 실패는 동일 폼으로 422
+      if (err?.name === 'ValidationError') {
+        const payload = normalizePayload(req.body);
+        const valErrs = {};
+        for (const k in err.errors) {
+          valErrs[k] = err.errors[k].message || `Invalid ${k}`;
+        }
+        const onlineTutor = await OnlineTutor.findById(id);
+        return res.status(422).render('onlineTutor/edit', {
+          onlineTutor: onlineTutor ? { ...onlineTutor.toObject(), ...payload } : payload,
+          expertiseList: defaultExpertise,
+          expList: defaultExperiences,
+          genderList: defaultGenders,
+          errors: valErrs
+        });
+      }
+
       return res.status(500).render('error', { message: 'Failed to update tutor profile', error: err });
     }
   }
