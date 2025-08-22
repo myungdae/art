@@ -1,31 +1,46 @@
-// router/jobSeeker.js  (FULL DROP-IN)
+// router/jobSeeker.js  (FULL DROP-IN, fixed)
+'use strict';
+
 const express = require('express');
 const router = express.Router();
 const methodOverride = require('method-override');
+const mongoose = require('mongoose');
+
 const JobSeeker = require('../model/jobSeeker');
-const validateObjectId = require('../middleware/validateObjectId');   // ✅ 추가
+const validateObjectId = require('../middleware/validateObjectId');
+// const { requireLogin, requireRole } = require('../middleware/auth'); // 필요 시 주석 해제
 
-router.param('id', validateObjectId('id'));                           // ✅ 추가
-
-// query ?_method=PUT 지원 (app.js에서 이미 했다면 이 줄은 중복 가능)
 router.use(methodOverride('_method'));
+router.param('id', validateObjectId('id'));
 
-/* -------------------- Presets (서버에서 뷰로 전달) -------------------- */
+/* -------------------- Presets (뷰에 주입) -------------------- */
 const defaultNationalities = ['Korean','Japanese','Chinese','Malaysian','Thai','American','British'];
 const defaultPrefWorkLocs  = ['Korea','Japan','China','Malaysia','Thailand','Remote'];
 const defaultMajors        = ['English','ESL','Education','Art','Biology','Social Studies','Spanish'];
 const defaultLanguages     = ['English','Korean','Japanese','Chinese','Spanish','French','German'];
 
-/* -------------------- Utilities -------------------- */
+/* -------------------- Helpers -------------------- */
 function parseDate(v) {
   if (!v) return null;
   const d = new Date(v);
   return isNaN(d.getTime()) ? null : d;
 }
 
-/** 요청 바디 → 표준 필드로 정규화 (시맨틱/일반 키 모두 흡수) */
+// 문자열/배열 모두 수용 → 배열<string>
+function toStringArray(v) {
+  if (Array.isArray(v)) {
+    return v.flatMap(x => String(x).split(','))
+      .map(s => s.trim())
+      .filter(Boolean);
+  }
+  return String(v || '')
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean);
+}
+
+/** body → 표준 페이로드 정규화 */
 function normalizePayload(body) {
-  // Title / Description (CKEditor HTML 허용)
   const title =
     body['rdfs:label[@value]'] ??
     body._label ??
@@ -38,7 +53,6 @@ function normalizePayload(body) {
     body.description ??
     '';
 
-  // 시맨틱 3종
   const nationality =
     body['http://schema.org/nationality[@value]'] ??
     body['schema:nationality[@value]'] ??
@@ -59,54 +73,53 @@ function normalizePayload(body) {
     body.major ??
     '';
 
-  // 언어: 콤마 구분 문자열 또는 체크박스 배열 모두 허용
-  let languageSpoken =
+  const languageSpoken = toStringArray(
     body['schema:knowsLanguage[@value]'] ??
     body.languageSpoken ??
     body.languages ??
-    '';
-  if (Array.isArray(languageSpoken)) {
-    languageSpoken = languageSpoken
-      .flatMap(v => String(v).split(','))
-      .map(s => s.trim())
-      .filter(Boolean);
-  } else {
-    languageSpoken = String(languageSpoken || '')
-      .split(',')
-      .map(s => s.trim())
-      .filter(Boolean);
-  }
+    ''
+  );
 
   return {
-    // 기본 프로필
     fullName: body.fullName ?? body.name ?? '',
     email: body.email ?? '',
-
-    // 제목/설명
     title,
-    description, // CKEditor HTML 그대로 저장 (렌더 시 sanitize 권장)
-
-    // 시맨틱 3종
+    description,
     nationality,
     preferredWorkLocation,
     major,
-
-    // 기타
-    languageSpoken,                       // 스키마가 String이면 .join(', ')로 바꿔서 저장하세요.
+    languageSpoken,                 // 스키마가 String이면 아래에서 런타임으로 join 처리
     dateAvailable: parseDate(body.dateAvailable),
   };
 }
 
-/** 최소 서버 검증 */
 function validatePayload(p) {
   const errors = {};
   if (!p.email) errors.email = 'Email is required.';
-  // 필요시 title/nationality 등 추가 검증 가능
   return errors;
 }
 
+/* ------------ RDF 미러 (Job_Seekers_RDF) ------------ */
+async function mirrorToRDF_JobSeeker(js) {
+  const db = mongoose.connection.db;
+  const doc = {
+    _id: js._id,
+    '@id': js['@id'] || `jobseeker:${js._id}`,
+    _class: 'Job_Seekers',
+    _label: js._label || js.title || js.name || js.fullName || '',
+    _description: js._description || js.description || js.summary || '',
+    Nationality: js.Nationality || js.nationality || '',
+    Preferred_Work_Location: js.Preferred_Work_Location || js.preferredWorkLocation || js.preferred_work_location || '',
+    Major: js.Major || js.major || '',
+    datePosted: js.datePosted || js.createdAt || new Date(),
+    updatedAt: new Date()
+  };
+  await db.collection('Job_Seekers_RDF')
+    .updateOne({ _id: js._id }, { $set: doc }, { upsert: true });
+}
+
 /* -------------------- NEW -------------------- */
-// GET /job-seekers/new
+// router.get('/job-seekers/new', requireLogin, requireRole('JobSeeker'), ...
 router.get('/job-seekers/new', (req, res) => {
   res.render('jobSeeker/new', {
     nationalities: defaultNationalities,
@@ -119,7 +132,6 @@ router.get('/job-seekers/new', (req, res) => {
 });
 
 /* -------------------- CREATE -------------------- */
-// POST /job-seekers
 router.post('/job-seekers', async (req, res) => {
   try {
     const payload = normalizePayload(req.body);
@@ -135,14 +147,19 @@ router.post('/job-seekers', async (req, res) => {
       });
     }
 
-    // 🔧 만약 model이 languageSpoken:String 이라면:
-    // payload.languageSpoken = Array.isArray(payload.languageSpoken) ? payload.languageSpoken.join(', ') : String(payload.languageSpoken || '');
+    // 스키마가 String이면 조인해서 저장
+    if (JobSeeker.schema.path('languageSpoken')?.instance === 'String') {
+      payload.languageSpoken = Array.isArray(payload.languageSpoken)
+        ? payload.languageSpoken.join(', ')
+        : String(payload.languageSpoken || '');
+    }
 
     const doc = new JobSeeker(payload);
     await doc.save();
+    await mirrorToRDF_JobSeeker(doc);
 
     req.flash?.('success', 'JobSeeker profile created.');
-    return res.redirect('/admin/dashboard'); // 필요시 목록 페이지로 변경
+    return res.redirect('/facet/Job_Seekers');
   } catch (err) {
     console.error('[JobSeeker CREATE] error:', err);
     return res.status(500).render('error', { message: 'Failed to create job seeker', error: err });
@@ -150,7 +167,6 @@ router.post('/job-seekers', async (req, res) => {
 });
 
 /* -------------------- EDIT -------------------- */
-// GET /job-seekers/:id/edit
 router.get('/job-seekers/:id/edit', async (req, res) => {
   try {
     const { id } = req.params;
@@ -172,7 +188,6 @@ router.get('/job-seekers/:id/edit', async (req, res) => {
 });
 
 /* -------------------- UPDATE -------------------- */
-// PUT /job-seekers/:id
 router.put('/job-seekers/:id', async (req, res) => {
   const { id } = req.params;
   try {
@@ -190,12 +205,21 @@ router.put('/job-seekers/:id', async (req, res) => {
       });
     }
 
-    // 🔧 model이 languageSpoken:String 이라면 동일하게 join 처리
-    // payload.languageSpoken = Array.isArray(payload.languageSpoken) ? payload.languageSpoken.join(', ') : String(payload.languageSpoken || '');
+    if (JobSeeker.schema.path('languageSpoken')?.instance === 'String') {
+      payload.languageSpoken = Array.isArray(payload.languageSpoken)
+        ? payload.languageSpoken.join(', ')
+        : String(payload.languageSpoken || '');
+    }
 
-    await JobSeeker.findByIdAndUpdate(id, payload, { new: true });
+    const updated = await JobSeeker.findByIdAndUpdate(
+      id,
+      payload,
+      { new: true, runValidators: true }
+    );
+    if (updated) await mirrorToRDF_JobSeeker(updated);
+
     req.flash?.('success', 'JobSeeker profile updated.');
-    return res.redirect('/admin/dashboard'); // 필요시 목록 페이지로 변경
+    return res.redirect('/facet/Job_Seekers');
   } catch (err) {
     console.error('[JobSeeker UPDATE] error:', err);
     return res.status(500).render('error', { message: 'Failed to update job seeker', error: err });
