@@ -1,4 +1,4 @@
-// router/jobSeeker.js  (FULL DROP-IN, fixed)
+// router/jobSeeker.js  (FULL DROP-IN, cleaned)
 'use strict';
 
 const express = require('express');
@@ -8,7 +8,7 @@ const mongoose = require('mongoose');
 
 const JobSeeker = require('../model/jobSeeker');
 const validateObjectId = require('../middleware/validateObjectId');
-// const { requireLogin, requireRole } = require('../middleware/auth'); // 필요 시 주석 해제
+// const { requireLogin, requireRole } = require('../middleware/auth'); // 필요 시 활성화
 
 router.use(methodOverride('_method'));
 router.param('id', validateObjectId('id'));
@@ -23,10 +23,10 @@ const defaultLanguages     = ['English','Korean','Japanese','Chinese','Spanish',
 function parseDate(v) {
   if (!v) return null;
   const d = new Date(v);
-  return isNaN(d.getTime()) ? null : d;
+  return Number.isNaN(d.getTime()) ? null : d;
 }
 
-// 문자열/배열 모두 수용 → 배열<string>
+// 문자열/배열/콤마 CSV 모두 → 배열<string>
 function toStringArray(v) {
   if (Array.isArray(v)) {
     return v.flatMap(x => String(x).split(','))
@@ -39,7 +39,7 @@ function toStringArray(v) {
     .filter(Boolean);
 }
 
-/** body → 표준 페이로드 정규화 */
+// body → 표준 페이로드 정규화
 function normalizePayload(body) {
   const title =
     body['rdfs:label[@value]'] ??
@@ -88,7 +88,7 @@ function normalizePayload(body) {
     nationality,
     preferredWorkLocation,
     major,
-    languageSpoken,                 // 스키마가 String이면 아래에서 런타임으로 join 처리
+    languageSpoken, // 스키마가 String이면 아래에서 join 처리
     dateAvailable: parseDate(body.dateAvailable),
   };
 }
@@ -106,12 +106,14 @@ async function mirrorToRDF_JobSeeker(js) {
     _id: js._id,
     '@id': js['@id'] || `jobseeker:${js._id}`,
     _class: 'Job_Seekers',
-    _label: js._label || js.title || js.name || js.fullName || '',
+    _label: js._label || js.title || js.name || js.fullName || js.email || '',
     _description: js._description || js.description || js.summary || '',
-    Nationality: js.Nationality || js.nationality || '',
-    Preferred_Work_Location: js.Preferred_Work_Location || js.preferredWorkLocation || js.preferred_work_location || '',
-    Major: js.Major || js.major || '',
-    datePosted: js.datePosted || js.createdAt || new Date(),
+    // 패싯 3종 (여러 키 변형 흡수)
+    Nationality: js.Nationality ?? js.nationality ?? '',
+    Preferred_Work_Location:
+      js.Preferred_Work_Location ?? js.preferredWorkLocation ?? js.preferred_work_location ?? '',
+    Major: js.Major ?? js.major ?? '',
+    datePosted: js.datePosted || js.dateAvailable || js.createdAt || new Date(),
     updatedAt: new Date()
   };
   await db.collection('Job_Seekers_RDF')
@@ -147,7 +149,7 @@ router.post('/job-seekers', async (req, res) => {
       });
     }
 
-    // 스키마가 String이면 조인해서 저장
+    // 스키마가 String이면 CSV로 저장
     if (JobSeeker.schema.path('languageSpoken')?.instance === 'String') {
       payload.languageSpoken = Array.isArray(payload.languageSpoken)
         ? payload.languageSpoken.join(', ')
