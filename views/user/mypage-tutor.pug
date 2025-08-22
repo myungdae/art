@@ -1,4 +1,4 @@
-//- views/user/mypage_tutor.pug
+//- views/user/mypage-tutor.pug
 extends ../layout
 
 block content
@@ -12,7 +12,6 @@ block content
 
       p.mp-subtext.mb-4 Manage your online tutor profile and recent activity.
 
-      // Grid
       .row.gap-6
         // LEFT: Account & quick actions
         .col-lg-4
@@ -23,10 +22,10 @@ block content
               ul.mp-list
                 li
                   div.mp-list-title Username
-                  div.mp-list-sub #{user && user.username || '—'}
+                  div.mp-list-sub #{(user && user.username) || '—'}
                 li
                   div.mp-list-title Email
-                  div.mp-list-sub #{user && user.email || '—'}
+                  div.mp-list-sub #{(user && user.email) || '—'}
                 li
                   div.mp-list-title Role
                   div.mp-list-sub Tutor
@@ -36,11 +35,10 @@ block content
               strong Quick actions
             .card-body.btn-block-mobile
               if tutor
-                a.btn.btn-primary.w-100.mb-2(href=`/online-tutor/${tutor._id}/edit`) Edit tutor profile
-                a.btn.btn-outline-dark.w-100.mb-2(href=`/facet/Online_Tutors?q=${encodeURIComponent(tutor.name || '')}`) View in directory
-                a.btn.btn-outline-secondary.w-100(href='/online-tutor') View all (internal list)
+                a.btn.btn-primary.w-100.mb-2(href=`/online-tutors/${tutor._id}/edit`) Edit tutor profile
+                a.btn.btn-outline-dark.w-100(href='/facet/Online_Tutors') Browse directory
               else
-                a.btn.btn-primary.w-100(href='/online-tutor/new') Create tutor profile
+                a.btn.btn-primary.w-100(href='/online-tutors/new') Create tutor profile
 
           .mp-card
             .card-header
@@ -59,27 +57,37 @@ block content
               .card-header
                 strong Your Tutor Profile
               .card-body
-                h3.mb-2 #{tutor.name}
-                if tutor.subject
-                  span.badge.bg-primary.me-2 #{tutor.subject}
-                if tutor.email
-                  span.badge.bg-secondary #{tutor.email}
+                - const headline = tutor._label || tutor.title || tutor.name || '(no name)';
+                h3.mb-2= headline
+
+                // 작은 메타칩 (있을 때만)
+                .mb-2
+                  if Array.isArray(tutor.Expertise) && tutor.Expertise.length
+                    each tag in tutor.Expertise
+                      span.badge.bg-primary.me-1 #{tag}
+                  if tutor.Tutoring_Experience
+                    span.badge.bg-secondary.ms-1 #{tutor.Tutoring_Experience}
+                  if tutor.Gender
+                    span.badge.bg-light.text-dark.ms-1 #{tutor.Gender}
+                  if tutor.email
+                    span.badge.bg-light.text-dark.ms-1 #{tutor.email}
+
                 hr.mp-divider
 
                 if tutor.description
                   .mb-3 !{tutor.description}
+                else if tutor._description
+                  .mb-3 !{tutor._description}
                 else
                   p.mp-muted No description provided.
 
                 .d-flex.justify-content-between.mt-3
-                  small.mp-muted Created: #{new Date(tutor.createdAt).toLocaleString('en-US')}
-                  small.mp-muted Updated: #{new Date(tutor.updatedAt).toLocaleString('en-US')}
+                  small.mp-muted Created: #{tutor.createdAt ? new Date(tutor.createdAt).toLocaleString('en-US') : '-'}
+                  small.mp-muted Updated: #{tutor.updatedAt ? new Date(tutor.updatedAt).toLocaleString('en-US') : '-'}
 
                 // Actions
                 .mt-3.btn-block-mobile
-                  a.btn.btn-primary.me-2(href=`/online-tutor/${tutor._id}/edit`) Edit
-                  form.d-inline(method='POST', action=`/online-tutor/${tutor._id}?_method=DELETE`)
-                    button.btn.btn-outline-danger(type='submit', onclick="return confirm('Delete this profile?')") Delete
+                  a.btn.btn-primary.me-2(href=`/online-tutors/${tutor._id}/edit`) Edit
           else
             .mp-card.mb-3
               .card-header
@@ -87,7 +95,7 @@ block content
               .card-body
                 h4.mb-2 No profile yet
                 p.mp-muted Create your public tutor card so schools can find you.
-                a.btn.btn-primary.mt-2(href='/online-tutor/new') Create tutor profile
+                a.btn.btn-primary.mt-2(href='/online-tutors/new') Create tutor profile
 
           // Recent activity
           .mp-card
@@ -99,8 +107,6 @@ block content
                   each t in threads
                     li
                       div.mp-list-title #{t.title || (t.action + ' ' + t.source)}
-                      div.mp-list-sub
-                        | #{t.summary || ''} · 
-                        | #{new Date(t.createdAt).toLocaleString('en-US')}
+                      div.mp-list-sub #{t.summary || ''} · #{new Date(t.createdAt).toLocaleString('en-US')}
               else
                 p.mp-muted No recent activity.

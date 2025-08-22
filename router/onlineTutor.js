@@ -1,156 +1,250 @@
 // router/onlineTutor.js
+'use strict';
+
 const express = require('express');
 const router = express.Router();
 const methodOverride = require('method-override');
+const mongoose = require('mongoose');
+
 const OnlineTutor = require('../model/onlineTutor');
+const validateObjectId = require('../middleware/validateObjectId');
+const { requireLogin, requireRole } = require('../middleware/auth');
 
 router.use(methodOverride('_method'));
-
-const validateObjectId = require('../middleware/validateObjectId');   // ✅ 추가
-
-router.param('id', validateObjectId('id'));                           // ✅ 추가
+router.param('id', validateObjectId('id'));
 
 
-/* 프리셋(뷰로 전달) */
+
+/* -------------------- Presets -------------------- */
 const defaultExpertise = [
-  'ESL', 'Conversation', 'Grammar', 'Business English', 'Kids English', 'Test Prep (TOEIC/IELTS)'
+  'Conversation', 'Grammar', 'BusinessEnglish', 'ExamPrep',
+  'TOEFL', 'IELTS', 'Kids', 'Pronunciation'
 ];
-const defaultTutoringExp = ['0-1 year', '1-3 years', '3-5 years', '5+ years'];
-const defaultGenders = ['Male', 'Female', 'Non-binary', 'Prefer not to say'];
+const defaultExperiences = ['Beginner', 'Intermediate', 'Advanced', '5+ years', '10+ years'];
+const defaultGenders = ['Male', 'Female', 'Other', 'Prefer not to say'];
 
-/* 정규화 */
+/* -------------------- Helpers -------------------- */
+const toStringArray = (v) => {
+  if (Array.isArray(v)) {
+    return v.flatMap(x => String(x).split(','))
+      .map(s => s.trim()).filter(Boolean);
+  }
+  return String(v || '').split(',').map(s => s.trim()).filter(Boolean);
+};
+const mergeExtraCsv = (arr, csv) => {
+  const extra = String(csv || '').split(',').map(s => s.trim()).filter(Boolean);
+  return Array.from(new Set([...(arr || []), ...extra]));
+};
+
 function normalizePayload(body) {
+  const title =
+    body['rdfs:label[@value]'] ??
+    body._label ??
+    body.title ??
+    '';
+
   const description =
     body['http://purl.org/dc/elements/1.1/description[@value]'] ??
     body._description ??
     body.description ??
     '';
 
-  const expertise =
-    body['esl:expertise[@value]'] ??
+  // 시맨틱/일반 키 흡수
+  let expertise =
     body.Expertise ??
     body.expertise ??
-    '';
+    body['esl:expertise[@value]'] ??
+    [];
+
+  expertise = toStringArray(expertise);
+  expertise = mergeExtraCsv(expertise, body.extraExpertise);
 
   const tutoringExperience =
-    body['esl:tutoringExperience[@value]'] ??
     body.Tutoring_Experience ??
-    body.tutoring_experience ??
     body.tutoringExperience ??
+    body['esl:tutoringExperience[@value]'] ??
     '';
 
-  // 오탈자 Gendder도 수용
   const gender =
-    body['esl:gender[@value]'] ??
     body.Gender ??
     body.gender ??
-    body.Gendder ??
-    '';
-
-  const skypeId =
-    body['Skype_ID'] ??
-    body.skypeId ??
-    body.skype_id ??
+    body['schema:gender[@value]'] ??
     '';
 
   return {
-    fullName: body.fullName ?? body.name ?? '',
-    email: body.email ?? '',
+    title,
     description,
-    expertise,
-    tutoringExperience,
-    gender,
-    skypeId,
+    Expertise: expertise,                 // array<string>
+    Tutoring_Experience: String(tutoringExperience || ''),
+    Gender: String(gender || ''),
+    email: body.email || '',              // 선택
   };
 }
 
 function validatePayload(p) {
   const errors = {};
-  if (!p.email) errors.email = 'Email is required.';
-  // 필요 시 다른 필수값도 추가
+  if (!p.Expertise || !p.Expertise.length) errors.Expertise = 'Select at least one expertise.';
+  if (!p.Tutoring_Experience) errors.Tutoring_Experience = 'Tutoring experience is required.';
+  if (!p.Gender) errors.Gender = 'Gender is required.';
   return errors;
 }
 
-/* NEW */
-router.get('/online-tutors/new', (req, res) => {
-  res.render('onlineTutor/new', {
-    expertiseList: defaultExpertise,
-    tutoringExpList: defaultTutoringExp,
-    genderList: defaultGenders,
-    values: {},
-    errors: {}
-  });
-});
+/* -------------------- RDF Mirror -------------------- */
+async function mirrorToRDF(tutorDoc) {
+  const db = mongoose.connection.db;
 
-/* CREATE */
-router.post('/online-tutors', async (req, res) => {
+  const doc = {
+    _id: tutorDoc._id,
+    '@id': tutorDoc['@id'] || `onlinetutor:${tutorDoc._id}`,
+    _class: 'Online_Tutors',
+    _label: tutorDoc._label || tutorDoc.title || '',
+    _description: tutorDoc._description || tutorDoc.description || '',
+    Expertise: Array.isArray(tutorDoc.Expertise) ? tutorDoc.Expertise : (tutorDoc.Expertise ? [tutorDoc.Expertise] : []),
+    Tutoring_Experience: tutorDoc.Tutoring_Experience || '',
+    Gender: tutorDoc.Gender || '',
+    datePosted: tutorDoc.datePosted || tutorDoc.createdAt || new Date(),
+    updatedAt: new Date()
+  };
+
+  await db.collection('Online_Tutors_RDF')
+          .updateOne({ _id: tutorDoc._id }, { $set: doc }, { upsert: true });
+
+  // 호환 컬렉션(있으면) 반영
   try {
-    const payload = normalizePayload(req.body);
-    const errors = validatePayload(payload);
-    if (Object.keys(errors).length) {
-      return res.status(422).render('onlineTutor/new', {
-        expertiseList: defaultExpertise,
-        tutoringExpList: defaultTutoringExp,
-        genderList: defaultGenders,
-        values: req.body,
-        errors
-      });
-    }
+    await db.collection('Online_Tutors')
+            .updateOne({ _id: tutorDoc._id }, { $set: doc }, { upsert: true });
+  } catch (_) {}
+}
 
-    const doc = new OnlineTutor(payload);
-    await doc.save();
-    req.flash?.('success', 'Online Tutor profile created.');
-    return res.redirect('/admin/dashboard');
-  } catch (err) {
-    console.error('[OnlineTutor CREATE] error:', err);
-    return res.status(500).render('error', { message: 'Failed to create online tutor', error: err });
+/* -------------------- New -------------------- */
+router.get('/online-tutors/new',
+  requireLogin,
+  requireRole(['Online_Tutor', 'Tutor']),     // ← 별칭 모두 허용
+  async (req, res) => {
+    res.render('onlineTutor/new', {
+      expertiseList: defaultExpertise,
+      expList: defaultExperiences,
+      genderList: defaultGenders,
+      values: {},
+      errors: {}
+    });
   }
-});
+);
 
-/* EDIT */
-router.get('/online-tutors/:id/edit', async (req, res) => {
-  try {
+/* -------------------- Create -------------------- */
+router.post('/online-tutors',
+  requireLogin,
+  requireRole(['Online_Tutor', 'Tutor']),
+  async (req, res) => {
+    try {
+      const payload = normalizePayload(req.body);
+      const errors = validatePayload(payload);
+
+      if (Object.keys(errors).length) {
+        return res.status(422).render('onlineTutor/new', {
+          expertiseList: defaultExpertise,
+          expList: defaultExperiences,
+          genderList: defaultGenders,
+          values: { ...payload, extraExpertise: req.body.extraExpertise || '' },
+          errors
+        });
+      }
+
+      const title  = (payload.title || '').trim();
+      const _label = (req.body._labelOverride || title).trim();
+      const _description = (req.body._descriptionOverride || payload.description || '').trim();
+
+      const doc = new OnlineTutor({
+        ...payload,
+        user: req.session.user._id,
+        title,
+        _label,
+        _description,
+        datePosted: new Date()
+      });
+
+      await doc.save();
+      await mirrorToRDF(doc);
+
+      req.flash?.('success', 'Tutor profile created.');
+      return res.redirect('/facet/Online_Tutors');
+    } catch (err) {
+      console.error('[ONLINE-TUTOR CREATE] error:', err);
+      return res.status(500).render('error', { message: 'Failed to create tutor profile', error: err });
+    }
+  }
+);
+
+/* -------------------- Edit -------------------- */
+router.get('/online-tutors/:id/edit',
+  requireLogin,
+  requireRole(['Online_Tutor', 'Tutor']),
+  async (req, res) => {
     const { id } = req.params;
     const onlineTutor = await OnlineTutor.findById(id);
     if (!onlineTutor) return res.status(404).send('Not found');
 
+    // (선택) 본인 소유만 수정 허용
+    if (String(onlineTutor.user || '') !== String(req.session.user._id || '')) {
+      return res.status(403).send('Forbidden: not owner');
+    }
+
     res.render('onlineTutor/edit', {
       onlineTutor,
       expertiseList: defaultExpertise,
-      tutoringExpList: defaultTutoringExp,
+      expList: defaultExperiences,
       genderList: defaultGenders,
       errors: {}
     });
-  } catch (err) {
-    console.error('[OnlineTutor EDIT] error:', err);
-    return res.status(500).render('error', { message: 'Failed to open online tutor', error: err });
   }
-});
+);
 
-/* UPDATE */
-router.put('/online-tutors/:id', async (req, res) => {
-  const { id } = req.params;
-  try {
-    const payload = normalizePayload(req.body);
-    const errors = validatePayload(payload);
-    if (Object.keys(errors).length) {
-      const onlineTutor = await OnlineTutor.findById(id);
-      return res.status(422).render('onlineTutor/edit', {
-        onlineTutor: onlineTutor ? { ...onlineTutor.toObject(), ...payload } : payload,
-        expertiseList: defaultExpertise,
-        tutoringExpList: defaultTutoringExp,
-        genderList: defaultGenders,
-        errors
-      });
+/* -------------------- Update -------------------- */
+router.put('/online-tutors/:id',
+  requireLogin,
+  requireRole(['Online_Tutor', 'Tutor']),
+  async (req, res) => {
+    const { id } = req.params;
+    try {
+      const payload = normalizePayload(req.body);
+      const errors = validatePayload(payload);
+
+      if (Object.keys(errors).length) {
+        const onlineTutor = await OnlineTutor.findById(id);
+        return res.status(422).render('onlineTutor/edit', {
+          onlineTutor: onlineTutor ? { ...onlineTutor.toObject(), ...payload } : payload,
+          expertiseList: defaultExpertise,
+          expList: defaultExperiences,
+          genderList: defaultGenders,
+          errors
+        });
+      }
+
+      const title  = (payload.title || '').trim();
+      const _label = (req.body._labelOverride || title).trim();
+      const _description = (req.body._descriptionOverride || payload.description || '').trim();
+
+      const updated = await OnlineTutor.findByIdAndUpdate(
+        id,
+        {
+          ...payload,
+          title,
+          _label,
+          _description,
+          datePosted: new Date()
+        },
+        { new: true, runValidators: true }
+      );
+
+      if (updated) await mirrorToRDF(updated);
+
+      req.flash?.('success', 'Tutor profile updated.');
+      return res.redirect('/facet/Online_Tutors');
+    } catch (err) {
+      console.error('[ONLINE-TUTOR UPDATE] error:', err);
+      return res.status(500).render('error', { message: 'Failed to update tutor profile', error: err });
     }
-
-    await OnlineTutor.findByIdAndUpdate(id, payload, { new: true });
-    req.flash?.('success', 'Online Tutor profile updated.');
-    return res.redirect('/admin/dashboard');
-  } catch (err) {
-    console.error('[OnlineTutor UPDATE] error:', err);
-    return res.status(500).render('error', { message: 'Failed to update online tutor', error: err });
   }
-});
+);
 
 module.exports = router;

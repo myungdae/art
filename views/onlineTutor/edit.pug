@@ -36,10 +36,25 @@ block content
               .alert.alert-danger Please fix the highlighted errors.
 
             form.form(method="POST", action=`/online-tutors/${onlineTutor._id}?_method=PUT`, onsubmit="return handleCustomFields()")
+            
+            // Title
+            .space-y-1
+              label.block(for="title") Title
+              input#title(
+                type="text"
+                name="title"
+                class="w-full border rounded px-3 py-2"
+                placeholder="e.g., Online English Tutor"
+                value=(values && values.title) || (onlineTutor && onlineTutor.title) || ""
+              )
+            
               // ===== Description (CKEditor)
               .form-group.mb-4
                 label(for="description") Description
                 textarea.form-control(name="http://purl.org/dc/elements/1.1/description[@value]", id="description", rows="8")= _desc
+                
+              
+
 
               // ===== Expertise / Tutoring Experience / Gender
               .form-group.mb-3

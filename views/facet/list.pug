@@ -1,4 +1,4 @@
-//- views/facet/list.pug
+//- views/facet/list.pug (DROP-IN)
 extends ../layout
 
 block content
@@ -33,11 +33,11 @@ block content
               .space-y-2
                 h3.font-semibold.text-gray-700= g.label
                 .space-y-1.max-h-64.overflow-auto.pr-1
-                  - const facetList = (facets && facets[g.key]) || []
-                  - const selList = (selected && selected[g.key]) || []
+                  - var facetList = (facets && facets[g.key]) || []
+                  - var selList = (selected && selected[g.key]) || []
                   if facetList.length
                     each f in facetList
-                      - const checked = selList.includes(f._id)
+                      - var checked = selList.indexOf(f._id) !== -1
                       label.flex.items-center.gap-2
                         input(type="checkbox", name=g.key, value=f._id, checked=checked)
                         span.flex-1.truncate= f._id
@@ -55,22 +55,23 @@ block content
         else
           ul.space-y-3
             each d in docs
-              - const posted = (d.datePosted && new Date(d.datePosted).toISOString().slice(0,10)) || '-'
-              // 카드
+              - var posted = (d.datePosted && new Date(d.datePosted).toISOString().slice(0,10)) || '-'
               li.border.rounded.p-3
                 .flex.items-center.gap-3
                   .min-w-0.flex-1
                     h2.font-semibold.text-lg.truncate
                       a(href=`/rdf-resource/${klass}/${d._id}`)= d._label || d.title || '(no title)'
 
-                    // 항목 하부 메타: 가능한 필드를 자동으로 모아 표시
-                    - const parts = []
-                    - const fieldsForMeta = ['country','studentType','teachingArea','Nationality','Preferred_Work_Location','Major','Expertise','Tutoring_Experience','Gender']
-                    - fieldsForMeta.forEach(function(k){
-                    -   if (Array.isArray(d[k]) && d[k].length) parts.push(d[k].join(', '))
-                    -   else if (d[k]) parts.push(d[k])
-                    - })
-                    p.text-sm.text-gray-600(class="mt-0.5") #{(parts && parts.length) ? parts.join(' · ') : '-'}
+                    // 하부 메타: 가능한 필드를 자동 모아 표시
+                    - var parts = []
+                    - var fieldsForMeta = ['country','studentType','teachingArea','Nationality','Preferred_Work_Location','Major','Expertise','Tutoring_Experience','Gender']
+                    - for (var i = 0; i < fieldsForMeta.length; i++) {
+                    -   var k = fieldsForMeta[i];
+                    -   if (!d || typeof d[k] === 'undefined' || d[k] === null) continue;
+                    -   if (Array.isArray(d[k]) && d[k].length) parts.push(d[k].join(', '));
+                    -   else if (d[k]) parts.push(d[k]);
+                    - }
+                    p.text-sm.text-gray-600(class="mt-0.5")= parts.join(' · ')
 
                     p.text-sm.mt-1 Posted: #{posted}
                   .shrink-0
@@ -78,30 +79,32 @@ block content
 
         // 페이지네이션
         if typeof total !== 'undefined' && total > limit
-          - const totalPages = Math.ceil(total / limit);
-          - const buildQs = () => {
-          -   let s = ''
-          -   if (q) s += '&q=' + encodeURIComponent(q)
-          -   if (facetCfg && facetCfg.groups) {
-          -     facetCfg.groups.forEach(g => {
-          -       (selected[g.key] || []).forEach(v => { s += '&' + encodeURIComponent(g.key) + '=' + encodeURIComponent(v) })
-          -     })
+          - var totalPages = Math.ceil(total / limit)
+          - var qs = ''
+          - if (q) { qs += '&q=' + encodeURIComponent(q) }
+          - if (facetCfg && facetCfg.groups) {
+          -   for (var gi = 0; gi < facetCfg.groups.length; gi++) {
+          -     var gg = facetCfg.groups[gi];
+          -     var sel = (selected && selected[gg.key]) || [];
+          -     for (var sj = 0; sj < sel.length; sj++) {
+          -       qs += '&' + encodeURIComponent(gg.key) + '=' + encodeURIComponent(sel[sj]);
+          -     }
           -   }
-          -   return s
           - }
           nav.mt-6.flex.items-center.gap-2.flex-wrap
             if page > 1
-              a(href=`/facet/${klass}?page=${page-1}&limit=${limit}${buildQs()}`, class="px-3 py-1 border rounded") Prev
+              a(href=`/facet/${klass}?page=${page-1}&limit=${limit}${qs}`, class="px-3 py-1 border rounded") Prev
             span.text-sm Page #{page} / #{totalPages}
             if page < totalPages
-              a(href=`/facet/${klass}?page=${page+1}&limit=${limit}${buildQs()}`, class="px-3 py-1 border rounded") Next
+              a(href=`/facet/${klass}?page=${page+1}&limit=${limit}${qs}`, class="px-3 py-1 border rounded") Next
 
   // 체크박스 변경 즉시 적용
   script.
     (function(){
       var f = document.getElementById('facetForm');
       if(!f) return;
-      f.querySelectorAll('input[type="checkbox"]').forEach(function(cb){
-        cb.addEventListener('change', function(){ f.submit(); });
-      });
+      var cbs = f.querySelectorAll('input[type="checkbox"]');
+      for (var i=0; i<cbs.length; i++) {
+        cbs[i].addEventListener('change', function(){ f.submit(); });
+      }
     })();

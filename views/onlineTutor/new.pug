@@ -20,6 +20,17 @@ block content
 
           .card-body
             form(method="POST", action="/online-tutors", onsubmit="return handleCustomFields()")
+            
+            // Title
+            .space-y-1
+              label.block(for="title") Title
+              input#title(
+                type="text"
+                name="title"
+                class="w-full border rounded px-3 py-2"
+                placeholder="e.g., Online English Tutor"
+                value=(values && values.title) || (onlineTutor && onlineTutor.title) || ""
+              )
               // ===== Description (CKEditor, dc:description)
               .form-group.mb-4
                 label(for="description") Description
@@ -28,6 +39,8 @@ block content
                   id="description"
                   rows="8"
                 )
+
+            
 
               // ===== Semantic: Expertise / Tutoring_Experience / Gender
               .form-group.mb-3

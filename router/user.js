@@ -267,34 +267,38 @@ router.post('/job-seekers/resume-access', requireLogin, async (req, res) => {
   }
 });
 
-/* --------------------------- Online Tutor mypage --------------------------- */
 router.get('/mypage-tutor', requireLogin, async (req, res) => {
   try {
     const user = await User.findById(req.session.user._id).lean();
-    const email = user?.email;
+    if (!user) return res.status(404).send('User not found');
 
+    const email = user.email || '';
     const tutor = email
       ? await OnlineTutor.findOne({ email }).sort({ updatedAt: -1 }).lean()
       : null;
 
-    let threads = [];
-    try {
-      threads = await Thread.find({
-        userId: String(req.session.user._id),
-        source: 'online_tutors'
-      })
+    const threads =
+      await Thread.find({ userId: String(req.session.user._id), source: 'online_tutors' })
         .sort({ createdAt: -1 })
         .limit(10)
-        .lean();
-    } catch (e) {
-      console.error('[thread] list failed:', e.message || e);
-    }
+        .lean()
+        .catch(() => []);
 
-    return res.render('user/mypage-tutor', { user, tutor, threads });
+    const data = { user, tutor, tutorDoc: tutor, threads };
+
+    // 기본(하이픈) 뷰 시도 → 실패하면 구(언더스코어) 뷰로 폴백
+    return res.render('user/mypage-tutor', data, (err, html) => {
+      if (err) {
+        console.error('[mypage-tutor] render error:', err.message);
+        return res.render('user/mypage_tutor', data);  // legacy fallback
+      }
+      res.send(html);
+    });
   } catch (err) {
-    console.error('❌ Tutor mypage error:', err.message);
+    console.error('❌ Tutor mypage error:', err.stack || err);
     return res.status(500).send('❌ Failed to load Tutor Dashboard');
   }
 });
+
 
 module.exports = router;
