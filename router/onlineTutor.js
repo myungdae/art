@@ -24,8 +24,7 @@ const defaultGenders = ['Male', 'Female', 'Other', 'Prefer not to say'];
 /* -------------------- Helpers -------------------- */
 const toStringArray = (v) => {
   if (Array.isArray(v)) {
-    return v.flatMap(x => String(x).split(','))
-      .map(s => s.trim()).filter(Boolean);
+    return v.flatMap(x => String(x).split(',')).map(s => s.trim()).filter(Boolean);
   }
   return String(v || '').split(',').map(s => s.trim()).filter(Boolean);
 };
@@ -47,13 +46,11 @@ function normalizePayload(body) {
     body.description ??
     '';
 
-  // 시맨틱/일반 키 흡수
   let expertise =
     body.Expertise ??
     body.expertise ??
     body['esl:expertise[@value]'] ??
     [];
-
   expertise = toStringArray(expertise);
   expertise = mergeExtraCsv(expertise, body.extraExpertise);
 
@@ -69,8 +66,7 @@ function normalizePayload(body) {
     body['schema:gender[@value]'] ??
     '';
 
-  // email: trim + lowercase
-  const email = String((body.email || '').trim().toLowerCase());
+  const email = String(body.email || '').trim().toLowerCase();
 
   return {
     title,
@@ -78,7 +74,7 @@ function normalizePayload(body) {
     Expertise: expertise,                 // array<string>
     Tutoring_Experience: String(tutoringExperience || ''),
     Gender: String(gender || ''),
-    email,                                // required (서버 검증)
+    email                                    // ← 필수
   };
 }
 
@@ -112,7 +108,6 @@ async function mirrorToRDF(tutorDoc) {
   await db.collection('Online_Tutors_RDF')
           .updateOne({ _id: tutorDoc._id }, { $set: doc }, { upsert: true });
 
-  // 호환 컬렉션(있으면) 반영
   try {
     await db.collection('Online_Tutors')
             .updateOne({ _id: tutorDoc._id }, { $set: doc }, { upsert: true });
@@ -122,13 +117,13 @@ async function mirrorToRDF(tutorDoc) {
 /* -------------------- New -------------------- */
 router.get('/online-tutors/new',
   requireLogin,
-  requireRole(['Online_Tutor', 'Tutor']),     // ← 별칭 모두 허용
+  requireRole(['Online_Tutor', 'Tutor']),
   async (req, res) => {
     res.render('onlineTutor/new', {
       expertiseList: defaultExpertise,
       expList: defaultExperiences,
       genderList: defaultGenders,
-      values: {},
+      values: { email: req.session?.user?.email || '' },   // 폼에 기본 채움
       errors: {}
     });
   }
@@ -141,8 +136,10 @@ router.post('/online-tutors',
   async (req, res) => {
     try {
       const payload = normalizePayload(req.body);
-      const errors = validatePayload(payload);
+      // 세션 메일 백업(UX)
+      if (!payload.email && req.session?.user?.email) payload.email = String(req.session.user.email).toLowerCase();
 
+      const errors = validatePayload(payload);
       if (Object.keys(errors).length) {
         return res.status(422).render('onlineTutor/new', {
           expertiseList: defaultExpertise,
@@ -157,11 +154,9 @@ router.post('/online-tutors',
       const _label = (req.body._labelOverride || title).trim();
       const _description = (req.body._descriptionOverride || payload.description || '').trim();
 
-      const userId = String(req.user?._id || req.session?.user?._id || '');
-
       const doc = new OnlineTutor({
         ...payload,
-        user: userId,
+        user: req.session.user._id,
         title,
         _label,
         _description,
@@ -174,15 +169,11 @@ router.post('/online-tutors',
       req.flash?.('success', 'Tutor profile created.');
       return res.redirect('/facet/Online_Tutors');
     } catch (err) {
-      console.error('[ONLINE-TUTOR CREATE] error:', err);
-
-      // DB 스키마 검증 실패는 같은 폼으로 되돌려 UX 개선
+      // 스키마 ValidationError면 폼으로 되돌려 인라인 에러 표시
       if (err?.name === 'ValidationError') {
         const payload = normalizePayload(req.body);
         const valErrs = {};
-        for (const k in err.errors) {
-          valErrs[k] = err.errors[k].message || `Invalid ${k}`;
-        }
+        for (const k in err.errors) valErrs[k] = err.errors[k].message || `Invalid ${k}`;
         return res.status(422).render('onlineTutor/new', {
           expertiseList: defaultExpertise,
           expList: defaultExperiences,
@@ -191,8 +182,7 @@ router.post('/online-tutors',
           errors: valErrs
         });
       }
-
-      // 그 외 예외만 에러 페이지
+      console.error('[ONLINE-TUTOR CREATE] error:', err);
       return res.status(500).render('error', { message: 'Failed to create tutor profile', error: err });
     }
   }
@@ -207,9 +197,7 @@ router.get('/online-tutors/:id/edit',
     const onlineTutor = await OnlineTutor.findById(id);
     if (!onlineTutor) return res.status(404).send('Not found');
 
-    // 본인 소유만 수정 허용
-    const userId = String(req.user?._id || req.session?.user?._id || '');
-    if (String(onlineTutor.user || '') !== userId) {
+    if (String(onlineTutor.user || '') !== String(req.session.user._id || '')) {
       return res.status(403).send('Forbidden: not owner');
     }
 
@@ -232,9 +220,7 @@ router.delete('/online-tutors/:id',
     const doc = await OnlineTutor.findById(id);
     if (!doc) return res.status(404).send('Not found');
 
-    // 본인 소유 or Admin
-    const userId = String(req.user?._id || req.session?.user?._id || '');
-    const isOwner = String(doc.user || '') === userId;
+    const isOwner = String(doc.user || '') === String(req.session.user._id || '');
     const isAdmin = (req.user?.role || '').toLowerCase() === 'admin';
     if (!isOwner && !isAdmin) return res.status(403).send('Forbidden: not owner');
 
@@ -253,8 +239,9 @@ router.put('/online-tutors/:id',
     const { id } = req.params;
     try {
       const payload = normalizePayload(req.body);
-      const errors = validatePayload(payload);
+      if (!payload.email && req.session?.user?.email) payload.email = String(req.session.user.email).toLowerCase();
 
+      const errors = validatePayload(payload);
       if (Object.keys(errors).length) {
         const onlineTutor = await OnlineTutor.findById(id);
         return res.status(422).render('onlineTutor/edit', {
@@ -287,15 +274,10 @@ router.put('/online-tutors/:id',
       req.flash?.('success', 'Tutor profile updated.');
       return res.redirect('/facet/Online_Tutors');
     } catch (err) {
-      console.error('[ONLINE-TUTOR UPDATE] error:', err);
-
-      // 검증 실패는 동일 폼으로 422
       if (err?.name === 'ValidationError') {
         const payload = normalizePayload(req.body);
         const valErrs = {};
-        for (const k in err.errors) {
-          valErrs[k] = err.errors[k].message || `Invalid ${k}`;
-        }
+        for (const k in err.errors) valErrs[k] = err.errors[k].message || `Invalid ${k}`;
         const onlineTutor = await OnlineTutor.findById(id);
         return res.status(422).render('onlineTutor/edit', {
           onlineTutor: onlineTutor ? { ...onlineTutor.toObject(), ...payload } : payload,
@@ -305,7 +287,7 @@ router.put('/online-tutors/:id',
           errors: valErrs
         });
       }
-
+      console.error('[ONLINE-TUTOR UPDATE] error:', err);
       return res.status(500).render('error', { message: 'Failed to update tutor profile', error: err });
     }
   }

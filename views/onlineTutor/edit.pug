@@ -2,128 +2,96 @@
 extends ../layout
 
 block content
+  - var errors = (typeof errors === 'object' && errors) ? errors : {};
+  - var onlineTutor = (typeof onlineTutor === 'object' && onlineTutor) ? onlineTutor : {};
+  - var expertiseList = Array.isArray(expertiseList) ? expertiseList : ['Conversation','Grammar','BusinessEnglish','ExamPrep','TOEFL','IELTS','Kids','Pronunciation'];
+  - var expList = Array.isArray(expList) ? expList : ['Beginner','Intermediate','Advanced','5+ years','10+ years'];
+  - var genderList = Array.isArray(genderList) ? genderList : ['Male','Female','Other','Prefer not to say'];
+
   .container.my-5
-    h2.text-center.mb-4 Edit Online Tutor
+    h2.text-center.mb-4 Edit Tutor Profile
 
     .row.justify-content-center
       .col-lg-9
-        if success
-          .alert.alert-success.mb-3= success
-        if error
-          .alert.alert-danger.mb-3= error
-        if errors && Object.keys(errors).length
-          .alert.alert-danger.mb-3
+        if Object.keys(errors).length
+          .alert.alert-danger
             strong Please fix the following:
             ul.mb-0.mt-2
               each msg, key in errors
                 li #{msg}
 
-        form#tutorForm(action=`/online-tutors/${onlineTutor && onlineTutor._id}` method="POST" novalidate)
-          // PUT 오버라이드
+        form#tutorForm(action=`/online-tutors/${onlineTutor._id || ''}` method="POST" novalidate)
           input(type="hidden" name="_method" value="PUT")
 
-          // 기본 정보
           .card.mb-3.border-0.shadow-sm
             .card-header.bg-white
               h5.mb-0 Basic Info
             .card-body
-              .form-row
-                .form-group.col-md-6
-                  label(for="title") Title
-                  input#title.form-control(
-                    type="text"
-                    name="title"
-                    value=(onlineTutor && onlineTutor.title) || ''
-                    placeholder="e.g., Friendly IELTS Coach"
-                  )
-                .form-group.col-md-6
-                  label(for="email") Email *
-                  input#email.form-control(
-                    type="email"
-                    name="email"
-                    required
-                    value=( (onlineTutor && onlineTutor.email) || (session && session.user && session.user.email) || '' )
-                    placeholder="your@email.com"
-                  )
-                  if errors && errors.email
-                    .invalid-feedback.d-block= errors.email
-                  else
-                    small.form-text.text-muted Keep this up to date.
+              .form-group
+                label(for="title") Title (optional)
+                input#title.form-control(type="text" name="title" value=onlineTutor.title || '')
 
               .form-group
                 label(for="description") Description
-                textarea#description.form-control(
-                  name="description"
-                  rows="5"
-                  placeholder="Write a short intro, specialties, and availability."
-                ) #{(onlineTutor && onlineTutor.description) || ''}
+                textarea#description.form-control(name="description" rows="5")= onlineTutor.description || ''
 
-          // 전문 분야
-          .card.mb-3.border-0.shadow-sm
-            .card-header.bg-white.d-flex.align-items-center
-              h5.mb-0.flex-grow-1 Expertise
-              small.text-muted Choose at least one
-            .card-body
-              .row
-                each item, idx in expertiseList
-                  - const checked = (onlineTutor && onlineTutor.Expertise && onlineTutor.Expertise.includes(item))
-                  .col-md-4.mb-2
-                    .custom-control.custom-checkbox
-                      input.custom-control-input(
-                        type="checkbox"
-                        id=`exp_${idx}`
-                        name="Expertise"
-                        value=item
-                        checked=checked
-                      )
-                      label.custom-control-label(for=`exp_${idx}`)= item
-              if errors && errors.Expertise
-                .invalid-feedback.d-block.mt-2= errors.Expertise
-
-              .form-group.mt-3
-                label(for="extraExpertise") Extra expertise (comma-separated)
-                input#extraExpertise.form-control(
-                  type="text"
-                  name="extraExpertise"
-                  value=""
-                  placeholder="e.g., Conversation for travel, TOEIC"
-                )
-                small.form-text.text-muted Optional. Will be merged with selected tags.
-
-          // 상세 정보
-          .card.mb-4.border-0.shadow-sm
-            .card-header.bg-white
-              h5.mb-0 Profile Details
-            .card-body
               .form-row
                 .form-group.col-md-6
-                  label(for="Tutoring_Experience") Tutoring Experience *
-                  select#Tutoring_Experience.form-control(name="Tutoring_Experience" required)
-                    option(value="") Select...
+                  label(for="tutoringExperience") Tutoring Experience *
+                  select#tutoringExperience.form-control(name="Tutoring_Experience" required)
+                    option(value="") Select…
                     each item in expList
-                      - const sel = (onlineTutor && onlineTutor.Tutoring_Experience === item)
-                      option(value=item selected=sel)= item
-                  if errors && errors.Tutoring_Experience
+                      option(value=item selected=(onlineTutor.Tutoring_Experience===item))= item
+                  if errors.Tutoring_Experience
                     .invalid-feedback.d-block= errors.Tutoring_Experience
 
                 .form-group.col-md-6
-                  label(for="Gender") Gender *
-                  select#Gender.form-control(name="Gender" required)
-                    option(value="") Select...
-                    each g in genderList
-                      - const selG = (onlineTutor && onlineTutor.Gender === g)
-                      option(value=g selected=selG)= g
-                  if errors && errors.Gender
+                  label(for="gender") Gender *
+                  select#gender.form-control(name="Gender" required)
+                    option(value="") Select…
+                    each item in genderList
+                      option(value=item selected=(onlineTutor.Gender===item))= item
+                  if errors.Gender
                     .invalid-feedback.d-block= errors.Gender
 
-          // 액션바
+              .form-group
+                label(for="email") Contact Email *
+                input#email.form-control(
+                  type="email"
+                  name="email"
+                  required
+                  value=onlineTutor.email || (session && session.user && session.user.email) || ''
+                  placeholder="you@example.com"
+                )
+                if errors.email
+                  .invalid-feedback.d-block= errors.email
+
+          .card.mb-3.border-0.shadow-sm
+            .card-header.bg-white
+              h5.mb-0 Expertise *
+            .card-body
+              .form-group
+                each item, idx in expertiseList
+                  - const checked = Array.isArray(onlineTutor.Expertise) && onlineTutor.Expertise.includes(item)
+                  .form-check.mb-2
+                    input.form-check-input(type="checkbox" id=`ex_${idx}` name="Expertise" value=item checked=checked)
+                    label.form-check-label(for=`ex_${idx}`)= item
+              if errors.Expertise
+                .invalid-feedback.d-block.mt-2= errors.Expertise
+
+              .form-group.mt-3
+                label(for="extraExpertise") Add more expertise (comma-separated)
+                input#extraExpertise.form-control(type="text" name="extraExpertise" value="")
+
           .d-flex.justify-content-between.align-items-center.bg-white.py-3
             small.text-muted * Required fields
             .text-right
               a.btn.btn-light.mr-2(href="/facet/Online_Tutors") Cancel
               button.btn.btn-primary(type="submit") Save changes
 
-  // 중복 제출 방지 UX
+  style.
+    .card-body .form-group{ max-height: 280px; overflow:auto; padding-right:.5rem; }
+
   script.
     (function(){
       var form = document.getElementById('tutorForm');
