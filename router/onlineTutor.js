@@ -199,6 +199,28 @@ router.get('/online-tutors/:id/edit',
   }
 );
 
+// router/onlineTutor.js
+router.delete('/online-tutors/:id',
+  requireLogin,
+  requireRole(['Online_Tutor','Tutor','Admin']),
+  async (req, res) => {
+    const { id } = req.params;
+    const doc = await OnlineTutor.findById(id);
+    if (!doc) return res.status(404).send('Not found');
+
+    // 본인 소유 or Admin
+    const isOwner = String(doc.user || '') === String(req.session.user._id || '');
+    const isAdmin = (req.user?.role || '').toLowerCase() === 'admin';
+    if (!isOwner && !isAdmin) return res.status(403).send('Forbidden: not owner');
+
+    await OnlineTutor.findByIdAndDelete(id);
+    try { await mongoose.connection.db.collection('Online_Tutors_RDF').deleteOne({ _id: doc._id }); } catch (_) {}
+
+    return res.redirect('/facet/Online_Tutors');
+  }
+);
+
+
 /* -------------------- Update -------------------- */
 router.put('/online-tutors/:id',
   requireLogin,
