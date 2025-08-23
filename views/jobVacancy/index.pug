@@ -45,7 +45,7 @@ block content
           span(class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full bg-gray-100 text-sm") Student: #{filters.studentType}
         if filters.teachingArea
           span(class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full bg-gray-100 text-sm") Area: #{filters.teachingArea}
-        a(href="/job-vacancies" class="ml-3 text-sm text-blue-600 hover:underline") Clear all
+        a(href="/job-vacancies", class="ml-3 text-sm text-blue-600 hover:underline") Clear all
 
     // == List ==
     if !jobs || !jobs.length
