@@ -1,0 +1,59 @@
+//- views/paypal/checkout_tutor.pug
+extends ../layout
+
+block content
+  .container.mt-5.mb-5
+    h2.mb-4 Buy Tutor Listing Visibility
+
+    .card.shadow-sm.p-4(style="max-width:720px; margin:0 auto;")
+      p.mb-1 Hello, #{user && user.username}!
+      p.mb-3 You are purchasing visibility for #{days} days.
+      if price
+        p.fw-semibold.mb-3 Price: $#{price.toFixed ? price.toFixed(2) : price}
+
+      // PayPal 버튼 영역
+      #paypal-mount(style="max-width:420px")
+
+      // 안내
+      .alert.alert-warning.mt-3(role="alert")
+        | If the PayPal button does not appear, please refresh this page or try again.
+
+      .d-flex.gap-2.mt-3
+        a.btn.btn-outline-secondary(href="/user/online-tutors/visibility") ← Back to Visibility Options
+        a.btn.btn-outline-dark(href="/user/mypage-tutor") Back to My Page
+
+  // PayPal SDK
+  script(src=`https://www.paypal.com/sdk/js?client-id=${paypalClientId}&currency=USD`)
+  script.
+    (function () {
+      var tutorDays = !{JSON.stringify(days)};
+      if (!window.paypal) return;
+
+      paypal.Buttons({
+        style: { layout: 'vertical' },
+        createOrder: function () {
+          return fetch('/paypal/create-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tutorDays: tutorDays })
+          })
+          .then(function (res) { return res.json(); })
+          .then(function (data) { return data.id; });
+        },
+        onApprove: function (data) {
+          return fetch('/paypal/capture-order/' + data.orderID, { method: 'POST' })
+            .then(function (res) { return res.json(); })
+            .then(function (result) {
+              if (result && result.status === 'redirect' && result.url) {
+                window.location.href = result.url;
+              } else {
+                alert('Payment captured, but no redirect URL was returned.');
+              }
+            });
+        },
+        onError: function (err) {
+          console.error('PayPal error:', err);
+          alert('Failed to initialize PayPal. Please try again.');
+        }
+      }).render('#paypal-mount');
+    })();

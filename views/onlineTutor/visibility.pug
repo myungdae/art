@@ -2,6 +2,11 @@
 extends ../layout
 
 block content
+  // ── 버튼·컨테이너 가시화 강제
+  style.
+    .purchase-cta, .purchase-cta * { visibility: visible !important; opacity: 1 !important; }
+    .buy-btn { min-height: 84px; }
+
   .container.mt-5.mb-5
     h2.text-center.mb-4 Purchase Tutor Listing Visibility
 
@@ -17,23 +22,23 @@ block content
           li You can create or update your tutor profile while visibility is active.
           li When the period expires, the profile becomes hidden until you renew.
 
-        form(method="POST", action="/user/online-tutors/visibility")
-          .row.g-3
-            .col-12.col-md-4
-              button.btn.btn-outline-primary.w-100.py-3(type="submit", name="accessPeriod", value="30")
-                strong 30 Days
-                br
-                span.small Keep me listed for a month
-            .col-12.col-md-4
-              button.btn.btn-outline-primary.w-100.py-3(type="submit", name="accessPeriod", value="90")
-                strong 90 Days
-                br
-                span.small Great for a semester
-            .col-12.col-md-4
-              button.btn.btn-outline-primary.w-100.py-3(type="submit", name="accessPeriod", value="365")
-                strong 365 Days
-                br
-                span.small Year-round visibility
+        // ✅ 버튼을 a 링크(GET)로 변경 → 보임/동작 보장
+        .row.g-3.purchase-cta
+          .col-12.col-md-4
+            a.buy-btn.btn.btn-primary.w-100.py-3(href="/user/online-tutors/visibility/start?days=30")
+              strong 30 Days
+              br
+              span.small Keep me listed for a month
+          .col-12.col-md-4
+            a.buy-btn.btn.btn-primary.w-100.py-3(href="/user/online-tutors/visibility/start?days=90")
+              strong 90 Days
+              br
+              span.small Great for a semester
+          .col-12.col-md-4
+            a.buy-btn.btn.btn-primary.w-100.py-3(href="/user/online-tutors/visibility/start?days=365")
+              strong 365 Days
+              br
+              span.small Year-round visibility
 
         .mt-3.text-center
           a.btn.btn-link(href="/user/mypage-tutor") ← Back to My Page

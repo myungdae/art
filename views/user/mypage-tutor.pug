@@ -24,15 +24,15 @@ block content
         .col-12.col-md-6
           p.mb-2
             strong Username:
-            |  #{u.username || ''}
-        .col-12.col-md-6
+            = (user && user.username) || ''
+          
           p.mb-2
             strong Email:
-            |  #{u.email || ''}
-        .col-12.col-md-6
+            = (user && user.email) || ''
+          
           p.mb-2
             strong Role:
-            |  #{u.role || ''}
+            = (user && user.role) || ''
 
       .mt-2
         p.mb-0
@@ -44,7 +44,7 @@ block content
           else
             span.ms-1.text-danger Not Active
 
-      // ===== ✅ 버튼 블록 (가시성 상태에 따른 제어) =====
+      // ===== 버튼 블록 =====
       .d-flex.justify-content-center.mt-3.btn-block-mobile
         .btn-group(role="group", aria-label="Tutor actions")
           if hasActive

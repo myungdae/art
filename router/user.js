@@ -283,21 +283,35 @@ router.get('/mypage-tutor', requireLogin, async (req, res) => {
       ? await OnlineTutor.findOne({ email }).sort({ updatedAt: -1 }).lean()
       : null;
 
-    const threads =
-      await Thread.find({ userId: String(req.session.user._id), source: 'online_tutors' })
-        .sort({ createdAt: -1 })
-        .limit(10)
-        .lean()
-        .catch(() => []);
+    const threads = await Thread.find({
+      userId: String(req.session.user._id),
+      source: 'online_tutors'
+    })
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .lean()
+      .catch(() => []);
 
     const data = { user, tutor, tutorDoc: tutor, threads };
 
-    // ✅ 폴백 제거: 하이픈 뷰만 사용
+    // ✅ 폴백 제거: 오직 'user/mypage-tutor'만 렌더
     return res.render('user/mypage-tutor', data);
   } catch (err) {
     console.error('❌ Tutor mypage error:', err.stack || err);
     return res.status(500).send('❌ Failed to load Tutor Dashboard');
   }
+});
+
+
+
+// Tutor visibility: GET entry (buttons hit this)
+router.get('/online-tutors/visibility/start', requireLogin, (req, res) => {
+  const days = parseInt(req.query.days, 10);
+  if (![30, 90, 365].includes(days)) {
+    return res.status(400).send('❌ Invalid tutor visibility period');
+  }
+  // PayPal checkout으로 분기 (type=tutor)
+  return res.redirect(`/paypal/checkout?type=tutor&accessPeriod=${days}`);
 });
 
 
