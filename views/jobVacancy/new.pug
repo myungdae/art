@@ -1,4 +1,3 @@
-//- views/jobVacancy/new.pug
 extends ../layout
 
 block content
@@ -11,40 +10,23 @@ block content
           each val, key in errors
             li #[strong #{key}] #{val}
 
-    //- CKEditor textarea 값을 폼 제출 전에 반영
     form(method="POST", action="/job-vacancies", onsubmit="if(window.CKEDITOR){for (var n in CKEDITOR.instances){CKEDITOR.instances[n].updateElement();}} return true;")
       .max-w-2xl.mx-auto.space-y-5
 
         // Title
         .space-y-1
           label.block(for="title") Title
-          input#title(
-            type="text"
-            name="title"
-            required
-            class="w-full border rounded px-3 py-2"
-            placeholder="e.g., English Teacher (Full-time)"
-            value=(values && values.title) || ""
-          )
+          input#title(type="text" name="title" required class="w-full border rounded px-3 py-2" value=(values && values.title) || "")
 
         // Description (CKEditor)
         .space-y-1
           label.block(for="description") Description
-          textarea#description(
-            name="description"
-            rows="8"
-            class="w-full border rounded px-3 py-2"
-            placeholder="Role summary, requirements, salary, benefits, how to apply..."
-          )= (values && values.description) || ""
+          textarea#description(name="description" rows="8" class="w-full border rounded px-3 py-2")= (values && values.description) || ""
 
-        // Host Country
+        // Host Country (자동완성: DB 값)
         .space-y-1
           label.block(for="country") Host Country
-          select#country(
-            name="country"
-            required
-            class="w-full border rounded px-3 py-2"
-          )
+          select#country(name="country" required class="w-full border rounded px-3 py-2")
             option(value="") -- Select host country --
             each c in (countries || [])
               option(value=c, selected=(values && values.country === c))= c
@@ -52,16 +34,12 @@ block content
         // Student Type
         .space-y-1
           label.block(for="studentType") Student Type
-          select#studentType(
-            name="studentType"
-            required
-            class="w-full border rounded px-3 py-2"
-          )
+          select#studentType(name="studentType" required class="w-full border rounded px-3 py-2")
             option(value="") -- Select student type --
             each s in (studentTypes || [])
               option(value=s, selected=(values && values.studentType === s))= s
 
-        //- Teaching Area (checkbox grid)
+        // Teaching Area (checkbox grid)
         .space-y-1
           label(for="teachingArea") Teaching Area
           .grid.grid-cols-2.gap-2(class="md:grid-cols-3")
@@ -73,129 +51,73 @@ block content
                 input(type="checkbox", name="teachingArea", value=t, checked=picked)
                 | #{t}
           p.text-xs.text-gray-500 Select one or more.
-        
+
+        // Extra Teaching Areas
         .space-y-1
           label(for="extraTeachingArea") Extra Teaching Areas (comma-separated)
-          input#extraTeachingArea(type="text", name="extraTeachingArea", placeholder="e.g., Seoul, Busan, Incheon", value=(values && values.extraTeachingArea) || "")
-        
-        //- Advanced (RDF) — optional overrides
+          input#extraTeachingArea(type="text" name="extraTeachingArea" value=(values && values.extraTeachingArea) || "")
+
+        // Advanced RDF overrides
         details.mt-6
           summary.cursor-pointer.font-medium Advanced (RDF) options
           .mt-3.space-y-3
             .space-y-1
               label(for="_labelOverride") Title (rdfs:label override)
-              input#_labelOverride(type="text", name="_labelOverride", placeholder="Leave blank to use Title", value=(values && values._labelOverride) || "")
-              p.text-xs.text-gray-500 If provided, this will be used as RDF label.
+              input#_labelOverride(type="text" name="_labelOverride" value=(values && values._labelOverride) || "")
             .space-y-1
               label(for="_descriptionOverride") Description (dc:description override)
-              textarea#_descriptionOverride(name="_descriptionOverride", rows="3", placeholder="Leave blank to use Description")= (values && values._descriptionOverride) || ""
-              p.text-xs.text-gray-500 If provided, this will be used as RDF description.
-
-
-
+              textarea#_descriptionOverride(name="_descriptionOverride" rows="3")= (values && values._descriptionOverride) || ""
 
         // Date Posted
         .space-y-1
           label.block(for="datePosted") Date Posted
-          input#datePosted(
-            type="date"
-            name="datePosted"
-            class="w-full border rounded px-3 py-2"
-            placeholder="YYYY-MM-DD"
-            value=(values && values.datePosted) || ""
-          )
+          input#datePosted(type="date" name="datePosted" class="w-full border rounded px-3 py-2" value=(values && values.datePosted) || "")
 
         // Contact Email
         .space-y-1
           label.block(for="email") Contact Email
-          input#email(
-            type="email"
-            name="email"
-            class="w-full border rounded px-3 py-2"
-            placeholder="name@example.com"
-            value=(values && values.email) || ""
-          )
+          input#email(type="email" name="email" class="w-full border rounded px-3 py-2" value=(values && values.email) || "")
 
         // Company Name
         .space-y-1
           label.block(for="companyName") Company Name
-          input#companyName(
-            type="text"
-            name="companyName"
-            class="w-full border rounded px-3 py-2"
-            placeholder="School or Organization"
-            value=(values && values.companyName) || ""
-          )
+          input#companyName(type="text" name="companyName" class="w-full border rounded px-3 py-2" value=(values && values.companyName) || "")
 
         // Job Location
         .space-y-1
           label.block(for="jobLocation") Job Location
-          input#jobLocation(
-            type="text"
-            name="jobLocation"
-            class="w-full border rounded px-3 py-2"
-            placeholder="City, State/Province"
-            value=(values && values.jobLocation) || ""
-          )
+          input#jobLocation(type="text" name="jobLocation" class="w-full border rounded px-3 py-2" value=(values && values.jobLocation) || "")
 
         // Pay
         .space-y-1
           label.block(for="pay") Pay
-          input#pay(
-            type="text"
-            name="pay"
-            class="w-full border rounded px-3 py-2"
-            placeholder="e.g., 2.3M KRW/month or 30,000 KRW/hour"
-            value=(values && values.pay) || ""
-          )
+          input#pay(type="text" name="pay" class="w-full border rounded px-3 py-2" value=(values && values.pay) || "")
 
         // Housing
         .space-y-1
           label.block(for="housing") Housing
-          input#housing(
-            type="text"
-            name="housing"
-            class="w-full border rounded px-3 py-2"
-            placeholder="e.g., Provided / Allowance / Not provided"
-            value=(values && values.housing) || ""
-          )
+          input#housing(type="text" name="housing" class="w-full border rounded px-3 py-2" value=(values && values.housing) || "")
 
         // Cellphone
         .space-y-1
           label.block(for="cellphoneNumber") Cellphone
-          input#cellphoneNumber(
-            type="text"
-            name="cellphoneNumber"
-            class="w-full border rounded px-3 py-2"
-            placeholder="+82-10-1234-5678"
-            value=(values && values.cellphoneNumber) || ""
-          )
+          input#cellphoneNumber(type="text" name="cellphoneNumber" class="w-full border rounded px-3 py-2" value=(values && values.cellphoneNumber) || "")
 
         // Homepage
         .space-y-1
           label.block(for="homepage") Homepage
-          input#homepage(
-            type="url"
-            name="homepage"
-            class="w-full border rounded px-3 py-2"
-            placeholder="https://example.com"
-            value=(values && values.homepage) || ""
-          )
+          input#homepage(type="url" name="homepage" class="w-full border rounded px-3 py-2" value=(values && values.homepage) || "")
 
       .max-w-2xl.mx-auto.mt-6.flex.gap-3
         button(type="submit" class="px-4 py-2 rounded bg-blue-600 text-white") Save
         a(href="/job-vacancies" class="px-4 py-2 rounded border") Cancel
 
-  //- CKEditor 4 LTS
   script(src="https://cdn.ckeditor.com/4.22.1/standard/ckeditor.js")
   script.
     (function () {
       function init() {
         if (window.CKEDITOR && document.getElementById('description')) {
-          CKEDITOR.replace('description', {
-            removePlugins: 'cloudservices,easyimage',
-            height: 260
-          });
+          CKEDITOR.replace('description', { removePlugins: 'cloudservices,easyimage', height: 260 });
         }
       }
       if (document.readyState === 'loading') {

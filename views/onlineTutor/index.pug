@@ -1,10 +1,11 @@
+//- views/onlineTutor/index.pug (견고 폴백 버전)
 extends ../layout
 
 block content
   .container.mt-5
     h2.text-center.mb-5(style="font-size: 2.2rem; font-weight: bold;") Online Tutors
 
-    if tutors.length
+    if tutors && tutors.length
       table.table.table-bordered.table-hover(style="font-size: 1.1rem;")
         thead
           tr
@@ -15,11 +16,32 @@ block content
             th Actions
         tbody
           each tutor in tutors
+            //- -------- 폴백 계산 영역 --------
+            - const _label     = (tutor && tutor._label) ? String(tutor._label).trim() : '';
+            - const _title     = (tutor && tutor.title) ? String(tutor.title).trim() : '';
+            - const _name      = (tutor && tutor.name) ? String(tutor.name).trim() : '';
+            - const _jobTitle  = (tutor && tutor.jobTitle) ? String(tutor.jobTitle).trim() : '';
+            - const nameText   = _label || _title || _name || _jobTitle || 'no title';
+            - const jobTitleText = _title || _jobTitle || '—';
+
+            - const expRawA  = (tutor && Array.isArray(tutor.Expertise)) ? tutor.Expertise : [];
+            - const expRawB  = (tutor && Array.isArray(tutor.expertise)) ? tutor.expertise : [];
+            - const expRawC  = (tutor && tutor.Expertise && !Array.isArray(tutor.Expertise)) ? [tutor.Expertise] : [];
+            - const expRawD  = (tutor && tutor.expertise && !Array.isArray(tutor.expertise)) ? [tutor.expertise] : [];
+            - const expMerged = [].concat(expRawA, expRawB, expRawC, expRawD).filter(Boolean);
+            - const expertiseText = expMerged.length ? expMerged.join(', ') : '—';
+
+            - const teachExpA = (tutor && tutor.Tutoring_Experience) ? String(tutor.Tutoring_Experience).trim() : '';
+            - const teachExpB = (tutor && tutor.tutoringExperience) ? String(tutor.tutoringExperience).trim() : '';
+            - const experienceText = teachExpA || teachExpB || '—';
+            //- --------------------------------
+
             tr
-              td #{tutor.name}
-              td #{tutor.jobTitle || '—'}
-              td #{(tutor.expertise || []).join(', ')}
-              td #{tutor.tutoringExperience || '—'}
+              td
+                a(href=`/rdf-resource/Online_Tutors/${tutor._id}`)= nameText
+              td= jobTitleText
+              td= expertiseText
+              td= experienceText
               td
                 a.btn.btn-outline-primary.btn-sm.me-1(href=`/rdf-resource/Online_Tutors/${tutor._id}`) View
                 a.btn.btn-outline-secondary.btn-sm.me-1(href=`/online-tutors/${tutor._id}/edit`) Edit
@@ -33,3 +55,9 @@ block content
         href="/online-tutors/new",
         style="font-size: 1.6rem; padding: 14px 28px; font-weight: bold; color: white;"
       ) ➕ Add New Tutor
+
+  //- --- 임시 디버그 토글(필요 시 주석 해제) ---
+  //- .text-center.mt-3
+  //-   button.btn.btn-link(type="button", onclick="var x=document.getElementById('dbg'); x.style.display=(x.style.display==='none'?'block':'none')") Toggle Debug
+  //- #dbg(style="display:none")
+  //-   pre.text-muted(style="white-space:pre-wrap") !{JSON.stringify(tutors, null, 2)}

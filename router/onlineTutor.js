@@ -1,4 +1,3 @@
-// router/onlineTutor.js
 'use strict';
 
 const express = require('express');
@@ -24,7 +23,8 @@ const defaultGenders = ['Male', 'Female', 'Other', 'Prefer not to say'];
 /* -------------------- Helpers -------------------- */
 const toStringArray = (v) => {
   if (Array.isArray(v)) {
-    return v.flatMap(x => String(x).split(',')).map(s => s.trim()).filter(Boolean);
+    return v.flatMap(x => String(x).split(','))
+      .map(s => s.trim()).filter(Boolean);
   }
   return String(v || '').split(',').map(s => s.trim()).filter(Boolean);
 };
@@ -32,20 +32,31 @@ const mergeExtraCsv = (arr, csv) => {
   const extra = String(csv || '').split(',').map(s => s.trim()).filter(Boolean);
   return Array.from(new Set([...(arr || []), ...extra]));
 };
+// ✅ 첫 번째 “비어있지 않은” 문자열만 채택
+const pickFirstNonEmpty = (...vals) => {
+  for (const v of vals) {
+    if (v === null || v === undefined) continue;
+    const s = String(v).trim();
+    if (s.length) return s;
+  }
+  return '';
+};
 
 function normalizePayload(body) {
-  const title =
-    body['rdfs:label[@value]'] ??
-    body._label ??
-    body.title ??
-    '';
+  // ✅ 폼의 title/description을 최우선으로 사용
+  const title = pickFirstNonEmpty(
+    body.title,
+    body._label,
+    body['rdfs:label[@value]']
+  );
 
-  const description =
-    body['http://purl.org/dc/elements/1.1/description[@value]'] ??
-    body._description ??
-    body.description ??
-    '';
+  const description = pickFirstNonEmpty(
+    body.description,
+    body._description,
+    body['http://purl.org/dc/elements/1.1/description[@value]']
+  );
 
+  // 시맨틱/일반 키 흡수
   let expertise =
     body.Expertise ??
     body.expertise ??
@@ -74,7 +85,7 @@ function normalizePayload(body) {
     Expertise: expertise,                 // array<string>
     Tutoring_Experience: String(tutoringExperience || ''),
     Gender: String(gender || ''),
-    email                                    // ← 필수
+    email
   };
 }
 
@@ -123,7 +134,7 @@ router.get('/online-tutors/new',
       expertiseList: defaultExpertise,
       expList: defaultExperiences,
       genderList: defaultGenders,
-      values: { email: req.session?.user?.email || '' },   // 폼에 기본 채움
+      values: { email: req.session?.user?.email || '' },
       errors: {}
     });
   }
@@ -136,8 +147,9 @@ router.post('/online-tutors',
   async (req, res) => {
     try {
       const payload = normalizePayload(req.body);
-      // 세션 메일 백업(UX)
-      if (!payload.email && req.session?.user?.email) payload.email = String(req.session.user.email).toLowerCase();
+      if (!payload.email && req.session?.user?.email) {
+        payload.email = String(req.session.user.email).toLowerCase();
+      }
 
       const errors = validatePayload(payload);
       if (Object.keys(errors).length) {
@@ -150,9 +162,10 @@ router.post('/online-tutors',
         });
       }
 
-      const title  = (payload.title || '').trim();
-      const _label = (req.body._labelOverride || title).trim();
-      const _description = (req.body._descriptionOverride || payload.description || '').trim();
+      // ✅ 폼 값을 최우선으로 반영 (빈 문자열은 무시)
+      const title = pickFirstNonEmpty(req.body.title, payload.title);
+      const _label = pickFirstNonEmpty(req.body._labelOverride, title);
+      const _description = pickFirstNonEmpty(req.body._descriptionOverride, payload.description);
 
       const doc = new OnlineTutor({
         ...payload,
@@ -169,7 +182,6 @@ router.post('/online-tutors',
       req.flash?.('success', 'Tutor profile created.');
       return res.redirect('/facet/Online_Tutors');
     } catch (err) {
-      // 스키마 ValidationError면 폼으로 되돌려 인라인 에러 표시
       if (err?.name === 'ValidationError') {
         const payload = normalizePayload(req.body);
         const valErrs = {};
@@ -239,7 +251,9 @@ router.put('/online-tutors/:id',
     const { id } = req.params;
     try {
       const payload = normalizePayload(req.body);
-      if (!payload.email && req.session?.user?.email) payload.email = String(req.session.user.email).toLowerCase();
+      if (!payload.email && req.session?.user?.email) {
+        payload.email = String(req.session.user.email).toLowerCase();
+      }
 
       const errors = validatePayload(payload);
       if (Object.keys(errors).length) {
@@ -253,9 +267,10 @@ router.put('/online-tutors/:id',
         });
       }
 
-      const title  = (payload.title || '').trim();
-      const _label = (req.body._labelOverride || title).trim();
-      const _description = (req.body._descriptionOverride || payload.description || '').trim();
+      // ✅ 폼 값을 최우선으로 반영
+      const title = pickFirstNonEmpty(req.body.title, payload.title);
+      const _label = pickFirstNonEmpty(req.body._labelOverride, title);
+      const _description = pickFirstNonEmpty(req.body._descriptionOverride, payload.description);
 
       const updated = await OnlineTutor.findByIdAndUpdate(
         id,

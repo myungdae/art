@@ -13,6 +13,7 @@ block content
 
     .row.justify-content-center
       .col-lg-9
+
         if Object.keys(errors).length
           .alert.alert-danger
             strong Please fix the following:
@@ -21,17 +22,18 @@ block content
                 li #{msg}
 
         form#tutorForm(action="/online-tutors" method="POST" novalidate)
+          // ---------------- Basic Info ----------------
           .card.mb-3.border-0.shadow-sm
             .card-header.bg-white
               h5.mb-0 Basic Info
             .card-body
               .form-group
                 label(for="title") Title (optional)
-                input#title.form-control(type="text" name="title" value=values.title || '' placeholder="e.g., Friendly Online Tutor")
+                input#title.form-control(type="text" name="title" value=(values.title || '') placeholder="e.g., Friendly Online Tutor")
 
               .form-group
                 label(for="description") Description
-                textarea#description.form-control(name="description" rows="5" placeholder="Introduce yourself, experience, specialties…")= values.description || ''
+                textarea#description.form-control(name="description" rows="6" placeholder="Introduce yourself, experience, specialties…")= values.description || ''
 
               .form-row
                 .form-group.col-md-6
@@ -58,47 +60,74 @@ block content
                   type="email"
                   name="email"
                   required
-                  value=values.email || (session && session.user && session.user.email) || ''
+                  value=(values.email || (session && session.user && session.user.email) || '')
                   placeholder="you@example.com"
                 )
                 if errors.email
                   .invalid-feedback.d-block= errors.email
 
+          // ---------------- Expertise ----------------
           .card.mb-3.border-0.shadow-sm
             .card-header.bg-white
               h5.mb-0 Expertise *
             .card-body
+              - var selectedExp = Array.isArray(values.Expertise) ? (values.Expertise[0] || '') : (values.Expertise || '')
               .form-group
-                each item, idx in expertiseList
-                  - const checked = Array.isArray(values.Expertise) && values.Expertise.includes(item)
-                  .form-check.mb-2
-                    input.form-check-input(type="checkbox" id=`ex_${idx}` name="Expertise" value=item checked=checked)
-                    label.form-check-label(for=`ex_${idx}`)= item
-              if errors.Expertise
-                .invalid-feedback.d-block.mt-2= errors.Expertise
+                label.sr-only(for="expertise") Expertise
+                select#expertise.form-control(name="Expertise" required)
+                  option(value="") Select…
+                  each item in expertiseList
+                    option(value=item selected=(selectedExp===item))= item
+                if errors.Expertise
+                  .invalid-feedback.d-block= errors.Expertise
 
               .form-group.mt-3
                 label(for="extraExpertise") Add more expertise (comma-separated)
-                input#extraExpertise.form-control(type="text" name="extraExpertise" value=values.extraExpertise || '')
+                input#extraExpertise.form-control(type="text" name="extraExpertise" value=(values.extraExpertise || ''))
+                small.form-text.text-muted You can type new expertise here (comma-separated). We'll add them even if not in the list.
 
+          // ---------------- Actions ----------------
           .d-flex.justify-content-between.align-items-center.bg-white.py-3
             small.text-muted * Required fields
             .text-right
               a.btn.btn-light.mr-2(href="/facet/Online_Tutors") Cancel
               button.btn.btn-primary(type="submit") Save
 
+  // 보조 스타일
   style.
-    .card-body .form-group{ max-height: 280px; overflow:auto; padding-right:.5rem; }
+    .card { border-radius: .75rem; }
+    .card-header { border-bottom: 1px solid rgba(0,0,0,.05); }
+    .form-control, .btn { border-radius: .6rem; }
 
+  // CKEditor (Classic)
+  script(src="/vendor/ckeditor/ckeditor.js")
   script.
-    (function(){
+    (function () {
+      if (window.CKEDITOR) {
+        CKEDITOR.replace('description', {
+          height: 260,
+          removePlugins: 'elementspath',
+          resize_enabled: false
+        });
+      }
+    })();
+
+  // 중복 제출 방지
+  script.
+    (function () {
       var form = document.getElementById('tutorForm');
-      if(!form) return;
+      if (!form) return;
       var submitting = false;
-      form.addEventListener('submit', function(e){
-        if(submitting){ e.preventDefault(); return; }
+      form.addEventListener('submit', function (e) {
+        if (submitting) {
+          e.preventDefault();
+          return;
+        }
         submitting = true;
         var btn = form.querySelector('button[type="submit"]');
-        if(btn){ btn.disabled = true; btn.innerText = 'Saving...'; }
+        if (btn) {
+          btn.disabled = true;
+          btn.innerText = 'Saving...';
+        }
       });
     })();

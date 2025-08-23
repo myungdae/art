@@ -1,184 +1,112 @@
-//- views/jobVacancy/edit.pug
 extends ../layout
 
 block content
-  // 프리셋은 block 안에서 선언해야 함
-  - const _defaultCountries    = ['Korea','Japan','China','Malaysia','Thailand'];
-  - const _defaultStudentTypes = ['Adults','Elementary','High School','Kindergarten','Middle School'];
-  - const _defaultTeaching     = ['Art','Biology','English','ESL','Social Studies','Spanish'];
+  .container.py-6
+    h1.text-2xl.font-bold.mb-6 Edit Job Vacancy
 
-  // 현재 값 안전 추출
-  - const _title = jobVacancy?._label || jobVacancy?.title || '';
-  - const _desc  = jobVacancy?._description || jobVacancy?.description || '';
-  - const _country = jobVacancy?.country || '';
-  - const _studentType = jobVacancy?.studentType || '';
-  - const _teachingArea = jobVacancy?.teachingArea || '';
+    if errors && Object.keys(errors).length
+      .max-w-2xl.mx-auto.bg-red-50.border.border-red-200.rounded.p-3.mb-5
+        ul
+          each val, key in errors
+            li #[strong #{key}] #{val}
 
-  - const _countries = (typeof countries !== 'undefined' && countries && countries.length) ? countries : _defaultCountries;
-  - const _studentTypes = (typeof studentTypes !== 'undefined' && studentTypes && studentTypes.length) ? studentTypes : _defaultStudentTypes;
-  - const _teachingAreas = (typeof teachingAreas !== 'undefined' && teachingAreas && teachingAreas.length) ? teachingAreas : _defaultTeaching;
+    form(method="POST", action=`/job-vacancies/${jobVacancy._id}?_method=PUT`, onsubmit="if(window.CKEDITOR){for (var n in CKEDITOR.instances){CKEDITOR.instances[n].updateElement();}} return true;")
+      .max-w-2xl.mx-auto.space-y-5
 
-  - const _cIn = _country && _countries.includes(_country);
-  - const _sIn = _studentType && _studentTypes.includes(_studentType);
-  - const _tIn = _teachingArea && _teachingAreas.includes(_teachingArea);
+        // Title
+        .space-y-1
+          label.block(for="title") Title
+          input#title(type="text" name="title" required class="w-full border rounded px-3 py-2" value=jobVacancy.title)
 
-  .container.mt-5
-    .row.justify-content-center
-      .col-md-10
-        .card.shadow
-          .card-header.bg-warning.text-white.text-center
-            h4.mb-0 Edit Job Ad
+        // Description
+        .space-y-1
+          label.block(for="description") Description
+          textarea#description(name="description" rows="8" class="w-full border rounded px-3 py-2")= jobVacancy.description
 
-          .card-body
-            form.form(method="POST", action=`/job-vacancies/${jobVacancy._id}?_method=PUT`, onsubmit="return handleCustomFields()")
-              // ✅ Job Title → rdfs:label
-              .form-group.mb-3
-                label(for="title") Job Title
-                input.form-control#title(type="text", name="rdfs:label[@value]", required, placeholder="Job Title", value=_title, oninput="validateTitle(this)")
-                small.text-danger#title-error(style="display:none") ❌ Emojis or Korean characters are not allowed.
+        // Host Country (자동완성: DB 값)
+        .space-y-1
+          label.block(for="country") Host Country
+          select#country(name="country" required class="w-full border rounded px-3 py-2")
+            option(value="") -- Select host country --
+            each c in (countries || [])
+              option(value=c, selected=(jobVacancy.country === c))= c
 
-              // ✅ Description → dc:description
-              .form-group.mb-4
-                label(for="description") Job Description
-                textarea.form-control(name="http://purl.org/dc/elements/1.1/description[@value]", id="description", rows="8")= _desc
+        // Student Type
+        .space-y-1
+          label.block(for="studentType") Student Type
+          select#studentType(name="studentType" required class="w-full border rounded px-3 py-2")
+            option(value="") -- Select student type --
+            each s in (studentTypes || [])
+              option(value=s, selected=(jobVacancy.studentType === s))= s
 
-              // ✅ Host Country
-              .form-group.mb-3
-                label(for="country") Host Country
-                select.form-control#countrySelect(name="country")
-                  option(disabled value='') Select Country
-                  each v in _countries
-                    option(value=v selected=(_country===v))= v
-                  if _country && !_cIn
-                    option(value=_country selected)= _country
-                small.text-muted.mt-1 You can also add a new country:
-                input.form-control.mt-1(type="text", id="customCountry", placeholder="Or enter a new Country")
+        // Teaching Area
+        .space-y-1
+          label(for="teachingArea") Teaching Area
+          .grid.grid-cols-2.gap-2(class="md:grid-cols-3")
+            each t in (teachingAreas || [])
+              - const picked = Array.isArray(jobVacancy.teachingArea) ? jobVacancy.teachingArea.includes(t) : jobVacancy.teachingArea === t
+              label.flex.items-center.gap-2
+                input(type="checkbox", name="teachingArea", value=t, checked=picked)
+                | #{t}
 
-              // ✅ Student Type
-              .form-group.mb-3
-                label(for="studentType") Student Type
-                select.form-control#studentTypeSelect(name="studentType")
-                  option(disabled value='') Select Student Type
-                  each v in _studentTypes
-                    option(value=v selected=(_studentType===v))= v
-                  if _studentType && !_sIn
-                    option(value=_studentType selected)= _studentType
-                small.text-muted.mt-1 You can also add a new student type:
-                input.form-control.mt-1(type="text", id="customStudentType", placeholder="Or enter a new Student Type")
+        // Extra Teaching Areas
+        .space-y-1
+          label(for="extraTeachingArea") Extra Teaching Areas
+          input#extraTeachingArea(type="text" name="extraTeachingArea" value=jobVacancy.extraTeachingArea || "")
 
-              // ✅ Teaching Area
-              .form-group.mb-3
-                label(for="teachingArea") Teaching Area
-                select.form-control#teachingArea(name="teachingArea")
-                  option(disabled value='') Select Teaching Area
-                  each v in _teachingAreas
-                    option(value=v selected=(_teachingArea===v))= v
-                  if _teachingArea && !_tIn
-                    option(value=_teachingArea selected)= _teachingArea
-                small.text-muted.mt-1 You can also add a new teaching area:
-                input.form-control.mt-1(type="text", id="customTeachingArea", placeholder="Or enter a new Teaching Area")
+        // Date Posted
+        .space-y-1
+          label.block(for="datePosted") Date Posted
+          input#datePosted(type="date" name="datePosted" class="w-full border rounded px-3 py-2" value=jobVacancy.datePosted)
 
-              // 기타 필드
-              .form-group.mb-3
-                label(for="duration") Duration
-                input.form-control(type="text", name="duration", id="duration", value=(jobVacancy.duration || ''), placeholder="Duration")
+        // Contact Email
+        .space-y-1
+          label.block(for="email") Contact Email
+          input#email(type="email" name="email" class="w-full border rounded px-3 py-2" value=jobVacancy.email)
 
-              .form-group.mb-3
-                label(for="pay") Pay
-                input.form-control(type="text", name="pay", id="pay", value=(jobVacancy.pay || ''), placeholder="Pay")
+        // Company Name
+        .space-y-1
+          label.block(for="companyName") Company Name
+          input#companyName(type="text" name="companyName" class="w-full border rounded px-3 py-2" value=jobVacancy.companyName)
 
-              .form-group.mb-3
-                label(for="housing") Housing
-                input.form-control(type="text", name="housing", id="housing", value=(jobVacancy.housing || ''), placeholder="Housing")
+        // Job Location
+        .space-y-1
+          label.block(for="jobLocation") Job Location
+          input#jobLocation(type="text" name="jobLocation" class="w-full border rounded px-3 py-2" value=jobVacancy.jobLocation)
 
-              .form-group.mb-3
-                label(for="email") Email
-                input.form-control(type="email", name="email", id="email", value=(jobVacancy.email || ''), placeholder="Email")
+        // Pay
+        .space-y-1
+          label.block(for="pay") Pay
+          input#pay(type="text" name="pay" class="w-full border rounded px-3 py-2" value=jobVacancy.pay)
 
-              .form-group.mb-3
-                label(for="companyName") Company Name
-                input.form-control(type="text", name="companyName", id="companyName", value=(jobVacancy.companyName || ''), placeholder="Company Name")
+        // Housing
+        .space-y-1
+          label.block(for="housing") Housing
+          input#housing(type="text" name="housing" class="w-full border rounded px-3 py-2" value=jobVacancy.housing)
 
-              .form-group.mb-3
-                label(for="jobLocation") Job Location
-                input.form-control(type="text", name="jobLocation", id="jobLocation", value=(jobVacancy.jobLocation || ''), placeholder="Job Location")
+        // Cellphone
+        .space-y-1
+          label.block(for="cellphoneNumber") Cellphone
+          input#cellphoneNumber(type="text" name="cellphoneNumber" class="w-full border rounded px-3 py-2" value=jobVacancy.cellphoneNumber)
 
-              .form-group.mb-3
-                label(for="cellphoneNumber") Cellphone Number
-                input.form-control(type="text", name="cellphoneNumber", id="cellphoneNumber", value=(jobVacancy.cellphoneNumber || ''), placeholder="Cellphone Number")
+        // Homepage
+        .space-y-1
+          label.block(for="homepage") Homepage
+          input#homepage(type="url" name="homepage" class="w-full border rounded px-3 py-2" value=jobVacancy.homepage)
 
-              .form-group.mb-3
-                label(for="homepage") Homepage
-                input.form-control(type="text", name="homepage", id="homepage", value=(jobVacancy.homepage || ''), placeholder="Homepage")
+      .max-w-2xl.mx-auto.mt-6.flex.gap-3
+        button(type="submit" class="px-4 py-2 rounded bg-blue-600 text-white") Update
+        a(href="/job-vacancies" class="px-4 py-2 rounded border") Cancel
 
-              .form-group.mb-3
-                label(for="datePosted") Date Posted
-                - const _datePosted = jobVacancy?.datePosted && typeof jobVacancy.datePosted.toISOString === 'function'
-                -   ? jobVacancy.datePosted.toISOString().substring(0,10)
-                -   : (jobVacancy?.datePosted || '')
-                input.form-control(type="date", name="datePosted", id="datePosted", value=_datePosted)
-
-              // (요청대로) Skype / WeChat 제거
-
-              button.btn.btn-warning.btn-block.mt-4(type="submit") Update
-
-block append_js
-  script(src="https://cdn.ckeditor.com/ckeditor5/41.0.0/classic/ckeditor.js")
+  script(src="https://cdn.ckeditor.com/4.22.1/standard/ckeditor.js")
   script.
-    ClassicEditor
-      .create(document.querySelector('#description'))
-      .catch(error => console.error(error));
-
-    function validateTitle(input) {
-      const emojiRegex = /[\\p{Emoji_Presentation}\\p{Extended_Pictographic}]/gu;
-      const koreanRegex = /[ㄱ-ㅎㅏ-ㅣ가-힣]/;
-      const errorElem = document.getElementById('title-error');
-      if (emojiRegex.test(input.value) || koreanRegex.test(input.value)) {
-        errorElem.style.display = 'block';
-        input.classList.add('is-invalid');
-      } else {
-        errorElem.style.display = 'none';
-        input.classList.remove('is-invalid');
+    (function () {
+      function init() {
+        if (window.CKEDITOR && document.getElementById('description')) {
+          CKEDITOR.replace('description', { removePlugins: 'cloudservices,easyimage', height: 260 });
+        }
       }
-    }
-
-    function handleCustomFields() {
-      const form = document.querySelector('form');
-
-      const customCountry = document.getElementById('customCountry')?.value.trim();
-      const customStudent = document.getElementById('customStudentType')?.value.trim();
-      const customTeaching = document.getElementById('customTeachingArea')?.value.trim();
-
-      const countrySelect = document.getElementById('countrySelect');
-      const studentTypeSelect = document.getElementById('studentTypeSelect');
-      const teachingSelect = document.getElementById('teachingArea');
-
-      if (customCountry && countrySelect.value === '') {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'country';
-        input.value = customCountry;
-        form.appendChild(input);
-        countrySelect.disabled = true;
-      }
-
-      if (customStudent && studentTypeSelect.value === '') {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'studentType';
-        input.value = customStudent;
-        form.appendChild(input);
-        studentTypeSelect.disabled = true;
-      }
-
-      if (customTeaching && teachingSelect.value === '') {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'teachingArea';
-        input.value = customTeaching;
-        form.appendChild(input);
-        teachingSelect.disabled = true;
-      }
-
-      return true;
-    }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else { init(); }
+    })();

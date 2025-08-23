@@ -1,4 +1,3 @@
-// router/jobVacancy.js
 'use strict';
 
 const express = require('express');
@@ -11,7 +10,7 @@ const { requireLogin, requireRole } = require('../middleware/auth');
 
 router.use(methodOverride('_method'));
 
-// :id 유효성 검사 (미들웨어 + 보조 방어)
+// :id 유효성 검사
 router.param('id', validateObjectId('id'));
 router.param('id', (req, res, next, id) => {
   if (!mongoose.isValidObjectId(id)) {
@@ -21,14 +20,9 @@ router.param('id', (req, res, next, id) => {
   next();
 });
 
-// 프리셋 (필요시 DB/Config로 대체)
-const defaultCountries    = ['Korea', 'Japan', 'China', 'Malaysia', 'Thailand'];
-const defaultStudentTypes = ['Adults', 'Elementary', 'High School', 'Kindergarten', 'Middle'];
-const defaultTeaching     = ['Art', 'Biology', 'English', 'ESL', 'Social Studies', 'Spanish'];
-
 /* ------------ helpers ------------ */
 
-// body → 표준 페이로드
+// payload 정규화
 function normalizePayload(body) {
   const title =
     body['rdfs:label[@value]'] ??
@@ -42,9 +36,7 @@ function normalizePayload(body) {
     body.description ??
     '';
 
-  // name="teachingArea" (multi) 또는 name="teachingArea[]" 모두 수용
   const rawTA = body.teachingArea ?? body['teachingArea[]'];
-
   const datePosted = body.datePosted ? new Date(body.datePosted) : null;
 
   return {
@@ -52,7 +44,7 @@ function normalizePayload(body) {
     description,
     country: body.country ?? '',
     studentType: body.studentType ?? '',
-    teachingArea: rawTA, // string | string[]
+    teachingArea: rawTA,
     duration: body.duration ?? '',
     pay: body.pay ?? '',
     housing: body.housing ?? '',
@@ -65,7 +57,7 @@ function normalizePayload(body) {
   };
 }
 
-// teachingArea를 항상 "배열<string>"로 보정(트림 + 빈값 제거 + 중복 제거)
+// teachingArea 배열 보정
 function toStringArray(v) {
   let arr = [];
   if (Array.isArray(v)) arr = v;
@@ -75,7 +67,7 @@ function toStringArray(v) {
   );
 }
 
-// 폼의 추가 Teaching Area CSV 병합 (선택값 + CSV)
+// 추가 Teaching Area CSV 병합
 function mergeExtraAreas(arr, extraCsv) {
   const extra = (extraCsv || '')
     .split(',')
@@ -107,12 +99,13 @@ function validatePayload(p) {
   return errors;
 }
 
-// facet용 RDF 미러(업서트)
-// /facet/Job_Vacancies가 어떤 컬렉션을 읽는지 확실치 않아
-// 'Job_Vacancies_RDF'에 기본 업서트 + 존재 시 'Job_Vacancies'에도 호환 업서트
+// facet용 RDF 미러
+// facet용 RDF 미러 (드롭인 교체본)
+// - @id 필드는 사용하지 않음(중복 인덱스 충돌 방지)
+// - 과거 문서에 남아 있을 수 있는 @id는 매 업데이트 때 제거
 async function mirrorToRDF(job) {
   const doc = {
-    _id: job._id, // RDF 쪽에서 _id로 맵핑(=jobId 대체)
+    _id: job._id,                               // Mongo PK만 사용
     _label: job._label || job.title || '',
     _description: job._description || job.description || '',
     title: job.title || '',
@@ -137,22 +130,43 @@ async function mirrorToRDF(job) {
 
   const db = mongoose.connection.db;
 
+  // ✅ RDF 미러 컬렉션
   await db.collection('Job_Vacancies_RDF').updateOne(
     { _id: job._id },
-    { $set: doc, $setOnInsert: { createdAt: new Date() } },
+    {
+      $set: doc,
+      $setOnInsert: { createdAt: new Date() },
+      $unset: { '@id': '' }       // 과거 잔여 필드 제거
+    },
     { upsert: true }
   );
 
+  // ✅ 호환 컬렉션(있으면 업데이트, 없으면 무시)
   try {
     await db.collection('Job_Vacancies').updateOne(
       { _id: job._id },
-      { $set: doc, $setOnInsert: { createdAt: new Date() } },
+      {
+        $set: doc,
+        $setOnInsert: { createdAt: new Date() },
+        $unset: { '@id': '' }     // 과거 잔여 필드 제거
+      },
       { upsert: true }
     );
-  } catch (e) {
-    // 호환 컬렉션이 없으면 무시
+  } catch (_) {
+    // 컬렉션 없으면 조용히 통과
   }
 }
+
+
+// ✅ Country 리스트 반환 API
+router.get('/countries', async (req, res) => {
+  try {
+    const countries = await JobVacancy.distinct("country");
+    res.json(countries.sort());
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 /* ------------ routes ------------ */
 
@@ -160,11 +174,15 @@ async function mirrorToRDF(job) {
 router.get('/job-vacancies/new',
   requireLogin,
   requireRole('Employer'),
-  (req, res) => {
+  async (req, res) => {
+    const countries    = await JobVacancy.distinct("country");
+    const studentTypes = await JobVacancy.distinct("studentType");
+    const teaching     = await JobVacancy.distinct("teachingArea");
+
     res.render('jobVacancy/new', {
-      countries: defaultCountries,
-      studentTypes: defaultStudentTypes,
-      teachingAreas: defaultTeaching,
+      countries: countries.sort(),
+      studentTypes: studentTypes.sort(),
+      teachingAreas: teaching.sort(),
       values: {},
       errors: {}
     });
@@ -183,16 +201,18 @@ router.post('/job-vacancies',
       taOut         = mergeExtraAreas(taOut, req.body.extraTeachingArea);
 
       if (Object.keys(errors).length) {
+        const countries    = await JobVacancy.distinct("country");
+        const studentTypes = await JobVacancy.distinct("studentType");
+        const teaching     = await JobVacancy.distinct("teachingArea");
+
         return res.status(422).render('jobVacancy/new', {
-          countries: defaultCountries,
-          studentTypes: defaultStudentTypes,
-          teachingAreas: defaultTeaching,
+          countries: countries.sort(),
+          studentTypes: studentTypes.sort(),
+          teachingAreas: teaching.sort(),
           values: {
             ...payload,
             teachingArea: taOut,
-            extraTeachingArea: req.body.extraTeachingArea || '',
-            _labelOverride: req.body._labelOverride || '',
-            _descriptionOverride: req.body._descriptionOverride || ''
+            extraTeachingArea: req.body.extraTeachingArea || ''
           },
           errors
         });
@@ -205,8 +225,8 @@ router.post('/job-vacancies',
 
       const doc = new JobVacancy({
         ...payload,
-        user: req.session.user._id,  // 소유자
-        teachingArea: taOut,         // [String]
+        user: req.session.user._id,
+        teachingArea: taOut,
         title,
         _label,
         _description,
@@ -218,24 +238,9 @@ router.post('/job-vacancies',
       await mirrorToRDF(doc);
 
       req.flash?.('success', 'Job vacancy created.');
-      console.log('→ redirect: /facet/Job_Vacancies (create)');
       return res.redirect('/facet/Job_Vacancies');
 
     } catch (err) {
-      // 사용자+제목 unique 인덱스 충돌 처리 (E11000)
-      if (err && err.code === 11000) {
-        return res.status(409).render('jobVacancy/new', {
-          countries: defaultCountries,
-          studentTypes: defaultStudentTypes,
-          teachingAreas: defaultTeaching,
-          values: {
-            ...req.body,
-            teachingArea: toStringArray(req.body.teachingArea),
-            extraTeachingArea: req.body.extraTeachingArea || ''
-          },
-          errors: { title: 'You already have a job with this title.' }
-        });
-      }
       console.error('[CREATE] job-vacancy error:', err);
       return res.status(500).render('error', { message: 'Failed to create job vacancy', error: err });
     }
@@ -251,11 +256,15 @@ router.get('/job-vacancies/:id/edit',
     const jobVacancy = await JobVacancy.findById(id);
     if (!jobVacancy) return res.status(404).send('Not found');
 
+    const countries    = await JobVacancy.distinct("country");
+    const studentTypes = await JobVacancy.distinct("studentType");
+    const teaching     = await JobVacancy.distinct("teachingArea");
+
     res.render('jobVacancy/edit', {
       jobVacancy,
-      countries: defaultCountries,
-      studentTypes: defaultStudentTypes,
-      teachingAreas: defaultTeaching,
+      countries: countries.sort(),
+      studentTypes: studentTypes.sort(),
+      teachingAreas: teaching.sort(),
       errors: {}
     });
   }
@@ -264,13 +273,11 @@ router.get('/job-vacancies/:id/edit',
 // List (public)
 router.get('/job-vacancies', async (req, res, next) => {
   try {
-    // /job-vacancies?country=Korea&studentType=Adult&teachingArea=English
     const { country, studentType, teachingArea } = req.query;
     const q = {};
     if (country)     q.country = country;
     if (studentType) q.studentType = studentType;
     if (teachingArea) {
-      // 배열 요소 매치 + 혹시 남아있을 문자열 문서 대비
       q.$or = [
         { teachingArea: teachingArea },
         { teachingArea: { $regex: teachingArea, $options: 'i' } }
@@ -284,11 +291,7 @@ router.get('/job-vacancies', async (req, res, next) => {
 
     return res.render('jobVacancy/index', {
       jobs,
-      filters: {
-        country: country || '',
-        studentType: studentType || '',
-        teachingArea: teachingArea || ''
-      }
+      filters: { country: country || '', studentType: studentType || '', teachingArea: teachingArea || '' }
     });
   } catch (err) {
     console.error('GET /job-vacancies error:', err);
@@ -327,7 +330,12 @@ router.put('/job-vacancies/:id',
       taOut         = mergeExtraAreas(taOut, req.body.extraTeachingArea);
 
       if (Object.keys(errors).length) {
+        const countries    = await JobVacancy.distinct("country");
+        const studentTypes = await JobVacancy.distinct("studentType");
+        const teaching     = await JobVacancy.distinct("teachingArea");
+
         const jobVacancy = await JobVacancy.findById(id);
+
         return res.status(422).render('jobVacancy/edit', {
           jobVacancy: {
             ...(jobVacancy ? jobVacancy.toObject() : {}),
@@ -335,9 +343,9 @@ router.put('/job-vacancies/:id',
             teachingArea: taOut,
             extraTeachingArea: req.body.extraTeachingArea || ''
           },
-          countries: defaultCountries,
-          studentTypes: defaultStudentTypes,
-          teachingAreas: defaultTeaching,
+          countries: countries.sort(),
+          studentTypes: studentTypes.sort(),
+          teachingAreas: teaching.sort(),
           errors
         });
       }
@@ -350,7 +358,7 @@ router.put('/job-vacancies/:id',
         id,
         {
           ...payload,
-          teachingArea: taOut,   // [String]
+          teachingArea: taOut,
           title,
           _label,
           _description,
@@ -362,7 +370,6 @@ router.put('/job-vacancies/:id',
       if (updated) await mirrorToRDF(updated);
 
       req.flash?.('success', 'Job vacancy updated.');
-      console.log('→ redirect: /facet/Job_Vacancies (update)');
       return res.redirect('/facet/Job_Vacancies');
     } catch (err) {
       console.error('[UPDATE] job-vacancy error:', err);

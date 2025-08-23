@@ -1,14 +1,15 @@
-//- views/facet/list.pug (DROP-IN)
+//- views/facet/list.pug
 extends ../layout
 
 block content
   .container.mx-auto.py-6
     // 헤더 + 검색
     .flex.items-center.justify-between.mb-4
+      - const titleMap = { Job_Vacancies: 'Job Vacancies', Job_Seekers: 'Job Seekers', Online_Tutors: 'Online Tutors' }
       h1.text-2xl.font-bold
-        | #{klass}
+        = titleMap && titleMap[klass] ? titleMap[klass] : (klass || 'List')
         if typeof total !== 'undefined'
-          span.text-gray-500.text-base (#{total})
+          span.text-gray-500.text-base &nbsp;(#{total})
 
       // 검색창 (현재 선택된 facet 보존)
       form(method="GET", action=`/facet/${klass}`, class="flex gap-2")
@@ -39,6 +40,7 @@ block content
                     each f in facetList
                       - var checked = selList.indexOf(f._id) !== -1
                       label.flex.items-center.gap-2
+                        //- 동일 name으로 여러 값 전송
                         input(type="checkbox", name=g.key, value=f._id, checked=checked)
                         span.flex-1.truncate= f._id
                         span.text-xs.text-gray-500 (#{f.c})
@@ -55,23 +57,25 @@ block content
         else
           ul.space-y-3
             each d in docs
-              - var posted = (d.datePosted && new Date(d.datePosted).toISOString().slice(0,10)) || '-'
+              - var posted = (d.datePosted && new Date(d.datePosted).toISOString().slice(0,10)) || (d.updatedAt && new Date(d.updatedAt).toISOString().slice(0,10)) || '-'
+              - var titleText = d.displayLabel || d._label || d.title || d.name || d.jobTitle || d.email || '(no title)'
               li.border.rounded.p-3
                 .flex.items-center.gap-3
                   .min-w-0.flex-1
                     h2.font-semibold.text-lg.truncate
-                      a(href=`/rdf-resource/${klass}/${d._id}`)= d._label || d.title || '(no title)'
+                      a(href=`/rdf-resource/${klass}/${d._id}`)= titleText
 
                     // 하부 메타: 가능한 필드를 자동 모아 표시
                     - var parts = []
-                    - var fieldsForMeta = ['country','studentType','teachingArea','Nationality','Preferred_Work_Location','Major','Expertise','Tutoring_Experience','Gender']
+                    - var fieldsForMeta = ['country','Country','studentType','StudentType','teachingArea','Teaching_Area','Nationality','Preferred_Work_Location','Major','Expertise','Tutoring_Experience','Gender']
                     - for (var i = 0; i < fieldsForMeta.length; i++) {
                     -   var k = fieldsForMeta[i];
                     -   if (!d || typeof d[k] === 'undefined' || d[k] === null) continue;
                     -   if (Array.isArray(d[k]) && d[k].length) parts.push(d[k].join(', '));
                     -   else if (d[k]) parts.push(d[k]);
                     - }
-                    p.text-sm.text-gray-600(class="mt-0.5")= parts.join(' · ')
+                    if parts.length
+                      p(class="text-sm text-gray-600 mt-0.5")= parts.join(' · ')
 
                     p.text-sm.mt-1 Posted: #{posted}
                   .shrink-0

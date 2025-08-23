@@ -1,0 +1,80 @@
+extends ../layout
+
+block content
+  .container.mx-auto.max-w-5xl.py-8
+
+    // Header
+    h1.text-3xl.font-bold.mb-2= vm.title || 'Job Vacancy'
+    if vm.meta.companyName
+      p.text-gray-600.mb-6 #{vm.meta.companyName}
+
+    // Meta Grid
+    div(class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8")
+      if vm.meta.country
+        .border.rounded.p-3
+          div.text-xs.text-gray-500.uppercase Tracking
+          div.font-medium.mt-1 Country
+          div.mt-1= vm.meta.country
+
+      if vm.meta.studentType
+        .border.rounded.p-3
+          div.text-xs.text-gray-500.uppercase Profile
+          div.font-medium.mt-1 Student Type
+          div.mt-1= vm.meta.studentType
+
+      if vm.meta.teachingAreas && vm.meta.teachingAreas.length
+        .border.rounded.p-3
+          div.text-xs.text-gray-500.uppercase Subjects
+          div.font-medium.mt-1 Teaching Areas
+          div.mt-1= vm.meta.teachingAreas.join(', ')
+
+      if vm.meta.jobLocation
+        .border.rounded.p-3
+          div.text-xs.text-gray-500.uppercase Location
+          div.font-medium.mt-1 Job Location
+          div.mt-1= vm.meta.jobLocation
+
+      if vm.meta.pay
+        .border.rounded.p-3
+          div.text-xs.text-gray-500.uppercase Compensation
+          div.font-medium.mt-1 Pay
+          div.mt-1= vm.meta.pay
+
+      if vm.meta.housing
+        .border.rounded.p-3
+          div.text-xs.text-gray-500.uppercase Benefits
+          div.font-medium.mt-1 Housing
+          div.mt-1= vm.meta.housing
+
+      if vm.meta.email
+        .border.rounded.p-3
+          div.text-xs.text-gray-500.uppercase Contact
+          div.font-medium.mt-1 Email
+          div.mt-1
+            a.text-blue-600(href=`mailto:${vm.meta.email}`)= vm.meta.email
+
+      if vm.meta.homepage
+        .border.rounded.p-3
+          div.text-xs.text-gray-500.uppercase Link
+          div.font-medium.mt-1 Homepage
+          div.mt-1
+            a.text-blue-600(href=vm.meta.homepage target="_blank")= vm.meta.homepage
+
+      if vm.meta.datePosted
+        .border.rounded.p-3
+          div.text-xs.text-gray-500.uppercase Posted
+          div.font-medium.mt-1 Date Posted
+          - const d = new Date(vm.meta.datePosted)
+          div.mt-1= d.toISOString().slice(0,10)
+
+    // Description
+    if vm.descriptionHtml
+      h2.text-xl.font-semibold.mb-3 Description
+      .prose.max-w-none
+        != vm.descriptionHtml
+
+    // Raw JSON (접이식)
+    details.mt-8
+      summary.cursor-pointer.text-sm.text-gray-500 Raw JSON (debug)
+      pre.mt-3.p-3.bg-gray-50.rounded.text-xs
+        = JSON.stringify(vm.raw, null, 2)

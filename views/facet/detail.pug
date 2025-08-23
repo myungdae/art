@@ -2,21 +2,19 @@
 extends ../layout
 
 block content
-  .container.mx-auto.py-6
-    a(href=`/facet/${klass}` class="text-blue-700 underline") ← Back to list
+  .container.mt-4
+    if doc
+      - const titleText = doc.displayLabel || doc._label || doc.title || doc.name || doc.jobTitle || doc.email || '(no title)'
+      h1.h3.mt-2.mb-3= titleText
 
-    h1.text-2xl.font-bold.mt-2= doc._label || doc.title || '(no title)'
+      if doc.displayDescription || doc._description || doc.description
+        p.text-muted= doc.displayDescription || doc._description || doc.description
 
-    p.text-sm.text-gray-600.mt-1
-      | #{doc.country || '-'} · #{doc.studentType || '-'} ·
-      | #{(doc.teachingArea && doc.teachingArea.length) ? doc.teachingArea.join(', ') : '-'}
-
-    p.text-sm.mt-1 Posted: #{posted}
-
-    .mt-6
-      if doc._description
-        != doc._description
-      else if doc.description
-        != doc.description
-      else
-        p No description.
+      // 상세 원본 필드(디버깅 겸 확인용)
+      .card.mt-3
+        .card-header.bg-white
+          h5.mb-0 Details
+        .card-body
+          pre.mb-0(style="white-space:pre-wrap")= JSON.stringify(doc, null, 2)
+    else
+      .alert.alert-warning Not found.
