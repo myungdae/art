@@ -2,22 +2,186 @@
 extends layout
 
 block content
-  .container.mt-5
+  -
+    var enc = encodeURIComponent;
+    var S  = (typeof stats === 'object' && stats) || {};
+    var RV = Array.isArray(recentVacancies) ? recentVacancies : [];
+    var RS = Array.isArray(recentSeekers) ? recentSeekers : [];
+    var RT = Array.isArray(recentTutors) ? recentTutors : [];
+    var TC = Array.isArray(topCountries) ? topCountries : [];
+    var TS = Array.isArray(topStudents) ? topStudents : [];
+    var TA = Array.isArray(topAreas) ? topAreas : [];
 
-    // 🎉 메인 환영 메시지 (헤더 타이틀과 중복되는 큰 타이틀 제거)
-    .text-center.mb-5
-      h3(style="font-size: 1.75rem; font-weight: 700;") Welcome to the ESL Semantic Platform!
-      p.text-muted.mt-3(style="font-size: 1.1rem; max-width: 900px; margin: 0 auto;")
-        | Discover job opportunities, connect with qualified tutors, or showcase your talent to language institutions worldwide.
+  div(class="container mx-auto max-w-6xl py-10")
 
-    // 🧠 RDF 메시지 박스
-    .card.shadow.mb-5
-      .card-body
-        h4.text-danger.text-center.mb-3(style="font-size: 1.2rem; font-weight: 800;")
-          | RDF-Compliant · Semantically-Driven · Facet-Linked
-        p.text-center(style="font-size: 1rem;")
-          | Your ESL platform is a semantic knowledge interface with RDF-compliant data and facet-based navigation.
+    // ───────── Hero ─────────
+    div(class="text-center mb-10")
+      h1(class="text-4xl font-extrabold mb-3") ESL Plus
+      p(class="text-gray-600 mb-3") The fast ESL hiring & tutoring hub
+      p(class="text-lg font-semibold text-gray-900 mt-1")
+        | Teach Beyond Borders. Inspire Minds. From ESL to STEM, Your Classroom Is Everywhere.
 
-    // ℹ️ 안내 문구
-    p.text-center.text-muted.mt-4
-      | Use the search bar above or the navigation menu to get started.
+      // Search bar
+      form(action="/go" method="GET" class="flex flex-col md:flex-row items-stretch gap-3 justify-center mt-6")
+        select(name="facet" required class="border rounded px-3 py-2")
+          option(value="Job_Vacancies") Job Vacancies
+          option(value="Job_Seekers") Job Seekers
+          option(value="Online_Tutors") Online Tutors
+        input(type="text" name="q" placeholder="Search by keyword (e.g., Seoul, ESL, Kindergarten)" class="flex-1 border rounded px-4 py-2")
+        button(type="submit" class="bg-blue-600 text-white rounded px-6 py-2") Search
+
+    // ───────── Stats (spinner + count-up) ─────────
+    style.
+      .stat-spinner{width:18px;height:18px;border:2px solid #e5e7eb;border-top-color:#3b82f6;border-radius:50%;animation:spin .8s linear infinite;display:inline-block;vertical-align:middle}
+      @keyframes spin{to{transform:rotate(360deg)}}
+      .hide{display:none}
+
+    div(class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8")
+      div(class="border rounded p-5 text-center")
+        div(class="flex items-center justify-center gap-3")
+          span(id="spin-v" class="stat-spinner")
+          div(id="stat-v" class="text-3xl font-bold")= (S.vCount != null ? S.vCount : 0)
+        div(class="text-gray-500 mt-1") Job Vacancies
+      div(class="border rounded p-5 text-center")
+        div(class="flex items-center justify-center gap-3")
+          span(id="spin-s" class="stat-spinner")
+          div(id="stat-s" class="text-3xl font-bold")= (S.sCount != null ? S.sCount : 0)
+        div(class="text-gray-500 mt-1") Job Seekers
+      div(class="border rounded p-5 text-center")
+        div(class="flex items-center justify-center gap-3")
+          span(id="spin-t" class="stat-spinner")
+          div(id="stat-t" class="text-3xl font-bold")= (S.tCount != null ? S.tCount : 0)
+        div(class="text-gray-500 mt-1") Online Tutors
+
+    // ───────── Chips: Top Countries ─────────
+    if TC.length
+      h2(class="text-xl font-semibold mb-3") Top Countries
+      div(class="d-flex flex-wrap gap-2 justify-content-center mb-8")
+        each c in TC
+          a(class="btn btn-outline-primary btn-sm" href='/facet/Job_Vacancies?country=' + enc(c._id)) #{c._id}
+
+    // ───────── Chips: Top Student Types ─────────
+    if TS.length
+      h2(class="text-xl font-semibold mb-3") Top Student Types
+      div(class="d-flex flex-wrap gap-2 justify-content-center mb-8")
+        each c in TS
+          a(class="btn btn-outline-secondary btn-sm" href='/facet/Job_Vacancies?studentType=' + enc(c._id)) #{c._id}
+
+    // ───────── Chips: Top Teaching Areas ─────────
+    if TA.length
+      h2(class="text-xl font-semibold mb-3") Top Teaching Areas
+      div(class="d-flex flex-wrap gap-2 justify-content-center mb-12")
+        each c in TA
+          a(class="btn btn-outline-success btn-sm" href='/facet/Job_Vacancies?teachingArea=' + enc(c._id)) #{c._id}
+
+    // ───────── Latest Job Vacancies ─────────
+    if RV.length
+      h2(class="text-xl font-semibold mb-3") Latest Job Vacancies
+      div(class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12")
+        each v in RV
+          div(class="border rounded p-4 flex flex-col")
+            a(class="font-semibold mb-1" href='/rdf-resource/Job_Vacancies/' + (v.id || ''))= (v.title || 'Untitled')
+            div(class="text-sm text-gray-500 mb-2")
+              if v.date
+                - var d1 = new Date(v.date)
+                span= d1.toISOString().slice(0,10)
+              if v.country
+                span(class="mx-1") &middot;
+                span= v.country
+            if v.studentType
+              div(class="flex flex-wrap gap-2 mb-2")
+                a(class="inline-flex items-center px-2 py-1 text-xs rounded border" href='/facet/Job_Vacancies?studentType=' + enc(v.studentType))= v.studentType
+            if Array.isArray(v.teachingAreas) && v.teachingAreas.length
+              div(class="flex flex-wrap gap-2 mt-auto")
+                each area in v.teachingAreas.slice(0,3)
+                  a(class="inline-flex items-center px-2 py-1 text-xs rounded border" href='/facet/Job_Vacancies?teachingArea=' + enc(area))= area
+
+    // ───────── Latest Job Seekers ─────────
+    if RS.length
+      h2(class="text-xl font-semibold mb-3") Latest Job Seekers
+      div(class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12")
+        each s in RS
+          div(class="border rounded p-4 flex flex-col")
+            a(class="font-semibold mb-1" href='/rdf-resource/Job_Seekers/' + (s.id || ''))= (s.title || 'Untitled')
+            div(class="text-sm text-gray-500 mb-2")
+              if s.date
+                - var d2 = new Date(s.date)
+                span= d2.toISOString().slice(0,10)
+              if s.country
+                span(class="mx-1") &middot;
+                span= s.country
+            if Array.isArray(s.languages) && s.languages.length
+              div(class="flex flex-wrap gap-2 mt-auto")
+                each lang in s.languages.slice(0,3)
+                  a(class="inline-flex items-center px-2 py-1 text-xs rounded border" href='/facet/Job_Seekers?language=' + enc(lang))= lang
+
+    // ───────── Latest Online Tutors ─────────
+    if RT.length
+      h2(class="text-xl font-semibold mb-3") Latest Online Tutors
+      div(class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12")
+        each t in RT
+          div(class="border rounded p-4 flex flex-col")
+            a(class="font-semibold mb-1" href='/rdf-resource/Online_Tutors/' + (t.id || ''))= (t.title || 'Untitled')
+            div(class="text-sm text-gray-500 mb-2")
+              if t.date
+                - var d3 = new Date(t.date)
+                span= d3.toISOString().slice(0,10)
+              if t.country
+                span(class="mx-1") &middot;
+                span= t.country
+            if Array.isArray(t.languages) && t.languages.length
+              div(class="flex flex-wrap gap-2 mt-auto")
+                each lang in t.languages.slice(0,3)
+                  a(class="inline-flex items-center px-2 py-1 text-xs rounded border" href='/facet/Online_Tutors?language=' + enc(lang))= lang
+
+    // ───────── Footer actions ─────────
+    hr(class="my-10 border-gray-200")
+    div(class="d-flex flex-wrap justify-content-center gap-2")
+      a(class="btn btn-outline-dark btn-sm" href="/user/register") Membership
+      a(class="btn btn-outline-dark btn-sm" href="/user/login") Login
+      a(class="btn btn-outline-dark btn-sm" href="/inquiry") Inquiry
+
+  // ───────── Count-up hydrator (vanilla JS) ─────────
+  script.
+    (function () {
+      function animateCount(el, from, to, ms, onDone) {
+        from = Number(from)||0; to = Number(to)||0;
+        if (ms <= 0 || from === to) { el.textContent = String(to); onDone && onDone(); return; }
+        var start = null;
+        function step(ts){
+          if(!start) start = ts;
+          var p = Math.min((ts - start) / ms, 1);
+          var eased = 1 - Math.pow(1 - p, 3);
+          var val = Math.round(from + (to - from) * eased);
+          el.textContent = String(val);
+          if(p < 1) requestAnimationFrame(step); else onDone && onDone();
+        }
+        requestAnimationFrame(step);
+      }
+      function hideSpinner(id){ var sp = document.getElementById(id); if(sp){ sp.classList.add('hide'); } }
+
+      async function hydrate() {
+        var ids = [
+          { num: 'stat-v', spin: 'spin-v', key: 'vCount' },
+          { num: 'stat-s', spin: 'spin-s', key: 'sCount' },
+          { num: 'stat-t', spin: 'spin-t', key: 'tCount' },
+        ];
+        try {
+          ids.forEach(o => { var sp = document.getElementById(o.spin); if (sp) sp.classList.remove('hide'); });
+          var res = await fetch('/api/home/stats', { headers: { 'Accept': 'application/json' }});
+          if(!res.ok) throw new Error('stats http ' + res.status);
+          var data = await res.json();
+          ids.forEach(o => {
+            var el = document.getElementById(o.num); if(!el) return;
+            var from = parseInt(el.textContent, 10) || 0;
+            var to   = Number(data && data[o.key]) || 0;
+            var dur  = Math.max(500, Math.min(1200, Math.abs(to - from) * 20));
+            animateCount(el, from, to, dur, function(){ hideSpinner(o.spin); });
+          });
+        } catch (e) {
+          setTimeout(function(){ ids.forEach(o => hideSpinner(o.spin)); }, 600);
+        }
+      }
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', hydrate);
+      else hydrate();
+    })();

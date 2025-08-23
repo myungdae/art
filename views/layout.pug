@@ -5,9 +5,8 @@ html(lang='en')
     meta(http-equiv='Content-Type', content='text/html; charset=utf-8')
     meta(name='viewport', content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0')
 
-    // 👇 레이아웃 반영 확인용 마킹
-    title ESL · SMTP (LAYOUT-TEST)
-
+    // Title (Brand 우선, 없으면 기본)
+    title= (typeof pageTitle !== 'undefined' && pageTitle) || (typeof siteBrand !== 'undefined' && siteBrand) || 'ESL Plus'
     link(rel='shortcut icon', href='/assets/img/favicon.ico', type='image/x-icon')
 
     // CSS
@@ -152,13 +151,19 @@ html(lang='en')
 
         // 중앙 타이틀 + 검색
         .text-center
-          h2(style="font-weight: bold; font-size: 28px; margin-bottom: 25px;") ESL · SMTP
-          - if (!searchKeyword) searchKeyword = "Enter keyword..."
+          h2(style="font-weight: bold; font-size: 28px; margin-bottom: 25px;")
+            a(
+              href=(typeof siteBrandLink!=='undefined' && siteBrandLink) || '/',
+              class="text-reset",
+              style="text-decoration:none; color:inherit;"
+            )= (typeof siteBrand!=='undefined' && siteBrand) || 'ESL Plus'
+
+          - var _ph = (typeof searchKeyword!=='undefined' && searchKeyword) ? searchKeyword : "Enter keyword...";
           .input-group.justify-content-center
             input#searchText.form-control.search-input(
               autocomplete='off',
               type='text',
-              placeholder=searchKeyword.replace(/\[dot\]/g, '.'),
+              placeholder=_ph.replace(/\[dot\]/g, '.'),
               value=searchText
             )
             span.input-group-append
@@ -166,7 +171,7 @@ html(lang='en')
                 style="margin-left:-55px;background:none;border:none;margin-top:5px;"
                 type="button"
               )
-                img(src="/assets/img/main/icon-search.png", alt="Search", width="30px")
+                img(src="/assets/img/main/icon-search.png", alt="Search", width="30")
 
     // ───────── GNB (부트스트랩 햄버거)
     nav.navbar.navbar-expand-md.main_nav_bar
