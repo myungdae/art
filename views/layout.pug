@@ -1,4 +1,4 @@
-//- views/layout.pug
+//- views/layout.pug  (REPLACE WHOLE FILE)
 doctype html
 html(lang='en')
   head
@@ -21,6 +21,7 @@ html(lang='en')
 
     block append_on_header
 
+    // ─────────────────────────────────────────────────────────────────────
     // 스타일
     style.
       /* 헤더 */
@@ -60,12 +61,19 @@ html(lang='en')
       .navbar-toggler { border-color: rgba(255,255,255,.55); }
       .navbar-toggler .fa { color:#fff; font-size:18px; }
 
+      /* brand logo (top-left) */
+      .brand-logo{position:absolute;top:16px;left:20px;display:flex;align-items:center;gap:10px}
+      .brand-logo img{height:34px;display:block}
+
       /* 모바일 레이아웃 스위치 */
       @media (max-width: 767.98px) {
         .menu-top { display:none; }
         .menu-top-mob { display:block; }
         .search-header { padding: 56px 0 56px 0; }
+        .brand-logo{top:12px;left:12px}
+        .brand-logo img{height:30px}
       }
+    // ─────────────────────────────────────────────────────────────────────
 
     // My Page 스코프 (원본 유지)
     style.
@@ -112,6 +120,10 @@ html(lang='en')
     header.main-search-header.search-header
       .container-fluid
 
+        // brand logo (top-left)
+        a.brand-logo(href=(siteBrandLink || '/'), aria-label=(siteBrand || 'ESL Plus'))
+          img(src="/assets/img/eslplus.svg", alt=(siteBrand || 'ESL Plus'))
+
         // 데스크탑: 우상단 계정 링크
         .menu-top.d-none.d-md-flex
           if session && session.user
@@ -149,15 +161,8 @@ html(lang='en')
               a(href="/admin/dashboard") Admin
               a(href="/admin/logout").logout Logout
 
-        // 중앙 타이틀 + 검색
+        // 중앙: 검색 (타이틀 텍스트 제거)
         .text-center
-          h2(style="font-weight: bold; font-size: 28px; margin-bottom: 25px;")
-            a(
-              href=(typeof siteBrandLink!=='undefined' && siteBrandLink) || '/',
-              class="text-reset",
-              style="text-decoration:none; color:inherit;"
-            )= (typeof siteBrand!=='undefined' && siteBrand) || 'ESL Plus'
-
           - var _ph = (typeof searchKeyword!=='undefined' && searchKeyword) ? searchKeyword : "Enter keyword...";
           .input-group.justify-content-center
             input#searchText.form-control.search-input(

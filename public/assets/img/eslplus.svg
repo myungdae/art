@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="180" viewBox="0 0 720 180">
+  <defs>
+    <style>
+      .brand { fill: #FF7A00; font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-weight: 800; letter-spacing: 2px; }
+    </style>
+  </defs>
+  <rect width="100%" height="100%" fill="none"/>
+  <text class="brand" x="0" y="122" font-size="120">ESL +</text>
+</svg>
