@@ -20,10 +20,10 @@ block content
       // Actions
       .flex.gap-3.mt-4
         if canPost
-          a.btn.btn-primary(href='/job-vacancies/new') Register Job Vacancy
+          a.btn.btn-primary(href='/job-vacancies/new') Buy Ad Credits
           a.btn(href='/job-vacancies/mine') My Job Vacancies
         else
-          button.btn.btn-secondary(disabled) Register Job Vacancy (No Slots)
+          a.btn.btn-primary(href="/job-vacancies/new") Buy Ad Credits
           a.btn(href='/job-vacancies/mine') My Job Vacancies
 
     // Job list

@@ -112,8 +112,10 @@ router.get('/mypage', requireLogin, async (req, res) => {
   }
 });
 
-/* --------------------------- Employer mypage (credits-based posting) --------------------------- */
-router.get('/mypage-employer',
+
+// --------------------------- Employer mypage (credits-based) ---------------------------
+router.get(
+  '/mypage-employer',
   requireLogin,
   requireRole('Employer'),
   async (req, res, next) => {
@@ -121,69 +123,20 @@ router.get('/mypage-employer',
       const user = await User.findById(req.session.user._id).lean();
       if (!user) return res.status(404).send('User not found');
 
-      // 내 공고 목록
-      const jobVacancies = await JobVacancy.find({ user: req.session.user._id }).lean();
+      // 남은 광고 크레딧
+      const credits = Number(user.adsAvailable || 0);
 
-      // (참고용) 활성 공고 수 / 총 슬롯
-      const now = new Date();
-      const TOTAL_SLOTS = parseInt(process.env.JOB_POST_QUOTA ?? '16', 10);
+      // 내가 올린 공고 수
+      const activeJobs = await JobVacancy.countDocuments({ user: user._id });
 
-      const idOrEmail = user.email
-        ? [{ user: user._id }, { email: user.email }]
-        : [{ user: user._id }];
-
-      const activeQuery = {
-        $and: [
-          { $or: idOrEmail },
-          { $or: [ { expiresAt: { $gte: now } }, { expiresAt: { $exists: false } } ] }
-        ]
-      };
-
-      const activeJobs = await JobVacancy.countDocuments(activeQuery);
-      const remainingSlots = Math.max(0, TOTAL_SLOTS - activeJobs);
-
-      // ✅ 핵심: 포스팅 가능 여부는 adsAvailable(보유 크레딧)로 판단
-      const adCredits = Number(user.adsAvailable || 0);
-      const canPost = adCredits > 0;
-
-      // 가장 빨리 만료되는 공고(표시용)
-      const soonest = await JobVacancy.findOne({
-        $or: idOrEmail,
-        expiresAt: { $exists: true }
-      }).sort({ expiresAt: 1 }).select('expiresAt title').lean();
-
-      let nextExpireAt = null;
-      let nextExpireTitle = null;
-      let expireTag = null;
-
-      if (soonest && soonest.expiresAt) {
-        const expireDate = new Date(soonest.expiresAt);
-        const msDiff = expireDate.getTime() - now.getTime();
-        if (msDiff <= 0) expireTag = 'Expired';
-        else {
-          const daysLeft = Math.ceil(msDiff / 86400000);
-          expireTag = daysLeft === 0 ? 'Today' : `D-${daysLeft}`;
-        }
-        const kst = new Date(expireDate.getTime() + 9 * 60 * 60 * 1000);
-        nextExpireAt = kst.toISOString().slice(0, 10);
-        nextExpireTitle = soonest.title || null;
-      }
+      // 버튼 노출 조건
+      const canPost = credits > 0;
 
       return res.render('user/mypage-employer', {
         user,
-        jobVacancies,
-
-        totalSlots: TOTAL_SLOTS,
         activeJobs,
-        remainingSlots,
-
-        // 👇 새로 추가: 크레딧/버튼 노출 제어
-        adCredits,
-        canPost,
-
-        nextExpireAt,
-        nextExpireTitle,
-        expireTag
+        credits,
+        canPost
       });
     } catch (err) {
       console.error('Employer mypage error:', err.message);
@@ -191,6 +144,7 @@ router.get('/mypage-employer',
     }
   }
 );
+
 
 /* --------------------------- Employer plan (선택: 그대로 유지) --------------------------- */
 router.get('/employer/plan',

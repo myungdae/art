@@ -4,21 +4,17 @@ const express = require('express');
 const router = express.Router();
 const methodOverride = require('method-override');
 const mongoose = require('mongoose');
+
 const JobVacancy = require('../model/jobVacancy');
+const User = require('../model/user');
+
 const validateObjectId = require('../middleware/validateObjectId');
 const { requireLogin, requireRole } = require('../middleware/auth');
 
 router.use(methodOverride('_method'));
 
-// :id 유효성 검사
+// :id 유효성 검사 (중복 핸들러 제거, 이 한 줄만 사용)
 router.param('id', validateObjectId('id'));
-router.param('id', (req, res, next, id) => {
-  if (!mongoose.isValidObjectId(id)) {
-    console.warn('[INVALID ID HIT]', req.method, req.originalUrl, 'id=', id);
-    return res.status(404).send('Invalid ID');
-  }
-  next();
-});
 
 /* ------------ helpers ------------ */
 
@@ -100,12 +96,9 @@ function validatePayload(p) {
 }
 
 // facet용 RDF 미러
-// facet용 RDF 미러 (드롭인 교체본)
-// - @id 필드는 사용하지 않음(중복 인덱스 충돌 방지)
-// - 과거 문서에 남아 있을 수 있는 @id는 매 업데이트 때 제거
 async function mirrorToRDF(job) {
   const doc = {
-    _id: job._id,                               // Mongo PK만 사용
+    _id: job._id,
     _label: job._label || job.title || '',
     _description: job._description || job.description || '',
     title: job.title || '',
@@ -130,39 +123,52 @@ async function mirrorToRDF(job) {
 
   const db = mongoose.connection.db;
 
-  // ✅ RDF 미러 컬렉션
   await db.collection('Job_Vacancies_RDF').updateOne(
     { _id: job._id },
     {
       $set: doc,
       $setOnInsert: { createdAt: new Date() },
-      $unset: { '@id': '' }       // 과거 잔여 필드 제거
+      $unset: { '@id': '' }
     },
     { upsert: true }
   );
 
-  // ✅ 호환 컬렉션(있으면 업데이트, 없으면 무시)
   try {
     await db.collection('Job_Vacancies').updateOne(
       { _id: job._id },
       {
         $set: doc,
         $setOnInsert: { createdAt: new Date() },
-        $unset: { '@id': '' }     // 과거 잔여 필드 제거
+        $unset: { '@id': '' }
       },
       { upsert: true }
     );
   } catch (_) {
-    // 컬렉션 없으면 조용히 통과
+    // 호환 컬렉션 없으면 무시
   }
 }
 
+// ✅ 광고 크레딧 확인 미들웨어
+async function ensureAdCredit(req, res, next) {
+  try {
+    const u = await User.findById(req.session.user._id).select('adsAvailable').lean();
+    const credits = u?.adsAvailable || 0;
+    if (credits <= 0) {
+      // 결제 유도
+      return res.redirect('/paypal/checkout');
+    }
+    return next();
+  } catch (e) {
+    console.error('[ensureAdCredit] error:', e);
+    return res.status(500).send('Failed to check ad credits');
+  }
+}
 
 // ✅ Country 리스트 반환 API
 router.get('/countries', async (req, res) => {
   try {
-    const countries = await JobVacancy.distinct("country");
-    res.json(countries.sort());
+    const countries = await JobVacancy.distinct('country');
+    res.json((countries || []).filter(Boolean).sort());
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -170,16 +176,25 @@ router.get('/countries', async (req, res) => {
 
 /* ------------ routes ------------ */
 
-// New (form)
-router.get('/job-vacancies/new',
+// New (form) — 크레딧이 있어야 접근 가능
+router.get(
+  '/job-vacancies/new',
   requireLogin,
   requireRole('Employer'),
   async (req, res) => {
+    // 크레딧 체크
+    const me = await User.findById(req.session.user._id).select('adsAvailable').lean();
+    const credits = Number(me?.adsAvailable || 0);
+    if (credits <= 0) {
+      // 결제 플로우로
+      return res.redirect('/paypal/checkout?type=employer');
+    }
+
     const countries    = await JobVacancy.distinct("country");
     const studentTypes = await JobVacancy.distinct("studentType");
     const teaching     = await JobVacancy.distinct("teachingArea");
 
-    res.render('jobVacancy/new', {
+    return res.render('jobVacancy/new', {
       countries: countries.sort(),
       studentTypes: studentTypes.sort(),
       teachingAreas: teaching.sort(),
@@ -189,11 +204,35 @@ router.get('/job-vacancies/new',
   }
 );
 
-// Create
-router.post('/job-vacancies',
+
+// 별칭(마이페이지에서 사용)
+router.get(
+  '/job-vacancies/new_paid_user',
+  requireLogin,
+  requireRole('Employer'),
+  ensureAdCredit,
+  (req, res) => res.redirect('/job-vacancies/new')
+);
+
+// Create — 원자적 차감 + 실패 시 롤백
+router.post(
+  '/job-vacancies',
   requireLogin,
   requireRole('Employer'),
   async (req, res) => {
+    // 1) 차감 먼저 시도 (경쟁 조건 방지)
+    const userId = req.session.user._id;
+    const dec = await User.findOneAndUpdate(
+      { _id: userId, adsAvailable: { $gt: 0 } },
+      { $inc: { adsAvailable: -1 } },
+      { new: true }
+    );
+
+    if (!dec) {
+      // 크레딧 없음 → 결제 페이지로
+      return res.redirect('/paypal/checkout');
+    }
+
     try {
       const payload = normalizePayload(req.body);
       const errors  = validatePayload(payload);
@@ -201,14 +240,19 @@ router.post('/job-vacancies',
       taOut         = mergeExtraAreas(taOut, req.body.extraTeachingArea);
 
       if (Object.keys(errors).length) {
-        const countries    = await JobVacancy.distinct("country");
-        const studentTypes = await JobVacancy.distinct("studentType");
-        const teaching     = await JobVacancy.distinct("teachingArea");
+        const [countries, studentTypes, teaching] = await Promise.all([
+          JobVacancy.distinct('country'),
+          JobVacancy.distinct('studentType'),
+          JobVacancy.distinct('teachingArea'),
+        ]);
+
+        // ❗폼 에러면 차감 롤백
+        await User.findByIdAndUpdate(userId, { $inc: { adsAvailable: +1 } });
 
         return res.status(422).render('jobVacancy/new', {
-          countries: countries.sort(),
-          studentTypes: studentTypes.sort(),
-          teachingAreas: teaching.sort(),
+          countries: (countries || []).filter(Boolean).sort(),
+          studentTypes: (studentTypes || []).filter(Boolean).sort(),
+          teachingAreas: (teaching || []).filter(Boolean).sort(),
           values: {
             ...payload,
             teachingArea: taOut,
@@ -225,7 +269,7 @@ router.post('/job-vacancies',
 
       const doc = new JobVacancy({
         ...payload,
-        user: req.session.user._id,
+        user: userId,
         teachingArea: taOut,
         title,
         _label,
@@ -235,20 +279,69 @@ router.post('/job-vacancies',
       });
 
       await doc.save();
+      await User.findByIdAndUpdate(req.session.user._id, { $inc: { adsAvailable: -1 } });
       await mirrorToRDF(doc);
 
       req.flash?.('success', 'Job vacancy created.');
-      return res.redirect('/facet/Job_Vacancies');
+      return res.redirect('/job-vacancies/mine');
 
     } catch (err) {
       console.error('[CREATE] job-vacancy error:', err);
-      return res.status(500).render('error', { message: 'Failed to create job vacancy', error: err });
+      // 실패 롤백
+      await User.findByIdAndUpdate(userId, { $inc: { adsAvailable: +1 } });
+      return res
+        .status(500)
+        .render('error', { message: 'Failed to create job vacancy', error: err });
+    }
+  }
+);
+
+router.get(
+  '/job-vacancies/mine',
+  requireLogin,
+  requireRole('Employer'),
+  async (req, res, next) => {
+    try {
+      const jobs = await JobVacancy.find({ user: req.session.user._id })
+        .sort({ datePosted: -1, createdAt: -1 })
+        .lean();
+
+      return res.render('jobVacancy/index', {
+        jobs,
+        filters: { mine: true, country: '', studentType: '', teachingArea: '' },
+        countries: [],
+        studentTypes: [],
+        teachingAreas: [],
+      });
+    } catch (err) {
+      console.error('GET /job-vacancies/mine error:', err);
+      return next(err);
+    }
+  }
+);
+
+
+// 내 공고 목록(고용주 전용)
+router.get(
+  '/job-vacancies/mine',
+  requireLogin,
+  requireRole('Employer'),
+  async (req, res, next) => {
+    try {
+      const jobs = await JobVacancy.find({ user: req.session.user._id })
+        .sort({ datePosted: -1, createdAt: -1 })
+        .lean();
+
+      res.render('jobVacancy/mine', { jobs });
+    } catch (e) {
+      next(e);
     }
   }
 );
 
 // Edit (form)
-router.get('/job-vacancies/:id/edit',
+router.get(
+  '/job-vacancies/:id/edit',
   requireLogin,
   requireRole('Employer'),
   async (req, res) => {
@@ -256,38 +349,37 @@ router.get('/job-vacancies/:id/edit',
     const jobVacancy = await JobVacancy.findById(id);
     if (!jobVacancy) return res.status(404).send('Not found');
 
-    const countries    = await JobVacancy.distinct("country");
-    const studentTypes = await JobVacancy.distinct("studentType");
-    const teaching     = await JobVacancy.distinct("teachingArea");
+    const [countries, studentTypes, teaching] = await Promise.all([
+      JobVacancy.distinct('country'),
+      JobVacancy.distinct('studentType'),
+      JobVacancy.distinct('teachingArea'),
+    ]);
 
     res.render('jobVacancy/edit', {
       jobVacancy,
-      countries: countries.sort(),
-      studentTypes: studentTypes.sort(),
-      teachingAreas: teaching.sort(),
+      countries: (countries || []).filter(Boolean).sort(),
+      studentTypes: (studentTypes || []).filter(Boolean).sort(),
+      teachingAreas: (teaching || []).filter(Boolean).sort(),
       errors: {}
     });
   }
 );
 
-// List (public) — 칩 UI용 distinct 값도 함께 내려줍니다.  ⬅⬅ 기존 블록 통째로 교체
+// List (public)
 router.get('/job-vacancies', async (req, res, next) => {
   try {
     const { country, studentType, teachingArea } = req.query;
 
-    // 검색 조건
     const q = {};
     if (country)     q.country = country;
     if (studentType) q.studentType = studentType;
     if (teachingArea) {
-      // 배열/단일값 모두 매치 + 대소문자 무시 검색
       q.$or = [
-        { teachingArea: teachingArea },                                 // 정확히 포함
-        { teachingArea: { $regex: `^${teachingArea}$`, $options: 'i' } } // 케이스무시
+        { teachingArea: teachingArea },
+        { teachingArea: { $regex: `^${teachingArea}$`, $options: 'i' } }
       ];
     }
 
-    // 목록 + 칩 소스(distinct) 병렬 조회
     const [jobs, countries, studentTypes, teachingAreas] = await Promise.all([
       JobVacancy.find(q).sort({ datePosted: -1, createdAt: -1 }).limit(200).lean(),
       JobVacancy.distinct('country'),
@@ -295,7 +387,6 @@ router.get('/job-vacancies', async (req, res, next) => {
       JobVacancy.distinct('teachingArea'),
     ]);
 
-    // falsy 제거 후 정렬
     const sortClean = (arr) => (arr || []).filter(Boolean).sort();
 
     return res.render('jobVacancy/index', {
@@ -305,7 +396,6 @@ router.get('/job-vacancies', async (req, res, next) => {
         studentType: studentType || '',
         teachingArea: teachingArea || ''
       },
-      // 상단 칩 섹션용 데이터
       countries: sortClean(countries),
       studentTypes: sortClean(studentTypes),
       teachingAreas: sortClean(teachingAreas),

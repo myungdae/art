@@ -2,67 +2,43 @@
 extends ../layout
 
 block content
-  .container.mt-5.mb-5
-    h2.text-center.mb-4 Employer Dashboard
+  .container.mt-5
+    h2.text-center.mb-5 Employer Dashboard
 
-    // ===== 사용자 정보 =====
+    // 사용자 카드
     .card.shadow-sm.p-4.mb-4
-      .row.g-2
+      p.mb-2
+        strong Username:
+        |  #{user.username}
+      p.mb-2
+        strong Email:
+        |  #{user.email}
+      p.mb-0
+        strong Role:
+        |  Employer
+
+    // 상태 + 액션
+    .card.shadow-sm.p-4
+      .row
         .col-12.col-md-6
           p.mb-2
-            strong Username:
-            |  #{user.username}
-        .col-12.col-md-6
-          p.mb-2
-            strong Email:
-            |  #{user.email}
-        .col-12.col-md-6
-          p.mb-0
-            strong Role:
-            |  Employer
-
-    // ===== 상태 요약 =====
-    .card.shadow-sm.p-4.mb-4
-      .row.g-3.align-items-center
-        .col-12.col-md-4
-          p.mb-1
             strong Active postings:
-            |  
-            - const _active = (typeof activeJobs !== 'undefined') ? activeJobs : ((jobVacancies && jobVacancies.length) ? jobVacancies.length : 0);
-            - const _total  = (typeof totalSlots !== 'undefined') ? totalSlots : 16;
-            | #{_active} / #{_total}
-
-        .col-12.col-md-4
-          p.mb-1
+            |  #{activeJobs}
+        .col-12.col-md-6
+          p.mb-2
             strong Remaining ad credits:
-            |  
-            - const _remaining = (typeof remainingSlots !== 'undefined') ? remainingSlots : Math.max(0, _total - _active);
-            | #{_remaining}
-
-        if typeof nextExpireAt !== 'undefined' && nextExpireAt
-          .col-12.col-md-4
-            p.mb-0
-              strong Next expiry:
-              |  #{nextExpireAt}
-              if typeof expireTag !== 'undefined' && expireTag
-                span.badge.bg-warning.text-dark.ms-2 #{expireTag}
+            |  #{credits}
 
       .mt-3.d-flex.flex-wrap.gap-2
-        if typeof canPost !== 'undefined' && canPost
-          a.btn.btn-warning(href="/job-vacancies/new_paid_user") Register Job Vacancy
+        if canPost
+          //- 크레딧 있으면 바로 등록
+          a.btn.btn-primary(href="/job-vacancies/new") Post Job Vacancy
         else
-          button.btn.btn-secondary(disabled) Register Job Vacancy
-        a.btn.btn-outline-dark(href="/paypal/checkout") Buy Ad Credits
+          //- 크레딧 없으면 구매
+          a.btn.btn-warning(href="/paypal/checkout?type=employer") Buy Ad Credits
 
-    // ===== 공고 목록 =====
-    if jobVacancies && jobVacancies.length
-      .card.shadow-sm
-        .card-header
-          h5.mb-0 My Job Vacancies
-        .card-body
-          ul.list-unstyled.mb-0
-            each job in jobVacancies
-              li.mb-2
-                a(href=`/job-vacancies/${job._id}`)= job.title
-    else
-      p.text-muted.text-center.mt-3 No job vacancies posted yet.
+        if activeJobs > 0
+          a.btn.btn-secondary(href="/job-vacancies/mine") My Job Vacancies
+
+    if activeJobs === 0
+      p.text-muted.mt-3 No job vacancies posted yet.
