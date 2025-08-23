@@ -3,75 +3,92 @@ extends ../layout
 block content
   .container.mx-auto.max-w-5xl.py-8
 
-    // Header
     h1.text-3xl.font-bold.mb-2= vm.title || 'Job Vacancy'
     if vm.meta.companyName
       p.text-gray-600.mb-6 #{vm.meta.companyName}
 
-    // Meta Grid
+    - const enc = encodeURIComponent;
+
+    // Meta grid
     div(class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8")
       if vm.meta.country
         .border.rounded.p-3
           div.text-xs.text-gray-500.uppercase Tracking
           div.font-medium.mt-1 Country
-          div.mt-1= vm.meta.country
+          div.mt-2.flex.flex-wrap.gap-2
+            a(href=`/facet/Job_Vacancies?country=${enc(vm.meta.country)}` class="inline-flex items-center px-3 py-1 rounded-full border hover:bg-gray-50 transition")= vm.meta.country
 
       if vm.meta.studentType
         .border.rounded.p-3
           div.text-xs.text-gray-500.uppercase Profile
           div.font-medium.mt-1 Student Type
-          div.mt-1= vm.meta.studentType
+          div.mt-2.flex.flex-wrap.gap-2
+            a(href=`/facet/Job_Vacancies?studentType=${enc(vm.meta.studentType)}` class="inline-flex items-center px-3 py-1 rounded-full border hover:bg-gray-50 transition")= vm.meta.studentType
 
       if vm.meta.teachingAreas && vm.meta.teachingAreas.length
         .border.rounded.p-3
           div.text-xs.text-gray-500.uppercase Subjects
           div.font-medium.mt-1 Teaching Areas
-          div.mt-1= vm.meta.teachingAreas.join(', ')
+          div.mt-2.flex.flex-wrap.gap-2
+            each area in vm.meta.teachingAreas
+              a(href=`/facet/Job_Vacancies?teachingArea=${enc(area)}` class="inline-flex items-center px-3 py-1 rounded-full border hover:bg-gray-50 transition")= area
 
       if vm.meta.jobLocation
         .border.rounded.p-3
           div.text-xs.text-gray-500.uppercase Location
           div.font-medium.mt-1 Job Location
-          div.mt-1= vm.meta.jobLocation
+          div.mt-2.flex.flex-wrap.gap-2
+            a(href=`/facet/Job_Vacancies?jobLocation=${enc(vm.meta.jobLocation)}` class="inline-flex items-center px-3 py-1 rounded-full border hover:bg-gray-50 transition")= vm.meta.jobLocation
 
       if vm.meta.pay
         .border.rounded.p-3
           div.text-xs.text-gray-500.uppercase Compensation
           div.font-medium.mt-1 Pay
-          div.mt-1= vm.meta.pay
+          div.mt-2.flex.flex-wrap.gap-2
+            a(href=`/facet/Job_Vacancies?pay=${enc(vm.meta.pay)}` class="inline-flex items-center px-3 py-1 rounded-full border hover:bg-gray-50 transition")= vm.meta.pay
 
       if vm.meta.housing
         .border.rounded.p-3
           div.text-xs.text-gray-500.uppercase Benefits
           div.font-medium.mt-1 Housing
-          div.mt-1= vm.meta.housing
+          div.mt-2.flex.flex-wrap.gap-2
+            a(href=`/facet/Job_Vacancies?housing=${enc(vm.meta.housing)}` class="inline-flex items-center px-3 py-1 rounded-full border hover:bg-gray-50 transition")= vm.meta.housing
 
       if vm.meta.email
         .border.rounded.p-3
           div.text-xs.text-gray-500.uppercase Contact
           div.font-medium.mt-1 Email
-          div.mt-1
+          div.mt-2
             a.text-blue-600(href=`mailto:${vm.meta.email}`)= vm.meta.email
 
       if vm.meta.homepage
         .border.rounded.p-3
           div.text-xs.text-gray-500.uppercase Link
           div.font-medium.mt-1 Homepage
-          div.mt-1
-            a.text-blue-600(href=vm.meta.homepage target="_blank")= vm.meta.homepage
+          div.mt-2
+            a.text-blue-600(href=vm.meta.homepage target="_blank" rel="noopener")= vm.meta.homepage
 
       if vm.meta.datePosted
         .border.rounded.p-3
           div.text-xs.text-gray-500.uppercase Posted
           div.font-medium.mt-1 Date Posted
           - const d = new Date(vm.meta.datePosted)
-          div.mt-1= d.toISOString().slice(0,10)
+          div.mt-2= d.toISOString().slice(0,10)
 
-    // Description
+    // Description (항상 동일 라벨)
     if vm.descriptionHtml
       h2.text-xl.font-semibold.mb-3 Description
       .prose.max-w-none
         != vm.descriptionHtml
+
+    // Additional Details (raw JSON 기반, 자동)
+    if vm.extras && vm.extras.length
+      h2.text-xl.font-semibold.mt-8.mb-3 Additional Details
+      div(class="grid grid-cols-1 md:grid-cols-2 gap-4")
+        each it in vm.extras
+          .border.rounded.p-3
+            div.text-xs.text-gray-500.uppercase= it.label
+            div.mt-2= it.value
 
     // Raw JSON (접이식)
     details.mt-8

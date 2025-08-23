@@ -6,67 +6,220 @@ const mongoose = require('mongoose');
 
 /* ---------- helpers ---------- */
 
-// NBSP 제거 + 트림
 function cleanHtml(html = '') {
   return (html || '').replace(/\u00A0/g, ' ').trim();
 }
-function asArray(v) {
-  if (!v) return [];
+function toArray(v) {
+  if (v == null) return [];
   return Array.isArray(v) ? v : [v];
+}
+function safeObjectId(id) {
+  try {
+    return new mongoose.Types.ObjectId(id);
+  } catch {
+    return null;
+  }
+}
+async function findOneById(db, preferred, fallback, _id) {
+  let doc = await db.collection(preferred).findOne({ _id });
+  if (!doc && fallback) {
+    doc = await db.collection(fallback).findOne({ _id });
+  }
+  return doc;
+}
+function pickFirst(obj, keys, def = '') {
+  for (const k of keys) if (obj[k]) return obj[k];
+  return def;
+}
+function labelize(key) {
+  return key
+    .replace(/^_+/, '')
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/_/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/^\w/, c => c.toUpperCase());
+}
+function fmtValue(v) {
+  if (v == null) return '';
+  if (v instanceof Date) return v.toISOString().slice(0, 10);
+  if (typeof v === 'object') {
+    if (Array.isArray(v)) return v.join(', ');
+    try {
+      return JSON.stringify(v);
+    } catch {
+      return String(v);
+    }
+  }
+  return String(v);
 }
 
 /**
- * GET /rdf-resource/Job_Vacancies/:id
- *  ↳ app.js 에서 app.use('/rdf-resource', rdfResourceRouter) 로 마운트되어 있으므로
- *  ↳ 여기서는 프리픽스 없이 '/Job_Vacancies/:id' 만 적습니다.
+ * 공통 VM 빌더
+ * - facetBase: 'Job_Vacancies' | 'Job_Seekers' | 'Online_Tutors'
+ * - 제목/본문 라벨은 항상 Title / Description 으로 통일
+ * - meta: 표준 필드
+ * - extras: meta/제목/본문에 쓰이지 않은 나머지 원시 키 자동 표기
  */
+function buildVM(doc, facetBase, titleKeys = [], descKeys = []) {
+  const used = new Set(['_id', '_class', 'createdAt', 'updatedAt', '__v']);
+
+  const title = (doc._label || pickFirst(doc, titleKeys, '') || '')
+    .toString()
+    .trim();
+  if (doc._label) used.add('_label');
+  for (const k of titleKeys) used.add(k);
+
+  const descriptionHtml = cleanHtml(
+    doc._description || pickFirst(doc, descKeys, '')
+  );
+  if (doc._description) used.add('_description');
+  for (const k of descKeys) used.add(k);
+
+  // meta (표준화)
+  const meta = {
+    country: doc.country || '',
+    studentType: doc.studentType || '',
+    teachingAreas: toArray(doc.teachingArea),
+    languages: toArray(doc.languages || doc.language),
+    companyName: doc.companyName || doc.schoolName || '',
+    jobLocation: doc.jobLocation || doc.location || doc.city || '',
+    pay: doc.pay || '',
+    housing: doc.housing || '',
+    email: doc.email || '',
+    homepage: doc.homepage || doc.website || '',
+    datePosted: doc.datePosted
+      ? new Date(doc.datePosted)
+      : doc.updatedAt
+      ? new Date(doc.updatedAt)
+      : doc.createdAt
+      ? new Date(doc.createdAt)
+      : null
+  };
+
+  // 사용된 키 마킹
+  [
+    'country',
+    'studentType',
+    'teachingArea',
+    'languages',
+    'language',
+    'companyName',
+    'schoolName',
+    'jobLocation',
+    'location',
+    'city',
+    'pay',
+    'housing',
+    'email',
+    'homepage',
+    'website',
+    'datePosted'
+  ].forEach(k => used.add(k));
+
+  // Additional Details: 아직 사용 안 된 원시 키들을 자동 렌더
+  const extras = [];
+  for (const [k, v] of Object.entries(doc)) {
+    if (used.has(k)) continue;
+    if (k.startsWith('@')) continue; // RDF 메타
+    if (k === '_id' || k === '__v') continue;
+    extras.push({ key: k, label: labelize(k), value: fmtValue(v) });
+  }
+
+  return {
+    id: doc._id.toString(),
+    facetBase,
+    title,
+    descriptionHtml,
+    meta,
+    extras,
+    raw: doc
+  };
+}
+
+/* ---------- Routes ---------- */
+
+// Job Vacancies
 router.get('/Job_Vacancies/:id', async (req, res, next) => {
   try {
-    const { id } = req.params;
-    let _id;
-
-    // id 안전 변환
-    try {
-      _id = new mongoose.Types.ObjectId(id);
-    } catch {
-      return res.status(404).send('Invalid id');
-    }
+    const _id = safeObjectId(req.params.id);
+    if (!_id) return res.status(404).send('Invalid id');
 
     const db = mongoose.connection.db;
-
-    // 1순위: RDF 미러
-    let doc = await db.collection('Job_Vacancies_RDF').findOne({ _id });
-
-    // 2순위(백업): 호환 컬렉션
-    if (!doc) {
-      doc = await db.collection('Job_Vacancies').findOne({ _id });
-    }
+    const doc = await findOneById(
+      db,
+      'Job_Vacancies_RDF',
+      'Job_Vacancies',
+      _id
+    );
     if (!doc) return res.status(404).send('Not found');
 
-    // 뷰 모델(화면에 필요한 필드만)
-    const vm = {
-      id: doc._id.toString(),
-      title: (doc._label || doc.title || '').trim(),
-      descriptionHtml: cleanHtml(doc._description || doc.description || ''),
-      meta: {
-        country: doc.country || '',
-        studentType: doc.studentType || '',
-        teachingAreas: asArray(doc.teachingArea),
-        companyName: doc.companyName || '',
-        jobLocation: doc.jobLocation || '',
-        pay: doc.pay || '',
-        housing: doc.housing || '',
-        email: doc.email || '',
-        homepage: doc.homepage || '',
-        datePosted: doc.datePosted ? new Date(doc.datePosted) : null,
-      },
-      // 디버그용 원본(JSON)은 접이식으로만 노출
-      raw: doc,
-    };
-
+    const vm = buildVM(doc, 'Job_Vacancies', ['title'], ['description']);
     return res.render('rdf-resource/jobVacancyShow', { vm });
   } catch (err) {
-    console.error('GET /rdf-resource/Job_Vacancies/:id error:', err);
+    console.error('GET /rdf-resource/Job_Vacancies/:id', err);
+    return next(err);
+  }
+});
+
+// Job Seekers (커스텀 시맨틱 칩 포함)
+router.get('/Job_Seekers/:id', async (req, res, next) => {
+  try {
+    const _id = safeObjectId(req.params.id);
+    if (!_id) return res.status(404).send('Invalid id');
+
+    const db = mongoose.connection.db;
+    const doc = await findOneById(db, 'Job_Seekers_RDF', 'Job_Seekers', _id);
+    if (!doc) return res.status(404).send('Not found');
+
+    const vm = buildVM(
+      doc,
+      'Job_Seekers',
+      ['title', 'name'],
+      ['description', 'about', 'bio']
+    );
+
+    // 커스텀 시맨틱 -> 칩으로 노출할 키들
+    const chipKeys = ['Nationality', 'Preferred_Work_Location', 'Major'];
+    vm.semanticChips = chipKeys
+      .filter(k => doc[k] != null && doc[k] !== '')
+      .map(k => ({
+        key: k,
+        label: k.replace(/_/g, ' '),
+        values: Array.isArray(doc[k]) ? doc[k] : [doc[k]]
+      }));
+
+    return res.render('rdf-resource/jobSeekerShow', { vm });
+  } catch (err) {
+    console.error('GET /rdf-resource/Job_Seekers/:id error:', err);
+    return next(err);
+  }
+});
+
+// Online Tutors
+router.get('/Online_Tutors/:id', async (req, res, next) => {
+  try {
+    const _id = safeObjectId(req.params.id);
+    if (!_id) return res.status(404).send('Invalid id');
+
+    const db = mongoose.connection.db;
+    const doc = await findOneById(
+      db,
+      'Online_Tutors_RDF',
+      'Online_Tutors',
+      _id
+    );
+    if (!doc) return res.status(404).send('Not found');
+
+    const vm = buildVM(
+      doc,
+      'Online_Tutors',
+      ['title', 'name'],
+      ['description', 'about', 'bio']
+    );
+    return res.render('rdf-resource/onlineTutorShow', { vm });
+  } catch (err) {
+    console.error('GET /rdf-resource/Online_Tutors/:id', err);
     return next(err);
   }
 });

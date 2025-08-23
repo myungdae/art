@@ -270,112 +270,50 @@ router.get('/job-vacancies/:id/edit',
   }
 );
 
-// List (public)
+// List (public) — 칩 UI용 distinct 값도 함께 내려줍니다.  ⬅⬅ 기존 블록 통째로 교체
 router.get('/job-vacancies', async (req, res, next) => {
   try {
     const { country, studentType, teachingArea } = req.query;
+
+    // 검색 조건
     const q = {};
     if (country)     q.country = country;
     if (studentType) q.studentType = studentType;
     if (teachingArea) {
+      // 배열/단일값 모두 매치 + 대소문자 무시 검색
       q.$or = [
-        { teachingArea: teachingArea },
-        { teachingArea: { $regex: teachingArea, $options: 'i' } }
+        { teachingArea: teachingArea },                                 // 정확히 포함
+        { teachingArea: { $regex: `^${teachingArea}$`, $options: 'i' } } // 케이스무시
       ];
     }
 
-    const jobs = await JobVacancy.find(q)
-      .sort({ datePosted: -1, createdAt: -1 })
-      .limit(200)
-      .lean();
+    // 목록 + 칩 소스(distinct) 병렬 조회
+    const [jobs, countries, studentTypes, teachingAreas] = await Promise.all([
+      JobVacancy.find(q).sort({ datePosted: -1, createdAt: -1 }).limit(200).lean(),
+      JobVacancy.distinct('country'),
+      JobVacancy.distinct('studentType'),
+      JobVacancy.distinct('teachingArea'),
+    ]);
+
+    // falsy 제거 후 정렬
+    const sortClean = (arr) => (arr || []).filter(Boolean).sort();
 
     return res.render('jobVacancy/index', {
       jobs,
-      filters: { country: country || '', studentType: studentType || '', teachingArea: teachingArea || '' }
+      filters: {
+        country: country || '',
+        studentType: studentType || '',
+        teachingArea: teachingArea || ''
+      },
+      // 상단 칩 섹션용 데이터
+      countries: sortClean(countries),
+      studentTypes: sortClean(studentTypes),
+      teachingAreas: sortClean(teachingAreas),
     });
   } catch (err) {
     console.error('GET /job-vacancies error:', err);
     return next(err);
   }
 });
-
-// List (mine)
-router.get('/job-vacancies/mine',
-  requireLogin,
-  requireRole('Employer'),
-  async (req, res, next) => {
-    try {
-      const jobs = await JobVacancy.find({ user: req.session.user._id })
-        .sort({ datePosted: -1, createdAt: -1 })
-        .lean();
-
-      return res.render('jobVacancy/mine', { jobs });
-    } catch (err) {
-      console.error('GET /job-vacancies/mine error:', err);
-      return next(err);
-    }
-  }
-);
-
-// Update
-router.put('/job-vacancies/:id',
-  requireLogin,
-  requireRole('Employer'),
-  async (req, res) => {
-    const { id } = req.params;
-    try {
-      const payload = normalizePayload(req.body);
-      const errors  = validatePayload(payload);
-      let taOut     = toStringArray(payload.teachingArea);
-      taOut         = mergeExtraAreas(taOut, req.body.extraTeachingArea);
-
-      if (Object.keys(errors).length) {
-        const countries    = await JobVacancy.distinct("country");
-        const studentTypes = await JobVacancy.distinct("studentType");
-        const teaching     = await JobVacancy.distinct("teachingArea");
-
-        const jobVacancy = await JobVacancy.findById(id);
-
-        return res.status(422).render('jobVacancy/edit', {
-          jobVacancy: {
-            ...(jobVacancy ? jobVacancy.toObject() : {}),
-            ...payload,
-            teachingArea: taOut,
-            extraTeachingArea: req.body.extraTeachingArea || ''
-          },
-          countries: countries.sort(),
-          studentTypes: studentTypes.sort(),
-          teachingAreas: teaching.sort(),
-          errors
-        });
-      }
-
-      const title        = (payload.title || '').trim();
-      const _label       = (req.body._labelOverride || title).trim();
-      const _description = (req.body._descriptionOverride || payload.description || '').trim();
-
-      const updated = await JobVacancy.findByIdAndUpdate(
-        id,
-        {
-          ...payload,
-          teachingArea: taOut,
-          title,
-          _label,
-          _description,
-          datePosted: payload.datePosted || new Date()
-        },
-        { new: true, runValidators: true }
-      );
-
-      if (updated) await mirrorToRDF(updated);
-
-      req.flash?.('success', 'Job vacancy updated.');
-      return res.redirect('/facet/Job_Vacancies');
-    } catch (err) {
-      console.error('[UPDATE] job-vacancy error:', err);
-      return res.status(500).render('error', { message: 'Failed to update job vacancy', error: err });
-    }
-  }
-);
 
 module.exports = router;
