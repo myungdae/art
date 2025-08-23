@@ -9,10 +9,10 @@ block content
     .card.shadow-sm.p-4.mb-4
       p.mb-2
         strong Username:
-        |  #{user.username}
+        |  #{(user && user.username) || ''}
       p.mb-2
         strong Email:
-        |  #{user.email}
+        |  #{(user && user.email) || ''}
       p.mb-0
         strong Role:
         |  Employer
@@ -23,11 +23,15 @@ block content
         .col-12.col-md-6
           p.mb-2
             strong Active postings:
-            |  #{activeJobs}
+            if totalSlots != null
+              |  #{activeJobs || 0} / #{totalSlots}
+            else
+              |  #{activeJobs || 0}
         .col-12.col-md-6
           p.mb-2
             strong Remaining ad credits:
-            |  #{credits}
+            // remainingSlots 또는 adCredits 중 내려오는 값 사용
+            |  #{(typeof adCredits !== 'undefined' && adCredits != null) ? adCredits : ((typeof remainingSlots !== 'undefined' && remainingSlots != null) ? remainingSlots : 0)}
 
       .mt-3.d-flex.flex-wrap.gap-2
         if canPost
@@ -37,8 +41,10 @@ block content
           //- 크레딧 없으면 구매
           a.btn.btn-warning(href="/paypal/checkout?type=employer") Buy Ad Credits
 
-        if activeJobs > 0
+        if (activeJobs || 0) > 0
           a.btn.btn-secondary(href="/job-vacancies/mine") My Job Vacancies
+        else
+          button.btn.btn-secondary(disabled) My Job Vacancies
 
-    if activeJobs === 0
+    if (activeJobs || 0) === 0
       p.text-muted.mt-3 No job vacancies posted yet.
