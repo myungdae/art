@@ -1,42 +1,87 @@
+//- views/paypal/checkout_resume.pug
 extends ../layout
 
 block content
   .container.mt-5
     h2.text-center.mb-4 Purchase Resume Visibility
-
     p.mb-3 Select Resume Access Plan:
 
-    each pkg in packages
+    - const hasPre = typeof preselectDays !== 'undefined' && preselectDays;
+
+    each pkg, idx in packages
       .form-check.mb-2
-        input.form-check-input(type="radio", name="planId", id=`plan-${pkg.value}`, value=pkg.value required)
-        label.form-check-label(for=`plan-${pkg.value}`)= `${pkg.label} — $${pkg.price}`
+        input.form-check-input(
+          type="radio"
+          name="planId"
+          id=`plan-${pkg.value}`
+          value=pkg.value
+          checked=(hasPre ? (pkg.days === preselectDays) : (idx === 0))
+        )
+        label.form-check-label(for=`plan-${pkg.value}`)
+          | #{pkg.label} — $#{pkg.price}
 
-    button.btn.btn-primary.mt-3#proceedButton(type="button") Proceed to PayPal
+    // PayPal Buttons will render here
+    .mt-4
+      #paypal-button-container
 
+    noscript
+      p.mt-3.text-danger JavaScript is required for PayPal checkout.
+
+  // ✅ PayPal JS SDK: 서버에서 전달한 paypalClientId 사용 (router/paypal.js에서 res.render 시 넣어둠)
+  script(src=`https://www.paypal.com/sdk/js?client-id=${paypalClientId}&currency=USD`)
   script.
-    document.getElementById('proceedButton').addEventListener('click', async () => {
-      const selectedPlan = document.querySelector('input[name="planId"]:checked');
-      if (!selectedPlan) {
-        alert('Please select a plan.');
-        return;
+    (function () {
+      function selectedPlanId() {
+        const el = document.querySelector('input[name="planId"]:checked');
+        return el ? el.value : null;
       }
 
-      try {
-        const res = await fetch('/paypal/create-order', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ planId: selectedPlan.value })
-        });
-        const data = await res.json();
+      function renderButtons() {
+        if (!(window.paypal && paypal.Buttons)) return;
+        paypal.Buttons({
+          style: { layout: 'vertical', shape: 'rect', label: 'paypal' },
 
-        if (data.id) {
-          // Redirect to PayPal checkout page
-          window.location.href = `https://www.paypal.com/checkoutnow?token=${data.id}`;
-        } else {
-          alert('Failed to create PayPal order');
+          // 1) 서버에 주문 생성 요청
+          createOrder: async function () {
+            const planId = selectedPlanId();
+            if (!planId) { alert('Please select a plan.'); throw new Error('no plan'); }
+            const res = await fetch('/paypal/create-order', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ planId })
+            });
+            const data = await res.json();
+            if (!data.id) throw new Error('Failed to create order');
+            return data.id; // → PayPal에 전달
+          },
+
+          // 2) 결제 승인되면 서버에 캡처 요청 후, 서버 응답대로 리다이렉트
+          onApprove: async function (data) {
+            const res = await fetch('/paypal/capture-order/' + data.orderID, { method: 'POST' });
+            const out = await res.json();
+            if (out.status === 'redirect' && out.url) {
+              window.location.href = out.url;
+            } else {
+              window.location.href = '/user/mypage-jobseeker';
+            }
+          },
+
+          onError: function (err) {
+            console.error('PayPal error', err);
+            alert('PayPal checkout failed. Please try again.');
+          }
+        }).render('#paypal-button-container');
+      }
+
+      // 플랜을 바꾸면 버튼도 다시 렌더링 (금액/설명 반영)
+      document.addEventListener('change', function (e) {
+        if (e.target && e.target.name === 'planId') {
+          const box = document.getElementById('paypal-button-container');
+          if (box) box.innerHTML = '';
+          renderButtons();
         }
-      } catch (err) {
-        console.error(err);
-        alert('An error occurred while creating the order.');
-      }
-    });
+      });
+
+      // 초기 렌더
+      renderButtons();
+    })();
