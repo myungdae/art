@@ -1,4 +1,4 @@
-// router/jobSeeker.js  (FULL DROP-IN, cleaned)
+// router/jobSeeker.js  (FULL DROP-IN, with payment gating)
 'use strict';
 
 const express = require('express');
@@ -8,7 +8,10 @@ const mongoose = require('mongoose');
 
 const JobSeeker = require('../model/jobSeeker');
 const validateObjectId = require('../middleware/validateObjectId');
-// const { requireLogin, requireRole } = require('../middleware/auth'); // 필요 시 활성화
+
+// ✅ 로그인/결제 가드 추가
+const { requireLogin } = require('../middleware/auth');            // 이미 프로젝트에 있는 로그인 미들웨어
+const { requireActiveResumeAccess } = require('../middleware/access'); // 새로 추가한 결제/만기 가드
 
 router.use(methodOverride('_method'));
 router.param('id', validateObjectId('id'));
@@ -120,61 +123,77 @@ async function mirrorToRDF_JobSeeker(js) {
     .updateOne({ _id: js._id }, { $set: doc }, { upsert: true });
 }
 
-/* -------------------- NEW -------------------- */
-// router.get('/job-seekers/new', requireLogin, requireRole('JobSeeker'), ...
-router.get('/job-seekers/new', (req, res) => {
-  res.render('jobSeeker/new', {
-    nationalities: defaultNationalities,
-    preferredWorkLocations: defaultPrefWorkLocs,
-    majors: defaultMajors,
-    languages: defaultLanguages,
-    values: {},
-    errors: {}
-  });
-});
-
-/* -------------------- CREATE -------------------- */
-router.post('/job-seekers', async (req, res) => {
-  try {
-    const payload = normalizePayload(req.body);
-    const errors = validatePayload(payload);
-    if (Object.keys(errors).length) {
-      return res.status(422).render('jobSeeker/new', {
-        nationalities: defaultNationalities,
-        preferredWorkLocations: defaultPrefWorkLocs,
-        majors: defaultMajors,
-        languages: defaultLanguages,
-        values: req.body,
-        errors
-      });
-    }
-
-    // 스키마가 String이면 CSV로 저장
-    if (JobSeeker.schema.path('languageSpoken')?.instance === 'String') {
-      payload.languageSpoken = Array.isArray(payload.languageSpoken)
-        ? payload.languageSpoken.join(', ')
-        : String(payload.languageSpoken || '');
-    }
-
-    const doc = new JobSeeker(payload);
-    await doc.save();
-    await mirrorToRDF_JobSeeker(doc);
-
-    req.flash?.('success', 'JobSeeker profile created.');
-    return res.redirect('/facet/Job_Seekers');
-  } catch (err) {
-    console.error('[JobSeeker CREATE] error:', err);
-    return res.status(500).render('error', { message: 'Failed to create job seeker', error: err });
+/* -------------------- NEW (결제 가드 적용) -------------------- */
+// 미결제/만기 사용자는 결제 페이지로 리다이렉트
+router.get(
+  '/job-seekers/new',
+  requireLogin,
+  requireActiveResumeAccess,
+  (req, res) => {
+    res.render('jobSeeker/new', {
+      nationalities: defaultNationalities,
+      preferredWorkLocations: defaultPrefWorkLocs,
+      majors: defaultMajors,
+      languages: defaultLanguages,
+      values: {},
+      errors: {}
+    });
   }
-});
+);
+
+/* -------------------- CREATE (결제 가드 적용) -------------------- */
+router.post(
+  '/job-seekers',
+  requireLogin,
+  requireActiveResumeAccess,
+  async (req, res) => {
+    try {
+      const payload = normalizePayload(req.body);
+      const errors = validatePayload(payload);
+      if (Object.keys(errors).length) {
+        return res.status(422).render('jobSeeker/new', {
+          nationalities: defaultNationalities,
+          preferredWorkLocations: defaultPrefWorkLocs,
+          majors: defaultMajors,
+          languages: defaultLanguages,
+          values: req.body,
+          errors
+        });
+      }
+
+      // 스키마가 String이면 CSV로 저장
+      if (JobSeeker.schema.path('languageSpoken')?.instance === 'String') {
+        payload.languageSpoken = Array.isArray(payload.languageSpoken)
+          ? payload.languageSpoken.join(', ')
+          : String(payload.languageSpoken || '');
+      }
+
+      // (선택) 소유자 연결
+      if (req.user?._id) {
+        payload.userId = req.user._id;
+      }
+
+      const doc = new JobSeeker(payload);
+      await doc.save();
+      await mirrorToRDF_JobSeeker(doc);
+
+      req.flash?.('success', 'JobSeeker profile created.');
+      return res.redirect('/facet/Job_Seekers');
+    } catch (err) {
+      console.error('[JobSeeker CREATE] error:', err);
+      return res.status(500).render('error', { message: 'Failed to create job seeker', error: err });
+    }
+  }
+);
 
 /* -------------------- EDIT -------------------- */
-router.get('/job-seekers/:id/edit', async (req, res) => {
+router.get('/job-seekers/:id/edit', requireLogin, async (req, res) => {
   try {
     const { id } = req.params;
     const jobSeeker = await JobSeeker.findById(id);
     if (!jobSeeker) return res.status(404).send('Not found');
 
+    // (선택) 본인/관리자만 접근하도록 강화하려면 여기서 검사
     res.render('jobSeeker/edit', {
       jobSeeker,
       nationalities: defaultNationalities,
@@ -190,7 +209,7 @@ router.get('/job-seekers/:id/edit', async (req, res) => {
 });
 
 /* -------------------- UPDATE -------------------- */
-router.put('/job-seekers/:id', async (req, res) => {
+router.put('/job-seekers/:id', requireLogin, async (req, res) => {
   const { id } = req.params;
   try {
     const payload = normalizePayload(req.body);

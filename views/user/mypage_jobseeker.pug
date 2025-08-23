@@ -30,14 +30,16 @@ block content
               | Remaining Days of Resume Access:
               strong.ms-1 #{remainingDays}
 
-        // 버튼 (붙어 보이도록 btn-group, 모바일 100%폭)
+        // ✅ 버튼 (결제/가시성 상태에 따른 노출 제어)
         .d-flex.justify-content-center.mt-3.btn-block-mobile
           .btn-group.mp-btn-group.mp-btn-tight(role="group", aria-label="Resume actions")
-            a.btn.btn-success.btn-lg(href="/jobSeeker/new") Register Resume
-            if remainingDays <= 0
-              a.btn.btn-primary.btn-lg(href="/paypal/checkout-resume") Purchase Resume Visibility
-            else
+            if hasActiveResumeAccess
+              a.btn.btn-success.btn-lg(href="/job-seekers/new") Register Resume
+              // 미리 결제되어 있으면 구매 버튼은 비활성
               a.btn.btn-outline-dark.btn-lg(aria-disabled="true") Purchase Resume Visibility
+            else
+              // 미결제/만기: Register는 감추고 구매만 노출
+              a.btn.btn-primary.btn-lg(href=purchaseLink || '/user/job-seekers/resume-access') Purchase Resume Visibility
 
       // ===== 메인 그리드 =====
       .row.mt-4

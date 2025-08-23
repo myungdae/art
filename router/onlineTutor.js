@@ -8,6 +8,8 @@ const mongoose = require('mongoose');
 const OnlineTutor = require('../model/onlineTutor');
 const validateObjectId = require('../middleware/validateObjectId');
 const { requireLogin, requireRole } = require('../middleware/auth');
+// ✅ 추가: 튜터 가시성 가드
+const { requireActiveTutorAccess } = require('../middleware/access');
 
 router.use(methodOverride('_method'));
 router.param('id', validateObjectId('id'));
@@ -126,29 +128,35 @@ async function mirrorToRDF(tutorDoc) {
 }
 
 /* -------------------- New -------------------- */
-router.get('/online-tutors/new',
+// ✅ 가드 추가 + 레거시 경로 겸용
+router.get(
+  ['/online-tutors/new', '/onlineTutor/new'],
   requireLogin,
   requireRole(['Online_Tutor', 'Tutor']),
+  requireActiveTutorAccess,                       // 🔒 결제/가시성 체크
   async (req, res) => {
     res.render('onlineTutor/new', {
       expertiseList: defaultExpertise,
       expList: defaultExperiences,
       genderList: defaultGenders,
-      values: { email: req.session?.user?.email || '' },
+      values: { email: (req.user?.email || req.session?.user?.email || '') },
       errors: {}
     });
   }
 );
 
 /* -------------------- Create -------------------- */
-router.post('/online-tutors',
+// ✅ 가드 추가 + 레거시 경로 겸용
+router.post(
+  ['/online-tutors', '/onlineTutor'],
   requireLogin,
   requireRole(['Online_Tutor', 'Tutor']),
+  requireActiveTutorAccess,                       // 🔒 결제/가시성 체크
   async (req, res) => {
     try {
       const payload = normalizePayload(req.body);
-      if (!payload.email && req.session?.user?.email) {
-        payload.email = String(req.session.user.email).toLowerCase();
+      if (!payload.email && (req.user?.email || req.session?.user?.email)) {
+        payload.email = String(req.user?.email || req.session.user.email).toLowerCase();
       }
 
       const errors = validatePayload(payload);
@@ -251,8 +259,8 @@ router.put('/online-tutors/:id',
     const { id } = req.params;
     try {
       const payload = normalizePayload(req.body);
-      if (!payload.email && req.session?.user?.email) {
-        payload.email = String(req.session.user.email).toLowerCase();
+      if (!payload.email && (req.user?.email || req.session?.user?.email)) {
+        payload.email = String(req.user?.email || req.session.user.email).toLowerCase();
       }
 
       const errors = validatePayload(payload);

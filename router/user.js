@@ -222,20 +222,25 @@ router.post('/employer/plan',
 );
 
 /* --------------------------- Job Seeker mypage + payments --------------------------- */
+// ✅ 남은 일수 계산 유틸
+function calcRemainingDays(resumeAccess) {
+  if (!resumeAccess || !resumeAccess.startDate || !resumeAccess.durationDays) return 0;
+  const start = new Date(resumeAccess.startDate);
+  const durationMs = resumeAccess.durationDays * 86400000;
+  const diff = start.getTime() + durationMs - Date.now();
+  return diff > 0 ? Math.ceil(diff / 86400000) : 0;
+}
+
 router.get('/mypage-jobseeker', requireLogin, async (req, res) => {
   const user = await User.findById(req.session.user._id).lean();
-  let remainingDays = 0;
 
-  if (user.resumeAccess && user.resumeAccess.startDate && user.resumeAccess.durationDays) {
-    const start = new Date(user.resumeAccess.startDate);
-    const durationMs = user.resumeAccess.durationDays * 86400000;
-    const diff = start.getTime() + durationMs - Date.now();
-    remainingDays = diff > 0 ? Math.ceil(diff / 86400000) : 0;
-  }
+  const remainingDays = calcRemainingDays(user?.resumeAccess);
+  const hasActiveResumeAccess = remainingDays > 0; // ✅ 이 값으로 버튼 노출 제어
 
   return res.render('user/mypage-jobseeker', {
     user,
     remainingDays,
+    hasActiveResumeAccess,                // ← 뷰에서 Register 버튼 노출 여부 결정
     purchaseLink: '/user/job-seekers/resume-access'
   });
 });
@@ -267,6 +272,7 @@ router.post('/job-seekers/resume-access', requireLogin, async (req, res) => {
   }
 });
 
+// --------------------------- Tutor mypage ---------------------------
 router.get('/mypage-tutor', requireLogin, async (req, res) => {
   try {
     const user = await User.findById(req.session.user._id).lean();
@@ -286,19 +292,40 @@ router.get('/mypage-tutor', requireLogin, async (req, res) => {
 
     const data = { user, tutor, tutorDoc: tutor, threads };
 
-    // 기본(하이픈) 뷰 시도 → 실패하면 구(언더스코어) 뷰로 폴백
-    return res.render('user/mypage-tutor', data, (err, html) => {
-      if (err) {
-        console.error('[mypage-tutor] render error:', err.message);
-        return res.render('user/mypage_tutor', data);  // legacy fallback
-      }
-      res.send(html);
-    });
+    // ✅ 폴백 제거: 하이픈 뷰만 사용
+    return res.render('user/mypage-tutor', data);
   } catch (err) {
     console.error('❌ Tutor mypage error:', err.stack || err);
     return res.status(500).send('❌ Failed to load Tutor Dashboard');
   }
 });
 
+
+/* --------------------------- Tutor visibility purchase (GET/POST) --------------------------- */
+// /user/online-tutors/visibility (리다이렉트 목적지)
+router.get('/online-tutors/visibility', requireLogin, (req, res) => {
+  return res.render('onlineTutor/visibility', {
+    user: req.session.user,
+    pageTitle: 'Purchase Tutor Visibility'
+  });
+});
+
+router.post('/online-tutors/visibility', requireLogin, async (req, res) => {
+  try {
+    const { accessPeriod } = req.body; // 30 | 90 | 365
+    const days = parseInt(accessPeriod, 10);
+    if (![30, 90, 365].includes(days)) {
+      return res.status(400).send('❌ Invalid tutor visibility period');
+    }
+    // 결제 모듈로 이동(type=tutor 구분)
+    return res.redirect(`/paypal/checkout?type=tutor&accessPeriod=${days}`);
+  } catch (e) {
+    console.error('[tutor visibility] error:', e.message || e);
+    return res.status(500).send('❌ Failed to process tutor visibility');
+  }
+});
+
+// (선택) 구경로 별칭 지원
+router.get('/tutor/plan', (req, res) => res.redirect('/user/online-tutors/visibility'));
 
 module.exports = router;

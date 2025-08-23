@@ -1,0 +1,39 @@
+//- views/onlineTutor/visibility.pug
+extends ../layout
+
+block content
+  .container.mt-5.mb-5
+    h2.text-center.mb-4 Purchase Tutor Listing Visibility
+
+    .card.shadow-sm.mx-auto(style="max-width: 720px")
+      .card-body
+        p.lead.mb-3
+          | Choose how long your tutor profile should be visible to 
+          b students and parents 
+          | (and schools looking for online lessons).
+
+        ul.mb-4.text-muted
+          li Your profile will be discoverable in the Online Tutors section during the active period.
+          li You can create or update your tutor profile while visibility is active.
+          li When the period expires, the profile becomes hidden until you renew.
+
+        form(method="POST", action="/user/online-tutors/visibility")
+          .row.g-3
+            .col-12.col-md-4
+              button.btn.btn-outline-primary.w-100.py-3(type="submit", name="accessPeriod", value="30")
+                strong 30 Days
+                br
+                span.small Keep me listed for a month
+            .col-12.col-md-4
+              button.btn.btn-outline-primary.w-100.py-3(type="submit", name="accessPeriod", value="90")
+                strong 90 Days
+                br
+                span.small Great for a semester
+            .col-12.col-md-4
+              button.btn.btn-outline-primary.w-100.py-3(type="submit", name="accessPeriod", value="365")
+                strong 365 Days
+                br
+                span.small Year-round visibility
+
+        .mt-3.text-center
+          a.btn.btn-link(href="/user/mypage-tutor") ← Back to My Page
