@@ -1,4 +1,6 @@
 // router/user.js
+'use strict';
+
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
@@ -7,13 +9,13 @@ const User = require('../model/user');
 const JobVacancy = require('../model/jobVacancy');
 const OnlineTutor = require('../model/onlineTutor');
 const Thread = require('../model/thread');
-const { logThread } = require('../utils/threadLog');
 const JobSeeker = require('../model/jobSeeker');
 
 const methodOverride = require('method-override');
 const requireAdmin = require('../middleware/requireAdmin');
+const { requireLogin, requireRole /*, requirePaidEmployer*/ } = require('../middleware/auth');
 
-const { requireLogin, requireRole, requirePaidEmployer } = require('../middleware/auth');
+router.use(methodOverride('_method'));
 
 /* --------------------------- Register --------------------------- */
 router.get('/register', (req, res) => {
@@ -69,8 +71,9 @@ router.post('/login', async (req, res) => {
       role: user.role
     };
 
-    // async log
+    // 선택: 로그인 로깅 (실패해도 무시)
     try {
+      const { logThread } = require('../utils/threadLog');
       await logThread(req, {
         type: 'auth',
         action: 'login',
@@ -109,7 +112,7 @@ router.get('/mypage', requireLogin, async (req, res) => {
   }
 });
 
-/* --------------------------- Employer mypage (slot-based) --------------------------- */
+/* --------------------------- Employer mypage (credits-based posting) --------------------------- */
 router.get('/mypage-employer',
   requireLogin,
   requireRole('Employer'),
@@ -118,10 +121,10 @@ router.get('/mypage-employer',
       const user = await User.findById(req.session.user._id).lean();
       if (!user) return res.status(404).send('User not found');
 
-      // List data
+      // 내 공고 목록
       const jobVacancies = await JobVacancy.find({ user: req.session.user._id }).lean();
 
-      // Slots (Admin “tokens” ≈ remaining slots)
+      // (참고용) 활성 공고 수 / 총 슬롯
       const now = new Date();
       const TOTAL_SLOTS = parseInt(process.env.JOB_POST_QUOTA ?? '16', 10);
 
@@ -138,30 +141,31 @@ router.get('/mypage-employer',
 
       const activeJobs = await JobVacancy.countDocuments(activeQuery);
       const remainingSlots = Math.max(0, TOTAL_SLOTS - activeJobs);
-      const canPost = remainingSlots > 0;
 
-      // Soonest expiration (for reference)
+      // ✅ 핵심: 포스팅 가능 여부는 adsAvailable(보유 크레딧)로 판단
+      const adCredits = Number(user.adsAvailable || 0);
+      const canPost = adCredits > 0;
+
+      // 가장 빨리 만료되는 공고(표시용)
       const soonest = await JobVacancy.findOne({
         $or: idOrEmail,
         expiresAt: { $exists: true }
       }).sort({ expiresAt: 1 }).select('expiresAt title').lean();
 
-      let nextExpireAt = null;       // "yyyy-MM-dd" (KST)
-      let nextExpireTitle = null;    // string
-      let expireTag = null;          // "D-7" | "Today" | "Expired"
+      let nextExpireAt = null;
+      let nextExpireTitle = null;
+      let expireTag = null;
 
       if (soonest && soonest.expiresAt) {
         const expireDate = new Date(soonest.expiresAt);
-        const kst = new Date(expireDate.getTime() + 9 * 60 * 60 * 1000);
-        nextExpireAt = kst.toISOString().slice(0, 10); // yyyy-MM-dd (KST)
-
         const msDiff = expireDate.getTime() - now.getTime();
-        if (msDiff <= 0) {
-          expireTag = 'Expired';
-        } else {
+        if (msDiff <= 0) expireTag = 'Expired';
+        else {
           const daysLeft = Math.ceil(msDiff / 86400000);
           expireTag = daysLeft === 0 ? 'Today' : `D-${daysLeft}`;
         }
+        const kst = new Date(expireDate.getTime() + 9 * 60 * 60 * 1000);
+        nextExpireAt = kst.toISOString().slice(0, 10);
         nextExpireTitle = soonest.title || null;
       }
 
@@ -172,6 +176,9 @@ router.get('/mypage-employer',
         totalSlots: TOTAL_SLOTS,
         activeJobs,
         remainingSlots,
+
+        // 👇 새로 추가: 크레딧/버튼 노출 제어
+        adCredits,
         canPost,
 
         nextExpireAt,
@@ -185,21 +192,11 @@ router.get('/mypage-employer',
   }
 );
 
-/* ============================================================
-   REMOVED: duplicate Job Vacancy create routes
-   (now handled exclusively in router/jobVacancy.js)
-   - GET  /job-vacancies/new
-   - POST /job-vacancies
-   ============================================================ */
-
-/* --------------------------- Employer plan (purchase entry) --------------------------- */
+/* --------------------------- Employer plan (선택: 그대로 유지) --------------------------- */
 router.get('/employer/plan',
   requireLogin,
   requireRole('Employer'),
-  (req, res) => {
-    // 플랜 선택 화면 (30/90/365)
-    return res.render('employer/plan');
-  }
+  (req, res) => res.render('employer/plan')
 );
 
 router.post('/employer/plan',
@@ -212,7 +209,6 @@ router.post('/employer/plan',
       if (![30, 90, 365].includes(periodDays)) {
         return res.status(400).send('❌ Invalid employer plan period');
       }
-      // 결제 라우트로 넘길 때 구분자 포함
       return res.redirect(`/paypal/checkout?type=employer&employerPeriod=${periodDays}`);
     } catch (err) {
       console.error('❌ Employer plan error:', err.message);
@@ -222,7 +218,6 @@ router.post('/employer/plan',
 );
 
 /* --------------------------- Job Seeker mypage + payments --------------------------- */
-// ✅ 남은 일수 계산 유틸
 function calcRemainingDays(resumeAccess) {
   if (!resumeAccess || !resumeAccess.startDate || !resumeAccess.durationDays) return 0;
   const start = new Date(resumeAccess.startDate);
@@ -235,12 +230,12 @@ router.get('/mypage-jobseeker', requireLogin, async (req, res) => {
   const user = await User.findById(req.session.user._id).lean();
 
   const remainingDays = calcRemainingDays(user?.resumeAccess);
-  const hasActiveResumeAccess = remainingDays > 0; // ✅ 이 값으로 버튼 노출 제어
+  const hasActiveResumeAccess = remainingDays > 0;
 
   return res.render('user/mypage-jobseeker', {
     user,
     remainingDays,
-    hasActiveResumeAccess,                // ← 뷰에서 Register 버튼 노출 여부 결정
+    hasActiveResumeAccess,
     purchaseLink: '/user/job-seekers/resume-access'
   });
 });
@@ -258,13 +253,7 @@ router.post('/job-seekers/resume-access', requireLogin, async (req, res) => {
       return res.status(400).send('❌ Invalid access period');
     }
 
-    await User.findByIdAndUpdate(req.session.user._id, {
-      resumeAccess: {
-        startDate: new Date(),
-        durationDays: periodDays
-      }
-    });
-
+    // 결제 페이지로 이동 (레거시 경로 유지)
     return res.redirect(`/paypal/checkout?accessPeriod=${periodDays}`);
   } catch (err) {
     console.error('❌ Failed to process resume access:', err.message);
@@ -272,7 +261,7 @@ router.post('/job-seekers/resume-access', requireLogin, async (req, res) => {
   }
 });
 
-// --------------------------- Tutor mypage ---------------------------
+/* --------------------------- Tutor mypage --------------------------- */
 router.get('/mypage-tutor', requireLogin, async (req, res) => {
   try {
     const user = await User.findById(req.session.user._id).lean();
@@ -294,7 +283,7 @@ router.get('/mypage-tutor', requireLogin, async (req, res) => {
 
     const data = { user, tutor, tutorDoc: tutor, threads };
 
-    // ✅ 폴백 제거: 오직 'user/mypage-tutor'만 렌더
+    // ✅ 폴백 제거: 오직 'user/mypage-tutor' 만 렌더
     return res.render('user/mypage-tutor', data);
   } catch (err) {
     console.error('❌ Tutor mypage error:', err.stack || err);
@@ -302,21 +291,17 @@ router.get('/mypage-tutor', requireLogin, async (req, res) => {
   }
 });
 
-
-
-// Tutor visibility: GET entry (buttons hit this)
+/* --------------------------- Tutor visibility purchase (GET/POST) --------------------------- */
+// 버튼에서 바로 결제로 가는 엔트리
 router.get('/online-tutors/visibility/start', requireLogin, (req, res) => {
   const days = parseInt(req.query.days, 10);
   if (![30, 90, 365].includes(days)) {
     return res.status(400).send('❌ Invalid tutor visibility period');
   }
-  // PayPal checkout으로 분기 (type=tutor)
   return res.redirect(`/paypal/checkout?type=tutor&accessPeriod=${days}`);
 });
 
-
-/* --------------------------- Tutor visibility purchase (GET/POST) --------------------------- */
-// /user/online-tutors/visibility (리다이렉트 목적지)
+// 설명/선택 페이지 (필요 시)
 router.get('/online-tutors/visibility', requireLogin, (req, res) => {
   return res.render('onlineTutor/visibility', {
     user: req.session.user,
@@ -331,7 +316,6 @@ router.post('/online-tutors/visibility', requireLogin, async (req, res) => {
     if (![30, 90, 365].includes(days)) {
       return res.status(400).send('❌ Invalid tutor visibility period');
     }
-    // 결제 모듈로 이동(type=tutor 구분)
     return res.redirect(`/paypal/checkout?type=tutor&accessPeriod=${days}`);
   } catch (e) {
     console.error('[tutor visibility] error:', e.message || e);
@@ -339,7 +323,7 @@ router.post('/online-tutors/visibility', requireLogin, async (req, res) => {
   }
 });
 
-// (선택) 구경로 별칭 지원
+// (선택) 구경로 별칭
 router.get('/tutor/plan', (req, res) => res.redirect('/user/online-tutors/visibility'));
 
 module.exports = router;

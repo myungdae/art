@@ -18,13 +18,17 @@ router.param('id', validateObjectId('id'));
 
 // --- PayPal Access Token ---
 async function getAccessToken() {
-  const auth = Buffer.from(`${CLIENT_ID}:${SECRET}`).toString('base64');
-  const res = await axios.post(`${PAYPAL_API}/v1/oauth2/token`, 'grant_type=client_credentials', {
-    headers: {
-      Authorization: `Basic ${auth}`,
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-  });
+  const auth = Buffer.from(CLIENT_ID + ':' + SECRET).toString('base64');
+  const res = await axios.post(
+    PAYPAL_API + '/v1/oauth2/token',
+    'grant_type=client_credentials',
+    {
+      headers: {
+        Authorization: 'Basic ' + auth,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    }
+  );
   return res.data.access_token;
 }
 
@@ -35,23 +39,24 @@ async function getAccessToken() {
    - Tutor          : ?type=tutor&accessPeriod=30 → tutor checkout
 ------------------------------------------------------------- */
 router.get('/checkout', requireLogin, (req, res) => {
-  const { type, accessPeriod } = req.query;
+  const type = req.query.type;
+  const accessPeriod = req.query.accessPeriod;
 
   // TUTOR
   if (type === 'tutor') {
     const days = parseInt(accessPeriod, 10);
-    if (![30, 90, 365].includes(days)) {
+    if ([30, 90, 365].indexOf(days) === -1) {
       return res.status(400).send('❌ Invalid tutor visibility period');
     }
-    const selected = tutorPriceConfig.find(p => Number(p.days ?? p.id) === days) || null;
-    const label = selected?.label || `Tutor Listing Visibility — ${days} Days`;
-    const price = selected?.price;
+    const selected = tutorPriceConfig.find(p => Number(p.days || p.id) === days) || null;
+    const label = (selected && selected.label) || ('Tutor Listing Visibility - ' + days + ' Days');
+    const price = selected && selected.price;
 
     return res.render('paypal/checkout_tutor', {
       user: req.user,
-      days,
-      price,
-      label,
+      days: days,
+      price: price,
+      label: label,
       paypalClientId: process.env.PAYPAL_CLIENT_ID
     });
   }
@@ -67,8 +72,8 @@ router.get('/checkout', requireLogin, (req, res) => {
     }));
     return res.render('paypal/checkout_resume', {
       user: req.user,
-      packages,
-      preselectDays,
+      packages: packages,
+      preselectDays: preselectDays,
       paypalClientId: process.env.PAYPAL_CLIENT_ID
     });
   }
@@ -82,7 +87,7 @@ router.get('/checkout', requireLogin, (req, res) => {
   ];
   return res.render('paypal/checkout', {
     user: req.user,
-    packages,
+    packages: packages,
     paypalClientId: process.env.PAYPAL_CLIENT_ID
   });
 });
@@ -99,7 +104,7 @@ router.get('/checkout-resume', requireLogin, (req, res) => {
   }));
   res.render('paypal/checkout_resume', {
     user: req.user,
-    packages,
+    packages: packages,
     paypalClientId: process.env.PAYPAL_CLIENT_ID
   });
 });
@@ -112,7 +117,11 @@ router.get('/checkout-resume', requireLogin, (req, res) => {
 ------------------------------------------------------------- */
 router.post('/create-order', requireLogin, async (req, res) => {
   try {
-    const { planId, resumeDays, adPackage, tutorDays } = req.body;
+    const planId = req.body.planId;
+    const resumeDays = req.body.resumeDays;
+    const adPackage = req.body.adPackage;
+    const tutorDays = req.body.tutorDays;
+
     let purchaseUnit = null;
 
     // RESUME (by planId)
@@ -133,27 +142,27 @@ router.post('/create-order', requireLogin, async (req, res) => {
       req.session.resumeDays = days;
       purchaseUnit = {
         amount: { currency_code: 'USD', value: selected.price.toFixed(2) },
-        description: selected.label || `Resume Visibility — ${days} Days`,
+        description: (selected.label || ('Resume Visibility - ' + days + ' Days')),
       };
     }
     // EMPLOYER ADS
     else if (adPackage) {
       const prices = { '1': 30, '4': 100, '12': 250, '24': 450 };
       purchaseUnit = {
-        amount: { currency_code: 'USD', value: (prices[adPackage] || 30).toFixed(2) },
-        description: `${adPackage} Job Vacancy Ads`,
+        amount: { currency_code: 'USD', value: ((prices[adPackage] || 30)).toFixed(2) },
+        description: adPackage + ' Job Vacancy Ads',
       };
       req.session.adPackage = adPackage;
     }
     // TUTOR
     else if (tutorDays) {
       const days = parseInt(tutorDays, 10);
-      const selected = tutorPriceConfig.find(p => Number(p.days ?? p.id) === days);
+      const selected = tutorPriceConfig.find(p => Number(p.days || p.id) === days);
       if (!selected) return res.status(400).json({ error: 'Invalid tutor plan' });
       req.session.tutorDays = days;
       purchaseUnit = {
         amount: { currency_code: 'USD', value: selected.price.toFixed(2) },
-        description: selected.label || `Tutor Listing Visibility — ${days} Days`,
+        description: (selected.label || ('Tutor Listing Visibility - ' + days + ' Days')),
       };
     }
     else {
@@ -163,14 +172,14 @@ router.post('/create-order', requireLogin, async (req, res) => {
     // Create PayPal Order
     const accessToken = await getAccessToken();
     const order = await axios.post(
-      `${PAYPAL_API}/v2/checkout/orders`,
+      PAYPAL_API + '/v2/checkout/orders',
       { intent: 'CAPTURE', purchase_units: [purchaseUnit] },
-      { headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' } }
+      { headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' } }
     );
 
     res.json({ id: order.data.id });
   } catch (error) {
-    console.error('❌ create-order error:', error.response?.data || error.message);
+    console.error('❌ create-order error:', error.response && error.response.data ? JSON.stringify(error.response.data) : error.message);
     res.status(500).json({ error: 'Failed to create order' });
   }
 });
@@ -181,24 +190,25 @@ router.post('/create-order', requireLogin, async (req, res) => {
 ------------------------------------------------------------- */
 router.post('/capture-order/:orderID', requireLogin, async (req, res) => {
   try {
-    const { orderID } = req.params;
+    const orderID = req.params.orderID;
     const accessToken = await getAccessToken();
 
     await axios.post(
-      `${PAYPAL_API}/v2/checkout/orders/${orderID}/capture`,
+      PAYPAL_API + '/v2/checkout/orders/' + orderID + '/capture',
       {},
-      { headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' } }
+      { headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' } }
     );
 
     // 현재 로그인 사용자 ID 추출 (세션 userId 미설정 방지)
-    const uid = (req.user && req.user._id) || (req.session.user && req.session.user._id);
+    const uid =
+      (req.user && req.user._id) ||
+      (req.session.user && req.session.user._id);
     if (!uid) return res.status(401).json({ error: 'No user in session' });
 
     // EMPLOYER ADS
     if (req.session.adPackage) {
       const count = parseInt(req.session.adPackage, 10);
       await User.findByIdAndUpdate(uid, { $inc: { adsAvailable: count } });
-      // 세션 클린업
       delete req.session.adPackage;
       return res.json({ status: 'redirect', url: '/job-vacancies/new_paid_user' });
     }
@@ -237,7 +247,7 @@ router.post('/capture-order/:orderID', requireLogin, async (req, res) => {
 
     return res.status(400).json({ error: 'Invalid payment context' });
   } catch (error) {
-    console.error('❌ capture-order error:', error.response?.data || error.message);
+    console.error('❌ capture-order error:', error.response && error.response.data ? JSON.stringify(error.response.data) : error.message);
     res.status(500).json({ error: 'Failed to capture payment' });
   }
 });

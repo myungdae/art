@@ -1,34 +1,68 @@
+//- views/user/mypage-employer.pug
 extends ../layout
 
 block content
-  .container.mt-5
-    h2.text-center.mb-5 My Page (Employer)
+  .container.mt-5.mb-5
+    h2.text-center.mb-4 Employer Dashboard
 
-    p
-      strong Username:
-      | #{user.username}
+    // ===== 사용자 정보 =====
+    .card.shadow-sm.p-4.mb-4
+      .row.g-2
+        .col-12.col-md-6
+          p.mb-2
+            strong Username:
+            |  #{user.username}
+        .col-12.col-md-6
+          p.mb-2
+            strong Email:
+            |  #{user.email}
+        .col-12.col-md-6
+          p.mb-0
+            strong Role:
+            |  Employer
 
-    p
-      strong Email:
-      | #{user.email}
+    // ===== 상태 요약 =====
+    .card.shadow-sm.p-4.mb-4
+      .row.g-3.align-items-center
+        .col-12.col-md-4
+          p.mb-1
+            strong Active postings:
+            |  
+            - const _active = (typeof activeJobs !== 'undefined') ? activeJobs : ((jobVacancies && jobVacancies.length) ? jobVacancies.length : 0);
+            - const _total  = (typeof totalSlots !== 'undefined') ? totalSlots : 16;
+            | #{_active} / #{_total}
 
-    p
-      strong Role:
-      | Employer
+        .col-12.col-md-4
+          p.mb-1
+            strong Remaining ad credits:
+            |  
+            - const _remaining = (typeof remainingSlots !== 'undefined') ? remainingSlots : Math.max(0, _total - _active);
+            | #{_remaining}
 
-    p.mt-3
-      | 🔑 Remaining Tokens:
-      strong= user.adsAvailable || 0
+        if typeof nextExpireAt !== 'undefined' && nextExpireAt
+          .col-12.col-md-4
+            p.mb-0
+              strong Next expiry:
+              |  #{nextExpireAt}
+              if typeof expireTag !== 'undefined' && expireTag
+                span.badge.bg-warning.text-dark.ms-2 #{expireTag}
 
-    .mt-4.d-flex.flex-wrap.gap-2
-      a.btn.btn-warning(href="/job-vacancies/new_paid_user") Post Paid Job Ad
-      a.btn.btn-secondary(href="/paypal/checkout") Make Payment
+      .mt-3.d-flex.flex-wrap.gap-2
+        if typeof canPost !== 'undefined' && canPost
+          a.btn.btn-warning(href="/job-vacancies/new_paid_user") Register Job Vacancy
+        else
+          button.btn.btn-secondary(disabled) Register Job Vacancy
+        a.btn.btn-outline-dark(href="/paypal/checkout") Buy Ad Credits
 
+    // ===== 공고 목록 =====
     if jobVacancies && jobVacancies.length
-      h4.mt-4 My Job Vacancies
-      ul
-        each job in jobVacancies
-          li
-            a(href=`/job-vacancies/${job._id}`)= job.title
+      .card.shadow-sm
+        .card-header
+          h5.mb-0 My Job Vacancies
+        .card-body
+          ul.list-unstyled.mb-0
+            each job in jobVacancies
+              li.mb-2
+                a(href=`/job-vacancies/${job._id}`)= job.title
     else
-      p.text-muted.mt-3 No job vacancies posted yet.
+      p.text-muted.text-center.mt-3 No job vacancies posted yet.
