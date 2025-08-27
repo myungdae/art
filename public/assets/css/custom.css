@@ -147,11 +147,42 @@ header.dashboard_header {
 }
 
 footer.footer {
-  font: 12px "Lucida Grande", Helvetica, Arial, sans-serif;
-  background: #393939;
   text-align: left;
   padding: 50px;
   margin: 0px;
+  font-weight: 400;
+  font-style: "Regular";
+  font-size: 14px;
+}
+
+.footer .company-info h6 {
+  font-size: 16px;
+  font-weight: 600; /* 강조감 */
+  margin-bottom: 8px; /* 간격 살짝 */
+}
+
+.footer .company-info p {
+  font-size: 14px;
+  margin: 2px 0; /* 위아래 여백 최소화 */
+  font-weight: 400;
+}
+
+div.link-area a {
+  display: block; /* 세로로 쌓이도록 */
+  font-size: 16px;
+  margin-bottom: 8px; /* 링크 간격 */
+}
+.footer .logo-area {
+  flex: 1;
+}
+
+.footer .company-info {
+  flex: 7;
+}
+
+.footer .link-area {
+  flex: 2;
+  text-align: right; /* 오른쪽 정렬 */
 }
 
 .description {
@@ -297,7 +328,7 @@ a:active {
 /* 🔶 결제 카드 영역 강화 */
 .payment-card {
   border-radius: 16px;
-  box-shadow: 0 8px 16px rgba(0,0,0,0.08);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
   padding: 20px;
   background-color: #ffffff;
 }
@@ -349,58 +380,58 @@ a:active {
     font-size: 0.95rem;
   }
 }
- .bold-button {
-   font-weight: bold;
-   color: white;
-   background-color: #007bff;
-   border: none;
- }
+.bold-button {
+  font-weight: bold;
+  color: white;
+  background-color: #007bff;
+  border: none;
+}
 
- /* Semantic UI 사용자 입력 추가 옵션 스타일 */
- .ui.dropdown .menu > .addition {
-   font-weight: bold;
-   color: #2185d0;
- }
+/* Semantic UI 사용자 입력 추가 옵션 스타일 */
+.ui.dropdown .menu > .addition {
+  font-weight: bold;
+  color: #2185d0;
+}
 
 .btn-warning {
-   background-color: #f0ad4e !important;
-   border: none !important;
- }
- 
- .btn-warning:hover {
-   background-color: #ec971f !important;
- }
- 
- .btn-success {
-   background-color: #5cb85c !important;
- }
- 
- .btn-success:hover {
-   background-color: #449d44 !important;
- }
+  background-color: #f0ad4e !important;
+  border: none !important;
+}
+
+.btn-warning:hover {
+  background-color: #ec971f !important;
+}
+
+.btn-success {
+  background-color: #5cb85c !important;
+}
+
+.btn-success:hover {
+  background-color: #449d44 !important;
+}
 
 .btn {
-   display: inline-block;
-   font-size: 1.2rem;
-   padding: 10px 20px;
-   border-radius: 8px;
-   text-decoration: none;
-   color: white;
-   margin: 5px;
- }
- 
- .btn-success {
-   background-color: #28a745;
- }
- 
- .btn-orange {
-   background-color: #fd7e14;
- }
- 
- .btn-gray {
-   background-color: #6c757d;
- }
- 
- .btn-blue {
-   background-color: #007bff;
- }
+  display: inline-block;
+  font-size: 1.2rem;
+  padding: 10px 20px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: white;
+  margin: 5px;
+}
+
+.btn-success {
+  background-color: #28a745;
+}
+
+.btn-orange {
+  background-color: #fd7e14;
+}
+
+.btn-gray {
+  background-color: #6c757d;
+}
+
+.btn-blue {
+  background-color: #007bff;
+}

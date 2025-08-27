@@ -26,10 +26,9 @@ html(lang='en')
     // ─────────────────────────────────────────────────────────
     style.
       /* 헤더 */
-      .search-header { position: relative; padding: 40px 0 80px 0; background-color: #fff; }
-      .menu-top { position: absolute; top: 20px; right: 20px; display:flex; gap:18px; }
-      .menu-top a { font-size: 15px; font-weight: 700; color:#000; text-decoration: none; }
-      .menu-top a.logout { color: red; }
+      .search-header {  background-color: #fff; display: flex; align-items: center; justify-content: space-between;  }
+      .menu-top {  gap: 30px; padding-top: 20px} /* 중앙 메뉴와 로그인 링크 분리 */
+      .menu-top a { font-weight: 700; color:#000; text-decoration: none; }
 
       /* 모바일: 우상단에 계정 토글 버튼, 드롭다운 */
       .menu-top-mob { position: absolute; top: 12px; right: 12px; display:none; z-index: 5; }
@@ -38,18 +37,48 @@ html(lang='en')
         background:#fff; border:1px solid #e5e7eb; border-radius:12px;
         box-shadow:0 8px 20px rgba(0,0,0,.08); padding:10px; width: 210px; display:none;
       }
+      .container-fluid {
+        padding: 0px;
+      }
+      .main-menu {
+        display: flex;
+        flex-direction: row; /* 명시적으로 추가 */
+        justify-content: center; /* 가로 중앙 정렬 */
+      }
+      .account-menu {
+        display: flex;
+        flex-direction: row; /* 명시적으로 추가 */
+        justify-content: center; /* 가로 중앙 정렬 */
+      }
+      .main_header {
+        width: '100%';
+        height: 750px;
+        display: flex;
+        flex-direction: column; /* 명시적으로 추가 */
+        background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('assets/img/header-background.jpg');
+        background-size: cover; /* 이미지가 컨테이너를 가득 채우도록 설정 */
+        background-position: center; /* 이미지를 중앙에 배치 */
+        background-repeat: no-repeat; /* 이미지 반복 방지 */
+      }
+
+      .main-menu a {font-size: 18px; color: #FFFFFF; height: 'auto'}
+      .account-menu a {font-size: 14px; color:#D8D8D8}
+
       .menu-drop a { display:block; padding:8px 10px; color:#111; text-decoration:none; border-radius:8px; font-weight:700; }
       .menu-drop a:hover { background:#f3f4f6; }
       .menu-drop.show { display:block; }
+      .head_div {display: flex; flex-direction: row; justify-content: center; /* 가로 중앙 정렬 */ }
+      
 
       /* 상단 검색 인풋 */
       .search-input {
-        max-width: 600px; height: 60px; font-size: 16pt;
-        border: 2px solid #ccc; border-radius: 30px; padding: 10px 25px;
+        max-width: 650px; height: 70px; font-size: 16pt;
+        border: 7px solid #FF7A00 !important; border-radius: 12px !important; padding: 0 20px;
+        background-color: white;
       }
 
       .main-content { min-height: 500px; padding: 60px 30px; background-color: #fff; }
-      footer.footer { background-color: #333; color: #fff; padding: 30px 0; margin-top: 0; }
+      footer.footer { background-color: #E5E5E5; color: #666666; padding: 30px 0; margin-top: 0;}
 
       /* GNB(파란 바) */
       nav.main_nav_bar { background:#0d46ff; }
@@ -64,8 +93,7 @@ html(lang='en')
       .navbar-toggler .fa { color:#fff; font-size:18px; }
 
       /* 브랜드 로고 (좌측 상단) */
-      .brand-logo{position:absolute;top:16px;left:20px;display:flex;align-items:center;gap:10px;z-index:1010}
-      .brand-logo img{height:34px;display:block}
+      .brand-logo img{  width: 300px; height: auto }
 
       /* 모바일 레이아웃 스위치 */
       @media (max-width: 767.98px) {
@@ -118,33 +146,62 @@ html(lang='en')
     include common_value
 
     // ───────── 상단 헤더 ─────────
-    header.main-search-header.search-header
+    header.main-search-header.search-header(class=(currentPage==='/' ? '' : 'compact'))
       .container-fluid
+        // 'HOME'에서만 보이는 메인 콘텐츠 (검색창 등)
+        if currentPage==='/'
+          .main_header
+            .head_div
+              // 좌측 상단 브랜드 로고
+              a.brand-logo(
+                href=(typeof siteBrandLink!=='undefined' && siteBrandLink) || '/',
+                aria-label=(typeof siteBrand!=='undefined' && siteBrand) || 'ESL Plus',
+                title=(typeof siteBrand!=='undefined' && siteBrand) || 'ESL Plus'
+              )
+                img(src="/assets/img/eslplus.svg", alt=(typeof siteBrand!=='undefined' && siteBrand) || 'ESL Plus')
 
-        // 좌측 상단 브랜드 로고
-        a.brand-logo(
-          href=(typeof siteBrandLink!=='undefined' && siteBrandLink) || '/',
-          aria-label=(typeof siteBrand!=='undefined' && siteBrand) || 'ESL Plus',
-          title=(typeof siteBrand!=='undefined' && siteBrand) || 'ESL Plus'
-        )
-          img(src="/eslplus.svg", alt=(typeof siteBrand!=='undefined' && siteBrand) || 'ESL Plus')
+              // 데스크탑: 우상단 계정 링크
+              .menu-top.d-none.d-md-flex
+                .main-menu
+                  a.nav-link.h5.my-0(class=(currentPage==='/' ? 'active' : ''), href='/') HOME
+                  a.nav-link.h5.my-0(class=(currentPage && (currentPage.indexOf('/facet/Job_Vacancies')===0 || currentPage.indexOf('/job-vacancies')===0)) ? 'active' : '', href='/facet/Job_Vacancies') JOB VACANCIES
+                  a.nav-link.h5.my-0(class=(currentPage && currentPage.indexOf('/job-seekers')===0) ? 'active' : '', href='/job-seekers') JOB SEEKERS
+                  a.nav-link.h5.my-0(class=(currentPage && currentPage.indexOf('/online-tutors')===0) ? 'active' : '', href='/online-tutors') ONLINE TUTORS
+                .account-menu
+                  if session && session.user
+                    a(href="/user/mypage") Mypage
+                    if session.user.adsAvailable !== undefined
+                      | (#{session.user.adsAvailable} left)
+                    a.nav-link.h5.my-0(href="/inquiry") Inquiry
+                    a.logout(href="/user/logout") Logout
+                  else
+                    a.nav-link.h5.my-0(href="/user/register") Membership
+                    a.nav-link.h5.my-0(href="/user/login") Login
+                    a.nav-link.h5.my-0(href="/inquiry") Inquiry
 
-        // 데스크탑: 우상단 계정 링크
-        .menu-top.d-none.d-md-flex
-          if session && session.user
-            a(href="/user/mypage") Mypage
-            if session.user.adsAvailable !== undefined
-              | (#{session.user.adsAvailable} left)
-            a(href="/inquiry") Inquiry
-            a.logout(href="/user/logout") Logout
-          else
-            a(href="/user/register") Membership
-            a(href="/user/login") Login
-            a(href="/inquiry") Inquiry
-
-          if session && session.isAdmin
-            a(href="/admin/dashboard") Admin
-            a(href="/admin/logout").logout Logout
+                  if session && session.isAdmin
+                    a.nav-link.h5.my-0(href="/admin/dashboard") Admin
+                    a.nav-link.h5.my-0(href="/admin/logout").logout Logout
+            .text-center(style="margin-top: 100px;")
+              h2(style="font-weight: bold; font-size: 50px; margin-bottom: 25px; color: #FFFFFF") ESL PLUS <br>The fast ESL hiring & tutoring hub
+              p(style="font-size: 20px; margin-bottom: 25px; color: #FFFFFF") Teaching opportunities available around the world
+               
+              - var _ph = (typeof searchKeyword!=='undefined' && searchKeyword) ? searchKeyword : "Enter keyword...";
+              .input-group.justify-content-center
+                input#searchText.form-control.search-input(
+                  autocomplete='off',
+                  type='text',
+                  placeholder=_ph.replace(/\[dot\]/g, '.'),
+                  value=searchText
+                )
+                span.input-group-append
+                  button.sstyly(
+                    style="margin-left:-55px;background:none;border:none;margin-top:5px; z-index: 2"
+                    type="button"
+                  )
+                    img(src="/assets/img/search.png", alt="Search", width="30")
+        else 
+          p hi
 
         // 모바일: 우상단 계정 토글
         .menu-top-mob.d-md-none
@@ -166,58 +223,42 @@ html(lang='en')
               a(href="/admin/dashboard") Admin
               a(href="/admin/logout").logout Logout
 
-        // 중앙 타이틀 + 상단 검색 (사이트 전역)
-        .text-center
-          h2(style="font-weight: bold; font-size: 28px; margin-bottom: 25px;")
-            a(
-              href=(typeof siteBrandLink!=='undefined' && siteBrandLink) || '/',
-              class="text-reset",
-              style="text-decoration:none; color:inherit;"
-            )= (typeof siteBrand!=='undefined' && siteBrand) || 'ESL Plus'
-
-          - var _ph = (typeof searchKeyword!=='undefined' && searchKeyword) ? searchKeyword : "Enter keyword...";
-          .input-group.justify-content-center
-            input#searchText.form-control.search-input(
-              autocomplete='off',
-              type='text',
-              placeholder=_ph.replace(/\[dot\]/g, '.'),
-              value=searchText
-            )
-            span.input-group-append
-              button.sstyly(
-                style="margin-left:-55px;background:none;border:none;margin-top:5px;"
-                type="button"
-              )
-                img(src="/assets/img/main/icon-search.png", alt="Search", width="30")
-
     // ───────── GNB (부트스트랩 햄버거)
-    nav.navbar.navbar-expand-md.main_nav_bar
-      .container
-        button.navbar-toggler(type="button", data-bs-toggle="collapse", data-bs-target="#mainNav", aria-controls="mainNav", aria-expanded="false", aria-label="Toggle navigation")
-          i.fa.fa-bars
-        #mainNav.collapse.navbar-collapse
-          ul.navbar-nav.justify-content-center.w-100
-            li.nav-item.text-nowrap
-              a.nav-link.h5.my-0(class=(currentPage==='/' ? 'active' : ''), href='/') HOME
-            li.nav-item.text-nowrap
-              - const activeJV = (currentPage && (currentPage.indexOf('/facet/Job_Vacancies')===0 || currentPage.indexOf('/job-vacancies')===0)) ? 'active' : ''
-              a.nav-link.h5.my-0(class=activeJV, href='/facet/Job_Vacancies') JOB VACANCIES
-            li.nav-item.text-nowrap
-              - const activeJS = (currentPage && currentPage.indexOf('/job-seekers')===0) ? 'active' : ''
-              a.nav-link.h5.my-0(class=activeJS, href='/job-seekers') JOB SEEKERS
-            li.nav-item.text-nowrap
-              - const activeOT = (currentPage && currentPage.indexOf('/online-tutors')===0) ? 'active' : ''
-              a.nav-link.h5.my-0(class=activeOT, href='/online-tutors') ONLINE TUTORS
 
     // 메인 컨텐츠
     main.main-content
       block content
 
-    // 푸터
+    // footer
     footer.footer
       .container
-        .row.justify-content-center
-          h6.text-white Linked Data Center
+        .d-flex.align-items-start
+          // 로고 (1)
+          div.logo-area
+            img(src="/assets/img/linked-data.png" alt="Linked Data Center" style="max-height:80px")
+
+          // 회사 정보 (8)
+          div.company-info
+            h6 Company Information
+            p Company Name: Linked Data Center
+            p CEO: Youngdo Cho
+            p Business Registration No.: 446-06-00440
+            p E-Commerce Intermediary Registration No.: 2025-Seoul-Gangnam-0000
+            p Address: 123, Teheran-ro, Gangnam-gu, Seoul, Republic of Korea
+            p Customer Support: myungdae.cho@gmail.com
+
+          // 링크 (1)
+          div.link-area
+            a(href="/terms") Terms of Service
+            a(href="/privacy") Privacy Policy
+            a(href="/refund") Refund Policy
+           
+      hr.my-3
+      .row.mt-3 
+        .col.text-center 
+          p © 2025 ESL PLUS. All rights reserved.
+        
+      
 
     // ───────── Scripts ─────────
     script(src='https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js')
