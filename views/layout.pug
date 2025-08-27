@@ -69,6 +69,13 @@ html(lang='en')
       .menu-drop.show { display:block; }
       .head_div {display: flex; flex-direction: row; justify-content: center; /* 가로 중앙 정렬 */ }
       
+      .black-text {
+        color: black !important;
+      }
+
+      .gray-text {
+        color:rgb(90, 90, 90) !important;
+      }
 
       /* 상단 검색 인풋 */
       .search-input {
@@ -94,6 +101,7 @@ html(lang='en')
 
       /* 브랜드 로고 (좌측 상단) */
       .brand-logo img{  width: 300px; height: auto }
+      .other_a {color: black;}
 
       /* 모바일 레이아웃 스위치 */
       @media (max-width: 767.98px) {
@@ -165,8 +173,8 @@ html(lang='en')
                 .main-menu
                   a.nav-link.h5.my-0(class=(currentPage==='/' ? 'active' : ''), href='/') HOME
                   a.nav-link.h5.my-0(class=(currentPage && (currentPage.indexOf('/facet/Job_Vacancies')===0 || currentPage.indexOf('/job-vacancies')===0)) ? 'active' : '', href='/facet/Job_Vacancies') JOB VACANCIES
-                  a.nav-link.h5.my-0(class=(currentPage && currentPage.indexOf('/job-seekers')===0) ? 'active' : '', href='/job-seekers') JOB SEEKERS
-                  a.nav-link.h5.my-0(class=(currentPage && currentPage.indexOf('/online-tutors')===0) ? 'active' : '', href='/online-tutors') ONLINE TUTORS
+                  a.nav-link.h5.my-0(class=(currentPage && currentPage.indexOf('/facet/Job_Seekers')===0) ? 'active' : '', href='/facet/Job_Seekers') JOB SEEKERS
+                  a.nav-link.h5.my-0(class=(currentPage && currentPage.indexOf('/facet/Online_Tutors')===0) ? 'active' : '', href='/facet/Online_Tutors') ONLINE TUTORS
                 .account-menu
                   if session && session.user
                     a(href="/user/mypage") Mypage
@@ -201,7 +209,37 @@ html(lang='en')
                   )
                     img(src="/assets/img/search.png", alt="Search", width="30")
         else 
-          p hi
+          .head_div
+              // 좌측 상단 브랜드 로고
+              a.brand-logo(
+                href=(typeof siteBrandLink!=='undefined' && siteBrandLink) || '/',
+                aria-label=(typeof siteBrand!=='undefined' && siteBrand) || 'ESL Plus',
+                title=(typeof siteBrand!=='undefined' && siteBrand) || 'ESL Plus'
+              )
+                img(src="/assets/img/eslplus.svg", alt=(typeof siteBrand!=='undefined' && siteBrand) || 'ESL Plus')
+
+              // 데스크탑: 우상단 계정 링크
+              .menu-top.d-none.d-md-flex
+                .main-menu
+                  a.nav-link.h5.my-0.black-text(class=(currentPage==='/' ? 'active' : ''), href='/') HOME
+                  a.nav-link.h5.my-0.black-text(class=(currentPage && (currentPage.indexOf('/facet/Job_Vacancies')===0 || currentPage.indexOf('/job-vacancies')===0)) ? 'active' : '', href='/facet/Job_Vacancies') JOB VACANCIES
+                  a.nav-link.h5.my-0.black-text(class=(currentPage && currentPage.indexOf('/facet/Job_Seekers')===0) ? 'active' : '', href='/facet/Job_Seekers') JOB SEEKERS
+                  a.nav-link.h5.my-0.black-text(class=(currentPage && currentPage.indexOf('/facet/Online_Tutors')===0) ? 'active' : '', href='/facet/Online_Tutors') ONLINE TUTORS
+                .account-menu
+                  if session && session.user
+                    a.gray-text(href="/user/mypage") Mypage
+                    if session.user.adsAvailable !== undefined
+                      | (#{session.user.adsAvailable} left)
+                    a.nav-link.h5.my-0.gray-text(href="/inquiry") Inquiry
+                    a.logout.gray-text(href="/user/logout") Logout
+                  else
+                    a.nav-link.h5.my-0.gray-text(href="/user/register") Membership
+                    a.nav-link.h5.my-0.gray-text(href="/user/login") Login
+                    a.nav-link.h5.my-0.gray-text(href="/inquiry") Inquiry
+
+                  if session && session.isAdmin
+                    a.nav-link.h5.my-0.gray-text(href="/admin/dashboard" ) Admin
+                    a.nav-link.h5.my-0.gray-text(href="/admin/logout").logout Logout
 
         // 모바일: 우상단 계정 토글
         .menu-top-mob.d-md-none
