@@ -177,11 +177,11 @@ html(lang='en')
                   a.nav-link.h5.my-0(class=(currentPage && currentPage.indexOf('/facet/Online_Tutors')===0) ? 'active' : '', href='/facet/Online_Tutors') ONLINE TUTORS
                 .account-menu
                   if session && session.user
-                    a(href="/user/mypage") Mypage
+                    a.nav-link.h5.my-0(href="/user/mypage") Mypage
                     if session.user.adsAvailable !== undefined
                       | (#{session.user.adsAvailable} left)
                     a.nav-link.h5.my-0(href="/inquiry") Inquiry
-                    a.logout(href="/user/logout") Logout
+                    a.logou.nav-link.h5.my-0(href="/user/logout") Logout
                   else
                     a.nav-link.h5.my-0(href="/user/register") Membership
                     a.nav-link.h5.my-0(href="/user/login") Login
@@ -227,11 +227,11 @@ html(lang='en')
                   a.nav-link.h5.my-0.black-text(class=(currentPage && currentPage.indexOf('/facet/Online_Tutors')===0) ? 'active' : '', href='/facet/Online_Tutors') ONLINE TUTORS
                 .account-menu
                   if session && session.user
-                    a.gray-text(href="/user/mypage") Mypage
+                    a.gray-text.nav-link.h5(href="/user/mypage") Mypage
                     if session.user.adsAvailable !== undefined
                       | (#{session.user.adsAvailable} left)
                     a.nav-link.h5.my-0.gray-text(href="/inquiry") Inquiry
-                    a.logout.gray-text(href="/user/logout") Logout
+                    a.logout.nav-link.h5.my-0.gray-text(href="/user/logout") Logout
                   else
                     a.nav-link.h5.my-0.gray-text(href="/user/register") Membership
                     a.nav-link.h5.my-0.gray-text(href="/user/login") Login
@@ -287,9 +287,9 @@ html(lang='en')
 
           // 링크 (1)
           div.link-area
-            a(href="/terms") Terms of Service
-            a(href="/privacy") Privacy Policy
-            a(href="/refund") Refund Policy
+            a(href="/policy/terms") Terms of Service
+            a(href="/policy/privacy") Privacy Policy
+            a(href="/policy/refund") Refund Policy
            
       hr.my-3
       .row.mt-3 

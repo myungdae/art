@@ -1,0 +1,98 @@
+extends ../layout
+
+block content
+  .container.mx-auto.max-w-4xl.px-4.py-10
+    h1.text-3xl.font-bold.mb-2 Terms and Conditions
+    p.text-sm.text-gray-500.mb-8 Last updated: #{lastUpdated || '2025-08-24'}
+
+    // Intro
+    p.mb-6 Please read these Terms and Conditions carefully before using our Service.
+
+    // Interpretation & Definitions
+    h2.text-2xl.font-semibold.mt-8.mb-3 Interpretation and Definitions
+    h3.text-xl.font-semibold.mt-4.mb-2 Interpretation
+    p.mb-4 Words with initial capital letters have meanings defined under the following conditions. The definitions apply whether in singular or plural.
+
+    h3.text-xl.font-semibold.mt-4.mb-2 Definitions
+    ul.list-disc.ml-6.space-y-2.mb-4
+      li
+        | <strong>Account</strong>: a unique account created for You to access our Service.
+      li
+        | <strong>Company</strong>: #{companyName || 'Linked Data Center Co., Ltd.'}, operator of ESL PLUS, headquartered at #{companyAddress || '123 Teheran-ro, Gangnam-gu, Seoul, Republic of Korea'} (also “We”, “Us”, or “Our”).
+      li
+        | <strong>Service</strong>: the ESL PLUS platform (the Website).
+      li
+        | <strong>Website</strong>: #{siteDomain || 'https://eslplus.com'}.
+      li
+        | <strong>User / You</strong>: the individual or entity accessing or using the Service.
+      li
+        | <strong>Matching Service</strong>: the intermediary function of connecting teachers with schools, academies, or institutions.
+
+    // Acknowledgement
+    h2.text-2xl.font-semibold.mt-8.mb-3 Acknowledgement
+    p.mb-4 These Terms govern your use of the Service and constitute an agreement between You and the Company. By accessing or using the Service, You agree to be bound by these Terms and our Privacy Policy.
+
+    // User Accounts
+    h2.text-2xl.font-semibold.mt-8.mb-3 User Accounts
+    ul.list-disc.ml-6.space-y-2.mb-4
+      li You must provide accurate, complete, and current information at all times.
+      li You are responsible for safeguarding your password and for activities under your account.
+      li Do not disclose your password to any third party; notify Us of any unauthorized use.
+      li Usernames must not infringe rights of others or be offensive or obscene.
+
+    // Service Use
+    h2.text-2xl.font-semibold.mt-8.mb-3 Service Use (Intermediary Role)
+    ul.list-disc.ml-6.space-y-2.mb-4
+      li ESL PLUS operates as an intermediary platform. We are not a party to employment or service contracts between Users.
+      li We do not guarantee employment, compensation, or outcomes of any matching.
+      li Users are solely responsible for the accuracy of postings, profiles, and any agreements made between them.
+
+    // Membership & Payments
+    h2.text-2xl.font-semibold.mt-8.mb-3 Membership Fees and Payments
+    ul.list-disc.ml-6.space-y-2.mb-4
+      li Some features may require payment of membership or matching fees.
+      li Payments may be made by methods displayed on the Website (e.g., credit card, PayPal, local payment gateways).
+      li Refunds: full refund within 7 days if the service is unused; no refund after matching has commenced, except where required by law. See our Refund Policy for details.
+
+    // Content
+    h2.text-2xl.font-semibold.mt-8.mb-3 Content
+    ul.list-disc.ml-6.space-y-2.mb-4
+      li You may post information such as resumes or job listings.
+      li By posting content, You grant Us a non-exclusive license to display such content within the Service.
+      li You represent that You own or have rights to the content you post and that it does not violate any rights.
+      li Do not post unlawful, offensive, defamatory, or otherwise inappropriate content.
+
+    // IP
+    h2.text-2xl.font-semibold.mt-8.mb-3 Intellectual Property
+    p.mb-4 The Service and original content (excluding User content) remain the exclusive property of the Company and its licensors. You may not copy, modify, or redistribute without our written consent.
+
+    // Links
+    h2.text-2xl.font-semibold.mt-8.mb-3 Links to Other Websites
+    p.mb-4 The Service may contain links to third-party websites. We are not responsible for their content, privacy policies, or practices. Review the terms and privacy policies of any third-party sites you visit.
+
+    // Termination
+    h2.text-2xl.font-semibold.mt-8.mb-3 Termination
+    p.mb-4 We may suspend or terminate your account immediately for any breach of these Terms. Upon termination, your right to use the Service ceases immediately.
+
+    // Liability
+    h2.text-2xl.font-semibold.mt-8.mb-3 Limitation of Liability
+    p.mb-4 To the maximum extent permitted by law, Our total liability shall be limited to the membership fees actually paid by You to use the Service. We shall not be liable for any indirect, incidental, special, or consequential damages.
+
+    // Disclaimer
+    h2.text-2xl.font-semibold.mt-8.mb-3 “AS IS” and “AS AVAILABLE” Disclaimer
+    p.mb-4 The Service is provided on an “AS IS” and “AS AVAILABLE” basis without warranties of any kind. We do not warrant uninterrupted or error-free operation, or that defects will be corrected.
+
+    // Governing Law
+    h2.text-2xl.font-semibold.mt-8.mb-3 Governing Law
+    p.mb-4 These Terms are governed by the laws of the Republic of Korea, excluding its conflict of law rules.
+
+    // Changes
+    h2.text-2xl.font-semibold.mt-8.mb-3 Changes to These Terms
+    p.mb-4 We may modify or replace these Terms at any time. Changes take effect upon posting on the Website. By continuing to use the Service, You agree to the revised Terms.
+
+    // Contact
+    h2.text-2xl.font-semibold.mt-8.mb-3 Contact Us
+    ul.list-disc.ml-6.space-y-2
+      li Email: #{supportEmail || 'support@eslplus.com'}
+      li Phone: #{supportPhone || '+82-2-000-0000'}
+      li Mail: #{companyName || 'Linked Data Center Co., Ltd.'}, #{companyAddress || '123 Teheran-ro, Gangnam-gu, Seoul, Republic of Korea'}

@@ -30,8 +30,8 @@ module.exports.requireActiveResumeAccess = (req, res, next) => {
 
   // 로그인 안 된 경우
   if (!u) {
-    req.flash?.('error', 'Please log in first.');
-    return res.redirect('/user/login');
+    req.flash?.("error", "Please log in first.");
+    return res.redirect("/user/login");
   }
 
   // 유효성 판단 (신형/구형 둘 중 하나라도 통과하면 OK)
@@ -39,13 +39,15 @@ module.exports.requireActiveResumeAccess = (req, res, next) => {
 
   if (!hasActiveResumeAccess) {
     // 미결제/만기 → 결제/갱신 페이지로 유도
-    req.flash?.('error', 'Please purchase or renew Resume Visibility before registering your resume.');
-    return res.redirect('/user/job-seekers/resume-access'); // 현재 프로젝트의 실제 경로
+    req.flash?.(
+      "error",
+      "Please purchase or renew Resume Visibility before registering your resume."
+    );
+    return res.redirect("/user/job-seekers/resume-access"); // 현재 프로젝트의 실제 경로
   }
 
   return next();
 };
-
 
 /* ================= Tutor(튜터) ================= */
 
@@ -72,15 +74,19 @@ module.exports.requireActiveTutorAccess = (req, res, next) => {
   const u = req.user;
 
   if (!u) {
-    req.flash?.('error', 'Please log in first.');
-    return res.redirect('/user/login');
+    req.flash?.("error", "Please log in first.");
+    return res.redirect("/user/login");
   }
 
-  const hasActiveTutorAccess = isTutorActiveByFlag(u) || isTutorActiveByAccess(u);
+  const hasActiveTutorAccess =
+    isTutorActiveByFlag(u) || isTutorActiveByAccess(u);
 
   if (!hasActiveTutorAccess) {
-    req.flash?.('error', 'Please purchase or renew Tutor Visibility before creating your tutor profile.');
-    return res.redirect('/user/online-tutors/visibility'); // 튜터 결제/구매 페이지 경로
+    req.flash?.(
+      "error",
+      "Please purchase or renew Tutor Visibility before creating your tutor profile."
+    );
+    return res.redirect("/user/online-tutors/visibility"); // 튜터 결제/구매 페이지 경로
   }
 
   return next();

@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema({
   username: {
@@ -18,8 +18,8 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['Employer', 'Job_Seeker', 'Online_Tutor'],
-    required: true
+    enum: ["Employer", "Job_Seeker", "Online_Tutor"],
+    required: true,
   },
   createdAt: {
     type: Date,
@@ -27,12 +27,16 @@ const userSchema = new mongoose.Schema({
   },
   adsAvailable: {
     type: Number,
-    default: 0
+    default: 0,
   },
   resumeAccess: {
     startDate: { type: Date },
-    durationDays: { type: Number }
-  }
+    durationDays: { type: Number },
+  },
+  tutorAccess: {
+    startDate: { type: Date },
+    durationDays: { type: Number },
+  },
 });
 
-module.exports = mongoose.model('User', userSchema);
+module.exports = mongoose.model("User", userSchema);

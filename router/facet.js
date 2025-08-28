@@ -65,7 +65,6 @@ router.get("/:klass", async (req, res, next) => {
     const klass = req.params.klass; // ex) "Online_Tutors"
     const spec = FACET_MAP[klass] || FACET_MAP.Job_Vacancies;
     const coll = spec.coll ? spec.coll(klass) : `${klass}_RDF`;
-    console.log(`[FACET] klass=${klass}, coll=${coll}`);
 
     const db = mongoose.connection.db;
 

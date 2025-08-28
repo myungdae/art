@@ -1,5 +1,5 @@
 // model/onlineTutor.js
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const ResumeAccessSchema = new mongoose.Schema(
   {
@@ -14,15 +14,22 @@ const OnlineTutorSchema = new mongoose.Schema(
   {
     // 기본
     fullName: { type: String, trim: true },
-    email:    { type: String, required: true, trim: true, lowercase: true, index: true },
+    email: {
+      type: String,
+      required: true,
+      trim: true,
+      lowercase: true,
+      index: true,
+    },
 
     // 소개 (CKEditor HTML 저장)
+    title: { type: String, trim: true }, // rdfs:label
     description: { type: String }, // dc:description
 
     // 시맨틱 입력 3종
-    expertise:          { type: String, trim: true }, // esl:expertise
+    expertise: { type: String, trim: true }, // esl:expertise
     tutoringExperience: { type: String, trim: true }, // esl:tutoringExperience
-    gender:             { type: String, trim: true }, // esl:gender
+    gender: { type: String, trim: true }, // esl:gender
 
     // 연락
     skypeId: { type: String, trim: true }, // Skype_ID
@@ -31,7 +38,7 @@ const OnlineTutorSchema = new mongoose.Schema(
     resumeAccess: ResumeAccessSchema,
   },
   {
-    collection: 'online_tutors',
+    collection: "online_tutors",
     timestamps: true,
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
@@ -39,24 +46,34 @@ const OnlineTutorSchema = new mongoose.Schema(
 );
 
 // expiresAt 자동 보완
-OnlineTutorSchema.pre('save', function (next) {
+OnlineTutorSchema.pre("save", function (next) {
   const ra = this.resumeAccess;
-  if (ra && ra.startDate && typeof ra.durationDays === 'number' && ra.durationDays >= 0) {
+  if (
+    ra &&
+    ra.startDate &&
+    typeof ra.durationDays === "number" &&
+    ra.durationDays >= 0
+  ) {
     if (!ra.expiresAt) {
-      ra.expiresAt = new Date(ra.startDate.getTime() + ra.durationDays * 86400000);
+      ra.expiresAt = new Date(
+        ra.startDate.getTime() + ra.durationDays * 86400000
+      );
     }
   }
   next();
 });
 
-OnlineTutorSchema.virtual('resumeAccessRemainingDays').get(function () {
+OnlineTutorSchema.virtual("resumeAccessRemainingDays").get(function () {
   const ra = this.resumeAccess;
   if (!ra) return 0;
   const now = Date.now();
   let end = null;
 
   if (ra.expiresAt instanceof Date) end = ra.expiresAt.getTime();
-  else if (ra.startDate instanceof Date && typeof ra.durationDays === 'number') {
+  else if (
+    ra.startDate instanceof Date &&
+    typeof ra.durationDays === "number"
+  ) {
     end = ra.startDate.getTime() + ra.durationDays * 86400000;
   }
 
@@ -65,4 +82,4 @@ OnlineTutorSchema.virtual('resumeAccessRemainingDays').get(function () {
   return Math.max(0, diff);
 });
 
-module.exports = mongoose.model('OnlineTutor', OnlineTutorSchema);
+module.exports = mongoose.model("OnlineTutor", OnlineTutorSchema);

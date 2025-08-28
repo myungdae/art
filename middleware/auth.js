@@ -1,13 +1,13 @@
 // middleware/auth.js
-'use strict';
+"use strict";
 
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 /** 로그인 여부 체크 */
 function requireLogin(req, res, next) {
   if (!req.session || !req.session.user) {
     if (req.originalUrl) req.session.returnTo = req.originalUrl;
-    return res.redirect('/user/login');             // 통일
+    return res.redirect("/user/login"); // 통일
   }
 
   const userSession = req.session.user;
@@ -24,26 +24,26 @@ function requireLogin(req, res, next) {
 
 /** 역할 문자열을 표준화 (소문자+언더스코어) 하고 별칭을 통일 */
 function canonRole(role) {
-  const key = String(role || '')
+  const key = String(role || "")
     .trim()
     .toLowerCase()
-    .replace(/[\s-]+/g, '_'); // "Online Tutor" -> "online_tutor"
+    .replace(/[\s-]+/g, "_"); // "Online Tutor" -> "online_tutor"
 
   // 별칭/오타 흡수: 튜터/잡시커 표기 다양성 정리
   const map = {
     // 온라인 튜터
-    'online_tutor': 'online_tutor',
-    'onlinetutor': 'online_tutor',
-    'tutor': 'online_tutor',
+    online_tutor: "online_tutor",
+    onlinetutor: "online_tutor",
+    tutor: "online_tutor",
 
     // 잡시커
-    'job_seeker': 'job_seeker',
-    'jobseeker': 'job_seeker',
-    'job seeker': 'job_seeker', // (안 들어오지만 안전망)
+    job_seeker: "job_seeker",
+    jobseeker: "job_seeker",
+    "job seeker": "job_seeker", // (안 들어오지만 안전망)
 
     // 그 외
-    'employer': 'employer',
-    'admin': 'admin',
+    employer: "employer",
+    admin: "admin",
   };
 
   return map[key] || key;
@@ -65,11 +65,11 @@ function requireRole(roles) {
 
   return (req, res, next) => {
     const u = req.user || req.session?.user;
-    if (!u) return res.redirect('/user/login');
+    if (!u) return res.redirect("/user/login");
 
     const userCanon = canonRole(u.role);
     if (!allowedCanon.has(userCanon)) {
-      return res.status(403).send('Forbidden: insufficient role');
+      return res.status(403).send("Forbidden: insufficient role");
     }
     next();
   };
@@ -78,7 +78,7 @@ function requireRole(roles) {
 /** Employer 유료 결제 여부 체크 (기존 로직 유지) */
 function requirePaidEmployer(req, res, next) {
   const u = req.user || req.session?.user;
-  if (!u) return res.redirect('/user/login');
+  if (!u) return res.redirect("/user/login");
 
   const isBoolPaid = !!u.isPaidEmployer;
   const byDatePaid =
@@ -87,7 +87,7 @@ function requirePaidEmployer(req, res, next) {
   if (isBoolPaid || byDatePaid) return next();
 
   if (req.originalUrl) req.session.returnTo = req.originalUrl;
-  return res.redirect('/payment/employer');
+  return res.redirect("/payment/employer");
 }
 
 module.exports = {

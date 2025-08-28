@@ -11,9 +11,7 @@ block content
     // ===== 사전 계산 (optional chaining 미사용) =====
     - var u = (typeof user !== 'undefined' && user) ? user : {};
     - var ta = (u.tutorAccess && u.tutorAccess.startDate && u.tutorAccess.durationDays) ? u.tutorAccess : null;
-    - var remainLocal = (typeof tutorRemainingDays !== 'undefined')
-    -   ? tutorRemainingDays
-    -   : (ta ? Math.max(0, Math.ceil(((new Date(ta.startDate)).getTime() + Number(ta.durationDays)*86400000 - Date.now())/86400000)) : 0);
+    - var remainLocal = (typeof tutorRemainingDays !== 'undefined') ? tutorRemainingDays : (ta ? Math.max(0, Math.ceil(((new Date(ta.startDate)).getTime() + Number(ta.durationDays)*86400000 - Date.now())/86400000)) : 0);
     - var flagActive = (u.isPaidUser && u.tutorVisibilityExpiresAt && (new Date(u.tutorVisibilityExpiresAt).getTime() > Date.now())) ? true : false;
     - var hasActive = (typeof hasActiveTutorAccess !== 'undefined') ? hasActiveTutorAccess : (flagActive || remainLocal > 0);
     - var purchaseLink = (typeof tutorPurchaseLink !== 'undefined') ? tutorPurchaseLink : '/user/online-tutors/visibility';
