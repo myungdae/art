@@ -22,12 +22,13 @@ block content
             .tab-pane.fade.show(id='list-body-' + idx, class=(idx === 0 ? 'active' : ''), role='tabpanel', aria-labelledby='list-' + idx)
               each list in item.list
                 .card(style='border-top:2px solid #000; color: black')
-                  a.card-body.d-block.text-decoration-none(href=list['@id'].replace(resource, '/resource/'))
+                  a.card-body.d-block.text-decoration-none(href='rdf-resource/'+item_id +'/'+ list['_id'])
                     .d-flex.justify-content-start
                         p(style="font-size: 20px")=list.title
                     .desc_wrap
                       if (list.description)
-                          p(style="font-size:15px")= (list.description['@value'] ? list.description['@value'] : list.description).replace(/<\/?[^>]+(>|$)/g, "")
+                          - const desc = (list.description['@value'] ? list.description['@value'] : list.description).replace(/<\/?[^>]+(>|$)/g, "");
+                          p(style="font-size:15px")!= desc.length > 20 ? desc.slice(0, 100) + "..." : desc
 
                       
 
