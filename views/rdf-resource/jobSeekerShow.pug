@@ -2,95 +2,95 @@ extends ../layout
 
 block content
   .container.mx-auto.max-w-5xl.py-8
+    // Title (가운데)
+    h1.text-3xl.font-bold.mb-6.text-center= vm.title || 'Job Seeker'
 
-    h1.text-3xl.font-bold.mb-2= vm.title || 'Job Seeker'
-    if vm.meta.companyName
-      p.text-gray-600.mb-6 #{vm.meta.companyName}
-
-    - const enc = encodeURIComponent;
-
-    // 표준 메타 칩
-    div(class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8")
-      if vm.meta.country
-        .border.rounded.p-3
-          div.text-xs.text-gray-500.uppercase Country
-          div.mt-2.flex.flex-wrap.gap-2
-            a(href=`/facet/${vm.facetBase}?country=${enc(vm.meta.country)}` class="inline-flex items-center px-3 py-1 rounded-full border hover:bg-gray-50 transition")= vm.meta.country
-
-      if vm.meta.studentType
-        .border.rounded.p-3
-          div.text-xs.text-gray-500.uppercase Student Type
-          div.mt-2.flex.flex-wrap.gap-2
-            a(href=`/facet/${vm.facetBase}?studentType=${enc(vm.meta.studentType)}` class="inline-flex items-center px-3 py-1 rounded-full border hover:bg-gray-50 transition")= vm.meta.studentType
-
-      if vm.meta.teachingAreas && vm.meta.teachingAreas.length
-        .border.rounded.p-3
-          div.text-xs.text-gray-500.uppercase Teaching Areas
-          div.mt-2.flex.flex-wrap.gap-2
-            each area in vm.meta.teachingAreas
-              a(href=`/facet/${vm.facetBase}?teachingArea=${enc(area)}` class="inline-flex items-center px-3 py-1 rounded-full border hover:bg-gray-50 transition")= area
-
-      if vm.meta.languages && vm.meta.languages.length
-        .border.rounded.p-3
-          div.text-xs.text-gray-500.uppercase Languages
-          div.mt-2.flex.flex-wrap.gap-2
-            each lang in vm.meta.languages
-              a(href=`/facet/${vm.facetBase}?language=${enc(lang)}` class="inline-flex items-center px-3 py-1 rounded-full border hover:bg-gray-50 transition")= lang
-
-      if vm.meta.jobLocation
-        .border.rounded.p-3
-          div.text-xs.text-gray-500.uppercase Location
-          div.mt-2= vm.meta.jobLocation
-
-      if vm.meta.email
-        .border.rounded.p-3
-          div.text-xs.text-gray-500.uppercase Email
-          div.mt-2
-            a.text-blue-600(href=`mailto:${vm.meta.email}`)= vm.meta.email
-
-      if vm.meta.homepage
-        .border.rounded.p-3
-          div.text-xs.text-gray-500.uppercase Homepage
-          div.mt-2
-            a.text-blue-600(href=vm.meta.homepage target="_blank" rel="noopener")= vm.meta.homepage
-
-      if vm.meta.datePosted
-        .border.rounded.p-3
-          div.text-xs.text-gray-500.uppercase Updated
-          - const d = new Date(vm.meta.datePosted)
-          div.mt-2= d.toISOString().slice(0,10)
-
-    // 커스텀 시맨틱 칩 (Nationality / Preferred_Work_Location / Major)
-    if vm.semanticChips && vm.semanticChips.length
-      h2.text-sm.font-semibold.text-gray-700.mb-2 Semantic
-      div(class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8")
-        each item in vm.semanticChips
-          .border.rounded.p-3
-            div.text-xs.text-gray-500.uppercase= item.label
-            div.mt-2.flex.flex-wrap.gap-2
-              each v in item.values
-                a(
-                  href=`/facet/${vm.facetBase}?${encodeURIComponent(item.key)}=${enc(v)}`
-                  class="inline-flex items-center px-3 py-1 rounded-full border hover:bg-gray-50 transition"
-                )= v
-
-    // Description
+    h3 Description
+    hr.my-3
+    // Description (왼쪽)
     if vm.descriptionHtml
-      h2.text-xl.font-semibold.mb-3 Description
-      .prose.max-w-none
+      .prose.max-w-none.mb-8.mx-auto.text-left
         != vm.descriptionHtml
-
-    // Additional Details
-    if vm.extras && vm.extras.length
-      h2.text-xl.font-semibold.mt-8.mb-3 Additional Details
-      div(class="grid grid-cols-1 md:grid-cols-2 gap-4")
-        each it in vm.extras
+    ul.nav.nav-tabs.justify-center.mb-4(role="tablist")
+      li.nav-item
+        a.nav-link.active(
+          id="tab-basic",
+          data-toggle="tab",
+          href="#panel-basic",
+          role="tab",
+          aria-controls="panel-basic"
+        ) Basic Information
+      li.nav-item
+        a.nav-link(
+          id="tab-semantic",
+          data-toggle="tab",
+          href="#panel-semantic",
+          role="tab",
+          aria-controls="panel-semantic"
+        ) Semantic Browsing
+    // Tab panels
+    .tab-content.text-left
+      // Basic Information Panel
+      .tab-pane.fade.show.active#panel-basic(role="tabpanel" aria-labelledby="tab-basic")
+        if vm.meta.country
           .border.rounded.p-3
-            div.text-xs.text-gray-500.uppercase= it.label
-            div.mt-2= it.value
+            div.text-xs.text-gray-500.uppercase Country
+            div.mt-2.flex.flex-wrap.gap-2
+              a(href=`/facet/${vm.facetBase}?country=${enc(vm.meta.country)}` class="inline-flex items-center px-3 py-1 rounded-full border hover:bg-gray-50 transition")= vm.meta.country
 
-    // Raw JSON
-    details.mt-8
-      summary.cursor-pointer.text-sm.text-gray-500 Raw JSON (debug)
-      pre.mt-3.p-3.bg-gray-50.rounded.text-xs
-        = JSON.stringify(vm.raw, null, 2)
+        if vm.meta.studentType
+          .border.rounded.p-3
+            div.text-xs.text-gray-500.uppercase Student Type
+            div.mt-2.flex.flex-wrap.gap-2
+              a(href=`/facet/${vm.facetBase}?studentType=${enc(vm.meta.studentType)}` class="inline-flex items-center px-3 py-1 rounded-full border hover:bg-gray-50 transition")= vm.meta.studentType
+
+        if vm.meta.teachingAreas && vm.meta.teachingAreas.length
+          .border.rounded.p-3
+            div.text-xs.text-gray-500.uppercase Teaching Areas
+            div.mt-2.flex.flex-wrap.gap-2
+              each area in vm.meta.teachingAreas
+                a(href=`/facet/${vm.facetBase}?teachingArea=${enc(area)}` class="inline-flex items-center px-3 py-1 rounded-full border hover:bg-gray-50 transition")= area
+
+        if vm.meta.languages && vm.meta.languages.length
+          .border.rounded.p-3
+            div.text-xs.text-gray-500.uppercase Languages
+            div.mt-2.flex.flex-wrap.gap-2
+              each lang in vm.meta.languages
+                a(href=`/facet/${vm.facetBase}?language=${enc(lang)}` class="inline-flex items-center px-3 py-1 rounded-full border hover:bg-gray-50 transition")= lang
+
+        if vm.meta.jobLocation
+          .border.rounded.p-3
+            div.text-xs.text-gray-500.uppercase Location
+            div.mt-2= vm.meta.jobLocation
+
+        if vm.meta.email
+          .border.rounded.p-3
+            div.text-xs.text-gray-500.uppercase Email
+            div.mt-2
+              a.text-blue-600(href=`mailto:${vm.meta.email}`)= vm.meta.email
+
+        if vm.meta.homepage
+          .border.rounded.p-3
+            div.text-xs.text-gray-500.uppercase Homepage
+            div.mt-2
+              a.text-blue-600(href=vm.meta.homepage target="_blank" rel="noopener")= vm.meta.homepage
+
+        if vm.meta.datePosted
+          .border.rounded.p-3
+            div.text-xs.text-gray-500.uppercase Updated
+            - const d = new Date(vm.meta.datePosted)
+            div.mt-2= d.toISOString().slice(0,10)
+
+      // Semantic Browsing Panel
+      .tab-pane.fade#panel-semantic(role="tabpanel" aria-labelledby="tab-semantic")
+        if vm.semanticChips && vm.semanticChips.length
+          .grid.grid-cols-1.md
+            each chip in vm.semanticChips
+              .border.rounded.p-3
+                div.text-xs.text-gray-500.uppercase= chip.label
+                div.mt-2.flex.flex-wrap.gap-2
+                  each val in chip.values
+                    a(
+                      href=`/facet/${vm.facetBase}?${encodeURIComponent(chip.key)}=${encodeURIComponent(val)}`,
+                      class="inline-flex items-center px-3 py-1 rounded-full border hover:bg-gray-50 transition"
+                    )= val

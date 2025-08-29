@@ -1,13 +1,13 @@
-'use strict';
+"use strict";
 
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 /* ---------- helpers ---------- */
 
-function cleanHtml(html = '') {
-  return (html || '').replace(/\u00A0/g, ' ').trim();
+function cleanHtml(html = "") {
+  return (html || "").replace(/\u00A0/g, " ").trim();
 }
 function toArray(v) {
   if (v == null) return [];
@@ -27,24 +27,24 @@ async function findOneById(db, preferred, fallback, _id) {
   }
   return doc;
 }
-function pickFirst(obj, keys, def = '') {
+function pickFirst(obj, keys, def = "") {
   for (const k of keys) if (obj[k]) return obj[k];
   return def;
 }
 function labelize(key) {
   return key
-    .replace(/^_+/, '')
-    .replace(/([a-z])([A-Z])/g, '$1 $2')
-    .replace(/_/g, ' ')
-    .replace(/\s+/g, ' ')
+    .replace(/^_+/, "")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/_/g, " ")
+    .replace(/\s+/g, " ")
     .trim()
-    .replace(/^\w/, c => c.toUpperCase());
+    .replace(/^\w/, (c) => c.toUpperCase());
 }
 function fmtValue(v) {
-  if (v == null) return '';
+  if (v == null) return "";
   if (v instanceof Date) return v.toISOString().slice(0, 10);
-  if (typeof v === 'object') {
-    if (Array.isArray(v)) return v.join(', ');
+  if (typeof v === "object") {
+    if (Array.isArray(v)) return v.join(", ");
     try {
       return JSON.stringify(v);
     } catch {
@@ -62,67 +62,67 @@ function fmtValue(v) {
  * - extras: meta/제목/본문에 쓰이지 않은 나머지 원시 키 자동 표기
  */
 function buildVM(doc, facetBase, titleKeys = [], descKeys = []) {
-  const used = new Set(['_id', '_class', 'createdAt', 'updatedAt', '__v']);
+  const used = new Set(["_id", "_class", "createdAt", "updatedAt", "__v"]);
 
-  const title = (doc._label || pickFirst(doc, titleKeys, '') || '')
+  const title = (doc._label || pickFirst(doc, titleKeys, "") || "")
     .toString()
     .trim();
-  if (doc._label) used.add('_label');
+  if (doc._label) used.add("_label");
   for (const k of titleKeys) used.add(k);
 
   const descriptionHtml = cleanHtml(
-    doc._description || pickFirst(doc, descKeys, '')
+    doc._description || pickFirst(doc, descKeys, "")
   );
-  if (doc._description) used.add('_description');
+  if (doc._description) used.add("_description");
   for (const k of descKeys) used.add(k);
 
   // meta (표준화)
   const meta = {
-    country: doc.country || '',
-    studentType: doc.studentType || '',
+    country: doc.country || "",
+    studentType: doc.studentType || "",
     teachingAreas: toArray(doc.teachingArea),
     languages: toArray(doc.languages || doc.language),
-    companyName: doc.companyName || doc.schoolName || '',
-    jobLocation: doc.jobLocation || doc.location || doc.city || '',
-    pay: doc.pay || '',
-    housing: doc.housing || '',
-    email: doc.email || '',
-    homepage: doc.homepage || doc.website || '',
+    companyName: doc.companyName || doc.schoolName || "",
+    jobLocation: doc.jobLocation || doc.location || doc.city || "",
+    pay: doc.pay || "",
+    housing: doc.housing || "",
+    email: doc.email || "",
+    homepage: doc.homepage || doc.website || "",
     datePosted: doc.datePosted
       ? new Date(doc.datePosted)
       : doc.updatedAt
       ? new Date(doc.updatedAt)
       : doc.createdAt
       ? new Date(doc.createdAt)
-      : null
+      : null,
   };
 
   // 사용된 키 마킹
   [
-    'country',
-    'studentType',
-    'teachingArea',
-    'languages',
-    'language',
-    'companyName',
-    'schoolName',
-    'jobLocation',
-    'location',
-    'city',
-    'pay',
-    'housing',
-    'email',
-    'homepage',
-    'website',
-    'datePosted'
-  ].forEach(k => used.add(k));
+    "country",
+    "studentType",
+    "teachingArea",
+    "languages",
+    "language",
+    "companyName",
+    "schoolName",
+    "jobLocation",
+    "location",
+    "city",
+    "pay",
+    "housing",
+    "email",
+    "homepage",
+    "website",
+    "datePosted",
+  ].forEach((k) => used.add(k));
 
   // Additional Details: 아직 사용 안 된 원시 키들을 자동 렌더
   const extras = [];
   for (const [k, v] of Object.entries(doc)) {
     if (used.has(k)) continue;
-    if (k.startsWith('@')) continue; // RDF 메타
-    if (k === '_id' || k === '__v') continue;
+    if (k.startsWith("@")) continue; // RDF 메타
+    if (k === "_id" || k === "__v") continue;
     extras.push({ key: k, label: labelize(k), value: fmtValue(v) });
   }
 
@@ -133,93 +133,112 @@ function buildVM(doc, facetBase, titleKeys = [], descKeys = []) {
     descriptionHtml,
     meta,
     extras,
-    raw: doc
+    raw: doc,
   };
 }
 
 /* ---------- Routes ---------- */
 
 // Job Vacancies
-router.get('/Job_Vacancies/:id', async (req, res, next) => {
+router.get("/Job_Vacancies/:id", async (req, res, next) => {
   try {
     const _id = safeObjectId(req.params.id);
-    if (!_id) return res.status(404).send('Invalid id');
+    if (!_id) return res.status(404).send("Invalid id");
 
     const db = mongoose.connection.db;
     const doc = await findOneById(
       db,
-      'Job_Vacancies_RDF',
-      'Job_Vacancies',
+      "Job_Vacancies_RDF",
+      "Job_Vacancies",
       _id
     );
-    if (!doc) return res.status(404).send('Not found');
+    if (!doc) return res.status(404).send("Not found");
 
-    const vm = buildVM(doc, 'Job_Vacancies', ['title'], ['description']);
-    return res.render('rdf-resource/jobVacancyShow', { vm });
+    const vm = buildVM(doc, "Job_Vacancies", ["title"], ["description"]);
+
+    const chipKeys = ["country", "studentType", "teachingArea"];
+    vm.semanticChips = chipKeys
+      .filter((k) => doc[k] != null && doc[k] !== "")
+      .map((k) => ({
+        key: k,
+        label: k.replace(/_/g, " "),
+        values: Array.isArray(doc[k]) ? doc[k] : [doc[k]],
+      }));
+
+    return res.render("rdf-resource/jobVacancyShow", { vm });
   } catch (err) {
-    console.error('GET /rdf-resource/Job_Vacancies/:id', err);
+    console.error("GET /rdf-resource/Job_Vacancies/:id", err);
     return next(err);
   }
 });
 
 // Job Seekers (커스텀 시맨틱 칩 포함)
-router.get('/Job_Seekers/:id', async (req, res, next) => {
+router.get("/Job_Seekers/:id", async (req, res, next) => {
   try {
     const _id = safeObjectId(req.params.id);
-    if (!_id) return res.status(404).send('Invalid id');
+    if (!_id) return res.status(404).send("Invalid id");
 
     const db = mongoose.connection.db;
-    const doc = await findOneById(db, 'Job_Seekers_RDF', 'Job_Seekers', _id);
-    if (!doc) return res.status(404).send('Not found');
+    const doc = await findOneById(db, "Job_Seekers_RDF", "Job_Seekers", _id);
+    if (!doc) return res.status(404).send("Not found");
 
     const vm = buildVM(
       doc,
-      'Job_Seekers',
-      ['title', 'name'],
-      ['description', 'about', 'bio']
+      "Job_Seekers",
+      ["title", "name"],
+      ["description", "about", "bio"]
     );
 
     // 커스텀 시맨틱 -> 칩으로 노출할 키들
-    const chipKeys = ['Nationality', 'Preferred_Work_Location', 'Major'];
+    const chipKeys = ["Nationality", "Preferred_Work_Location", "Major"];
     vm.semanticChips = chipKeys
-      .filter(k => doc[k] != null && doc[k] !== '')
-      .map(k => ({
+      .filter((k) => doc[k] != null && doc[k] !== "")
+      .map((k) => ({
         key: k,
-        label: k.replace(/_/g, ' '),
-        values: Array.isArray(doc[k]) ? doc[k] : [doc[k]]
+        label: k.replace(/_/g, " "),
+        values: Array.isArray(doc[k]) ? doc[k] : [doc[k]],
       }));
 
-    return res.render('rdf-resource/jobSeekerShow', { vm });
+    return res.render("rdf-resource/jobSeekerShow", { vm });
   } catch (err) {
-    console.error('GET /rdf-resource/Job_Seekers/:id error:', err);
+    console.error("GET /rdf-resource/Job_Seekers/:id error:", err);
     return next(err);
   }
 });
 
 // Online Tutors
-router.get('/Online_Tutors/:id', async (req, res, next) => {
+router.get("/Online_Tutors/:id", async (req, res, next) => {
   try {
     const _id = safeObjectId(req.params.id);
-    if (!_id) return res.status(404).send('Invalid id');
+    if (!_id) return res.status(404).send("Invalid id");
 
     const db = mongoose.connection.db;
     const doc = await findOneById(
       db,
-      'Online_Tutors_RDF',
-      'Online_Tutors',
+      "Online_Tutors_RDF",
+      "Online_Tutors",
       _id
     );
-    if (!doc) return res.status(404).send('Not found');
+    if (!doc) return res.status(404).send("Not found");
 
     const vm = buildVM(
       doc,
-      'Online_Tutors',
-      ['title', 'name'],
-      ['description', 'about', 'bio']
+      "Online_Tutors",
+      ["title", "name"],
+      ["description", "about", "bio"]
     );
-    return res.render('rdf-resource/onlineTutorShow', { vm });
+
+    const chipKeys = ["Expertise", "Gender", "Tutoring_Experience"];
+    vm.semanticChips = chipKeys
+      .filter((k) => doc[k] != null && doc[k] !== "")
+      .map((k) => ({
+        key: k,
+        label: k.replace(/_/g, " "),
+        values: Array.isArray(doc[k]) ? doc[k] : [doc[k]],
+      }));
+    return res.render("rdf-resource/onlineTutorShow", { vm });
   } catch (err) {
-    console.error('GET /rdf-resource/Online_Tutors/:id', err);
+    console.error("GET /rdf-resource/Online_Tutors/:id", err);
     return next(err);
   }
 });

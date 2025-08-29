@@ -21,22 +21,15 @@ block content
             - var item_id = Array.isArray(item._id) ? item._id[0] : item._id
             .tab-pane.fade.show(id='list-body-' + idx, class=(idx === 0 ? 'active' : ''), role='tabpanel', aria-labelledby='list-' + idx)
               each list in item.list
-                .card(style='border-top:2px solid #000')
-                  .card-body
+                .card(style='border-top:2px solid #000; color: black')
+                  a.card-body.d-block.text-decoration-none(href=list['@id'].replace(resource, '/resource/'))
                     .d-flex.justify-content-start
-                      a(href=list['@id'].replace(resource, '/resource/'))
-                        if (list[resource + '그림'] && list[resource + '그림']['@value'])
-                          img(style='width:100px; min-width:100px; margin:10px;' name="pic" src=list[resource + '그림']['@value'].replace(/\[dot\]/g, '.'))
-                        else
-                          img(style='width:100px; min-width:100px; margin:10px;' name="pic" src='/assets/img/empty.gif')
-                      .desc_wrap
-                        if (list[label])
-                          a.text-info.font-weight-bold(href=list['@id'].replace(resource, '/resource/'))= list[label]['@value'] ? list[label]['@value'].replace(/\[dot\]/g, '.') : (Array.isArray(list[label]) ? list[label][0]['@value'].replace(/\[dot\]/g, '.') : '')
-                        if (list[description])
-                          if (list[description]['@value'])
-                            p.description.overflow-auto.my-0(style='max-height:100px;')= list[description]['@value'].replace(/\[dot\]/g, '.')
-                          else
-                            p.description.overflow-auto.my-0(style='max-height:100px;')= list[description].replace(/\[dot\]/g, '.')
+                        p(style="font-size: 20px")=list.title
+                    .desc_wrap
+                      if (list.description)
+                          p(style="font-size:15px")= (list.description['@value'] ? list.description['@value'] : list.description).replace(/<\/?[^>]+(>|$)/g, "")
+
+                      
 
 block append_js
   script.
