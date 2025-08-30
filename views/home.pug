@@ -18,50 +18,45 @@ block content
       p(class="text-gray-600 mb-3") The fast ESL hiring & tutoring hub
       p(class="text-lg text-black-300 mt-1" style="font-size: 18px; font-weight: 500") Teach Beyond Borders. Inspire Minds. From ESL to STEM, Your Classroom Is Everywhere.
 
-    // Stats (clickable + spinner + count-up, light orange theme)
+    // Stats
     style.
       .stat-spinner{width:18px;height:18px;border:2px solid #e5e7eb;border-top-color:#f97316;border-radius:50%;animation:spin .8s linear infinite;display:inline-block;vertical-align:middle}
       @keyframes spin{to{transform:rotate(360deg)}}
       .hide{display:none}
-      .stat-number {
-        color: #FF7A00;
-        font-size: 50px;
-      }
+      .stat-number { color: #FF7A00; font-size: 50px; }
       .stat-card {
         background: #F2F2F2;
         border: 1px solid #FFEDD5;
         border-radius: 20px;
-        width: 400px;
-        height: 240px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
+        width: 400px; height: 240px;
+        display: flex; flex-direction: column; justify-content: center;
       }
       .stat-card:hover{background:#FFEAD5;box-shadow:0 6px 18px rgba(249,115,22,.12)}
       .stat-label{color:#6b7280; font-size:20px; font-weight: 400; padding-top: 20px;}
+
     div(class="flex flex-col md:flex-row items-center justify-center gap-6 mb-12")
-      a(href="/facet/Job_Vacancies" aria-label="Browse Job Vacancies" 
-        class="stat-card block p-5 text-center transition transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-orange-400"
-        )
+      a(href="/facet/Job_Vacancies" class="stat-card block p-5 text-center transition transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-orange-400")
         .flex.items-center.justify-center.gap-3
           span#spin-v.stat-spinner
           div#stat-v.text-3xl.font-bold.stat-number= (S.vCount != null ? S.vCount : 0)
         div.stat-label.mt-1 Job Vacancies
 
-      a(href="/facet/Job_Seekers" aria-label="Browse Job Seekers" class="stat-card block p-5 text-center transition transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-orange-400")
+      a(href="/facet/Job_Seekers" class="stat-card block p-5 text-center transition transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-orange-400")
         .flex.items-center.justify-center.gap-3
           span#spin-s.stat-spinner
           div#stat-s.text-3xl.font-bold.stat-number= (S.sCount != null ? S.sCount : 0)
         div.stat-label.mt-1 Job Seekers
 
-      a(href="/facet/Online_Tutors" aria-label="Browse Online Tutors" class="stat-card block p-5 text-center transition transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-orange-400")
+      a(href="/facet/Online_Tutors" class="stat-card block p-5 text-center transition transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-orange-400")
         .flex.items-center.justify-center.gap-3
           span#spin-t.stat-spinner
           div#stat-t.text-3xl.font-bold.stat-number= (S.tCount != null ? S.tCount : 0)
         div.stat-label.mt-1 Online Tutors
-    
+
     hr.my-3
     .mb-15
+
+    // ===================== Video Section =====================
     div(class="container mx-auto max-w-6xl py-10")
       div(class="flex flex-col md:flex-row items-center md:items-start gap-12")
         // 좌측 텍스트 영역
@@ -69,16 +64,24 @@ block content
           h1(class="text-5.3xl font-extrabold mb-3") ESL Plus:
           p(class="text-4xl") Bridge to the World
 
-        // 우측 영상 컨테이너 (실제 동영상 삽입)
+        // 우측 영상 영역
         div(class="w-full md:w-2/3 flex justify-center")
-          div(class="relative w-full max-w-4xl rounded-3xl border-4" style="border-color:#FF7A00;")
+          div(class="relative w-full max-w-4xl rounded-3xl border-4 overflow-hidden" style="border-color:#FF7A00;")
             div(class="relative" style="padding-top:56.25%;")
               video(
+                id="introVideo"
                 src="/assets/video/eslplus.mp4"
                 controls
                 playsinline
                 muted
                 class="absolute top-0 left-0 w-full h-full rounded-2xl"
+              )
+              // 오버레이 유튜브 스타일 버튼
+              img(
+                src="/assets/img/youtube_play.png"
+                alt="Play Button"
+                class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-24 h-24 cursor-pointer opacity-90 hover:opacity-100"
+                onclick="document.getElementById('introVideo').play(); this.style.display='none';"
               )
             a(
               href="/assets/video/eslplus.mp4"
@@ -87,7 +90,7 @@ block content
               class="absolute bottom-3 right-3 bg-orange-500 text-white text-sm px-3 py-1 rounded-full hover:bg-orange-600"
             ) Open in new tab
 
-    // Latest Job Vacancies
+    // ===================== Lists =====================
     if RV.length
       h2(class="text-xl font-semibold mb-3") Latest Job Vacancies
       div(class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12")
@@ -109,7 +112,6 @@ block content
                 each area in v.teachingAreas.slice(0,3)
                   a(href='/facet/Job_Vacancies?teachingArea=' + enc(area) class="inline-flex items-center px-2 py-1 text-xs rounded-full border")= area
 
-    // Latest Job Seekers
     if RS.length
       h2(class="text-xl font-semibold mb-3") Latest Job Seekers
       div(class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12")
@@ -128,7 +130,6 @@ block content
                 each lang in s.languages.slice(0,3)
                   a(href='/facet/Job_Seekers?language=' + enc(lang) class="inline-flex items-center px-2 py-1 text-xs rounded-full border")= lang
 
-    // Latest Online Tutors
     if RT.length
       h2(class="text-xl font-semibold mb-3") Latest Online Tutors
       div(class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12")
@@ -147,7 +148,6 @@ block content
                 each lang in t.languages.slice(0,3)
                   a(href='/facet/Online_Tutors?language=' + enc(lang) class="inline-flex items-center px-2 py-1 text-xs rounded-full border")= lang
 
-   
     // 카운트업 스크립트
     script.
       (function () {
