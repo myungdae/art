@@ -20,16 +20,13 @@ block content
       // Actions
       .flex.gap-3.mt-4
         if canPost
-          a.btn.btn-primary(href='/job-vacancies/new') Buy Ad Credits
+          a.btn.btn-success(href='/job-vacancies/new') Register
           a.btn(href='/job-vacancies/mine') My Job Vacancies
         else
           a.btn.btn-primary(href="/job-vacancies/new") Buy Ad Credits
           a.btn(href='/job-vacancies/mine') My Job Vacancies
 
     // Job list
-    if jobVacancies && jobVacancies.length
-      ul.mt-6.max-w-xl.mx-auto.list-disc.pl-6
-        each j in jobVacancies
-          li #{j.title}
+    if activeJobs > 0
     else
       p.mt-6.text-gray-500.text-center No job vacancies posted yet.

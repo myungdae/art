@@ -72,10 +72,12 @@ block content
 
         // 우측 영상/이미지 컨테이너
         div(class="w-full md:w-2/3 flex justify-center")
-          div(class="video-mockup bg-white p-6 rounded-3xl border-4 border-orange-500" style="width: 840px; height: 400px; border-color: #FF7A00;")
-            h3 추후 링크 또는 영상 삽입 예정
-            //- img(src="/assets/img/video.png" alt="ESL PLUS Video Mockup" class="w-full h-full object-cover" style="width: 500px; height: auto;")
-           
+          div(class="video-mockup bg-white p-6 rounded-3xl border-4 border-orange-500 flex items-center justify-center relative" style="width: 840px; height: 400px; border-color: #FF7A00;")
+            img(src="/assets/img/video.png" alt="ESL PLUS Video Mockup" class="max-w-full max-h-full object-contain" style="width: 500px; height: 300px;")
+            a(href="/" target="_blank")
+              img(src="/assets/img/play_btn.png" alt="Play Button" 
+                  class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 cursor-pointer"
+                  style="width: 50px; height: 50px;")
       
 
     // Latest Job Vacancies
