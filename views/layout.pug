@@ -19,6 +19,14 @@ html(lang='en')
     link(href='/assets/css/now-ui-kit.css?v=1.3.0', rel='stylesheet')
     link(href='/assets/css/custom.css', rel='stylesheet')
 
+    // ✅ Google Analytics (GA4)
+    script(async src="https://www.googletagmanager.com/gtag/js?id=G-4645N65FCR")
+    script.
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-4645N65FCR');
+
     block append_on_header
 
     // ─────────────────────────────────────────────────────────
@@ -27,7 +35,7 @@ html(lang='en')
     style.
       /* 헤더 */
       .search-header {  background-color: #fff; display: flex; align-items: center; justify-content: space-between;  }
-      .menu-top {  gap: 30px; padding-top: 20px} /* 중앙 메뉴와 로그인 링크 분리 */
+      .menu-top {  gap: 30px; padding-top: 20px}
       .menu-top a { font-weight: 700; color:#000; text-decoration: none; }
 
       /* 모바일: 우상단에 계정 토글 버튼, 드롭다운 */
@@ -37,28 +45,15 @@ html(lang='en')
         background:#fff; border:1px solid #e5e7eb; border-radius:12px;
         box-shadow:0 8px 20px rgba(0,0,0,.08); padding:10px; width: 210px; display:none;
       }
-      .container-fluid {
-        padding: 0px;
-      }
-      .main-menu {
-        display: flex;
-        flex-direction: row; /* 명시적으로 추가 */
-        justify-content: center; /* 가로 중앙 정렬 */
-      }
-      .account-menu {
-        display: flex;
-        flex-direction: row; /* 명시적으로 추가 */
-        justify-content: center; /* 가로 중앙 정렬 */
-      }
+      .container-fluid { padding: 0px; }
+      .main-menu { display: flex; flex-direction: row; justify-content: center; }
+      .account-menu { display: flex; flex-direction: row; justify-content: center; }
       .main_header {
         width: '100%';
         height: 750px;
-        display: flex;
-        flex-direction: column; /* 명시적으로 추가 */
+        display: flex; flex-direction: column;
         background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('assets/img/header-background.jpg');
-        background-size: cover; /* 이미지가 컨테이너를 가득 채우도록 설정 */
-        background-position: center; /* 이미지를 중앙에 배치 */
-        background-repeat: no-repeat; /* 이미지 반복 방지 */
+        background-size: cover; background-position: center; background-repeat: no-repeat;
       }
 
       .main-menu a {font-size: 18px; color: #FFFFFF; height: 'auto'}
@@ -67,15 +62,10 @@ html(lang='en')
       .menu-drop a { display:block; padding:8px 10px; color:#111; text-decoration:none; border-radius:8px; font-weight:700; }
       .menu-drop a:hover { background:#f3f4f6; }
       .menu-drop.show { display:block; }
-      .head_div {display: flex; flex-direction: row; justify-content: center; /* 가로 중앙 정렬 */ }
-      
-      .black-text {
-        color: black !important;
-      }
+      .head_div {display: flex; flex-direction: row; justify-content: center; }
 
-      .gray-text {
-        color:rgb(90, 90, 90) !important;
-      }
+      .black-text { color: black !important; }
+      .gray-text { color:rgb(90, 90, 90) !important; }
 
       /* 상단 검색 인풋 */
       .search-input {
@@ -92,7 +82,6 @@ html(lang='en')
       nav.main_nav_bar .nav-link { color:#fff !important; font-weight:700; letter-spacing:.3px; }
       nav.main_nav_bar .navbar-nav { gap:24px; }
       nav.main_nav_bar .nav-link.active { text-decoration: underline; text-underline-offset: 6px; }
-      /* nav에 혹시 검색 DOM이 생겨도 숨김 (안전장치) */
       nav.main_nav_bar #searchText, nav.main_nav_bar .sstyly { display:none !important; }
 
       /* 부트스트랩 토글러 색상 */
@@ -193,7 +182,7 @@ html(lang='en')
             .text-center(style="margin-top: 100px;")
               h2(style="font-weight: bold; font-size: 50px; margin-bottom: 25px; color: #FFFFFF") ESL PLUS <br>The fast ESL hiring & tutoring hub
               p(style="font-size: 20px; margin-bottom: 25px; color: #FFFFFF") Teaching opportunities available around the world
-               
+
               - var _ph = (typeof searchKeyword!=='undefined' && searchKeyword) ? searchKeyword : "Enter keyword...";
               .input-group.justify-content-center
                 input#searchText.form-control.search-input(
@@ -208,7 +197,7 @@ html(lang='en')
                     type="button"
                   )
                     img(src="/assets/img/search.png", alt="Search", width="30")
-        else 
+        else
           .head_div
               // 좌측 상단 브랜드 로고
               a.brand-logo(
@@ -261,8 +250,6 @@ html(lang='en')
               a(href="/admin/dashboard") Admin
               a(href="/admin/logout").logout Logout
 
-    // ───────── GNB (부트스트랩 햄버거)
-
     // 메인 컨텐츠
     main.main-content
       block content
@@ -290,13 +277,11 @@ html(lang='en')
             a(href="/policy/terms") Terms of Service
             a(href="/policy/privacy") Privacy Policy
             a(href="/policy/refund") Refund Policy
-           
+
       hr.my-3
-      .row.mt-3 
-        .col.text-center 
+      .row.mt-3
+        .col.text-center
           p © 2025 ESL PLUS. All rights reserved.
-        
-      
 
     // ───────── Scripts ─────────
     script(src='https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js')
