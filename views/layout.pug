@@ -199,38 +199,39 @@ html(lang=(typeof htmlLang !== 'undefined' && htmlLang ? htmlLang : 'en'))
                     type="button"
                   )
                     img(src="/assets/img/search.png", alt="Search", width="30")
+
+              // ✅ 홈 검색창 '바로 아래'에 꽂아 넣는 슬롯
+              block home_below_search
+
         else
           .head_div
-              // 좌측 상단 브랜드 로고
-              a.brand-logo(
-                href=(typeof siteBrandLink!=='undefined' && siteBrandLink) || '/',
-                aria-label=(typeof siteBrand!=='undefined' && siteBrand) || 'ESL Plus',
-                title=(typeof siteBrand!=='undefined' && siteBrand) || 'ESL Plus'
-              )
-                img(src="/assets/img/eslplus.svg", alt=(typeof siteBrand!=='undefined' && siteBrand) || 'ESL Plus')
+            a.brand-logo(
+              href=(typeof siteBrandLink!=='undefined' && siteBrandLink) || '/',
+              aria-label=(typeof siteBrand!=='undefined' && siteBrand) || 'ESL Plus',
+              title=(typeof siteBrand!=='undefined' && siteBrand) || 'ESL Plus'
+            )
+              img(src="/assets/img/eslplus.svg", alt=(typeof siteBrand!=='undefined' && siteBrand) || 'ESL Plus')
+            .menu-top.d-none.d-md-flex
+              .main-menu
+                a.nav-link.h5.my-0.black-text(class=(currentPage==='/' ? 'active' : ''), href='/') HOME
+                a.nav-link.h5.my-0.black-text(class=(currentPage && (currentPage.indexOf('/facet/Job_Vacancies')===0 || currentPage.indexOf('/job-vacancies')===0)) ? 'active' : '', href='/facet/Job_Vacancies') JOB VACANCIES
+                a.nav-link.h5.my-0.black-text(class=(currentPage && currentPage.indexOf('/facet/Job_Seekers')===0) ? 'active' : '', href='/facet/Job_Seekers') JOB SEEKERS
+                a.nav-link.h5.my-0.black-text(class=(currentPage && currentPage.indexOf('/facet/Online_Tutors')===0) ? 'active' : '', href='/facet/Online_Tutors') ONLINE TUTORS
+              .account-menu
+                if session && session.user
+                  a.gray-text.nav-link.h5(href="/user/mypage") Mypage
+                  if session.user.adsAvailable !== undefined
+                    | (#{session.user.adsAvailable} left)
+                  a.nav-link.h5.my-0.gray-text(href="/inquiry") Inquiry
+                  a.logout.nav-link.h5.my-0.gray-text(href="/user/logout") Logout
+                else
+                  a.nav-link.h5.my-0.gray-text(href="/user/register") Membership
+                  a.nav-link.h5.my-0.gray-text(href="/user/login") Login
+                  a.nav-link.h5.my-0.gray-text(href="/inquiry") Inquiry
 
-              // 데스크탑: 우상단 계정 링크
-              .menu-top.d-none.d-md-flex
-                .main-menu
-                  a.nav-link.h5.my-0.black-text(class=(currentPage==='/' ? 'active' : ''), href='/') HOME
-                  a.nav-link.h5.my-0.black-text(class=(currentPage && (currentPage.indexOf('/facet/Job_Vacancies')===0 || currentPage.indexOf('/job-vacancies')===0)) ? 'active' : '', href='/facet/Job_Vacancies') JOB VACANCIES
-                  a.nav-link.h5.my-0.black-text(class=(currentPage && currentPage.indexOf('/facet/Job_Seekers')===0) ? 'active' : '', href='/facet/Job_Seekers') JOB SEEKERS
-                  a.nav-link.h5.my-0.black-text(class=(currentPage && currentPage.indexOf('/facet/Online_Tutors')===0) ? 'active' : '', href='/facet/Online_Tutors') ONLINE TUTORS
-                .account-menu
-                  if session && session.user
-                    a.gray-text.nav-link.h5(href="/user/mypage") Mypage
-                    if session.user.adsAvailable !== undefined
-                      | (#{session.user.adsAvailable} left)
-                    a.nav-link.h5.my-0.gray-text(href="/inquiry") Inquiry
-                    a.logout.nav-link.h5.my-0.gray-text(href="/user/logout") Logout
-                  else
-                    a.nav-link.h5.my-0.gray-text(href="/user/register") Membership
-                    a.nav-link.h5.my-0.gray-text(href="/user/login") Login
-                    a.nav-link.h5.my-0.gray-text(href="/inquiry") Inquiry
-
-                  if session && session.isAdmin
-                    a.nav-link.h5.my-0.gray-text(href="/admin/dashboard" ) Admin
-                    a.nav-link.h5.my-0.gray-text(href="/admin/logout").logout Logout
+                if session && session.isAdmin
+                  a.nav-link.h5.my-0.gray-text(href="/admin/dashboard" ) Admin
+                  a.nav-link.h5.my-0.gray-text(href="/admin/logout").logout Logout
 
         // 모바일: 우상단 계정 토글
         .menu-top-mob.d-md-none
@@ -260,11 +261,8 @@ html(lang=(typeof htmlLang !== 'undefined' && htmlLang ? htmlLang : 'en'))
     footer.footer
       .container
         .d-flex.align-items-start
-          // 로고 (1)
           div.logo-area
             img(src="/assets/img/linked-data.png" alt="Linked Data Center" style="max-height:80px")
-
-          // 회사 정보 (8)
           div.company-info
             h6 Company Information
             p Company Name: Linked Data Center
@@ -273,13 +271,10 @@ html(lang=(typeof htmlLang !== 'undefined' && htmlLang ? htmlLang : 'en'))
             p E-Commerce Intermediary Registration No.: 2025-Seoul-Gangnam-0000
             p Address: 167, Sangri 1-gil, Bongdam-eup, Hwaseong-si, Gyeonggi-do, Apt. 601-101 (Jungheung S-Class Edu Foret)
             p Customer Support: myungdae.cho@gmail.com
-
-          // 링크 (1)
           div.link-area
             a(href="/policy/terms") Terms of Service
             a(href="/policy/privacy") Privacy Policy
             a(href="/policy/refund") Refund Policy
-
       hr.my-3
       .row.mt-3
         .col.text-center
@@ -306,15 +301,10 @@ html(lang=(typeof htmlLang !== 'undefined' && htmlLang ? htmlLang : 'en'))
     script(src='/assets/js/custom/nav-prettify.js')
     script(src='/assets/js/custom/nav-dedupe.js')
     script(src='/assets/js/custom/nav-hardfix.js')
-    
-    
-  
-    script(src='/assets/js/plugins/moment-with-locale.js', type='text/javascript')
-    script.
-      if (window.moment) { moment.locale('en'); }
-      
-      
 
+    // 모먼트 로케일 고정(안전)
+    script.
+      if (window.moment) { try { moment.locale('en'); } catch(e){} }
 
     // 모바일 계정 드롭 토글
     script.
