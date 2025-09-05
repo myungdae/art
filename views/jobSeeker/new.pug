@@ -1,167 +1,104 @@
-//- views/jobSeeker/new.pug  (DB-backed nationalities + datalist + upsert)
+//- views/jobSeeker/new.pug
 extends ../layout
 
 block content
-  // ✅ 서버에서 주입한 locals를 우선 사용, 없으면 안전한 기본값으로 폴백
-  - const _defNationalities = ['Korean','American','British','Japanese','Chinese'];
-  - const _defWorkLoc       = ['Korea','Japan','China','Malaysia','Thailand','Remote'];
-  - const _defMajors        = ['English','Education','TESOL','Linguistics','Business'];
-
-  - const _nationalities = (typeof nationalities !== 'undefined' && nationalities?.length) ? nationalities : _defNationalities;
-  - const _workLocs      = (typeof preferredWorkLocations !== 'undefined' && preferredWorkLocations?.length) ? preferredWorkLocations : _defWorkLoc;
-  - const _majors        = (typeof majors !== 'undefined' && majors?.length) ? majors : _defMajors;
-
   .container.mt-5
     .row.justify-content-center
       .col-md-10
         .card.shadow
           .card-header.bg-primary.text-white.text-center
             h4.mb-0 New Job Seeker
-
           .card-body
-            // ⚠️ 본문 제출 전에 JS가 hidden 필드를 만들어 표준 키로 보냅니다.
             form(method="POST", action="/job-seekers", onsubmit="return handleCustomFields()")
-              // ===== Job Title (rdfs:label)
-              .form-group.mb-3
+              // ===== Job Title
+              .mb-3
                 label(for="title") Job Title
-                input.form-control#title(type="text", name="rdfs:label[@value]", placeholder="e.g., ESL Teacher")
+                input#title.form-control(type="text", name="rdfs:label[@value]", placeholder="e.g., ESL Teacher")
 
-              // ===== Description (CKEditor, dc:description)
-              .form-group.mb-4
+              // ===== Description
+              .mb-4
                 label(for="description") Description
-                textarea.form-control(name="http://purl.org/dc/elements/1.1/description[@value]", id="description", rows="8")
+                textarea#description.form-control(name="http://purl.org/dc/elements/1.1/description[@value]", rows="8")
 
-              // ===== Nationality (✅ datalist + input: 스크롤/검색 + 직접 입력)
-              .form-group.mb-3
-                label(for="nationality") Nationality
-                input#nationality.form-control(
+              // ===== Nationality (datalist + hidden semantic field)
+              .mb-3
+                label(for="nationalityUi") Nationality
+                input#nationalityUi.form-control(
                   type="text"
-                  name="__nationality_ui__"
                   list="nationality-list"
-                  value=(values && values.nationality) || 'Korean'
-                  placeholder="Select or type nationality..."
+                  placeholder="Select or type nationality"
                   autocomplete="off"
                 )
+                //- 서버로 보낼 실제 필드
+                input#nationalityHidden(type="hidden", name="esl:Nationality[@value]")
+
+                //- 초기 프리셋 (서버에서 전달된 nationalities 없으면 기본값 사용)
+                - const _nats = (typeof nationalities !== 'undefined' && nationalities && nationalities.length) ? nationalities : ['Korean','American','British','Japanese','Chinese']
                 datalist#nationality-list
-                  each n in _nationalities
+                  each n in _nats
                     option(value=n)= n
-                small.text-muted.mt-1 If not listed, type a new nationality. It will be added automatically.
+                small.text-muted Type to search or enter a new nationality.
 
-              // ===== Preferred Work Location (semantic)
-              .form-group.mb-3
-                label(for="workLocSelect") Preferred Work Location
-                select.form-control#workLocSelect(name="esl:Preferred_Work_Location[@value]")
-                  option(disabled selected value="") Select Preferred Work Location
-                  each v in _workLocs
-                    option(value=v)= v
-                small.text-muted.mt-1 You can also type a new location:
-                input.form-control.mt-1(type="text", id="customWorkLoc", placeholder="Or enter a new work location")
+              // ===== Preferred Work Location
+              .mb-3
+                label(for="workLoc") Preferred Work Location
+                input#workLoc.form-control(type="text", name="esl:Preferred_Work_Location[@value]", placeholder="e.g., Korea or Remote")
 
-              // ===== Major (semantic)
-              .form-group.mb-3
-                label(for="majorSelect") Major
-                select.form-control#majorSelect(name="esl:Major[@value]")
-                  option(disabled selected value="") Select Major
-                  each v in _majors
-                    option(value=v)= v
-                small.text-muted.mt-1 You can also type a new major:
-                input.form-control.mt-1(type="text", id="customMajor", placeholder="Or enter a new major")
+              // ===== Major
+              .mb-3
+                label(for="major") Major
+                input#major.form-control(type="text", name="esl:Major[@value]", placeholder="e.g., Education")
 
-              // ===== Email / Languages / Date Available (일반 필드)
-              .form-group.mb-3
+              // ===== Email / Languages / Date
+              .mb-3
                 label(for="email") Email
-                input.form-control#email(type="email", name="email", placeholder="email@example.com")
+                input#email.form-control(type="email", name="email", placeholder="email@example.com")
 
-              .form-group.mb-3
+              .mb-3
                 label(for="languageSpoken") Languages Spoken
-                input.form-control#languageSpoken(type="text", name="languageSpoken", placeholder="e.g., English, Korean")
+                input#languageSpoken.form-control(type="text", name="languageSpoken", placeholder="e.g., English, Korean")
 
-              .form-group.mb-3
+              .mb-3
                 label(for="dateAvailable") Date Available
-                input.form-control#dateAvailable(type="date", name="dateAvailable")
+                input#dateAvailable.form-control(type="date", name="dateAvailable")
 
-              button.btn.btn-primary.btn-block.mt-3(type="submit") Save
+              button.btn.btn-primary.mt-3(type="submit") Save
 
 block append_js
+  // CKEditor
+  script(src="https://cdn.ckeditor.com/ckeditor5/41.0.0/classic/ckeditor.js")
+  script.
+    (function () {
+      if (window.ClassicEditor) {
+        ClassicEditor.create(document.querySelector('#description')).catch(console.error);
+      }
 
-  <script>
-    (function reloadNationalities() {
+      // hidden 필드에 UI 값 동기화
+      function syncNationality() {
+        var ui  = document.getElementById('nationalityUi');
+        var hid = document.getElementById('nationalityHidden');
+        if (ui && hid) hid.value = (ui.value || '').trim();
+      }
+      document.getElementById('nationalityUi')?.addEventListener('input', syncNationality);
+
+      // 폼 제출 시 한 번 더 동기화
+      window.handleCustomFields = function () {
+        syncNationality();
+        return true;
+      };
+
+      // 최신 국적 목록을 API에서 로드하여 datalist 갱신
       fetch('/api/nationalities')
-        .then(r => r.json())
-        .then(arr => {
-          const dl = document.getElementById('nationality-list');
-          if (!dl) return;
+        .then(function (r) { return r.json(); })
+        .then(function (arr) {
+          var dl = document.getElementById('nationality-list');
+          if (!dl || !Array.isArray(arr)) return;
           dl.innerHTML = '';
-          arr.forEach(n => {
-            const opt = document.createElement('option');
+          arr.forEach(function (n) {
+            var opt = document.createElement('option');
             opt.value = n;
             dl.appendChild(opt);
           });
         })
-        .catch(()=>{});
+        .catch(function () { /* no-op */ });
     })();
-  </script>
-
-  // CKEditor
-  script(src="https://cdn.ckeditor.com/ckeditor5/41.0.0/classic/ckeditor.js")
-  script.
-    ClassicEditor.create(document.querySelector('#description')).catch(console.error);
-
-    // --- Helpers ---
-    function normalizeWord(s){
-      if(!s) return null;
-      s = String(s).trim();
-      if(!s) return null;
-      return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
-    }
-
-    function handleCustomFields() {
-      const form = document.querySelector('form');
-
-      // ✅ Nationality: datalist+input → 표준 키(esl:Nationality[@value])로 hidden 생성
-      const natInput = document.getElementById('nationality');
-      let nat = normalizeWord(natInput && natInput.value);
-      if (nat) {
-        // hidden 필드로 표준 키를 추가
-        const hid = document.createElement('input');
-        hid.type = 'hidden';
-        hid.name = 'esl:Nationality[@value]';
-        hid.value = nat;
-        form.appendChild(hid);
-
-        // 백그라운드로 마스터 upsert (실패해도 제출은 계속)
-        try {
-          fetch('/api/nationalities', {
-            method: 'POST',
-            headers: { 'content-type':'application/json' },
-            body: JSON.stringify({ name: nat })
-          });
-        } catch(_) {}
-      }
-
-      // Preferred Work Location: select or custom
-      const wlSel = document.getElementById('workLocSelect');
-      const wlNew = normalizeWord(document.getElementById('customWorkLoc')?.value);
-      if (wlNew && wlSel && wlSel.value === '') {
-        const i = document.createElement('input');
-        i.type = 'hidden';
-        i.name = 'esl:Preferred_Work_Location[@value]';
-        i.value = wlNew;
-        form.appendChild(i);
-        wlSel.disabled = true;
-      }
-
-      // Major: select or custom
-      const mjSel = document.getElementById('majorSelect');
-      const mjNew = normalizeWord(document.getElementById('customMajor')?.value);
-      if (mjNew && mjSel && mjSel.value === '') {
-        const i = document.createElement('input');
-        i.type = 'hidden';
-        i.name = 'esl:Major[@value]';
-        i.value = mjNew;
-        form.appendChild(i);
-        mjSel.disabled = true;
-      }
-
-      return true;
-    }

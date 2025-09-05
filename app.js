@@ -39,7 +39,6 @@ const inquiryRouter = require("./router/inquiry");
 const policyRouter = require("./router/policy");
 const nationalitiesRoutes = require("./router/nationalities");
 
-
 console.log("📌 app.js 시작됨");
 require("./router/config");
 connect();
@@ -55,11 +54,11 @@ app.set("view cache", false);
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true, limit: "2mb" }));
 
+// ── Method Override (파서 뒤, 라우터 앞)
+app.use(methodOverride("_method"));
+
 // ── Static
 app.use(express.static(path.join(__dirname, "public")));
-
-// ── Method Override
-app.use(methodOverride("_method"));
 
 // ── Request logging
 app.use((req, _res, next) => {
@@ -72,6 +71,9 @@ app.use((req, res, next) => {
   res.set("Content-Language", "en");
   next();
 });
+
+
+
 
 // ── Session (MUST be before flash)
 app.set("trust proxy", 1);
@@ -108,7 +110,7 @@ app.use((req, res, next) => {
 // ── Shortcuts
 app.get("/login", (_req, res) => res.redirect("/user/login"));
 
-// ── Router mounts
+// ── Router mounts (순서 중요하지 않은 특이 케이스 제외)
 app.use("/resource", resourceRouter);
 app.use("/rdf-resource", rdfResourceRouter);
 
@@ -134,6 +136,15 @@ app.use("/", require("./router/index"));
 app.use("/", require("./router/public"));
 app.use("/", homeRouter);
 app.use("/preview", previewRoutes);
+
+// force English site-wide
+app.use((req, res, next) => {
+  res.setHeader('Content-Language', 'en');
+  res.locals.htmlLang = 'en'; // 뷰 <html lang="...">에 사용
+  next();
+});
+
+
 
 // ── 404
 app.use((req, res) => {

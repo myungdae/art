@@ -8,11 +8,19 @@ block content
       h1.text-3xl.font-bold Admin Dashboard
       span.text-sm.text-gray-500 Last updated (KST): #{new Date(Date.now() + 9*60*60*1000).toISOString().replace('T',' ').slice(0,16)}
 
+    if success
+      .mb-4.rounded.border.border-green-300.bg-green-50.p-3.text-green-800 #{success}
+    if error
+      .mb-4.rounded.border.border-red-300.bg-red-50.p-3.text-red-800 #{error}
+
     // Summary cards
-    div(class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8")
+    div(class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8")
       .rounded-xl.shadow.p-5.bg-white
         div.text-gray-500.text-sm Employers
         div.text-3xl.font-bold #{employers && employers.length || 0}
+      .rounded-xl.shadow.p-5.bg-white
+        div.text-gray-500.text-sm Job Vacancies
+        div.text-3xl.font-bold #{jobVacancies && jobVacancies.length || 0}
       .rounded-xl.shadow.p-5.bg-white
         div.text-gray-500.text-sm Job Seekers
         div.text-3xl.font-bold #{jobSeekers && jobSeekers.length || 0}
@@ -22,13 +30,8 @@ block content
 
     // ==================== Employers ====================
     h2(class="text-2xl font-semibold mb-3 text-red-600") Employers
-    // Search bar
     div(class="flex items-center gap-3 mb-3")
-      input#empSearch(
-        type="text"
-        placeholder="Search by username or email..."
-        class="w-full md:w-96 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring"
-      )
+      input#empSearch(type="text" placeholder="Search by username or email..." class="w-full md:w-96 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring")
       span#empCount(class="text-sm text-gray-500") #{employers && employers.length || 0} rows
     .overflow-x-auto.mb-10
       if employers && employers.length
@@ -49,22 +52,54 @@ block content
                 td(class="border px-3 py-2") #{emp.createdAtDisplay}
                 td(class="border px-3 py-2")
                   if emp.id
-                    // NOTE: 사용자 편집 라우트 경로는 프로젝트에 맞게 조정하세요.
-                    // 통상 /users/:id/edit 를 사용합니다.
-                    a(href=`/users/${emp.id}/edit` class="text-blue-600 hover:underline") Edit
+                    form(method="POST", action=`/admin/users/${emp.id}?_method=DELETE`, style="display:inline", onsubmit="return confirm('Delete this employer user?');")
+                      //- 더 안전하게 hidden도 같이
+                      input(type="hidden" name="_method" value="DELETE")
+                      button.btn.btn-sm.btn-danger(type="submit") Delete
                   else
                     span.text-gray-400 —
+
+    // ==================== Job Vacancies ====================
+    .flex.items-center.justify-between.mb-3
+      h2(class="text-2xl font-semibold text-indigo-700") Job Vacancies
+      a(href="/job-vacancies/new" class="px-3 py-1 rounded bg-blue-600 text-white hover:bg-blue-700") New
+    .flex.items-center.gap-3.mb-3
+      input#jvSearch(type="text" placeholder="Search by title, email, country, type..." class="w-full md:w-96 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring")
+      span#jvCount(class="text-sm text-gray-500") #{jobVacancies && jobVacancies.length || 0} rows
+    .overflow-x-auto.mb-10
+      if jobVacancies && jobVacancies.length
+        table#jvTable(class="table-auto min-w-full border rounded bg-white")
+          thead(class="bg-gray-100")
+            tr
+              th(class="sortable border px-3 py-2 text-left select-none") Title
+              th(class="sortable border px-3 py-2 text-left select-none") Country
+              th(class="sortable border px-3 py-2 text-left select-none") Student Type
+              th(class="sortable border px-3 py-2 text-left select-none") Teaching Area
+              th(class="sortable border px-3 py-2 text-left select-none") Posted (KST)
+              th(class="sortable border px-3 py-2 text-left select-none") Created (KST)
+              th(class="border px-3 py-2 text-left select-none") Actions
+          tbody
+            each j in jobVacancies
+              tr
+                td(class="border px-3 py-2") #{j.title}
+                td(class="border px-3 py-2") #{j.country}
+                td(class="border px-3 py-2") #{j.studentType}
+                td(class="border px-3 py-2") #{j.teachingArea}
+                td(class="border px-3 py-2") #{j.datePostedDisplay}
+                td(class="border px-3 py-2") #{j.createdAtDisplay}
+                td(class="border px-3 py-2")
+                  .flex.items-center.gap-3
+                    a(href=`/job-vacancies/${j.id}/edit` class="text-blue-600 hover:underline") Edit
+                    form(method="POST", action=`/admin/job-vacancies/${j.id}?_method=DELETE`, style="display:inline", onsubmit="return confirm('Delete this job vacancy? This also removes the RDF mirror.');")
+                      input(type="hidden" name="_method" value="DELETE")
+                      button.btn.btn-sm.btn-danger(type="submit") Delete
 
     // ==================== Job Seekers ====================
     .flex.items-center.justify-between.mb-3
       h2(class="text-2xl font-semibold text-green-700") Job Seekers
       a(href="/job-seekers/new" class="px-3 py-1 rounded bg-blue-600 text-white hover:bg-blue-700") New
-    div(class="flex items-center gap-3 mb-3")
-      input#jsSearch(
-        type="text"
-        placeholder="Search by username, email, remaining days, expires..."
-        class="w-full md:w-96 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring"
-      )
+    .flex.items-center.gap-3.mb-3
+      input#jsSearch(type="text" placeholder="Search by username, email, remaining days, expires..." class="w-full md:w-96 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring")
       span#jsCount(class="text-sm text-gray-500") #{jobSeekers && jobSeekers.length || 0} rows
     .overflow-x-auto.mb-10
       if jobSeekers && jobSeekers.length
@@ -86,131 +121,105 @@ block content
                 td(class="border px-3 py-2") #{js.expiresAtDisplay}
                 td(class="border px-3 py-2") #{js.createdAtDisplay}
                 td(class="border px-3 py-2")
-                  if js.id
+                  .flex.items-center.gap-3
                     a(href=`/job-seekers/${js.id}/edit` class="text-blue-600 hover:underline") Edit
-                  else
-                    span.text-gray-400 —
+                    //- 현재는 삭제 잠금이라면 아래 form을 주석 처리하세요.
+                    form(method="POST", action=`/admin/job-seekers/${js.id}?_method=DELETE`, style="display:inline", onsubmit="return confirm('Delete this job seeker? This also removes the RDF mirror.');")
+                      input(type="hidden" name="_method" value="DELETE")
+                      button.btn.btn-sm.btn-danger(type="submit") Delete
 
     // ==================== Online Tutors ====================
     .flex.items-center.justify-between.mb-3
-      h2(class="text-2xl font-semibold text-blue-700") Online Tutors
-      a(href="/online-tutors/new" class="px-3 py-1 rounded bg-blue-600 text-white hover:bg-blue-700") New
-    div(class="flex.items-center gap-3 mb-3")
-      input#otSearch(
-        type="text"
-        placeholder="Search by username, email, remaining days, expires..."
-        class="w-full md:w-96 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring"
-      )
+      h2(class="text-2xl font-semibold text-purple-700") Online Tutors
+      //- 필요 시 New 버튼 경로가 있다면 추가
+      // a(href="/online-tutors/new" class="px-3 py-1 rounded bg-blue-600 text-white hover:bg-blue-700") New
+    .flex.items-center.gap-3.mb-3
+      input#otSearch(type="text" placeholder="Search by name, email, country, language..." class="w-full md:w-96 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring")
       span#otCount(class="text-sm text-gray-500") #{onlineTutors && onlineTutors.length || 0} rows
-    .overflow-x-auto.mb-4
+    .overflow-x-auto.mb-10
       if onlineTutors && onlineTutors.length
         table#otTable(class="table-auto min-w-full border rounded bg-white")
           thead(class="bg-gray-100")
             tr
-              th(data-key="username" class="sortable border px-3 py-2 text-left cursor-pointer select-none") Username
-              th(data-key="email" class="sortable border px-3 py-2 text-left cursor-pointer select-none") Email
-              th(data-key="remainingDays" class="sortable border px-3 py-2 text-right cursor-pointer select-none") Remaining Days
-              th(data-key="expiresAtDisplay" class="sortable border px-3 py-2 text-left cursor-pointer select-none") Expires At (KST)
-              th(data-key="createdAtDisplay" class="sortable border px-3 py-2 text-left cursor-pointer select-none") Created At (KST)
+              th(class="sortable border px-3 py-2 text-left select-none") Name
+              th(class="sortable border px-3 py-2 text-left select-none") Email
+              th(class="sortable border px-3 py-2 text-left select-none") Country
+              th(class="sortable border px-3 py-2 text-right select-none") Remaining Days
+              th(class="sortable border px-3 py-2 text-left select-none") Expires (KST)
+              th(class="sortable border px-3 py-2 text-left select-none") Created (KST)
               th(class="border px-3 py-2 text-left select-none") Actions
           tbody
             each ot in onlineTutors
               tr
-                td(class="border px-3 py-2") #{ot.username}
-                td(class="border px-3 py-2") #{ot.email}
-                td(class="border px-3 py-2 text-right") #{ot.remainingDays}
+                td(class="border px-3 py-2") #{ot.name || ot.title || ot.username || '-'}
+                td(class="border px-3 py-2") #{ot.email || '-'}
+                td(class="border px-3 py-2") #{ot.country || '-'}
+                td(class="border px-3 py-2 text-right") #{ot.remainingDays || ''}
                 td(class="border px-3 py-2") #{ot.expiresAtDisplay}
                 td(class="border px-3 py-2") #{ot.createdAtDisplay}
                 td(class="border px-3 py-2")
-                  if ot.id
+                  .flex.items-center.gap-3
                     a(href=`/online-tutors/${ot.id}/edit` class="text-blue-600 hover:underline") Edit
-                  else
-                    span.text-gray-400 —
+                    form(method="POST", action=`/admin/online-tutors/${ot.id}?_method=DELETE`, style="display:inline", onsubmit="return confirm('Delete this online tutor? This also removes the RDF mirror.');")
+                      input(type="hidden" name="_method" value="DELETE")
+                      button.btn.btn-sm.btn-danger(type="submit") Delete
 
-    // Footer note
-    p(class="text-xs text-gray-400 mt-6")
-      | * Click column headers to sort. Type in the search boxes to filter rows (client-side). All times are KST (UTC+9).
+  p(class="text-xs text-gray-400 mt-6")
+    | * Click column headers to sort. Type in the search boxes to filter rows (client-side). All times are KST (UTC+9).
 
-  // =============== Client-side Search & Sort Script ===============
+block append_js
   script.
     (function(){
-      function text(row, idx){
-        const cell = row.children[idx];
-        return (cell ? cell.textContent : '').trim();
-      }
-      function parseNumber(v){
-        const n = Number(String(v).replace(/[^0-9.-]/g,''));
-        return isNaN(n) ? null : n;
-      }
-      function compare(a, b, keyIdx, numeric){
-        const av = text(a, keyIdx);
-        const bv = text(b, keyIdx);
-        if (numeric){
-          const an = parseNumber(av), bn = parseNumber(bv);
-          if (an === null && bn === null) return 0;
-          if (an === null) return -1;
-          if (bn === null) return 1;
-          return an - bn;
-        }
+      function text(row, idx){ const cell=row.children[idx]; return (cell?cell.textContent:'').trim(); }
+      function parseNumber(v){ const n=Number(String(v).replace(/[^0-9.-]/g,'')); return isNaN(n)?null:n; }
+      function compare(a,b,idx,numeric){
+        const av=text(a,idx), bv=text(b,idx);
+        if(numeric){ const an=parseNumber(av), bn=parseNumber(bv); if(an===null&&bn===null)return 0; if(an===null)return -1; if(bn===null)return 1; return an-bn; }
         return av.localeCompare(bv);
       }
       function applySort(tableId, th, dir){
-        const table = document.getElementById(tableId);
-        const thead = table.querySelector('thead tr');
-        const headers = Array.from(thead.children);
-        const keyIdx = headers.indexOf(th);
-        const numeric = /(Remaining|Days|Tokens)/i.test(th.textContent);
-        const tbody = table.querySelector('tbody');
-        const rows = Array.from(tbody.children);
-        rows.sort((r1, r2) => {
-          const c = compare(r1, r2, keyIdx, numeric);
-          return dir === 'asc' ? c : -c;
-        });
-        rows.forEach(r => tbody.appendChild(r));
-        headers.forEach(h => h.classList.remove('bg-gray-200'));
+        const table=document.getElementById(tableId);
+        if(!table) return;
+        const headers=Array.from(table.querySelector('thead tr').children);
+        const keyIdx=headers.indexOf(th);
+        const numeric=/(Remaining|Days|Tokens)/i.test(th.textContent);
+        const tbody=table.querySelector('tbody');
+        const rows=Array.from(tbody.children);
+        rows.sort((r1,r2)=>{const c=compare(r1,r2,keyIdx,numeric); return dir==='asc'?c:-c;});
+        rows.forEach(r=>tbody.appendChild(r));
+        headers.forEach(h=>h.classList.remove('bg-gray-200'));
         th.classList.add('bg-gray-200');
       }
       function applyFilter(tableId, inputId, countId){
-        const q = (document.getElementById(inputId).value || '').toLowerCase();
-        const table = document.getElementById(tableId);
-        const tbody = table.querySelector('tbody');
-        const rows = Array.from(tbody.children);
-        let shown = 0;
-        rows.forEach(row => {
-          const cells = Array.from(row.children).map(td => td.textContent.toLowerCase());
-          const hit = cells.some(v => v.includes(q));
-          row.style.display = hit ? '' : 'none';
-          if (hit) shown++;
+        const q=(document.getElementById(inputId)?.value||'').toLowerCase();
+        const tbody=document.getElementById(tableId)?.querySelector('tbody');
+        if(!tbody) return;
+        const rows=Array.from(tbody.children);
+        let shown=0;
+        rows.forEach(row=>{
+          const cells=Array.from(row.children).map(td=>td.textContent.toLowerCase());
+          const hit=cells.some(v=>v.includes(q));
+          row.style.display=hit?'':'none';
+          if(hit) shown++;
         });
-        if (countId){
-          const el = document.getElementById(countId);
-          if (el) el.textContent = shown + ' rows';
-        }
+        const el=document.getElementById(countId);
+        if(el) el.textContent=shown+' rows';
       }
       function wire(tableId, inputId, countId){
-        // sort
-        const thead = document.getElementById(tableId)?.querySelector('thead');
-        if (thead){
-          Array.from(thead.querySelectorAll('th.sortable')).forEach(th => {
-            let dir = 'asc';
-            th.addEventListener('click', () => {
-              applySort(tableId, th, dir);
-              dir = (dir === 'asc') ? 'desc' : 'asc';
-            });
+        const thead=document.getElementById(tableId)?.querySelector('thead');
+        if(thead){
+          Array.from(thead.querySelectorAll('th.sortable')).forEach(th=>{
+            let dir='asc';
+            th.addEventListener('click',()=>{ applySort(tableId, th, dir); dir=(dir==='asc')?'desc':'asc'; });
           });
         }
-        // filter (debounced)
-        const input = document.getElementById(inputId);
-        if (input){
-          let t;
-          input.addEventListener('input', () => {
-            clearTimeout(t);
-            t = setTimeout(() => applyFilter(tableId, inputId, countId), 160);
-          });
+        const input=document.getElementById(inputId);
+        if(input){
+          let t; input.addEventListener('input',()=>{ clearTimeout(t); t=setTimeout(()=>applyFilter(tableId,inputId,countId),160); });
         }
       }
-      // wire all three tables
-      wire('empTable', 'empSearch', 'empCount');
-      wire('jsTable', 'jsSearch', 'jsCount');
-      wire('otTable', 'otSearch', 'otCount');
+      wire('empTable','empSearch','empCount');
+      wire('jvTable','jvSearch','jvCount');
+      wire('jsTable','jsSearch','jsCount');
+      wire('otTable','otSearch','otCount');
     })();

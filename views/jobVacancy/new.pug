@@ -1,3 +1,4 @@
+//- views/jobVacancy/new.pug  (Advanced RDF 섹션 제거판)
 extends ../layout
 
 block content
@@ -44,9 +45,8 @@ block content
           label(for="teachingArea") Teaching Area
           .grid.grid-cols-2.gap-2(class="md:grid-cols-3")
             each t in (teachingAreas || [])
-              - const picked = Array.isArray(values && values.teachingArea)
-              -   ? values.teachingArea.includes(t)
-              -   : ((values && values.teachingArea) ? values.teachingArea === t : false)
+              - var _ta = values && values.teachingArea
+              - var picked = Array.isArray(_ta) ? _ta.includes(t) : (_ta ? (_ta === t) : false)
               label.flex.items-center.gap-2
                 input(type="checkbox", name="teachingArea", value=t, checked=picked)
                 | #{t}
@@ -56,17 +56,6 @@ block content
         .space-y-1
           label(for="extraTeachingArea") Extra Teaching Areas (comma-separated)
           input#extraTeachingArea(type="text" name="extraTeachingArea" value=(values && values.extraTeachingArea) || "")
-
-        // Advanced RDF overrides
-        details.mt-6
-          summary.cursor-pointer.font-medium Advanced (RDF) options
-          .mt-3.space-y-3
-            .space-y-1
-              label(for="_labelOverride") Title (rdfs:label override)
-              input#_labelOverride(type="text" name="_labelOverride" value=(values && values._labelOverride) || "")
-            .space-y-1
-              label(for="_descriptionOverride") Description (dc:description override)
-              textarea#_descriptionOverride(name="_descriptionOverride" rows="3")= (values && values._descriptionOverride) || ""
 
         // Date Posted
         .space-y-1
@@ -112,6 +101,7 @@ block content
         button(type="submit" class="px-4 py-2 rounded bg-blue-600 text-white") Save
         a(href="/job-vacancies" class="px-4 py-2 rounded border") Cancel
 
+  // CKEditor 4
   script(src="https://cdn.ckeditor.com/4.22.1/standard/ckeditor.js")
   script.
     (function () {
