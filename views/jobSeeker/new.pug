@@ -1,14 +1,14 @@
-//- views/jobSeeker/new.pug
+//- views/jobSeeker/new.pug  (DB-backed nationalities + datalist + upsert)
 extends ../layout
 
 block content
-  // ⬇️ 프리셋은 블록 안에서 선언해야 합니다.
-  - const _defNationalities = ['Korea','Japan','China','Malaysia','Thailand'];
-  - const _defWorkLoc       = ['Korea','Japan','China','Malaysia','Thailand'];
+  // ✅ 서버에서 주입한 locals를 우선 사용, 없으면 안전한 기본값으로 폴백
+  - const _defNationalities = ['Korean','American','British','Japanese','Chinese'];
+  - const _defWorkLoc       = ['Korea','Japan','China','Malaysia','Thailand','Remote'];
   - const _defMajors        = ['English','Education','TESOL','Linguistics','Business'];
 
   - const _nationalities = (typeof nationalities !== 'undefined' && nationalities?.length) ? nationalities : _defNationalities;
-  - const _workLocs      = (typeof workLocations !== 'undefined' && workLocations?.length) ? workLocations : _defWorkLoc;
+  - const _workLocs      = (typeof preferredWorkLocations !== 'undefined' && preferredWorkLocations?.length) ? preferredWorkLocations : _defWorkLoc;
   - const _majors        = (typeof majors !== 'undefined' && majors?.length) ? majors : _defMajors;
 
   .container.mt-5
@@ -19,6 +19,7 @@ block content
             h4.mb-0 New Job Seeker
 
           .card-body
+            // ⚠️ 본문 제출 전에 JS가 hidden 필드를 만들어 표준 키로 보냅니다.
             form(method="POST", action="/job-seekers", onsubmit="return handleCustomFields()")
               // ===== Job Title (rdfs:label)
               .form-group.mb-3
@@ -30,15 +31,21 @@ block content
                 label(for="description") Description
                 textarea.form-control(name="http://purl.org/dc/elements/1.1/description[@value]", id="description", rows="8")
 
-              // ===== Nationality (semantic)
+              // ===== Nationality (✅ datalist + input: 스크롤/검색 + 직접 입력)
               .form-group.mb-3
-                label(for="nationalitySelect") Nationality
-                select.form-control#nationalitySelect(name="esl:Nationality[@value]")
-                  option(disabled selected value="") Select Nationality
-                  each v in _nationalities
-                    option(value=v)= v
-                small.text-muted.mt-1 You can also type a new nationality:
-                input.form-control.mt-1(type="text", id="customNationality", placeholder="Or enter a new nationality")
+                label(for="nationality") Nationality
+                input#nationality.form-control(
+                  type="text"
+                  name="__nationality_ui__"
+                  list="nationality-list"
+                  value=(values && values.nationality) || 'Korean'
+                  placeholder="Select or type nationality..."
+                  autocomplete="off"
+                )
+                datalist#nationality-list
+                  each n in _nationalities
+                    option(value=n)= n
+                small.text-muted.mt-1 If not listed, type a new nationality. It will be added automatically.
 
               // ===== Preferred Work Location (semantic)
               .form-group.mb-3
@@ -76,36 +83,85 @@ block content
               button.btn.btn-primary.btn-block.mt-3(type="submit") Save
 
 block append_js
+
+  <script>
+    (function reloadNationalities() {
+      fetch('/api/nationalities')
+        .then(r => r.json())
+        .then(arr => {
+          const dl = document.getElementById('nationality-list');
+          if (!dl) return;
+          dl.innerHTML = '';
+          arr.forEach(n => {
+            const opt = document.createElement('option');
+            opt.value = n;
+            dl.appendChild(opt);
+          });
+        })
+        .catch(()=>{});
+    })();
+  </script>
+
   // CKEditor
   script(src="https://cdn.ckeditor.com/ckeditor5/41.0.0/classic/ckeditor.js")
   script.
     ClassicEditor.create(document.querySelector('#description')).catch(console.error);
 
+    // --- Helpers ---
+    function normalizeWord(s){
+      if(!s) return null;
+      s = String(s).trim();
+      if(!s) return null;
+      return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+    }
+
     function handleCustomFields() {
       const form = document.querySelector('form');
 
-      const natSel = document.getElementById('nationalitySelect');
-      const natNew = document.getElementById('customNationality')?.value.trim();
-      if (natNew && natSel.value === '') {
-        const i = document.createElement('input');
-        i.type = 'hidden'; i.name = 'esl:Nationality[@value]'; i.value = natNew;
-        form.appendChild(i); natSel.disabled = true;
+      // ✅ Nationality: datalist+input → 표준 키(esl:Nationality[@value])로 hidden 생성
+      const natInput = document.getElementById('nationality');
+      let nat = normalizeWord(natInput && natInput.value);
+      if (nat) {
+        // hidden 필드로 표준 키를 추가
+        const hid = document.createElement('input');
+        hid.type = 'hidden';
+        hid.name = 'esl:Nationality[@value]';
+        hid.value = nat;
+        form.appendChild(hid);
+
+        // 백그라운드로 마스터 upsert (실패해도 제출은 계속)
+        try {
+          fetch('/api/nationalities', {
+            method: 'POST',
+            headers: { 'content-type':'application/json' },
+            body: JSON.stringify({ name: nat })
+          });
+        } catch(_) {}
       }
 
+      // Preferred Work Location: select or custom
       const wlSel = document.getElementById('workLocSelect');
-      const wlNew = document.getElementById('customWorkLoc')?.value.trim();
-      if (wlNew && wlSel.value === '') {
+      const wlNew = normalizeWord(document.getElementById('customWorkLoc')?.value);
+      if (wlNew && wlSel && wlSel.value === '') {
         const i = document.createElement('input');
-        i.type = 'hidden'; i.name = 'esl:Preferred_Work_Location[@value]'; i.value = wlNew;
-        form.appendChild(i); wlSel.disabled = true;
+        i.type = 'hidden';
+        i.name = 'esl:Preferred_Work_Location[@value]';
+        i.value = wlNew;
+        form.appendChild(i);
+        wlSel.disabled = true;
       }
 
+      // Major: select or custom
       const mjSel = document.getElementById('majorSelect');
-      const mjNew = document.getElementById('customMajor')?.value.trim();
-      if (mjNew && mjSel.value === '') {
+      const mjNew = normalizeWord(document.getElementById('customMajor')?.value);
+      if (mjNew && mjSel && mjSel.value === '') {
         const i = document.createElement('input');
-        i.type = 'hidden'; i.name = 'esl:Major[@value]'; i.value = mjNew;
-        form.appendChild(i); mjSel.disabled = true;
+        i.type = 'hidden';
+        i.name = 'esl:Major[@value]';
+        i.value = mjNew;
+        form.appendChild(i);
+        mjSel.disabled = true;
       }
+
       return true;
     }

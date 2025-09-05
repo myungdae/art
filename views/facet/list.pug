@@ -6,12 +6,13 @@ block content
     // 헤더 + 검색
     .flex.items-center.justify-between.mb-4
       - const titleMap = { Job_Vacancies: 'Job Vacancies', Job_Seekers: 'Job Seekers', Online_Tutors: 'Online Tutors' }
+      - const hz = (typeof hideZero !== 'undefined' && hideZero) ? true : false
       h1.text-2xl.font-bold
         = titleMap && titleMap[klass] ? titleMap[klass] : (klass || 'List')
         if typeof total !== 'undefined'
           span.text-gray-500.text-base &nbsp;(#{total})
 
-      // 검색창 (현재 선택된 facet 보존)
+      // 검색창 (현재 선택된 facet/토글 보존)
       form(method="GET", action=`/facet/${klass}`, class="flex gap-2")
         input(type="text", name="q", value=q || "", placeholder="Search title/description...", class="border rounded px-3 py-2")
         if facetCfg && facetCfg.groups
@@ -20,14 +21,25 @@ block content
               each v in selected[g.key]
                 input(type="hidden", name=g.key, value=v)
         input(type="hidden", name="limit", value=limit)
+        if hz
+          input(type="hidden", name="hideZero", value="1")
         button(type="submit", class="px-4 py-2 rounded bg-blue-600 text-white") Search
 
     .grid.grid-cols-12.gap-6
       // 좌측: 패싯
       div(class="col-span-12 md:col-span-3")
         form#facetForm(method="GET", action=`/facet/${klass}`, class="space-y-6 border rounded p-3")
+          // 검색/페이지 크기/토글 상태 유지
           input(type="hidden", name="q", value=q || "")
           input(type="hidden", name="limit", value=limit)
+          if hz
+            input(type="hidden", name="hideZero", value="1")
+
+          // ── 0건 숨기기 토글
+          .mb-2
+            label.flex.items-center.gap-2.cursor-pointer
+              input#hzToggle(type="checkbox", checked=hz)
+              span.text-sm.text-gray-700 Hide items with 0
 
           if facetCfg && facetCfg.groups && facetCfg.groups.length
             each g in facetCfg.groups
@@ -47,8 +59,11 @@ block content
                   else
                     p.text-sm.text-gray-400 No values
 
-          .pt-2
-            a(href=`/facet/${klass}`, class="px-3 py-2 rounded border inline-block") Clear
+          .pt-2.flex.items-center.gap-2
+            a(href=`/facet/${klass}${hz ? '?hideZero=1' : ''}`, class="px-3 py-2 rounded border inline-block") Clear
+            if Object.keys(selected || {}).some(k => (selected[k]||[]).length)
+              // 현재 선택 유지한 채 0건 숨김만 토글하려면 여기서 체크박스로 조절하세요
+              span.text-xs.text-gray-500 Selected filters active
 
       // 우측: 리스트
       div(class="col-span-12 md:col-span-9")
@@ -95,6 +110,7 @@ block content
           -     }
           -   }
           - }
+          - if (hz) { qs += '&hideZero=1' }
           nav.mt-6.flex.items-center.gap-2.flex-wrap
             if page > 1
               a(href=`/facet/${klass}?page=${page-1}&limit=${limit}${qs}`, class="px-3 py-1 border rounded") Prev
@@ -102,13 +118,24 @@ block content
             if page < totalPages
               a(href=`/facet/${klass}?page=${page+1}&limit=${limit}${qs}`, class="px-3 py-1 border rounded") Next
 
-  // 체크박스 변경 즉시 적용
+  // 체크박스/토글 변경 즉시 적용
   script.
     (function(){
       var f = document.getElementById('facetForm');
-      if(!f) return;
-      var cbs = f.querySelectorAll('input[type="checkbox"]');
-      for (var i=0; i<cbs.length; i++) {
-        cbs[i].addEventListener('change', function(){ f.submit(); });
+      if (f) {
+        var cbs = f.querySelectorAll('input[type="checkbox"][name]');
+        for (var i=0; i<cbs.length; i++) {
+          cbs[i].addEventListener('change', function(){ f.submit(); });
+        }
+        var hzT = document.getElementById('hzToggle');
+        if (hzT) {
+          hzT.addEventListener('change', function(){
+            // hidden 상태 갱신 (있으면 값만 바꾸고, 없으면 추가)
+            var h = f.querySelector('input[name="hideZero"]');
+            if (!h) { h = document.createElement('input'); h.type='hidden'; h.name='hideZero'; f.appendChild(h); }
+            h.value = hzT.checked ? '1' : '';
+            f.submit();
+          });
+        }
       }
     })();

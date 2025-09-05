@@ -10,7 +10,7 @@ const session = require("express-session");
 const MongoStore = require("connect-mongo");
 const flash = require("connect-flash");
 const methodOverride = require("method-override");
-
+const previewRoutes = require("./router/preview");
 const connect = require("./model");
 const app = express();
 
@@ -37,6 +37,8 @@ const resumeAccessRouter = require("./router/resume-access");
 const threadRouter = require("./router/thread");
 const inquiryRouter = require("./router/inquiry");
 const policyRouter = require("./router/policy");
+const nationalitiesRoutes = require("./router/nationalities");
+
 
 console.log("📌 app.js 시작됨");
 require("./router/config");
@@ -116,6 +118,7 @@ app.use(onlineTutorRouter);
 
 app.use("/policy", policyRouter);
 app.use("/paypal", paypalRoutes);
+app.use("/api/nationalities", nationalitiesRoutes);
 app.use("/resume-access", resumeAccessRouter);
 app.use("/tutor-access", tutorAccessRouter);
 app.use("/admin", adminRouter);
@@ -130,6 +133,7 @@ app.use("/", inquiryRouter);
 app.use("/", require("./router/index"));
 app.use("/", require("./router/public"));
 app.use("/", homeRouter);
+app.use("/preview", previewRoutes);
 
 // ── 404
 app.use((req, res) => {

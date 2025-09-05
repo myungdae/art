@@ -1,14 +1,14 @@
-//- views/jobSeeker/edit.pug
+//- views/jobSeeker/edit.pug  (DB-backed nationalities + datalist + upsert)
 extends ../layout
 
 block content
-  // 프리셋(블록 안에서 선언)
-  - const _defNationalities = ['Korea','Japan','China','Malaysia','Thailand'];
-  - const _defWorkLoc       = ['Korea','Japan','China','Malaysia','Thailand'];
+  // ✅ 서버 주입값 우선, 없으면 안전한 폴백
+  - const _defNationalities = ['Korean','American','British','Japanese','Chinese'];
+  - const _defWorkLoc       = ['Korea','Japan','China','Malaysia','Thailand','Remote'];
   - const _defMajors        = ['English','Education','TESOL','Linguistics','Business'];
 
   - const _nationalities = (typeof nationalities !== 'undefined' && nationalities && nationalities.length) ? nationalities : _defNationalities;
-  - const _workLocs      = (typeof workLocations !== 'undefined' && workLocations && workLocations.length) ? workLocations : _defWorkLoc;
+  - const _workLocs      = (typeof preferredWorkLocations !== 'undefined' && preferredWorkLocations && preferredWorkLocations.length) ? preferredWorkLocations : _defWorkLoc;
   - const _majors        = (typeof majors !== 'undefined' && majors && majors.length) ? majors : _defMajors;
 
   // 현재 값
@@ -30,7 +30,7 @@ block content
             h4.mb-0 Edit Job Seeker
 
           .card-body
-            form.form(method="POST", action=`/job-seekers/${jobSeeker._id}?_method=PUT`, onsubmit="return handleCustomFields()")
+            form.form(method="POST", action=`/job-seekers/${jobSeeker._id}?&_method=PUT`, onsubmit="return handleCustomFields()")
               // ===== Job Title (rdfs:label)
               .form-group.mb-3
                 label(for="title") Job Title
@@ -41,17 +41,24 @@ block content
                 label(for="description") Description
                 textarea.form-control(name="http://purl.org/dc/elements/1.1/description[@value]", id="description", rows="8")= _desc
 
-              // ===== Nationality (semantic)
+              // ===== Nationality (✅ datalist + input: 스크롤/검색 + 직접 입력)
               .form-group.mb-3
-                label(for="nationalitySelect") Nationality
-                select.form-control#nationalitySelect(name="esl:Nationality[@value]")
-                  option(disabled value="") Select Nationality
-                  each v in _nationalities
-                    option(value=v selected=(_nat===v))= v
+                label(for="nationality") Nationality
+                input#nationality.form-control(
+                  type="text"
+                  name="__nationality_ui__"
+                  list="nationality-list"
+                  value=_nat || 'Korean'
+                  placeholder="Select or type nationality..."
+                  autocomplete="off"
+                )
+                datalist#nationality-list
+                  each n in _nationalities
+                    option(value=n)= n
+                  // 현재 값이 목록에 없으면 보정을 위해 한 번 더 노출
                   if _nat && !_natIn
-                    option(value=_nat selected)= _nat
-                small.text-muted.mt-1 You can also type a new nationality:
-                input.form-control.mt-1(type="text", id="customNationality", placeholder="Or enter a new nationality")
+                    option(value=_nat)= _nat
+                small.text-muted.mt-1 If not listed, type a new nationality. It will be added automatically.
 
               // ===== Preferred Work Location (semantic)
               .form-group.mb-3
@@ -94,36 +101,81 @@ block content
               button.btn.btn-warning.btn-block.mt-3(type="submit") Update
 
 block append_js
+
+  <script>
+    (function reloadNationalities() {
+      fetch('/api/nationalities')
+        .then(r => r.json())
+        .then(arr => {
+          const dl = document.getElementById('nationality-list');
+          if (!dl) return;
+          dl.innerHTML = '';
+          arr.forEach(n => {
+            const opt = document.createElement('option');
+            opt.value = n;
+            dl.appendChild(opt);
+          });
+        })
+        .catch(()=>{});
+    })();
+  </script>
+
   // CKEditor
   script(src="https://cdn.ckeditor.com/ckeditor5/41.0.0/classic/ckeditor.js")
   script.
     ClassicEditor.create(document.querySelector('#description')).catch(console.error);
 
+    function normalizeWord(s){
+      if(!s) return null;
+      s = String(s).trim();
+      if(!s) return null;
+      return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+    }
+
     function handleCustomFields() {
       const form = document.querySelector('form');
 
-      const natSel = document.getElementById('nationalitySelect');
-      const natNew = document.getElementById('customNationality')?.value.trim();
-      if (natNew && natSel && natSel.value === '') {
-        const i = document.createElement('input');
-        i.type = 'hidden'; i.name = 'esl:Nationality[@value]'; i.value = natNew;
-        form.appendChild(i); natSel.disabled = true;
+      // ✅ Nationality: datalist + input → 표준 키로 hidden 생성 + 마스터 upsert
+      const natInput = document.getElementById('nationality');
+      const nat = normalizeWord(natInput && natInput.value);
+      if (nat) {
+        const hid = document.createElement('input');
+        hid.type = 'hidden';
+        hid.name = 'esl:Nationality[@value]';
+        hid.value = nat;
+        form.appendChild(hid);
+
+        try {
+          fetch('/api/nationalities', {
+            method: 'POST',
+            headers: { 'content-type':'application/json' },
+            body: JSON.stringify({ name: nat })
+          });
+        } catch(_) {}
       }
 
+      // Preferred Work Location: select or custom
       const wlSel = document.getElementById('workLocSelect');
-      const wlNew = document.getElementById('customWorkLoc')?.value.trim();
+      const wlNew = normalizeWord(document.getElementById('customWorkLoc')?.value);
       if (wlNew && wlSel && wlSel.value === '') {
         const i = document.createElement('input');
-        i.type = 'hidden'; i.name = 'esl:Preferred_Work_Location[@value]'; i.value = wlNew;
-        form.appendChild(i); wlSel.disabled = true;
+        i.type = 'hidden';
+        i.name = 'esl:Preferred_Work_Location[@value]';
+        i.value = wlNew;
+        form.appendChild(i);
+        wlSel.disabled = true;
       }
 
+      // Major: select or custom
       const mjSel = document.getElementById('majorSelect');
-      const mjNew = document.getElementById('customMajor')?.value.trim();
+      const mjNew = normalizeWord(document.getElementById('customMajor')?.value);
       if (mjNew && mjSel && mjSel.value === '') {
         const i = document.createElement('input');
-        i.type = 'hidden'; i.name = 'esl:Major[@value]'; i.value = mjNew;
-        form.appendChild(i); mjSel.disabled = true;
+        i.type = 'hidden';
+        i.name = 'esl:Major[@value]';
+        i.value = mjNew;
+        form.appendChild(i);
+        mjSel.disabled = true;
       }
       return true;
     }

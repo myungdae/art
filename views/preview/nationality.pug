@@ -1,0 +1,113 @@
+//- views/preview/nationality.pug
+extends ../layout
+
+block content
+  - const _defNationalities = ['Korean','American','British','Japanese','Chinese'];
+  - const _nationalities = (typeof nationalities !== 'undefined' && nationalities?.length) ? nationalities : _defNationalities;
+
+  .container.mt-5
+    .row.justify-content-center
+      .col-md-8
+        .card.shadow
+          .card-header.bg-info.text-white.text-center
+            h4.mb-0 Nationality Widget Preview
+          .card-body
+            p.text-muted.small
+              | This is a preview-only page to verify the nationality input (input + datalist) and upsert behavior.
+              br
+              | It does NOT save a JobSeeker profile.
+
+            .form-group.mb-3
+              label(for="nationality") Nationality (Preview)
+              input#nationality.form-control(
+                type="text"
+                name="__nationality_ui__"
+                list="nationality-list"
+                value="Korean"
+                placeholder="Select or type nationality..."
+                autocomplete="off"
+              )
+              datalist#nationality-list
+                each n in _nationalities
+                  option(value=n)= n
+              small.text-muted.mt-1 If not listed, type a new nationality and click “Upsert”.
+
+            button.btn.btn-primary#upsertBtn(type="button") Upsert to /api/nationalities
+            button.btn.btn-secondary#reloadBtn(type="button") Reload list
+            span#hint.text-muted.ms-3
+
+block append_js
+  // 모든 스크립트는 한 개의 block 안에 정리
+  script.
+    function normalizeWord(s){
+      if(!s) return null;
+      s = String(s).trim();
+      if(!s) return null;
+      return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+    }
+
+    async function reloadNationalities(){
+      try{
+        const arr = await fetch('/api/nationalities').then(r=>r.json());
+        const dl = document.getElementById('nationality-list');
+        if (!dl) return;
+        dl.innerHTML = '';
+        for(const n of arr){
+          const opt = document.createElement('option');
+          opt.value = n;
+          dl.appendChild(opt);
+        }
+      }catch(_){}
+    }
+
+    async function doUpsert(){
+      const el = document.getElementById('nationality');
+      const val = normalizeWord(el && el.value);
+      const hint = document.getElementById('hint');
+      if(!val){ if(hint) hint.textContent = ' Enter a value first.'; return; }
+
+      try{
+        const resp = await fetch('/api/nationalities', {
+          method: 'POST',
+          headers: { 'content-type':'application/json' },
+          body: JSON.stringify({ name: val })
+        });
+
+        if(resp.ok){
+          // 즉시 목록에 반영(중복 방지) + 인풋/힌트 갱신
+          const dl = document.getElementById('nationality-list');
+          if (dl && !Array.from(dl.options).some(o => o.value === val)) {
+            const opt = document.createElement('option');
+            opt.value = val;
+            dl.appendChild(opt);
+          }
+          if (el) el.value = val;
+          if (hint) hint.textContent = ' Upsert OK (' + val + '). Added to list.';
+          // 서버 최신값으로 재동기화
+          reloadNationalities();
+          console.log('[preview] upsert OK:', val);
+        } else {
+          if (hint) hint.textContent = ' Upsert failed (' + resp.status + ').';
+          console.warn('[preview] upsert failed:', resp.status);
+        }
+      }catch(err){
+        if (hint) hint.textContent = ' Network error.';
+        console.error('[preview] network error:', err);
+      }
+    }
+
+    // 바인딩: 언제 로드돼도 동작하도록 세 가지 경로로 연결
+    (function initPreview(){
+      // 첫 로드시 최신 목록으로 채우기
+      reloadNationalities();
+
+      // 클릭 위임(안전핀)
+      document.addEventListener('click', function(e){
+        if (e.target && e.target.id === 'upsertBtn') return doUpsert();
+        if (e.target && e.target.id === 'reloadBtn') return reloadNationalities();
+      });
+
+      // 포커스 시에도 최신 목록으로 갱신
+      const nat = document.getElementById('nationality');
+      if (nat) nat.addEventListener('focus', reloadNationalities);
+    })();
