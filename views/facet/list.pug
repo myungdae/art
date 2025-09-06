@@ -2,9 +2,9 @@
 extends ../layout
 
 block content
-  .container.mx-auto.py-6
+  .container.mx-auto.pt-3.pb-4
     // ───────── 헤더 + 검색 ─────────
-    .flex.items-center.justify-between.mb-4
+    .flex.items-center.justify-between.mb-2
       - var titleMap = { Job_Vacancies: 'Job Vacancies', Job_Seekers: 'Job Seekers', Online_Tutors: 'Online Tutors' };
       - var hz = (typeof hideZero !== 'undefined' && hideZero) ? true : false;
       h1.text-2xl.font-bold
@@ -94,11 +94,6 @@ block content
             input#hzToggleMob(type="checkbox", checked=hz)
             span(class="text-sm text-gray-700") Hide 0
 
-        // 모바일: Membership / Login / Inquiry 퀵링크
-        div(class="mt-2 flex items-center gap-3 px-2 text-sm")
-          a(href="/user/register", class="px-3 py-1 rounded border") Membership
-          a(href="/user/login", class="px-3 py-1 rounded border") Login
-          a(href="/inquiry", class="px-3 py-1 rounded border") Inquiry
 
     // ───────── 공통 리스트 영역 ─────────
     .grid.grid-cols-12.gap-6

@@ -13,6 +13,7 @@ const methodOverride = require("method-override");
 const previewRoutes = require("./router/preview");
 const connect = require("./model");
 const app = express();
+const { requireLogin } = require('./middleware/auth');
 
 // Mailer (optional verify)
 const mailer = require("./utils/mailer");
@@ -144,6 +145,9 @@ app.use((req, res, next) => {
   next();
 });
 
+app.get('/billing/credits', requireLogin, (req, res) => {
+  return res.redirect(302, '/paypal/checkout');
+});
 
 
 // ── 404

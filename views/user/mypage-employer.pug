@@ -1,32 +1,116 @@
+//- views/user/mypage-employer.pug
 extends ../layout
 
+block append_on_header
+  style.
+    /* ===== Clean white + orange header ===== */
+    .dash-page{ background:#fff; }               /* 페이지 전체 흰색 */
+    .dash-wrap{ color:#111; }
+    .dash-hero{
+      max-width:900px; margin:0 auto 18px; background:#fff;
+      border-radius:14px; overflow:hidden;
+      box-shadow:0 10px 26px rgba(0,0,0,.10); border:1px solid #eee;
+    }
+    .dash-hero .bar{
+      background:#FF7A00; color:#fff; font-weight:800;
+      text-align:center; padding:.85rem 1rem; font-size:28px; letter-spacing:.2px;
+    }
+    .dash-card{
+      max-width:900px; margin:16px auto; background:#fff; /* 카드도 완전 흰색 */
+      border-radius:14px; overflow:hidden;
+      box-shadow:0 10px 26px rgba(0,0,0,.08); border:1px solid #eee;
+    }
+    .dash-head{
+      background:#FF7A00; color:#fff; font-weight:800;
+      padding:.7rem 1rem; font-size:1.05rem;
+    }
+    .dash-body{ padding:1.2rem 1.2rem; background:#fff; }
+
+    .stat-grid{ display:grid; grid-template-columns:1fr; gap:12px; }
+    @media (min-width:640px){ .stat-grid{ grid-template-columns:repeat(3,1fr); } }
+    .stat{ border:1px solid #e5e7eb; border-radius:12px; padding:12px; background:#fff; }
+    .stat .k{ font-size:.92rem; color:#374151; }  /* 너무 연하지 않게 */
+    .stat .v{ font-size:1.45rem; font-weight:800; color:#111; }
+
+    .btn-orange{ background:#FF7A00; border-color:#FF7A00; color:#fff; font-weight:700; }
+    .btn-orange:hover{ background:#e56e00; border-color:#e56e00; color:#fff; }
+    .btn-outline-secondary{ background:#fff; border:2px solid #d1d5db; color:#111; }
+    .btn-outline-secondary.disabled{ pointer-events:none; opacity:.55; }
+    .muted{ color:#4b5563; }
+
 block content
-  .container.mx-auto.px-4.py-10
-    h1.text-2xl.text-center.mb-8 Employer Dashboard
+  .container.mx-auto.px-4.py-8.dash-wrap.dash-page
+    // ── 상단 타이틀 바
+    .dash-hero
+      .bar Employer Dashboard
 
-    // User info
-    .max-w-xl.mx-auto.bg-white.rounded-xl.shadow.p-6
-      p Username: #{user.username}
-      p Email: #{user.email}
-      p Role: #{user.role}
+    // ── 계정 정보(선명한 흰색 카드)
+    .dash-card
+      .dash-head Account
+      .dash-body
+        p
+          | Username: 
+          strong= user && user.username
+        p
+          | Email: 
+          strong= user && user.email
+        p
+          | Role: 
+          strong= (user && user.role) || 'Employer'
 
-    // Slots card
-    .max-w-xl.mx-auto.mt-6.bg-gray-50.rounded-xl.shadow.p-6
-      p Current postings: #{activeJobs} / #{totalSlots}
-      p Remaining slots: #{remainingSlots}
-      if nextExpireAt
-        p Soonest expiration: #{nextExpireTitle ? `${nextExpireTitle} — ` : ''}#{nextExpireAt} (#{expireTag})
+    // ── 서버 값 정규화 (크레딧이 있는지 "남은 슬롯"만으로 판단)
+    - var _activeJobs      = Number(typeof activeJobs     !== 'undefined' ? activeJobs     : 0)
+    - var _totalSlots      = Number(typeof totalSlots     !== 'undefined' ? totalSlots     : 0)
+    - var _remainingSlots  = Number(typeof remainingSlots !== 'undefined' ? remainingSlots : 0)
+    - var _hasCredits      = _remainingSlots > 0                       // ← canPost 무시, 남은 슬롯만 신뢰
+    - var _buyUrl          = (typeof buyUrl !== 'undefined' && buyUrl) ? buyUrl : '/paypal/checkout'
+    - var _nextExpireLabel = ''
+    - if (typeof nextExpireAt !== 'undefined' && nextExpireAt){
+    -   var _prefix = (typeof nextExpireTitle !== 'undefined' && nextExpireTitle) ? (nextExpireTitle + ' — ') : ''
+    -   _nextExpireLabel = _prefix + nextExpireAt
+    - }
 
-      // Actions
-      .flex.gap-3.mt-4
-        if canPost
-          a.btn.btn-success(href='/job-vacancies/new') Register
-          a.btn(href='/job-vacancies/mine') My Job Vacancies
-        else
-          a.btn.btn-primary(href="/job-vacancies/new") Buy Ad Credits
-          a.btn(href='/job-vacancies/mine') My Job Vacancies
+    // ── 슬롯/상태 + 액션
+    .dash-card
+      .dash-head Posting Status
+      .dash-body
+        .stat-grid.mt-1
+          .stat
+            div.k Active postings
+            div.v= _activeJobs
+          .stat
+            div.k Total slots
+            div.v= _totalSlots
+          .stat
+            div.k Remaining slots
+            div.v= _remainingSlots
 
-    // Job list
-    if activeJobs > 0
-    else
-      p.mt-6.text-gray-500.text-center No job vacancies posted yet.
+        if _nextExpireLabel
+          p.mt-3.muted
+            | Soonest expiration: 
+            strong= _nextExpireLabel
+            if typeof expireTag !== 'undefined' && expireTag
+              |  • 
+              span.badge.bg-light.text-dark= expireTag
+
+        // ── 액션 (크레딧 없으면 'Register' 절대 노출 X, 결제 유도만)
+        .mt-4.flex.flex-wrap.gap-2
+          if _hasCredits
+            a.btn.btn-orange(href='/job-vacancies/new') Register
+            a.btn.btn-outline-secondary(href='/job-vacancies/mine') My Job Vacancies
+          else
+            a.btn.btn-orange(href=_buyUrl) Buy Ad Credits
+            a.btn.btn-outline-secondary(href='/job-vacancies/mine') My Job Vacancies
+        if !_hasCredits
+          p.muted.mt-1 You have no available posting slots. Purchase credits to create a new vacancy.
+
+    // ── 공란 상태(목록 없음) – CTA도 동일 규칙 적용
+    if _activeJobs <= 0
+      .dash-card
+        .dash-head No Job Vacancies
+        .dash-body.text-center
+          p.muted.mb-3 No job vacancies posted yet.
+          if _hasCredits
+            a.btn.btn-orange.mt-1(href='/job-vacancies/new') Create your first posting
+          else
+            a.btn.btn-orange.mt-1(href=_buyUrl) Buy Ad Credits

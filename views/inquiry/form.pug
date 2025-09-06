@@ -1,58 +1,117 @@
 //- views/inquiry/form.pug
 extends ../layout
 
+
+block append_on_header
+  style.
+    .inq-card{
+      width:100%;
+      max-width:640px;
+      background:#fff;
+      border-radius:10px;
+      box-shadow:0 10px 26px rgba(0,0,0,.10);
+      overflow:hidden;
+    }
+    .inq-title{
+      background:#FF7A00;
+      color:#fff;
+      font-weight:700;
+      text-align:center;
+      padding:.8rem 1rem;
+      font-size:28px;
+    }
+    .inq-field{ margin:16px 20px 0; }
+    .inq-field label{
+      display:block;
+      font-weight:700;
+      color:#333;
+      margin-bottom:6px;
+    }
+    .inq-field .form-control{
+      height:3rem;
+      border-radius:9999px;
+      padding:0 1rem;
+    }
+    .inq-field textarea.form-control{
+      height:auto;
+      border-radius:12px;
+      padding:.75rem 1rem;
+    }
+    .inq-actions{ padding:20px; }
+    .inq-actions .btn-success{
+      background:#2ecc71;
+      border-color:#2ecc71;
+      padding:.6rem 1.5rem;
+      border-radius:8px;
+      font-weight:700;
+    }
+    @media (max-width:767.98px){
+      .container.mx-auto.py-8{ padding-top:1.25rem; }
+    }
+
 block content
-  .container(style="max-width: 840px")
-    h2.mb-3 Inquiry
+  .container.mx-auto.py-8
+    .flex.justify-center
+      .inq-card
+        .inq-title Inquiry
 
-    //- Global error (e.g., server-side failure)
-    if errors && errors._global
-      .alert.alert-danger= errors._global
+        if errors && errors._global
+          .alert.alert-danger.m-3= errors._global
+        if typeof flash !== 'undefined' && flash
+          .alert.alert-success.m-3= flash
 
-    form(method="POST", action="/inquiry")
-      .mb-3
-        label.form-label(for="name") Name
-        input#name.form-control(
-          type="text",
-          name="name",
-          required,
-          value=(values && values.name) || ''
-          placeholder="Your name"
-        )
-        if errors && errors.name
-          small.text-danger= errors.name
+        form(method="POST", action="/inquiry" novalidate)
+          .inq-field
+            label(for="name") Name
+            input#name.form-control(
+              type="text"
+              name="name"
+              required
+              placeholder="Your name"
+              value=(values && values.name) || ''
+            )
+            if errors && errors.name
+              small.text-danger= errors.name
 
-      .mb-3
-        label.form-label(for="email") Email
-        input#email.form-control(
-          type="email",
-          name="email",
-          required,
-          value=(values && values.email) || ''
-          placeholder="you@example.com"
-        )
-        if errors && errors.email
-          small.text-danger= errors.email
+          .inq-field
+            label(for="email") Email
+            input#email.form-control(
+              type="email"
+              name="email"
+              required
+              placeholder="you@example.com"
+              value=(values && values.email) || ''
+            )
+            if errors && errors.email
+              small.text-danger= errors.email
 
-      .mb-3
-        label.form-label(for="subject") Subject
-        input#subject.form-control(
-          type="text",
-          name="subject",
-          required,
-          value=(values && values.subject) || ''
-          placeholder="What is this about?"
-        )
-        if errors && errors.subject
-          small.text-danger= errors.subject
+          .inq-field
+            label(for="subject") Subject
+            input#subject.form-control(
+              type="text"
+              name="subject"
+              required
+              placeholder="What is this about?"
+              value=(values && values.subject) || ''
+            )
+            if errors && errors.subject
+              small.text-danger= errors.subject
 
-      .mb-3
-        label.form-label(for="message") Message
-        textarea#message.form-control(name="message", rows="8", required, placeholder="Please include enough details so we can help.")
-          | #{(values && values.message) || ''}
-        if errors && errors.message
-          small.text-danger= errors.message
+          .inq-field
+            label(for="message") Message
+            textarea#message.form-control(
+              name="message"
+              rows="6"
+              required
+              placeholder="Please include enough details so we can help."
+            )= (values && values.message) || ''
+            if errors && errors.message
+              small.text-danger= errors.message
 
-      .d-flex.gap-2
-        button.btn.btn-primary(type="submit") Send
-        a.btn.btn-outline-secondary(href="/") Cancel
+          //- 간단 허니팟(스팸 방지)
+          .d-none
+            input(type="text", name="hp", autocomplete="off", tabindex="-1")
+
+          .inq-actions.text-center
+            button.btn.btn-success(type="submit") Send
+            a.btn.btn-outline-secondary.ms-2(href="/") Cancel

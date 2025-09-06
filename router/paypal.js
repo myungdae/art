@@ -16,6 +16,17 @@ const SECRET = process.env.PAYPAL_SECRET;
 const validateObjectId = require("../middleware/validateObjectId");
 router.param("id", validateObjectId("id"));
 
+// ─────────────────────────────────────────────────────────
+// Common price maps
+// ─────────────────────────────────────────────────────────
+const EMPLOYER_PACKAGES = [
+  { value: "1",  label: "1 Ad — $30",                     price: 30 },
+  { value: "4",  label: "4 Ads — $100 (Save $20)",        price: 100 },
+  { value: "12", label: "12 Ads — $250 (Save $110)",      price: 250 },
+  { value: "24", label: "24 Ads — $450 (Save $270)",      price: 450 },
+];
+const EMPLOYER_PRICE_MAP = EMPLOYER_PACKAGES.reduce((m, p) => { m[p.value] = p.price; return m; }, {});
+
 // --- PayPal Access Token ---
 async function getAccessToken() {
   const auth = Buffer.from(CLIENT_ID + ":" + SECRET).toString("base64");
@@ -34,12 +45,12 @@ async function getAccessToken() {
 
 /* -------------------------------------------------------------
    GET /paypal/checkout  (Unified entry)
-   - Employer Ads   : (기본) 옵션 목록
-   - Resume (Seeker): ?accessPeriod=30 → resume checkout (선택 사전 지정)
+   - Employer Ads   : (기본) 옵션 목록, ?pkg=1|4|12|24 프리셀렉트
+   - Resume (Seeker): ?accessPeriod=30 → resume checkout
    - Tutor          : ?type=tutor&accessPeriod=30 → tutor checkout
 ------------------------------------------------------------- */
 router.get("/checkout", requireLogin, (req, res) => {
-  const { type, accessPeriod } = req.query;
+  const { type, accessPeriod, pkg } = req.query;
 
   // TUTOR
   if (type === "tutor") {
@@ -81,17 +92,27 @@ router.get("/checkout", requireLogin, (req, res) => {
   }
 
   // EMPLOYER Job Ads (default)
-  const packages = [
-    { value: "1", label: "1 Ad — $30" },
-    { value: "4", label: "4 Ads — $100 (Save $20)" },
-    { value: "12", label: "12 Ads — $250 (Save $110)" },
-    { value: "24", label: "24 Ads — $450 (Save $270)" },
-  ];
+  const preselectPkg = (pkg && ["1","4","12","24"].includes(pkg)) ? pkg : null;
   return res.render("paypal/checkout", {
     user: req.user,
-    packages,
+    packages: EMPLOYER_PACKAGES,
+    preselectPkg, // 뷰에서 미리 선택 표시용
     paypalClientId: process.env.PAYPAL_CLIENT_ID,
   });
+});
+
+/* -------------------------------------------------------------
+   Aliases for employer credits (mounted under /paypal)
+   /paypal/credits, /paypal/billing/credits, /paypal/checkout-ads
+   → 모두 /paypal/checkout 로 보냄 (pkg 프리셀렉트 유지)
+------------------------------------------------------------- */
+router.get(["/credits", "/billing/credits", "/checkout-ads"], requireLogin, (req, res) => {
+  const qs = [];
+  if (req.query.pkg && ["1","4","12","24"].includes(String(req.query.pkg))) {
+    qs.push("pkg=" + encodeURIComponent(String(req.query.pkg)));
+  }
+  const suffix = qs.length ? ("?" + qs.join("&")) : "";
+  return res.redirect(302, "/paypal/checkout" + suffix);
 });
 
 /* -------------------------------------------------------------
@@ -122,11 +143,6 @@ router.post("/create-order", requireLogin, async (req, res) => {
     const { planId, resumeDays, adPackage, tutorDays } = req.body;
     console.log("create-order body", req.body);
 
-    // const planId = 30;
-    // const resumeDays = 20;
-    // const adPackage = 1;
-    // const tutorDays = 20;
-
     let purchaseUnit = null;
 
     // RESUME (by planId)
@@ -154,12 +170,9 @@ router.post("/create-order", requireLogin, async (req, res) => {
     }
     // EMPLOYER ADS
     else if (adPackage) {
-      const prices = { 1: 30, 4: 100, 12: 250, 24: 450 };
+      const price = EMPLOYER_PRICE_MAP[adPackage] ?? 30;
       purchaseUnit = {
-        amount: {
-          currency_code: "USD",
-          value: (prices[adPackage] || 30).toFixed(2),
-        },
+        amount: { currency_code: "USD", value: Number(price).toFixed(2) },
         description: adPackage + " Job Vacancy Ads",
       };
       req.session.adPackage = adPackage;
@@ -182,9 +195,8 @@ router.post("/create-order", requireLogin, async (req, res) => {
       return res.status(400).json({ error: "No valid purchase data" });
     }
 
-    // Create PayPal Order (no backticks)
+    // Create PayPal Order
     const accessToken = await getAccessToken();
-    console.log("accessToken", accessToken);
     const order = await axios.post(
       PAYPAL_API + "/v2/checkout/orders",
       { intent: "CAPTURE", purchase_units: [purchaseUnit] },
@@ -198,10 +210,7 @@ router.post("/create-order", requireLogin, async (req, res) => {
 
     res.json({ id: order.data.id });
   } catch (error) {
-    console.error(
-      "❌ create-order error:",
-      error.response?.data || error.message
-    );
+    console.error("❌ create-order error:", error.response?.data || error.message);
     res.status(500).json({ error: "Failed to create order" });
   }
 });
@@ -226,7 +235,7 @@ router.post("/capture-order/:orderID", requireLogin, async (req, res) => {
       }
     );
 
-    // 현재 로그인 사용자 ID 추출 (세션 userId 미설정 방지)
+    // 현재 로그인 사용자 ID 추출
     const uid =
       (req.user && req.user._id) ||
       (req.session.user && req.session.user._id) ||
@@ -238,17 +247,12 @@ router.post("/capture-order/:orderID", requireLogin, async (req, res) => {
       const count = parseInt(req.session.adPackage, 10);
       await User.findByIdAndUpdate(uid, { $inc: { adsAvailable: count } });
       delete req.session.adPackage;
-      return res.json({
-        status: "redirect",
-        url: "/job-vacancies/new_paid_user",
-      });
+      return res.json({ status: "redirect", url: "/job-vacancies/new_paid_user" });
     }
 
     // RESUME VISIBILITY (by planId)
     if (req.session.resumePlan) {
-      const selected = resumePriceConfig.find(
-        (p) => p.id === req.session.resumePlan
-      );
+      const selected = resumePriceConfig.find((p) => p.id === req.session.resumePlan);
       if (selected) {
         await User.findByIdAndUpdate(uid, {
           resumeAccess: { startDate: new Date(), durationDays: selected.days },
@@ -280,10 +284,7 @@ router.post("/capture-order/:orderID", requireLogin, async (req, res) => {
 
     return res.status(400).json({ error: "Invalid payment context" });
   } catch (error) {
-    console.error(
-      "❌ capture-order error:",
-      error.response?.data || error.message
-    );
+    console.error("❌ capture-order error:", error.response?.data || error.message);
     res.status(500).json({ error: "Failed to capture payment" });
   }
 });
