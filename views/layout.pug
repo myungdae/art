@@ -103,6 +103,10 @@ html(lang=(typeof htmlLang !== 'undefined' && htmlLang ? htmlLang : 'en'))
         .brand-logo img{height:30px}
       }
 
+    style.
+      @media (max-width: 767.98px){
+        .mob-quickbar{ position: sticky; top: 0; z-index: 2147483647; background:#fff; }
+      }
     // My Page 스코프 (원본 유지)
     style.
       .mypage-scope {
@@ -136,10 +140,12 @@ html(lang=(typeof htmlLang !== 'undefined' && htmlLang ? htmlLang : 'en'))
       .mp-list-sub { color: var(--mp-dim); font-size: .925rem; margin-top: .15rem; }
       .mp-list a { text-decoration: none; color: var(--mp-primary); }
       .mp-list a:hover { text-decoration: underline; }
-      @media (max-width: 576px) {
-        .btn-block-mobile .btn { width: 100%; }
-        .btn-block-mobile .btn + .btn { margin-top: .5rem; }
-      }
+      
+      // Mobile quickbar styles
+      style.
+        @media (max-width: 767.98px){
+          .mob-quickbar{ position: sticky; top: 0; z-index: 2147483647; background:#fff; }
+        }
       
       // ── Mobile wobble fixes (global) ──
       style.
@@ -279,6 +285,25 @@ html(lang=(typeof htmlLang !== 'undefined' && htmlLang ? htmlLang : 'en'))
             if session && session.isAdmin
               a(href="/admin/dashboard") Admin
               a(href="/admin/logout").logout Logout
+  
+  
+    // 모바일 퀵 링크 바 (facet 페이지만 표시)
+    if currentPage && currentPage.indexOf('/facet/') === 0
+      div(class="mob-quickbar md:hidden bg-white border-b")
+        div(class="container mx-auto px-2 py-2 flex items-center gap-3 text-sm")
+          if session && session.user
+            a(href="/user/mypage", class="px-3 py-1 rounded border") Mypage
+            if session.user.adsAvailable !== undefined
+              a(href="javascript:void(0)", class="px-3 py-1 rounded border") (#{session.user.adsAvailable} left)
+            a(href="/inquiry", class="px-3 py-1 rounded border") Inquiry
+            a(href="/user/logout", class="px-3 py-1 rounded border") Logout
+          else
+            a(href="/user/register", class="px-3 py-1 rounded border") Membership
+            a(href="/user/login", class="px-3 py-1 rounded border") Login
+            a(href="/inquiry", class="px-3 py-1 rounded border") Inquiry
+
+
+
 
     // 메인 컨텐츠
     main.main-content
