@@ -29,7 +29,7 @@ block content
           a(href="/admin", class="ml-2 text-sm bg-blue-500 hover:bg-blue-400 px-3 py-1.5 rounded") Admin
 
     // Mobile center nav (stack)
-    div(class="md:hidden border-t border-blue-500 py-2")
+    .md:hidden.border-t.border-blue-500.py-2
       .max-w-6xl.mx-auto.px-4
         ul(class="flex flex-wrap gap-4 text-sm")
           li: a(href="/facet/Job_Vacancies", class="hover:opacity-90") JOB VACANCIES

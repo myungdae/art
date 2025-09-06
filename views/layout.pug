@@ -140,6 +140,33 @@ html(lang=(typeof htmlLang !== 'undefined' && htmlLang ? htmlLang : 'en'))
         .btn-block-mobile .btn { width: 100%; }
         .btn-block-mobile .btn + .btn { margin-top: .5rem; }
       }
+      
+      // ── Mobile wobble fixes (global) ──
+      style.
+        /* 가로 스크롤/레이아웃 폭 흔들림 방지 */
+        html, body { overflow-x: hidden; }
+        /* 상단/하단 바 등장시 과도한 바운스 억제 */
+        body { overscroll-behavior-y: none; -webkit-overflow-scrolling: touch; }
+      
+        /* 모바일 필터바는 blur 제거(모바일 Safari에서 스크롤 잔떨림 유발) */
+        @media (max-width: 767.98px){
+          #facetMobileBar { background:#fff !important; }
+          #facetMobileBar .pill-row {
+            overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling: touch;
+            scroll-snap-type: x mandatory; gap:.5rem;
+          }
+          #facetMobileBar .pill-row > * { scroll-snap-align: start; }
+        }
+        /* iOS Safari에서는 backdrop-filter 자체 off */
+        @supports (-webkit-touch-callout: none) {
+          #facetMobileBar { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+        }
+      
+        /* 패널을 오버레이로 띄울 때 바디 락(스크롤 위치 고정) */
+        html.facet-lock, body.facet-lock {
+          position: fixed; overflow: hidden; width: 100%;
+        }
+
 
   body
     include common_value
@@ -301,6 +328,7 @@ html(lang=(typeof htmlLang !== 'undefined' && htmlLang ? htmlLang : 'en'))
     script(src='/assets/js/custom/nav-prettify.js')
     script(src='/assets/js/custom/nav-dedupe.js')
     script(src='/assets/js/custom/nav-hardfix.js')
+
 
     // 모먼트 로케일 고정(안전)
     script.

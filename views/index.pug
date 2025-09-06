@@ -9,7 +9,7 @@ block content
       p.text-gray-600.mb-6 The fast ESL hiring & tutoring hub
 
       // Search bar
-      form.flex.flex-col.md:flex-row.items-stretch.gap-3.justify-center(action="/go" method="GET")
+      form(class="flex flex-col md:flex-row items-stretch gap-3 justify-center")(action="/go" method="GET")
         select.name-facet.border.rounded.px-3.py-2(name="facet" required)
           option(value="Job_Vacancies") Job Vacancies
           option(value="Job_Seekers") Job Seekers
@@ -24,7 +24,7 @@ block content
         a.border.rounded-full.px-4.py-2(href="/facet/Online_Tutors") Online Tutors
 
     // Stats
-    .grid.grid-cols-1.md:grid-cols-3.gap-4.mb-10
+    div(class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10")
       .border.rounded.p-5.text-center
         div.text-3xl.font-bold= stats.vCount || 0
         div.text-gray-500.mt-1 Job Vacancies
@@ -48,7 +48,7 @@ block content
     // Latest Job Vacancies
     if recentVacancies && recentVacancies.length
       h2.text-xl.font-semibold.mb-3 Latest Job Vacancies
-      .grid.grid-cols-1.md:grid-cols-3.gap-4.mb-12
+      div(class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12")
         each v in recentVacancies
           .border.rounded.p-4.flex.flex-col
             a.font-semibold.mb-1(href=`/rdf-resource/Job_Vacancies/${v.id}`)= v.title || 'Untitled'
@@ -70,7 +70,7 @@ block content
     // Latest Job Seekers
     if recentSeekers && recentSeekers.length
       h2.text-xl.font-semibold.mb-3 Latest Job Seekers
-      .grid.grid-cols-1.md:grid-cols-3.gap-4.mb-12
+      div(class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12")
         each s in recentSeekers
           .border.rounded.p-4.flex.flex-col
             a.font-semibold.mb-1(href=`/rdf-resource/Job_Seekers/${s.id}`)= s.title || 'Untitled'
@@ -89,7 +89,7 @@ block content
     // Latest Online Tutors
     if recentTutors && recentTutors.length
       h2.text-xl.font-semibold.mb-3 Latest Online Tutors
-      .grid.grid-cols-1.md:grid-cols-3.gap-4.mb-12
+      div(class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12")
         each t in recentTutors
           .border.rounded.p-4.flex.flex-col
             a.font-semibold.mb-1(href=`/rdf-resource/Online_Tutors/${t.id}`)= t.title || 'Untitled'

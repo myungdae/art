@@ -1,0 +1,106 @@
+extends ../layout
+
+block content
+  .container.mx-auto.max-w-6xl.py-10
+
+    // Hero
+    .text-center.mb-10
+      h1.text-4xl.font-extrabold.mb-3 ESL Plus
+      p.text-gray-600.mb-6 The fast ESL hiring & tutoring hub
+
+      // Search bar
+      form.flex.flex-col.md:flex-row.items-stretch.gap-3.justify-center(action="/go" method="GET")
+        select.name-facet.border.rounded.px-3.py-2(name="facet" required)
+          option(value="Job_Vacancies") Job Vacancies
+          option(value="Job_Seekers") Job Seekers
+          option(value="Online_Tutors") Online Tutors
+        input.flex-1.border.rounded.px-4.py-2(type="text" name="q" placeholder="Search by keyword (e.g., Seoul, ESL, Kindergarten)")
+        button.bg-blue-600.text-white.rounded.px-6.py-2(type="submit") Search
+
+      // Quick links
+      .flex.flex-wrap.gap-3.justify-center.mt-6
+        a.border.rounded-full.px-4.py-2(href="/facet/Job_Vacancies") View Jobs
+        a.border.rounded-full.px-4.py-2(href="/facet/Job_Seekers") View Job Seekers
+        a.border.rounded-full.px-4.py-2(href="/facet/Online_Tutors") Online Tutors
+
+    // Stats
+    .grid.grid-cols-1.md:grid-cols-3.gap-4.mb-10
+      .border.rounded.p-5.text-center
+        div.text-3xl.font-bold= stats.vCount || 0
+        div.text-gray-500.mt-1 Job Vacancies
+      .border.rounded.p-5.text-center
+        div.text-3xl.font-bold= stats.sCount || 0
+        div.text-gray-500.mt-1 Job Seekers
+      .border.rounded.p-5.text-center
+        div.text-3xl.font-bold= stats.tCount || 0
+        div.text-gray-500.mt-1 Online Tutors
+
+    // Top Countries
+    if topCountries && topCountries.length
+      h2.text-xl.font-semibold.mb-3 Top Countries
+      .flex.flex-wrap.gap-2.mb-10
+        - const enc = encodeURIComponent;
+        each c in topCountries
+          a.inline-flex.items-center.px-3.py-1.rounded-full.border.hover:bg-gray-50(href=`/facet/Job_Vacancies?country=${enc(c._id)}`)
+            span.mr-2= c._id
+            span.text-xs.text-gray-500 (#{c.count})
+
+    // Latest Job Vacancies
+    if recentVacancies && recentVacancies.length
+      h2.text-xl.font-semibold.mb-3 Latest Job Vacancies
+      .grid.grid-cols-1.md:grid-cols-3.gap-4.mb-12
+        each v in recentVacancies
+          .border.rounded.p-4.flex.flex-col
+            a.font-semibold.mb-1(href=`/rdf-resource/Job_Vacancies/${v.id}`)= v.title || 'Untitled'
+            .text-sm.text-gray-500.mb-2
+              if v.date
+                - const d = new Date(v.date)
+                span= d.toISOString().slice(0,10)
+              if v.country
+                span.mx-1 •
+                span= v.country
+            if v.studentType
+              .flex.flex-wrap.gap-2.mb-2
+                a.inline-flex.items-center.px-2.py-1.text-xs.rounded-full.border(href=`/facet/Job_Vacancies?studentType=${enc(v.studentType)}`)= v.studentType
+            if v.teachingAreas && v.teachingAreas.length
+              .flex.flex-wrap.gap-2.mt-auto
+                each area in v.teachingAreas.slice(0,3)
+                  a.inline-flex.items-center.px-2.py-1.text-xs.rounded-full.border(href=`/facet/Job_Vacancies?teachingArea=${enc(area)}`)= area
+
+    // Latest Job Seekers
+    if recentSeekers && recentSeekers.length
+      h2.text-xl.font-semibold.mb-3 Latest Job Seekers
+      .grid.grid-cols-1.md:grid-cols-3.gap-4.mb-12
+        each s in recentSeekers
+          .border.rounded.p-4.flex.flex-col
+            a.font-semibold.mb-1(href=`/rdf-resource/Job_Seekers/${s.id}`)= s.title || 'Untitled'
+            .text-sm.text-gray-500.mb-2
+              if s.date
+                - const d = new Date(s.date)
+                span= d.toISOString().slice(0,10)
+              if s.country
+                span.mx-1 •
+                span= s.country
+            if s.languages && s.languages.length
+              .flex.flex-wrap.gap-2.mt-auto
+                each lang in s.languages.slice(0,3)
+                  a.inline-flex.items-center.px-2.py-1.text-xs.rounded-full.border(href=`/facet/Job_Seekers?language=${enc(lang)}`)= lang
+
+    // Latest Online Tutors
+    if recentTutors && recentTutors.length
+      h2.text-xl.font-semibold.mb-3 Latest Online Tutors
+      .grid.grid-cols-1.md:grid-cols-3.gap-4.mb-12
+        each t in recentTutors
+          .border.rounded.p-4.flex.flex-col
+            a.font-semibold.mb-1(href=`/rdf-resource/Online_Tutors/${t.id}`)= t.title || 'Untitled'
+            .text-sm.text-gray-500.mb-2
+              if t.date
+                - const d = new Date(t.date)
+                span= d.toISOString().slice(0,10)
+              if t.country
+                span.mx-1 •
+                span= t.country
+            if t.languages && t.languages.length
+              .flex.flex-wrap.gap-2.mt-auto
+                each lang in t.languages.slice(0,3)
+                  a.inline-flex.items-center.px-2.py-1.text-xs.rounded-full.border(href=`/facet/Online_Tutors?language=${enc(lang)}`)= lang

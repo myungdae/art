@@ -3,16 +3,16 @@ extends ../layout
 
 block content
   .container.mx-auto.py-6
-    // 헤더 + 검색
+    // ───────── 헤더 + 검색 ─────────
     .flex.items-center.justify-between.mb-4
-      - const titleMap = { Job_Vacancies: 'Job Vacancies', Job_Seekers: 'Job Seekers', Online_Tutors: 'Online Tutors' }
-      - const hz = (typeof hideZero !== 'undefined' && hideZero) ? true : false
+      - var titleMap = { Job_Vacancies: 'Job Vacancies', Job_Seekers: 'Job Seekers', Online_Tutors: 'Online Tutors' };
+      - var hz = (typeof hideZero !== 'undefined' && hideZero) ? true : false;
       h1.text-2xl.font-bold
-        = titleMap && titleMap[klass] ? titleMap[klass] : (klass || 'List')
+        = (titleMap && titleMap[klass]) ? titleMap[klass] : (klass || 'List')
         if typeof total !== 'undefined'
           span.text-gray-500.text-base &nbsp;(#{total})
 
-      // 검색창 (현재 선택된 facet/토글 보존)
+      // 검색창 (현재 선택 유지)
       form(method="GET", action=`/facet/${klass}`, class="flex gap-2")
         input(type="text", name="q", value=q || "", placeholder="Search title/description...", class="border rounded px-3 py-2")
         if facetCfg && facetCfg.groups
@@ -25,35 +25,85 @@ block content
           input(type="hidden", name="hideZero", value="1")
         button(type="submit", class="px-4 py-2 rounded bg-blue-600 text-white") Search
 
+    // ───────── 모바일 가로 필터바 (< md 전용) ─────────
+    div(id="facetMobileBar" class="block md:hidden bg-white border-b py-2 mb-3 sticky top-0" style="z-index:2147483647; position:sticky; top:0;")
+      form(id="facetFormMobileInline" method="GET", action=`/facet/${klass}`, class="container mx-auto")
+        // 유지 파라미터
+        input(type="hidden", name="q", value=q || "")
+        input(type="hidden", name="limit", value=limit)
+        if hz
+          input(type="hidden", name="hideZero", value="1")
+
+        - var orderMap = { country:0, studentType:1, teachingArea:2 };
+        - var groups = (facetCfg && facetCfg.groups) ? facetCfg.groups.slice() : [];
+        - groups.sort(function(a,b){
+        -   var ai = orderMap.hasOwnProperty(a.key) ? orderMap[a.key] : 99;
+        -   var bi = orderMap.hasOwnProperty(b.key) ? orderMap[b.key] : 99;
+        -   return ai - bi;
+        - });
+        - var top3 = groups.slice(0,3);
+        - var sel = selected || {};
+
+        // 칩 3개 가로배치 (각각 드롭다운)
+        div(class="flex items-center gap-2 px-2 overflow-x-auto")
+          each g in top3
+            - var selCnt = (sel[g.key] && sel[g.key].length) ? sel[g.key].length : 0
+            - var menuId = 'fm-' + g.key
+            details(class="relative facet-dd" data-key=g.key)
+              summary(class="facet-pill px-3 py-2 rounded border bg-white flex items-center gap-2 cursor-pointer select-none" aria-controls=menuId aria-expanded="false")
+                span= g.label
+                if selCnt > 0
+                  span(class="text-xs text-blue-600") (#{selCnt})
+                span(class="text-gray-500") ▼
+
+              // 드롭다운 내용(초기엔 bar 안에 두되, 열릴 때 body로 포탈 이동)
+              // 주의: 고정 위치/최상위 z-index, 한 줄 style!
+              div(id=menuId class="facet-menu" data-key=g.key style='position:fixed; left:-9999px; top:-9999px; background:#fff; border:1px solid #e5e7eb; border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,.15); width:16rem; max-height:60vh; overflow:auto; z-index:2147483647; padding:8px;')
+                - var facetList = (facets && facets[g.key]) || []
+                - var selList = sel[g.key] || []
+                if facetList.length
+                  each f in facetList
+                    - var checked = selList.indexOf(f._id) !== -1
+                    label(class="flex items-center gap-2 py-1")
+                      // 폼 밖으로 이동해도 제출되도록 form 속성 부여
+                      input(type="checkbox", form="facetFormMobileInline", name=g.key, value=f._id, checked=checked)
+                      span(class="flex-1 truncate")= f._id
+                      span(class="text-xs text-gray-500") (#{f.c})
+                else
+                  p(class="text-sm text-gray-400 p-2") No values
+
+          // Hide 0 토글
+          label(class="flex items-center gap-2 px-3 py-2 rounded border bg-white ml-1")
+            input#hzToggleMob(type="checkbox", checked=hz)
+            span(class="text-sm text-gray-700") Hide 0
+
+    // ───────── 데스크탑/모바일 공통 리스트 레이아웃 ─────────
     .grid.grid-cols-12.gap-6
-      // 좌측: 패싯
-      div(class="col-span-12 md:col-span-3")
+      // 좌측: 데스크탑 사이드 패싯
+      div(class="hidden md:block md:col-span-3")
         form#facetForm(method="GET", action=`/facet/${klass}`, class="space-y-6 border rounded p-3")
-          // 검색/페이지 크기/토글 상태 유지
           input(type="hidden", name="q", value=q || "")
           input(type="hidden", name="limit", value=limit)
           if hz
             input(type="hidden", name="hideZero", value="1")
 
-          // ── 0건 숨기기 토글
           .mb-2
-            label.flex.items-center.gap-2.cursor-pointer
+            label(class="flex items-center gap-2 cursor-pointer")
               input#hzToggle(type="checkbox", checked=hz)
               span.text-sm.text-gray-700 Hide items with 0
 
           if facetCfg && facetCfg.groups && facetCfg.groups.length
             each g in facetCfg.groups
-              .space-y-2
+              div(class="space-y-2")
                 h3.font-semibold.text-gray-700= g.label
-                .space-y-1.max-h-64.overflow-auto.pr-1
-                  - var facetList = (facets && facets[g.key]) || []
-                  - var selList = (selected && selected[g.key]) || []
-                  if facetList.length
-                    each f in facetList
-                      - var checked = selList.indexOf(f._id) !== -1
-                      label.flex.items-center.gap-2
-                        //- 동일 name으로 여러 값 전송
-                        input(type="checkbox", name=g.key, value=f._id, checked=checked)
+                div(class="space-y-1 max-h-64 overflow-auto pr-1")
+                  - var facetList2 = (facets && facets[g.key]) || []
+                  - var selList2 = (selected && selected[g.key]) || []
+                  if facetList2.length
+                    each f in facetList2
+                      - var checked2 = selList2.indexOf(f._id) !== -1
+                      label(class="flex items-center gap-2")
+                        input(type="checkbox", name=g.key, value=f._id, checked=checked2)
                         span.flex-1.truncate= f._id
                         span.text-xs.text-gray-500 (#{f.c})
                   else
@@ -61,8 +111,7 @@ block content
 
           .pt-2.flex.items-center.gap-2
             a(href=`/facet/${klass}${hz ? '?hideZero=1' : ''}`, class="px-3 py-2 rounded border inline-block") Clear
-            if Object.keys(selected || {}).some(k => (selected[k]||[]).length)
-              // 현재 선택 유지한 채 0건 숨김만 토글하려면 여기서 체크박스로 조절하세요
+            if Object.keys(selected || {}).some(function(k){ return (selected[k]||[]).length; })
               span.text-xs.text-gray-500 Selected filters active
 
       // 우측: 리스트
@@ -79,8 +128,7 @@ block content
                   .min-w-0.flex-1
                     h2.font-semibold.text-lg.truncate
                       a(href=`/rdf-resource/${klass}/${d._id}`)= titleText
-
-                    // 하부 메타: 가능한 필드를 자동 모아 표시
+                    // 메타
                     - var parts = []
                     - var fieldsForMeta = ['country','Country','studentType','StudentType','teachingArea','Teaching_Area','Nationality','Preferred_Work_Location','Major','Expertise','Tutoring_Experience','Gender']
                     - for (var i = 0; i < fieldsForMeta.length; i++) {
@@ -90,13 +138,12 @@ block content
                     -   else if (d[k]) parts.push(d[k]);
                     - }
                     if parts.length
-                      p(class="text-sm text-gray-600 mt-0.5")= parts.join(' · ')
-
+                      p(class="text-sm text-gray-600 mt-1")= parts.join(' · ')
                     p.text-sm.mt-1 Posted: #{posted}
                   .shrink-0
                     a(href=`/rdf-resource/${klass}/${d._id}`, class="text-blue-700 underline") View
 
-        // 페이지네이션
+        // ───────── Pagination ─────────
         if typeof total !== 'undefined' && total > limit
           - var totalPages = Math.ceil(total / limit)
           - var qs = ''
@@ -104,9 +151,9 @@ block content
           - if (facetCfg && facetCfg.groups) {
           -   for (var gi = 0; gi < facetCfg.groups.length; gi++) {
           -     var gg = facetCfg.groups[gi];
-          -     var sel = (selected && selected[gg.key]) || [];
-          -     for (var sj = 0; sj < sel.length; sj++) {
-          -       qs += '&' + encodeURIComponent(gg.key) + '=' + encodeURIComponent(sel[sj]);
+          -     var selArr = (selected && selected[gg.key]) || [];
+          -     for (var sj = 0; sj < selArr.length; sj++) {
+          -       qs += '&' + encodeURIComponent(gg.key) + '=' + encodeURIComponent(selArr[sj]);
           -     }
           -   }
           - }
@@ -118,23 +165,112 @@ block content
             if page < totalPages
               a(href=`/facet/${klass}?page=${page+1}&limit=${limit}${qs}`, class="px-3 py-1 border rounded") Next
 
-  // 체크박스/토글 변경 즉시 적용
+  // ───────── 스크립트 ─────────
   script.
     (function(){
-      var f = document.getElementById('facetForm');
-      if (f) {
-        var cbs = f.querySelectorAll('input[type="checkbox"][name]');
-        for (var i=0; i<cbs.length; i++) {
-          cbs[i].addEventListener('change', function(){ f.submit(); });
-        }
+      // 데스크탑: 체크 변경 시 자동 제출
+      var fd = document.getElementById('facetForm');
+      if (fd) {
+        var cbs = fd.querySelectorAll('input[type="checkbox"][name]');
+        for (var i=0; i<cbs.length; i++) cbs[i].addEventListener('change', function(){ fd.submit(); });
         var hzT = document.getElementById('hzToggle');
         if (hzT) {
           hzT.addEventListener('change', function(){
-            // hidden 상태 갱신 (있으면 값만 바꾸고, 없으면 추가)
-            var h = f.querySelector('input[name="hideZero"]');
-            if (!h) { h = document.createElement('input'); h.type='hidden'; h.name='hideZero'; f.appendChild(h); }
+            var h = fd.querySelector('input[name="hideZero"]');
+            if (!h) { h = document.createElement('input'); h.type='hidden'; h.name='hideZero'; fd.appendChild(h); }
             h.value = hzT.checked ? '1' : '';
-            f.submit();
+            fd.submit();
+          });
+        }
+      }
+
+      // --- 모바일: 드롭다운을 body로 포탈 + 위치 계산 ---
+      function positionFacetMenus(){
+        var bar = document.getElementById('facetMobileBar');
+        if (!bar) return;
+        var openDDs = bar.querySelectorAll('details.facet-dd[open]');
+        for (var i=0;i<openDDs.length;i++){
+          var dd   = openDDs[i];
+          var sum  = dd.querySelector('summary');
+          var key  = dd.getAttribute('data-key');
+          var menu = document.getElementById('fm-' + key);
+          if (!sum || !menu) continue;
+
+          // body로 이동 (한번만)
+          if (menu.parentElement !== document.body) {
+            document.body.appendChild(menu);
+          }
+
+          var r = sum.getBoundingClientRect();
+          var menuW = 256;
+          var left  = Math.max(8, Math.min(window.innerWidth - 8 - menuW, r.left));
+          var top   = Math.max(8, r.bottom + 8);
+
+          menu.style.left = Math.round(left) + 'px';
+          menu.style.top  = Math.round(top)  + 'px';
+        }
+      }
+
+      (function initMobileFacet(){
+        var bar = document.getElementById('facetMobileBar');
+        if (!bar) return;
+
+        // details 열릴 때 위치 잡고, 형제 닫기
+        var dds = bar.querySelectorAll('details.facet-dd');
+        for (var i=0;i<dds.length;i++){
+          (function(dd){
+            dd.addEventListener('toggle', function(){
+              var key  = dd.getAttribute('data-key');
+              var menu = document.getElementById('fm-' + key);
+              if (dd.open) {
+                // 다른 열린 패널 닫기
+                var others = bar.querySelectorAll('details.facet-dd[open]');
+                for (var j=0;j<others.length;j++){
+                  if (others[j] !== dd) others[j].removeAttribute('open');
+                }
+                // 위치 계산
+                setTimeout(positionFacetMenus, 0);
+              } else if (menu) {
+                // 닫힐 때 화면 밖으로 치우기
+                menu.style.left = '-9999px';
+                menu.style.top  = '-9999px';
+              }
+              // summary의 aria-expanded 업데이트
+              var sum = dd.querySelector('summary');
+              if (sum) sum.setAttribute('aria-expanded', dd.open ? 'true' : 'false');
+            });
+          })(dds[i]);
+        }
+
+        // 바깥 클릭 시 모두 닫기 (메뉴도 허용)
+        document.addEventListener('click', function(e){
+          var clickedInsideBar = bar.contains(e.target);
+          var clickedInMenu = !!e.target.closest('.facet-menu');
+          if (!clickedInsideBar && !clickedInMenu) {
+            var opens = bar.querySelectorAll('details.facet-dd[open]');
+            for (var i=0;i<opens.length;i++) opens[i].removeAttribute('open');
+          }
+        });
+
+        // 스크롤/리사이즈 시 위치 갱신
+        window.addEventListener('scroll', positionFacetMenus, {passive:true});
+        window.addEventListener('resize', positionFacetMenus);
+      })();
+
+      // 모바일: 체크 변경 시 자동 제출 (폼 밖 메뉴까지)
+      var formM = document.getElementById('facetFormMobileInline');
+      if (formM){
+        var mobCbs = document.querySelectorAll('input[type="checkbox"][name][form="facetFormMobileInline"]');
+        for (var k=0;k<mobCbs.length;k++){
+          mobCbs[k].addEventListener('change', function(){ formM.submit(); });
+        }
+        var hzM = document.getElementById('hzToggleMob');
+        if (hzM){
+          hzM.addEventListener('change', function(){
+            var h = formM.querySelector('input[name="hideZero"]');
+            if (!h) { h = document.createElement('input'); h.type='hidden'; h.name='hideZero'; formM.appendChild(h); }
+            h.value = hzM.checked ? '1' : '';
+            formM.submit();
           });
         }
       }

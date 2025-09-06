@@ -1,0 +1,288 @@
+//- views/facet/list.pug
+extends ../layout
+
+block append_on_header
+  //- 모바일 패널/락 전용 스타일 (상단 삽입)
+  style.
+    /* 모바일 패널(바텀시트 느낌) */
+    .m-panel{
+      position: fixed; left:0; right:0;
+      top: var(--facet-top, 56px);
+      height: calc(100dvh - var(--facet-top, 56px)); /* 주소창 변동 대응 */
+      background:#fff; z-index:1040; overflow:auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      border-top:1px solid #e5e7eb;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    @supports (height: 100svh){
+      .m-panel{ height: calc(100svh - var(--facet-top, 56px)); }
+    }
+    @media (min-width: 768px){ .m-panel{ display:none !important; } }
+
+    /* 바디 락(흔들림 방지) */
+    html.facet-lock{ overflow: hidden; }
+    body.facet-lock{
+      position: fixed; left:0; right:0; width:100%;
+      top: var(--lock-top, 0px);
+    }
+
+    /* 모바일 상단 칩 바(고정) */
+    #facetMobileBar{
+      position: sticky; top: 0; z-index: 30; background:#fff;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+block content
+  .container.mx-auto.py-6
+    .flex.items-center.justify-between.mb-4
+      - const titleMap = { Job_Vacancies: 'Job Vacancies', Job_Seekers: 'Job Seekers', Online_Tutors: 'Online Tutors' }
+      - const hz = (typeof hideZero !== 'undefined' && hideZero) ? true : false
+      h1.text-2xl.font-bold
+        = titleMap && titleMap[klass] ? titleMap[klass] : (klass || 'List')
+        if typeof total !== 'undefined'
+          span.text-gray-500.text-base &nbsp;(#{total})
+
+      // 검색창 (현재 선택된 facet/토글 보존)
+      form(method="GET", action=`/facet/${klass}`, class="flex gap-2")
+        input(type="text", name="q", value=q || "", placeholder="Search title/description...", class="border rounded px-3 py-2")
+        if facetCfg && facetCfg.groups
+          each g in facetCfg.groups
+            if selected && selected[g.key]
+              each v in selected[g.key]
+                input(type="hidden", name=g.key, value=v)
+        input(type="hidden", name="limit", value=limit)
+        if hz
+          input(type="hidden", name="hideZero", value="1")
+        button(type="submit", class="px-4 py-2 rounded bg-blue-600 text-white") Search
+
+    - var groups = (facetCfg && facetCfg.groups) ? facetCfg.groups : []
+    - var mgroups = groups.slice(0, 3) // 모바일에서 상단에 보일 3개(예: Country, Student type, Teaching Area)
+
+    // ───── 모바일 상단 필터 바(칩) ─────
+    if mgroups.length
+      #facetMobileBar(class="md:hidden py-2 mb-3")
+        .flex.flex-nowrap.items-center.gap-2.px-2.overflow-x-auto
+          each g in mgroups
+            - var sel = (selected && selected[g.key]) || []
+            button.facet-pill(
+              type="button"
+              data-target=`panel-${g.key}`
+              class=`px-3 py-2 rounded-full border text-sm whitespace-nowrap ${sel.length ? 'bg-blue-50 border-blue-400 text-blue-700' : ''}`
+            )
+              span= g.label || g.key
+              if sel.length
+                span.ml-1.text-xs (#{sel.length})
+          // 우측 여백 확보
+          span(class="inline-block w-2")
+
+    // ───── 모바일 패널들(각 칩에 대응) ─────
+    if mgroups.length
+      each g in mgroups
+        - var gid = `panel-${g.key}`
+        div(id=gid, class="m-panel hidden md:hidden")
+          .px-3.py-2.border-b.flex.items-center.justify-between
+            h3.text-base.font-semibold= g.label || g.key
+            .flex.gap-2
+              a(href=`/facet/${klass}`, class="px-3 py-1 border rounded text-sm") Clear all
+              button(type="button", class="px-3 py-1 border rounded text-sm", data-panel-close=gid) Close
+          form(method="GET", action=`/facet/${klass}`, data-mobile-facet=g.key, class="p-3 space-y-3")
+            // 상태 유지용 히든들
+            input(type="hidden", name="q", value=q || "")
+            input(type="hidden", name="limit", value=limit)
+            if hz
+              input(type="hidden", name="hideZero", value="1")
+            if groups && groups.length
+              each gg in groups
+                if gg.key !== g.key && selected && selected[gg.key]
+                  each v in selected[gg.key]
+                    input(type="hidden", name=gg.key, value=v)
+            // 체크박스 목록
+            - var facetList = (facets && facets[g.key]) || []
+            - var selList = (selected && selected[g.key]) || []
+            if facetList.length
+              .space-y-1
+                each f in facetList
+                  - var checked = selList.indexOf(f._id) !== -1
+                  label.flex.items-center.gap-2
+                    input(type="checkbox", name=g.key, value=f._id, checked=checked)
+                    span.flex-1.truncate= f._id
+                    span.text-xs.text-gray-500 (#{f.c})
+            else
+              p.text-sm.text-gray-400.px-1 No values
+
+    .grid.grid-cols-12.gap-6
+      // 좌측: 데스크탑 사이드 패싯
+      div(class="hidden md:block md:col-span-3")
+      form#facetForm(method="GET", action=`/facet/${klass}`, class="space-y-6 border rounded p-3")
+
+          input(type="hidden", name="q", value=q || "")
+          input(type="hidden", name="limit", value=limit)
+          if hz
+            input(type="hidden", name="hideZero", value="1")
+
+          .mb-2
+            label.flex.items-center.gap-2.cursor-pointer
+              input#hzToggle(type="checkbox", checked=hz)
+              span.text-sm.text-gray-700 Hide items with 0
+
+          if facetCfg && facetCfg.groups && facetCfg.groups.length
+            each g in facetCfg.groups
+              .space-y-2
+                h3.font-semibold.text-gray-700= g.label
+                .space-y-1.max-h-64.overflow-auto.pr-1
+                  - var facetList = (facets && facets[g.key]) || []
+                  - var selList = (selected && selected[g.key]) || []
+                  if facetList.length
+                    each f in facetList
+                      - var checked = selList.indexOf(f._id) !== -1
+                      label.flex.items-center.gap-2
+                        input(type="checkbox", name=g.key, value=f._id, checked=checked)
+                        span.flex-1.truncate= f._id
+                        span.text-xs.text-gray-500 (#{f.c})
+                  else
+                    p.text-sm.text-gray-400 No values
+
+          .pt-2.flex.items-center.gap-2
+            a(href=`/facet/${klass}${hz ? '?hideZero=1' : ''}`, class="px-3 py-2 rounded border inline-block") Clear
+            if Object.keys(selected || {}).some(k => (selected[k]||[]).length)
+              span.text-xs.text-gray-500 Selected filters active
+
+      // 우측: 리스트
+      div(class="col-span-12 md:col-span-9")
+      if !docs || !docs.length
+        .text-gray-500 No results.
+      else
+          ul.space-y-3
+            each d in docs
+              - var posted = (d.datePosted && new Date(d.datePosted).toISOString().slice(0,10)) || (d.updatedAt && new Date(d.updatedAt).toISOString().slice(0,10)) || '-'
+              - var titleText = d.displayLabel || d._label || d.title || d.name || d.jobTitle || d.email || '(no title)'
+              li.border.rounded.p-3
+                .flex.items-center.gap-3
+                  .min-w-0.flex-1
+                    h2.font-semibold.text-lg.truncate
+                      a(href=`/rdf-resource/${klass}/${d._id}`)= titleText
+                    - var parts = []
+                    - var fieldsForMeta = ['country','Country','studentType','StudentType','teachingArea','Teaching_Area','Nationality','Preferred_Work_Location','Major','Expertise','Tutoring_Experience','Gender']
+                    - for (var i = 0; i < fieldsForMeta.length; i++) {
+                    -   var k = fieldsForMeta[i];
+                    -   if (!d || typeof d[k] === 'undefined' || d[k] === null) continue;
+                    -   if (Array.isArray(d[k]) && d[k].length) parts.push(d[k].join(', '));
+                    -   else if (d[k]) parts.push(d[k]);
+                    - }
+                    if parts.length
+                      p(class="text-sm text-gray-600 mt-0.5")= parts.join(' · ')
+                    p.text-sm.mt-1 Posted: #{posted}
+                  .shrink-0
+                    a(href=`/rdf-resource/${klass}/${d._id}`, class="text-blue-700 underline") View
+
+        // 페이지네이션
+        if typeof total !== 'undefined' && total > limit
+          - var totalPages = Math.ceil(total / limit)
+          - var qs = ''
+          - if (q) { qs += '&q=' + encodeURIComponent(q) }
+          - if (facetCfg && facetCfg.groups) {
+          -   for (var gi = 0; gi < facetCfg.groups.length; gi++) {
+          -     var gg = facetCfg.groups[gi];
+          -     var sel = (selected && selected[gg.key]) || [];
+          -     for (var sj = 0; sj < sel.length; sj++) {
+          -       qs += '&' + encodeURIComponent(gg.key) + '=' + encodeURIComponent(sel[sj]);
+          -     }
+          -   }
+          - }
+          - if (hz) { qs += '&hideZero=1' }
+          nav.mt-6.flex.items-center.gap-2.flex-wrap
+            if page > 1
+              a(href=`/facet/${klass}?page=${page-1}&limit=${limit}${qs}`, class="px-3 py-1 border rounded") Prev
+            span.text-sm Page #{page} / #{totalPages}
+            if page < totalPages
+              a(href=`/facet/${klass}?page=${page+1}&limit=${limit}${qs}`, class="px-3 py-1 border rounded") Next
+
+block append_js
+  //- 데스크탑: 체크박스 즉시 적용 & 0건 토글
+  script.
+    (function(){
+      var f = document.getElementById('facetForm');
+      if (f) {
+        var cbs = f.querySelectorAll('input[type="checkbox"][name]');
+        for (var i=0; i<cbs.length; i++) cbs[i].addEventListener('change', function(){ f.submit(); });
+        var hzT = document.getElementById('hzToggle');
+        if (hzT) {
+          hzT.addEventListener('change', function(){
+            var h = f.querySelector('input[name="hideZero"]');
+            if (!h) { h = document.createElement('input'); h.type='hidden'; h.name='hideZero'; f.appendChild(h); }
+            h.value = hzT.checked ? '1' : '';
+            f.submit();
+          });
+        }
+      }
+    })();
+
+  //- 모바일: 칩/패널 열고 닫기(흔들림 방지)
+  script.
+    (function(){
+      var pills = document.querySelectorAll('button.facet-pill[data-target]');
+      var openId = null;
+
+      function computeTop(){
+        var bar = document.getElementById('facetMobileBar');
+        var bottom = 56;
+        if (bar){
+          var r = bar.getBoundingClientRect();
+          bottom = (r.bottom || 56);
+        }
+        document.documentElement.style.setProperty('--facet-top', bottom + 'px');
+      }
+
+      function lockBody(){
+        var y = window.scrollY || document.documentElement.scrollTop || 0;
+        document.documentElement.dataset.lockY = y;
+        document.documentElement.classList.add('facet-lock');
+        document.documentElement.style.setProperty('--lock-top', (-y) + 'px');
+        document.body.classList.add('facet-lock');
+      }
+      function unlockBody(){
+        var y = parseInt(document.documentElement.dataset.lockY || '0', 10);
+        document.body.classList.remove('facet-lock');
+        document.documentElement.classList.remove('facet-lock');
+        document.documentElement.style.removeProperty('--lock-top');
+        window.scrollTo(0, y);
+      }
+      function closeAll(){
+        var panels = document.querySelectorAll('.m-panel');
+        for (var i=0;i<panels.length;i++) panels[i].classList.add('hidden');
+        if (openId){ unlockBody(); openId = null; }
+      }
+
+      for (var i=0;i<pills.length;i++){
+        pills[i].addEventListener('click', function(){
+          var id = this.getAttribute('data-target');
+          var p = document.getElementById(id);
+          if (!id || !p) return;
+          if (openId === id){ p.classList.add('hidden'); unlockBody(); openId = null; return; }
+          closeAll(); computeTop(); lockBody(); p.classList.remove('hidden'); openId = id;
+        });
+      }
+
+      var closes = document.querySelectorAll('[data-panel-close]');
+      for (var j=0;j<closes.length;j++) closes[j].addEventListener('click', closeAll);
+
+      // 각 패널에서 체크박스 변경 즉시 제출
+      var forms = document.querySelectorAll('form[data-mobile-facet]');
+      for (var m=0;m<forms.length;m++){
+        (function(ff){
+          var facetName = ff.getAttribute('data-mobile-facet');
+          var cbs = ff.querySelectorAll('input[type="checkbox"][name="'+facetName+'"]');
+          for (var n=0;n<cbs.length;n++) cbs[n].addEventListener('change', function(){ ff.submit(); });
+        })(forms[m]);
+      }
+
+      // 리사이즈/방향전환 때만 top 재계산(락 중 스크롤 이벤트로는 재계산 안 함→워블 방지)
+      window.addEventListener('resize', function(){ if (openId) computeTop(); }, { passive:true });
+      window.addEventListener('orientationchange', function(){ if (openId) setTimeout(computeTop, 150); });
+      document.addEventListener('click', function(e){
+        var onPill = e.target.closest && e.target.closest('.facet-pill');
+        var onPanel = e.target.closest && e.target.closest('.m-panel');
+        if (!onPill && !onPanel) closeAll();
+      });
+    })();
