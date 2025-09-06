@@ -25,7 +25,15 @@ block content
           input(type="hidden", name="hideZero", value="1")
         button(type="submit", class="px-4 py-2 rounded bg-blue-600 text-white") Search
 
-    // ───────── 모바일 가로 필터바 (< md 전용) ─────────
+    // ───────── 모바일 전용 필터바 ─────────
+    style.
+      @media (max-width: 767.98px){
+        #facetMobileBar{will-change:transform;backface-visibility:hidden;-webkit-transform:translateZ(0)}
+      }
+      html,body{overscroll-behavior-y:contain}
+      body.facet-open{position:fixed;overflow:hidden;width:100%}
+      .facet-menu{ -webkit-overflow-scrolling:touch; }
+
     div(id="facetMobileBar" class="block md:hidden bg-white border-b py-2 mb-3 sticky top-0" style="z-index:2147483647; position:sticky; top:0;")
       form(id="facetFormMobileInline" method="GET", action=`/facet/${klass}`, class="container mx-auto")
         // 유지 파라미터
@@ -37,47 +45,44 @@ block content
         - var orderMap = { country:0, studentType:1, teachingArea:2 };
         - var groups = (facetCfg && facetCfg.groups) ? facetCfg.groups.slice() : [];
         - groups.sort(function(a,b){
-        -   var ai = orderMap.hasOwnProperty(a.key) ? orderMap[a.key] : 99;
-        -   var bi = orderMap.hasOwnProperty(b.key) ? orderMap[b.key] : 99;
+        -   var ai = Object.prototype.hasOwnProperty.call(orderMap, a.key) ? orderMap[a.key] : 99;
+        -   var bi = Object.prototype.hasOwnProperty.call(orderMap, b.key) ? orderMap[b.key] : 99;
         -   return ai - bi;
         - });
         - var top3 = groups.slice(0,3);
         - var sel = selected || {};
 
-        // 칩 3개 가로배치 (각각 드롭다운)
+        // 칩 3개 + Hide0
         div(class="flex items-center gap-2 px-2 overflow-x-auto")
           each g in top3
             - var selCnt = (sel[g.key] && sel[g.key].length) ? sel[g.key].length : 0
             - var menuId = 'fm-' + g.key
-            details(class="relative facet-dd" data-key=g.key)
-              summary(class="facet-pill px-3 py-2 rounded border bg-white flex items-center gap-2 cursor-pointer select-none" aria-controls=menuId aria-expanded="false")
-                span= g.label
-                if selCnt > 0
-                  span(class="text-xs text-blue-600") (#{selCnt})
-                span(class="text-gray-500") ▼
-
-              // 드롭다운 내용(초기엔 bar 안에 두되, 열릴 때 body로 포탈 이동)
-              // 주의: 고정 위치/최상위 z-index, 한 줄 style!
-              div(id=menuId class="facet-menu" data-key=g.key style='position:fixed; left:-9999px; top:-9999px; background:#fff; border:1px solid #e5e7eb; border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,.15); width:16rem; max-height:60vh; overflow:auto; z-index:2147483647; padding:8px;')
-                - var facetList = (facets && facets[g.key]) || []
-                - var selList = sel[g.key] || []
-                if facetList.length
-                  each f in facetList
-                    - var checked = selList.indexOf(f._id) !== -1
-                    label(class="flex items-center gap-2 py-1")
-                      // 폼 밖으로 이동해도 제출되도록 form 속성 부여
-                      input(type="checkbox", form="facetFormMobileInline", name=g.key, value=f._id, checked=checked)
-                      span(class="flex-1 truncate")= f._id
-                      span(class="text-xs text-gray-500") (#{f.c})
-                else
-                  p(class="text-sm text-gray-400 p-2") No values
+            // 버튼
+            button(type="button" class="facet-pill px-3 py-2 rounded border bg-white flex items-center gap-2" data-key=g.key aria-controls=menuId aria-expanded="false")
+              span= g.label
+              if selCnt > 0
+                span(class="text-xs text-blue-600") (#{selCnt})
+              span(class="text-gray-500") ▼
+            // 드롭다운 박스(처음엔 화면 밖, 열릴 때 body로 이동)
+            div(id=menuId class="facet-menu" data-key=g.key style="position:fixed; left:-9999px; top:-9999px; background:#fff; border:1px solid #e5e7eb; border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,.15); width:16rem; max-height:60vh; overflow:auto; z-index:2147483647; padding:8px;")
+              - var facetList = (facets && facets[g.key]) || []
+              - var selList = sel[g.key] || []
+              if facetList.length
+                each f in facetList
+                  - var checked = selList.indexOf(f._id) !== -1
+                  label(class="flex items-center gap-2 py-1")
+                    input(type="checkbox", form="facetFormMobileInline", name=g.key, value=f._id, checked=checked)
+                    span(class="flex-1 truncate")= f._id
+                    span(class="text-xs text-gray-500") (#{f.c})
+              else
+                p(class="text-sm text-gray-400 p-2") No values
 
           // Hide 0 토글
           label(class="flex items-center gap-2 px-3 py-2 rounded border bg-white ml-1")
             input#hzToggleMob(type="checkbox", checked=hz)
             span(class="text-sm text-gray-700") Hide 0
 
-    // ───────── 데스크탑/모바일 공통 리스트 레이아웃 ─────────
+    // ───────── 데스크탑/모바일 공통 리스트 ─────────
     .grid.grid-cols-12.gap-6
       // 좌측: 데스크탑 사이드 패싯
       div(class="hidden md:block md:col-span-3")
@@ -168,7 +173,7 @@ block content
   // ───────── 스크립트 ─────────
   script.
     (function(){
-      // 데스크탑: 체크 변경 시 자동 제출
+      // 데스크탑: 체크 변경 즉시 제출
       var fd = document.getElementById('facetForm');
       if (fd) {
         var cbs = fd.querySelectorAll('input[type="checkbox"][name]');
@@ -184,78 +189,116 @@ block content
         }
       }
 
-      // --- 모바일: 드롭다운을 body로 포탈 + 위치 계산 ---
-      function positionFacetMenus(){
-        var bar = document.getElementById('facetMobileBar');
-        if (!bar) return;
-        var openDDs = bar.querySelectorAll('details.facet-dd[open]');
-        for (var i=0;i<openDDs.length;i++){
-          var dd   = openDDs[i];
-          var sum  = dd.querySelector('summary');
-          var key  = dd.getAttribute('data-key');
-          var menu = document.getElementById('fm-' + key);
-          if (!sum || !menu) continue;
+      // ── 모바일: 버튼 기반 드롭다운(흔들림 방지)
+      var bar = document.getElementById('facetMobileBar');
+      if (!bar) return;
 
-          // body로 이동 (한번만)
-          if (menu.parentElement !== document.body) {
-            document.body.appendChild(menu);
-          }
-
-          var r = sum.getBoundingClientRect();
-          var menuW = 256;
-          var left  = Math.max(8, Math.min(window.innerWidth - 8 - menuW, r.left));
-          var top   = Math.max(8, r.bottom + 8);
-
-          menu.style.left = Math.round(left) + 'px';
-          menu.style.top  = Math.round(top)  + 'px';
-        }
+      // 투명 오버레이
+      var overlay = document.getElementById('facetOverlay');
+      if (!overlay){
+        overlay = document.createElement('div');
+        overlay.id = 'facetOverlay';
+        overlay.setAttribute('style','position:fixed; inset:0; z-index:2147483646; display:none; background:rgba(0,0,0,0);');
+        document.body.appendChild(overlay);
       }
 
-      (function initMobileFacet(){
-        var bar = document.getElementById('facetMobileBar');
-        if (!bar) return;
+      var scrollYStore = 0;
+      function lockBody(){
+        if (document.body.classList.contains('facet-open')) return;
+        scrollYStore = window.scrollY || window.pageYOffset || 0;
+        document.body.classList.add('facet-open');
+        document.body.style.top = '-' + scrollYStore + 'px';
+      }
+      function unlockBody(){
+        if (!document.body.classList.contains('facet-open')) return;
+        document.body.classList.remove('facet-open');
+        document.body.style.top = '';
+        window.scrollTo(0, scrollYStore || 0);
+      }
 
-        // details 열릴 때 위치 잡고, 형제 닫기
-        var dds = bar.querySelectorAll('details.facet-dd');
-        for (var i=0;i<dds.length;i++){
-          (function(dd){
-            dd.addEventListener('toggle', function(){
-              var key  = dd.getAttribute('data-key');
-              var menu = document.getElementById('fm-' + key);
-              if (dd.open) {
-                // 다른 열린 패널 닫기
-                var others = bar.querySelectorAll('details.facet-dd[open]');
-                for (var j=0;j<others.length;j++){
-                  if (others[j] !== dd) others[j].removeAttribute('open');
-                }
-                // 위치 계산
-                setTimeout(positionFacetMenus, 0);
-              } else if (menu) {
-                // 닫힐 때 화면 밖으로 치우기
-                menu.style.left = '-9999px';
-                menu.style.top  = '-9999px';
-              }
-              // summary의 aria-expanded 업데이트
-              var sum = dd.querySelector('summary');
-              if (sum) sum.setAttribute('aria-expanded', dd.open ? 'true' : 'false');
-            });
-          })(dds[i]);
+      // 위치 계산 (transform 사용, rAF 스로틀)
+      var ticking=false;
+      function positionMenuFor(btn, menu){
+        var r = btn.getBoundingClientRect();
+        var MENU_W = 256, GAP = 8, PAD = 8;
+        var left = Math.max(PAD, Math.min(window.innerWidth - PAD - MENU_W, r.left));
+        var top  = Math.max(PAD, r.bottom + GAP);
+        // body 최상단 기준(0,0)에 두고 transform만 변경
+        menu.style.left = '0px';
+        menu.style.top  = '0px';
+        menu.style.transform = 'translate3d(' + Math.round(left) + 'px,' + Math.round(top) + 'px,0)';
+      }
+      function schedulePosition(btn, menu){
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(function(){ positionMenuFor(btn, menu); ticking=false; });
+      }
+
+      // 열려있는 메뉴 관리
+      var openKey = null;
+      function closeAll(){
+        var pills = bar.querySelectorAll('.facet-pill[aria-expanded="true"]');
+        for (var i=0;i<pills.length;i++) pills[i].setAttribute('aria-expanded','false');
+        var menus = document.querySelectorAll('.facet-menu[data-key]');
+        for (var j=0;j<menus.length;j++){
+          menus[j].style.left = '-9999px';
+          menus[j].style.top  = '-9999px';
+          menus[j].style.transform = 'translate3d(0,0,0)';
         }
+        overlay.style.display = 'none';
+        unlockBody();
+        openKey = null;
+      }
 
-        // 바깥 클릭 시 모두 닫기 (메뉴도 허용)
-        document.addEventListener('click', function(e){
-          var clickedInsideBar = bar.contains(e.target);
-          var clickedInMenu = !!e.target.closest('.facet-menu');
-          if (!clickedInsideBar && !clickedInMenu) {
-            var opens = bar.querySelectorAll('details.facet-dd[open]');
-            for (var i=0;i<opens.length;i++) opens[i].removeAttribute('open');
-          }
-        });
+      // 버튼 클릭 핸들러
+      bar.addEventListener('click', function(ev){
+        var btn = ev.target.closest('button.facet-pill[data-key]');
+        if (!btn) return;
+        ev.preventDefault();
 
-        // 스크롤/리사이즈 시 위치 갱신
-        window.addEventListener('scroll', positionFacetMenus, {passive:true});
-        window.addEventListener('resize', positionFacetMenus);
-      })();
+        var key  = btn.getAttribute('data-key');
+        var menu = document.getElementById('fm-' + key);
+        if (!menu) return;
+
+        var isOpen = (btn.getAttribute('aria-expanded') === 'true');
+        if (isOpen){
+          // 닫기
+          btn.setAttribute('aria-expanded','false');
+          menu.style.left='-9999px'; menu.style.top='-9999px'; menu.style.transform='translate3d(0,0,0)';
+          overlay.style.display='none';
+          unlockBody();
+          openKey = null;
+        } else {
+          // 다른 메뉴 닫기
+          closeAll();
+          // body로 포탈
+          if (menu.parentElement !== document.body) document.body.appendChild(menu);
+          btn.setAttribute('aria-expanded','true');
+          overlay.style.display='block';
+          lockBody();
+          // 위치
+          schedulePosition(btn, menu);
+          openKey = key;
+        }
+      });
+
+      // 오버레이/ESC 닫기
+      overlay.addEventListener('click', closeAll);
+      document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeAll(); });
+
+      // 스크롤/리사이즈 시 위치 갱신
+      window.addEventListener('scroll', function(){
+        if (!openKey) return;
+        var btn = bar.querySelector('button.facet-pill[data-key="'+openKey+'"]');
+        var menu = document.getElementById('fm-'+openKey);
+        if (btn && menu) schedulePosition(btn, menu);
+      }, {passive:true});
+      window.addEventListener('resize', function(){
+        if (!openKey) return;
+        var btn = bar.querySelector('button.facet-pill[data-key="'+openKey+'"]');
+        var menu = document.getElementById('fm-'+openKey);
+        if (btn && menu) schedulePosition(btn, menu);
+      });
 
       // 모바일: 체크 변경 시 자동 제출 (폼 밖 메뉴까지)
       var formM = document.getElementById('facetFormMobileInline');
