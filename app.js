@@ -14,6 +14,10 @@ const previewRoutes = require("./router/preview");
 const connect = require("./model");
 const app = express();
 const { requireLogin } = require('./middleware/auth');
+app.use("/pay/portone", require("./router/portone"));
+const { isFreeWindowOpen, FREE_UNTIL } = require('./utils/freeMode');
+const promoRouter = require('./router/promo');
+
 
 // Mailer (optional verify)
 const mailer = require("./utils/mailer");
@@ -91,6 +95,12 @@ app.use(
   })
 );
 
+app.use((req, res, next) => {
+  res.locals.freeNow = isFreeWindowOpen();
+  res.locals.freeUntilStr = FREE_UNTIL ? FREE_UNTIL.toISOString().slice(0,10) : null; // "2025-12-31"
+  next();
+});
+
 // ── Flash & locals (ONLY once, after session)
 app.use(flash());
 app.use((req, res, next) => {
@@ -137,6 +147,8 @@ app.use("/", require("./router/index"));
 app.use("/", require("./router/public"));
 app.use("/", homeRouter);
 app.use("/preview", previewRoutes);
+app.use("/pay/portone", require("./router/portone"));
+app.use('/promo', promoRouter);
 
 // force English site-wide
 app.use((req, res, next) => {

@@ -25,23 +25,48 @@ router.get("/register", (req, res) => {
   res.render("user/register");
 });
 
+// router/user.js - Register (DROP-IN REPLACEMENT)
 router.post("/register", async (req, res) => {
-  let { username, email, password, role } = req.body;
-
-  // normalize role
-  if (role === "JobSeeker" || role === "Job Seeker") role = "Job_Seeker";
-  else if (role === "OnlineTutor" || role === "Online Tutor")
-    role = "Online_Tutor";
-  // Employer는 그대로 사용
-
   try {
-    const existingUser = await User.findOne({ email });
-    if (existingUser)
-      return res.status(409).send("This email is already registered.");
+    // 1) 필드 정규화 (name 또는 username 모두 허용)
+    let username = (req.body.username || req.body.name || "").trim();
+    const email = (req.body.email || "").trim().toLowerCase();
+    const password = req.body.password || "";
+    const rawRole = (req.body.role || "").trim();
 
+    // 2) role 정규화 (라벨/대소문자/스페이스 모두 허용)
+    const roleMap = {
+      "Employer": "Employer",
+      "Employer / Recruiter": "Employer",
+      "employer": "Employer",
+      "Job Seeker": "Job_Seeker",
+      "JobSeeker": "Job_Seeker",
+      "job_seeker": "Job_Seeker",
+      "Online Tutor": "Online_Tutor",
+      "OnlineTutor": "Online_Tutor",
+      "online_tutor": "Online_Tutor",
+    };
+    const role = roleMap[rawRole] || rawRole;
+
+    // 3) 간단 검증
+    if (!username || !email || !password || !role) {
+      return res
+        .status(400)
+        .send("❌ Missing required fields (name/email/password/role).");
+    }
+    if (!["Employer", "Job_Seeker", "Online_Tutor"].includes(role)) {
+      return res.status(400).send("❌ Invalid role.");
+    }
+
+    // 4) 중복 이메일 체크
+    const exists = await User.findOne({ email });
+    if (exists) return res.status(409).send("This email is already registered.");
+
+    // 5) 저장
     const newUser = new User({ username, email, password, role });
     await newUser.save();
 
+    // 6) 세션 설정
     req.session.user = {
       _id: newUser._id,
       username: newUser.username,
@@ -50,10 +75,11 @@ router.post("/register", async (req, res) => {
     };
     return res.redirect("/user/mypage");
   } catch (err) {
-    console.error("❌ Registration error:", err.message);
+    console.error("❌ Registration error:", err);
     return res.status(500).send("❌ Registration failed.");
   }
 });
+
 
 /* --------------------------- Login / Logout --------------------------- */
 router.get("/login", (req, res) => res.render("user/login"));

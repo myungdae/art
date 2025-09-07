@@ -1,0 +1,233 @@
+//- views/home.pug
+extends layout
+
+block home_below_search
+  style.
+    .stat-spinner{width:18px;height:18px;border:2px solid #e5e7eb;border-top-color:#f97316;border-radius:50%;animation:spin .8s linear infinite;display:inline-block;vertical-align:middle}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .hide{display:none}
+    .stat-number { color: #FF7A00; font-size: 50px; }
+    .stat-card {
+      background: #F2F2F2;
+      border: 1px solid #FFEDD5;
+      border-radius: 20px;
+      width: 400px; height: 240px;
+      display: flex; flex-direction: column; justify-content: center;
+      box-shadow: 0 18px 40px rgba(0,0,0,.06);
+    }
+    .stat-card:hover{background:#FFEAD5;box-shadow:0 22px 46px rgba(249,115,22,.12)}
+    .stat-label{color:#6b7280; font-size:20px; font-weight: 400; padding-top: 20px;}
+    .home-stats-belt{ margin-top: 18px; }
+
+    @media (max-width: 1200px){
+      .stat-card{ width: 360px; height: 220px; }
+    }
+    @media (max-width: 992px){
+      .stat-card{ width: 320px; height: 200px; }
+    }
+    @media (max-width: 768px){
+      .stat-card{ width: 90vw; height: 180px; }
+    }
+
+    /* --- Promo Modal styles --- */
+    .promo-backdrop {
+      position: fixed; inset: 0; background: rgba(15, 23, 42, 0.55);
+      z-index: 60; display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .promo-card {
+      background: #fff; border-radius: 16px; max-width: 720px; width: 100%;
+      box-shadow: 0 22px 60px rgba(0,0,0,.25); overflow: hidden;
+    }
+    .promo-header {
+      padding: 18px 22px; background: #EEF2FF; border-bottom: 1px solid #E5E7EB;
+    }
+    .promo-body { padding: 18px 22px; }
+    .btn { padding: 10px 14px; border-radius: 10px; border: 1px solid #E5E7EB; background: #fff; cursor: pointer; font-weight: 600; }
+    .btn-primary { background: #FF7A00; border-color: #FF7A00; color: #fff; }
+    .btn-lg { padding: 14px 22px; font-size: 16px; border-radius: 12px; }
+
+  - var S = (typeof stats === 'object' && stats) || {};
+
+  // --- Promo Modal (first visit during free window) ---
+  if freeNow
+    #promoModal.promo-backdrop.hide(data-key="promo-2025-modal-v1")
+      .promo-card
+        .promo-header
+          h3(style="margin:0;font-weight:800;color:#111827") Year-end Free Registration
+        .promo-body
+          p(style="margin:0 0 10px 0;color:#374151")
+            | Enjoy free access until #{freeUntilStr}. Here’s what you get:
+          ul(style="margin:0 0 12px 18px;color:#111827")
+            li Employers: 1 free job posting token (no payment required)
+            li Job Seekers: profile listed free for 90 days
+            li Online Tutors: profile listed free for 90 days
+          p(style="margin:8px 0 0 0;color:#6B7280;font-size:12px")
+            | Posts remain after the promo; expired items are simply hidden from search.
+        .promo-footer
+          a.btn.btn-primary.btn-lg(href="https://eslplus.org/promo/start") Get Started
+          button.btn.btn-lg(type="button" data-promo-close) Close
+
+  section.home-stats-belt
+    div(class="d-flex flex-column flex-md-row align-items-center justify-content-center gap-3 gap-md-4")
+      a(href="/facet/Job_Vacancies" class="stat-card text-center px-4 transition transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-orange-400" aria-label="Job Vacancies")
+        .d-flex.align-items-center.justify-content-center.gap-3
+          span#spin-v.stat-spinner
+          div#stat-v.stat-number= (S.vCount != null ? S.vCount : 0)
+        div.stat-label.mt-1 Job Vacancies
+
+      a(href="/facet/Job_Seekers" class="stat-card text-center px-4 transition transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-orange-400" aria-label="Job Seekers")
+        .d-flex.align-items-center.justify-content-center.gap-3
+          span#spin-s.stat-spinner
+          div#stat-s.stat-number= (S.sCount != null ? S.sCount : 0)
+        div.stat-label.mt-1 Job Seekers
+
+      a(href="/facet/Online_Tutors" class="stat-card text-center px-4 transition transform hover:-translate-y-0.5 focus:ring-2 focus:ring-orange-400" aria-label="Online Tutors")
+        .d-flex.align-items-center.justify-content-center.gap-3
+          span#spin-t.stat-spinner
+          div#stat-t.stat-number= (S.tCount != null ? S.tCount : 0)
+        div.stat-label.mt-1 Online Tutors
+
+block content
+  - var enc = encodeURIComponent;
+  - var RV = Array.isArray(recentVacancies) ? recentVacancies : [];
+  - var RS = Array.isArray(recentSeekers) ? recentSeekers : [];
+  - var RT = Array.isArray(recentTutors) ? recentTutors : [];
+
+  .container.mx-auto.max-w-6xl.py-10
+    .text-center.mb-10
+      h1(class="text-4xl font-extrabold mb-3" style="font-size: 50px;")
+        span(style="color: #FF7A00") ESL
+        |  Plus
+      p(class="text-gray-600 mb-3") The fast ESL hiring & tutoring hub
+      p(class="text-lg text-black-300 mt-1" style="font-size: 18px; font-weight: 500")
+        | Teach Beyond Borders. Inspire Minds. From ESL to STEM, Your Classroom Is Everywhere.
+
+    hr.my-3
+    .mb-12
+
+    // ===================== Video Section =====================
+    div(class="container mx-auto max-w-6xl py-10")
+      div(class="flex flex-col md:flex-row items-center md:items-start gap-12")
+        div(class="w-full md:w-1/3 text-center md:text-left")
+          h1(class="text-5.3xl font-extrabold mb-3") ESL Plus:
+          p(class="text-4xl") Bridge to the World
+        div(class="w-full md:w-2/3 flex justify-center")
+          div(class="relative w-full max-w-4xl rounded-3xl border-4 overflow-hidden" style="border-color:#FF7A00;")
+            div(class="relative" style="padding-top:56.25%;")
+              video(id="introVideo" src="/assets/video/eslplus.mp4" controls playsinline muted class="absolute top-0 left-0 w-full h-full rounded-2xl")
+              img(src="/assets/img/youtube_play.png" alt="Play Button" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-24 h-24 cursor-pointer opacity-90 hover:opacity-100" onclick="document.getElementById('introVideo').play(); this.style.display='none';")
+            a(href="/assets/video/eslplus.mp4" target="_blank" rel="noopener" class="absolute bottom-3 right-3 bg-orange-500 text-white text-sm px-3 py-1 rounded-full hover:bg-orange-600") Open in new tab
+
+    // ===================== Lists =====================
+    if RV.length
+      h2(class="text-xl font-semibold mb-3") Latest Job Vacancies
+      div(class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12")
+        each v in RV
+          .border.rounded.p-4.flex.flex-col
+            a.font-semibold.mb-1(href='/rdf-resource/Job_Vacancies/' + (v.id || ''))= (v.title || 'Untitled')
+            .text-sm.text-gray-500.mb-2
+              if v.date
+                - var d1 = new Date(v.date)
+                span= d1.toISOString().slice(0,10)
+              if v.country
+                span.mx-1 •
+                span= v.country
+            if v.studentType
+              .flex.flex-wrap.gap-2.mb-2
+                a(href='/facet/Job_Vacancies?studentType=' + enc(v.studentType) class="inline-flex items-center px-2 py-1 text-xs rounded-full border")= v.studentType
+            if Array.isArray(v.teachingAreas) && v.teachingAreas.length
+              .flex.flex-wrap.gap-2.mt-auto
+                each area in v.teachingAreas.slice(0,3)
+                  a(href='/facet/Job_Vacancies?teachingArea=' + enc(area) class="inline-flex items-center px-2 py-1 text-xs rounded-full border")= area
+
+    if RS.length
+      h2(class="text-xl font-semibold mb-3") Latest Job Seekers
+      div(class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12")
+        each s in RS
+          .border.rounded.p-4.flex.flex-col
+            a.font-semibold.mb-1(href='/rdf-resource/Job_Seekers/' + (s.id || ''))= (s.title || 'Untitled')
+            .text-sm.text-gray-500.mb-2
+              if s.date
+                - var d2 = new Date(s.date)
+                span= d2.toISOString().slice(0,10)
+              if s.country
+                span.mx-1 •
+                span= s.country
+            if Array.isArray(s.languages) && s.languages.length
+              .flex.flex-wrap.gap-2.mt-auto
+                each lang in s.languages.slice(0,3)
+                  a(href='/facet/Job_Seekers?language=' + enc(lang) class="inline-flex items-center px-2 py-1 text-xs rounded-full border")= lang
+
+    if RT.length
+      h2(class="text-xl font-semibold mb-3") Latest Online Tutors
+      div(class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12")
+        each t in RT
+          .border.rounded.p-4.flex.flex-col
+            a.font-semibold.mb-1(href='/rdf-resource/Online_Tutors/' + (t.id || ''))= (t.title || 'Untitled')
+            .text-sm.text-gray-500.mb-2
+              if t.date
+                - var d3 = new Date(t.date)
+                span= d3.toISOString().slice(0,10)
+              if t.country
+                span.mx-1 •
+                span= t.country
+            if Array.isArray(t.languages) && t.languages.length
+              .flex.flex-wrap.gap-2.mt-auto
+                each lang in t.languages.slice(0,3)
+                  a(href='/facet/Online_Tutors?language=' + enc(lang) class="inline-flex items-center px-2 py-1 text-xs rounded-full border")= lang
+
+  // Count-up animation script
+  script.
+    (function () {
+      function animateCount(el, from, to, ms, onDone) {
+        from = Number(from)||0; to = Number(to)||0;
+        if (ms <= 0 || from === to) { el.textContent = String(to); onDone && onDone(); return; }
+        var start = null;
+        function step(ts){
+          if(!start) start = ts;
+          var p = Math.min((ts - start) / ms, 1);
+          var eased = 1 - Math.pow(1 - p, 3);
+          var val = Math.round(from + (to - from) * eased);
+          el.textContent = String(val);
+          if(p < 1) requestAnimationFrame(step); else onDone && onDone();
+        }
+        requestAnimationFrame(step);
+      }
+      function hideSpinner(id){
+        var sp = document.getElementById(id);
+        if(sp){ sp.classList.add('hide'); }
+      }
+      async function hydrate() {
+        var ids = [
+          { num: 'stat-v', spin: 'spin-v', key: 'vCount' },
+          { num: 'stat-s', spin: 'spin-s', key: 'sCount' },
+          { num: 'stat-t', spin: 'spin-t', key: 'tCount' },
+        ];
+        try {
+          ids.forEach(o => {
+            var sp = document.getElementById(o.spin);
+            if (sp) sp.classList.remove('hide');
+          });
+          var res = await fetch('/api/home/stats', { headers: { 'Accept': 'application/json' }});
+          if(!res || !res.ok) throw new Error('stats http ' + (res && res.status));
+          var data = await res.json();
+          ids.forEach(o => {
+            var el = document.getElementById(o.num);
+            if(!el) return;
+            var from = parseInt(el.textContent, 10) || 0;
+            var to   = Number(data && data[o.key]) || 0;
+            var dur  = Math.max(500, Math.min(1200, Math.abs(to - from) * 20));
+            animateCount(el, from, to, dur, function(){ hideSpinner(o.spin); });
+          });
+        } catch (e) {
+          setTimeout(function(){ ids.forEach(o => hideSpinner(o.spin)); }, 600);
+        }
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', hydrate);
+      } else { hydrate(); }
+    })();
+
+  // Load promo modal JS
+  script(src="/js/promo-modal.js?v=20250907h")

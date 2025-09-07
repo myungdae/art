@@ -1,0 +1,22 @@
+//- views/promo-choose-role.pug
+extends layout
+
+block content
+  .container.mx-auto.max-w-3xl.py-10
+    h1.text-3xl.font-bold.mb-2 Year-end Free Registration
+    p.text-gray-600.mb-6 Select your free user type. Promo ends on #{freeUntilStr}.
+
+    // 간단히: 당장은 "활성화" 없이 각 생성 페이지로 바로 연결
+    .grid.grid-cols-1.md:grid-cols-3.gap-4
+      a.block.border.rounded-lg.p-6.text-center.hover:shadow(href="/job-vacancies/new")
+        strong Employer
+        .text-sm.text-gray-600.mt-1 1 free job posting (no payment)
+      a.block.border.rounded-lg.p-6.text-center.hover:shadow(href="/job-seekers/new")
+        strong Job Seeker
+        .text-sm.text-gray-600.mt-1 Profile listed free for 90 days
+      a.block.border.rounded-lg.p-6.text-center.hover:shadow(href="/online-tutors/new")
+        strong Online Tutor
+        .text-sm.text-gray-600.mt-1 Profile listed free for 90 days
+
+    .mt-6
+      a.btn(href="/") Back to Home

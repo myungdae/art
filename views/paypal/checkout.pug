@@ -1,92 +1,198 @@
 extends ../layout
 
 block content
-  - const packages = [{ value: '1', label: '1 Ad — $30' }, { value: '4', label: '4 Ads — $100 (Save $20)' }, { value: '12', label: '12 Ads — $250 (Save $110)' }, { value: '24', label: '24 Ads — $450 (Save $270)' }]
+  - const packages = [
+  -   { value: '1',  label: '1 Ad — $30' },
+  -   { value: '4',  label: '4 Ads — $100 (Save $20)' },
+  -   { value: '12', label: '12 Ads — $250 (Save $110)' },
+  -   { value: '24', label: '24 Ads — $450 (Save $270)' }
+  - ];
 
+  // ✅ 한국 사용자에게 PayPal 계정 안내 (기존 안내 유지)
+  if user && user.country === 'KR'
+    .alert.alert-warning.text-center.mt-3(style="font-size: 1.05rem")
+      strong 한국 사용자 안내:
+      |  결제를 위해 PayPal 계정이 필요합니다.
+      br
+      |  아직 계정이 없으신가요? 아래 가이드를 참고해 주세요.
+      br
+      a(href="/paypal/guide", target="_blank").btn.btn-outline-info.mt-2 PayPal 가입 및 결제 안내 보기
 
-  
-    // ✅ 한국 사용자에게만 PayPal 가입 안내 표시
-    if user && user.country === 'KR'
-      .alert.alert-warning.text-center.mt-3(style="font-size: 1.05rem")
-        strong 한국 사용자 안내:
-        | 결제를 위해 PayPal 계정이 필요합니다.
-        br
-        | 아직 계정이 없으신가요? 아래 가이드를 참고해 주세요.
-        br
-        a(href="/paypal/guide", target="_blank").btn.btn-outline-info.mt-2 PayPal 가입 및 결제 안내 보기
-  
-    .container.mt-5
-      .row.justify-content-center
-        .col-md-8.col-lg-6
-          .card.shadow-lg.rounded
-            .card-header.text-center(style="background-color: #f15a29;")
-              h3.text-white.mb-0(style="font-weight: bold; font-size: 1.6rem") Buy Job Vacancy Ads
-  
-            .card-body.px-4.py-4(style="background-color: white; color: black; font-size: 16px;")
-              h4.text-center.mb-4 Welcome, #{user.username}!
-  
-              form#paymentForm
-                .form-group.mb-4.pl-4
-                  each pkg in packages
-                    .form-check.d-flex.align-items-center.justify-content-start.mb-2(style="padding-left: 1.5rem;")
-                      input.form-check-input.mt-0.mr-2(
-                        type="radio",
-                        name="adPackage",
-                        id=`pkg-${pkg.value}`,
-                        value=pkg.value,
-                        checked=pkg.value === '1',
-                        onchange="setPackage(this.value)"
-                      )
-                      label.form-check-label(for=`pkg-${pkg.value}` style="font-size: 1rem;")= pkg.label
-  
-                #paypal-button-container.mt-4
-  
-              .text-center.mt-4
-                a.btn.btn-outline-secondary.btn-lg(href="/user/mypage") Back to My Page
-  
-    // ✅ Load PayPal SDK: 로그인 강제 (card 비활성화)
-    script(src="https://www.paypal.com/sdk/js?client-id=AdCfY_Fv91WJinsDArKeBbdCpOMCO4SK7D-0ZjmbngMFffGJHJRyQIlSg7Av8cLPfh7jCRmeqyJyDIut&currency=USD&disable-funding=card")
-  
-    // ✅ PayPal Script Logic
-    script.
-      let selectedPackage = '1';
-  
-      function setPackage(value) {
-        selectedPackage = value;
-      }
-  
+  .container.mt-5
+    .row.justify-content-center
+      .col-md-8.col-lg-6
+        .card.shadow-lg.rounded
+          .card-header.text-center(style="background-color: #f15a29;")
+            h3.text-white.mb-0(style="font-weight: bold; font-size: 1.6rem") Buy Job Vacancy Ads
+
+          .card-body.px-4.py-4(style="background-color: white; color: black; font-size: 16px;")
+            h4.text-center.mb-4 Welcome, #{user.username}!
+
+            // ---- PayPal 결제 영역 (해외 사용자용) ----
+            form#paymentForm
+              .form-group.mb-4.pl-4
+                each pkg in packages
+                  .form-check.d-flex.align-items-center.justify-content-start.mb-2(style="padding-left: 1.5rem;")
+                    input.form-check-input.mt-0.mr-2(
+                      type="radio",
+                      name="adPackage",
+                      id=`pkg-${pkg.value}`,
+                      value=pkg.value,
+                      checked=pkg.value === '1',
+                      onchange="setPackage(this.value)"
+                    )
+                    label.form-check-label(for=`pkg-${pkg.value}` style="font-size: 1rem;")= pkg.label
+
+              #paypal-button-container.mt-4
+
+            // ---- CTA & 보조 링크 ----
+            .text-center.mt-4
+              button#paypal-cta(type="button" class="btn btn-primary btn-lg") Pay with PayPal
+              .small.text-muted.mt-2 After clicking, a secure PayPal window will open.
+              a.btn.btn-link.mt-3(href="/user/mypage") Cancel and go back
+
+  // ✅ PayPal SDK (CLIENT_ID 교체 또는 테스트 중이면 유지해도 가드가 보호합니다)
+  script(src="https://www.paypal.com/sdk/js?client-id=YOUR_CLIENT_ID&currency=USD&disable-funding=card")
+
+  // ✅ PayPal Script Logic (가드 포함)
+  script.
+    let selectedPackage = '1';
+    function setPackage(value) { selectedPackage = value; }
+    if (window.paypal && window.paypal.Buttons) {
       paypal.Buttons({
-        fundingSource: paypal.FUNDING.PAYPAL,  // 로그인 방식만 허용
-  
-        createOrder: function (data, actions) {
+        fundingSource: paypal.FUNDING.PAYPAL,
+        createOrder: function () {
           return fetch('/paypal/create-order', {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ package: selectedPackage })
-          })
-          .then(res => res.json())
-          .then(order => order.id);
+          }).then(res => res.json()).then(order => order.id);
         },
-  
-        onApprove: function (data, actions) {
+        onApprove: function (data) {
           return fetch(`/paypal/capture-order/${data.orderID}`, {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ package: selectedPackage })
-          })
-          .then(res => res.json())
-          .then(details => {
+          }).then(() => {
             alert('✅ Payment successful!');
             window.location.href = '/job-vacancies/new_paid_user';
           });
         },
-  
         onError: function (err) {
-          console.error('❌ Payment error:', err);
-          alert('❌ Payment failed. Please try again.');
+          console.error('❌ PayPal error:', err);
+          alert('❌ PayPal failed. Please try again.');
         }
       }).render('#paypal-button-container');
+    } else {
+      console.warn('[PAYPAL] SDK not loaded — skipping Smart Buttons');
+    }
+
+  // ✅ PayPal CTA: 버튼 위치로 스크롤 + 로드 미완료 안내
+  script.
+    (function(){
+      var cta = document.getElementById('paypal-cta');
+      var container = document.getElementById('paypal-button-container');
+      var warn;
+      function showWarn(msg){
+        if(!warn){
+          warn = document.createElement('div');
+          warn.className = 'text-danger mt-2';
+          container.parentNode.insertBefore(warn, container.nextSibling);
+        }
+        warn.textContent = msg;
+      }
+      cta?.addEventListener('click', function(){
+        if (window.paypal && window.paypal.Buttons) {
+          container.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+          showWarn('PayPal 버튼이 아직 로드되지 않았습니다. 잠시 후 다시 시도하거나 새로고침 해 주세요.');
+        }
+      });
+    })();
+
+  // ===============================
+  //  한국 광고주 전용: PortOne(국내 카드)
+  // ===============================
+
+  // ---- 안내 박스 ----
+  .mt-5
+    .card.border-2.border-warning.rounded.shadow-sm(style="background-color:#fffbea;")
+      .card-body.text-center
+        h4.text-danger.mb-2(style="font-weight:bold;") 🇰🇷 한국 광고주 전용 안내
+        p.text-dark.mb-1(style="font-size:1rem;")
+          | PayPal 계정이 필요하지 않습니다.
+          br
+          | 국내 신용/체크카드로 간편하게 결제하세요.
+        small.text-muted 결제 승인 후 즉시 광고 등록권(토큰)이 충전됩니다.
+
+  // ---- 국내 카드 결제 폼 (토큰/원화 표시) ----
+  .mt-3.text-center
+    form#kpayFormEmployer(method="POST" action="/pay/portone/ready")
+      input(type="hidden" name="item" value="employer_plan")
+      select(name="package" id="kpay_package" class="form-select d-inline w-auto")
+        option(value="1") 1회 (₩40,500)
+        option(value="4") 4회 (₩135,000)
+        option(value="12") 12회 (₩337,500)
+        option(value="24") 24회 (₩607,500)
+      button(type="submit" class="btn btn-primary btn-lg ml-2") 국내 카드로 결제
+
+  // PortOne SDK
+  script(src="https://cdn.iamport.kr/v1/iamport.js")
+
+  // ✅ PortOne handler (JSON 전송으로 500 방지)
+  script.
+    (function () {
+      function log(){ try{ console.log.apply(console, arguments);}catch(e){} }
+      var form = document.getElementById('kpayFormEmployer');
+      if (!form) { log('[PORTONE] form not found'); return; }
+      if (form.__bound) return; form.__bound = true;
+
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        log('[PORTONE] submit');
+        var pkg = document.getElementById('kpay_package').value;
+
+        // 🔁 JSON으로 전송 (multipart/FormData 사용 안 함)
+        var r = await fetch('/pay/portone/ready', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ item: 'employer_plan', package: pkg })
+        });
+
+        var txt = await r.text();
+        var j; try { j = JSON.parse(txt); } catch(e){ alert('서버가 JSON이 아닌 응답을 보냈습니다. status ' + r.status); console.log(txt); return; }
+        log('[PORTONE] ready resp:', j);
+
+        if (!j || !j.ok) { alert('결제 준비 실패: ' + (j && j.message || '')); return; }
+        if (!window.IMP) { alert('결제 모듈 로드 실패(IMP)'); return; }
+
+        var IMP = window.IMP; IMP.init(j.merchant_id);
+
+        IMP.request_pay({
+          pg: 'html5_inicis',
+          pay_method: 'card',
+          merchant_uid: j.merchant_uid,
+          name: j.name,
+          amount: j.amount,
+          buyer_email: (j.buyer && j.buyer.email) || '',
+          buyer_name: (j.buyer && j.buyer.name) || '',
+          buyer_tel:  (j.buyer && j.buyer.tel)  || ''
+        }, async function (rsp) {
+          log('[PORTONE] rsp:', rsp);
+          if (!rsp || !rsp.success) { alert('결제창 테스트: 실패/취소 (' + (rsp && rsp.error_msg || 'unknown') + ')'); return; }
+
+          // ▶ 키 받기 전 테스트: 팝업까지 확인 용도
+          alert('✅ 결제창 테스트 성공! (콜백 수신). 키 발급 후 검증 단계 활성화하세요.');
+
+          // 키 받은 뒤 검증 활성화:
+          // const vr = await fetch('/pay/portone/complete', {
+          //   method: 'POST',
+          //   headers: { 'Content-Type': 'application/json' },
+          //   body: JSON.stringify({ imp_uid: rsp.imp_uid, merchant_uid: j.merchant_uid })
+          // });
+          // const out = await vr.json();
+          // if (out && out.ok) { alert('✅ 결제 완료!'); location.href = '/user/mypage'; }
+          // else { alert('❌ 검증 실패: ' + (out && out.message || '')); }
+        });
+      });
+    })();

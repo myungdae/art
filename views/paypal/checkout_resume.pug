@@ -1,82 +1,110 @@
-//- views/paypal/checkout_resume.pug
 extends ../layout
 
 block content
   .container.mt-5
-    h2.text-center.mb-4 Purchase Resume Visibility
+    .row.justify-content-center
+      .col-md-8.col-lg-6
+        .card.shadow-lg.rounded
+          .card-header.text-center(style="background-color: #007bff;")
+            h3.text-white.mb-0(style="font-weight: bold; font-size: 1.6rem") Purchase Resume Access
+          .card-body.px-4.py-4
+            h4.text-center.mb-4 Welcome, #{user.username}!
 
-    if preselectDays
-      .alert.alert-info.text-center
-        | Preselected: #{preselectDays} days
+            // PayPal 버튼 (해외 사용자)
+            #paypal-button-container.mt-4
 
-    p.mb-3 Select a plan:
+            .text-center.mt-4
+              a.btn.btn-outline-secondary.btn-lg(href="/user/mypage") Back to My Page
 
-    form#resumeForm
-      .list-group.mb-3
-        each pkg in packages
-          label.list-group-item.list-group-item-action
-            input.form-check-input.me-2(type="radio", name="planId", value=pkg.value checked=(String(preselectDays||'')===String(pkg.days||pkg.value)))
-            | #{pkg.label} — $#{pkg.price}
+  // ✅ PayPal SDK (CLIENT_ID 교체)
+  script(src="https://www.paypal.com/sdk/js?client-id=YOUR_CLIENT_ID&currency=USD&disable-funding=card")
 
-      // PayPal 버튼 표시 영역
-      #paypal-buttons
-
-  // ✅ PayPal SDK: 서버에서 넘긴 client id 사용
-  script(src=`https://www.paypal.com/sdk/js?client-id=${paypalClientId}&currency=USD&intent=capture&commit=true&components=buttons`)
+  // ✅ PayPal Script (그대로 유지)
   script.
-    (function() {
-      const form = document.getElementById('resumeForm');
+    paypal.Buttons({
+      fundingSource: paypal.FUNDING.PAYPAL,
+      createOrder: function () {
+        return fetch('/paypal/create-order', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ accessType: 'resume_access' })
+        }).then(r=>r.json()).then(o=>o.id);
+      },
+      onApprove: function (data) {
+        return fetch(`/paypal/capture-order/${data.orderID}`, {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ accessType: 'resume_access' })
+        }).then(()=>location.href='/user/mypage');
+      },
+      onError: function (err) { console.error(err); alert('❌ PayPal error'); }
+    }).render('#paypal-button-container');
 
-      function getSelectedPlanId() {
-        const el = form.querySelector('input[name="planId"]:checked');
-        return el ? el.value : null;
-      }
+  // ===============================
+  //  한국 사용자 전용: PortOne(국내 카드)
+  // ===============================
 
-      paypal.Buttons({
-        style: { layout: 'vertical', shape: 'rect' },
+  // ---- 안내 박스 ----
+  .mt-5
+    .card.border-2.border-warning.rounded.shadow-sm(style="background-color:#fffbea;")
+      .card-body.text-center
+        h4.text-danger.mb-2(style="font-weight:bold;") 🇰🇷 한국 구직자 전용 안내
+        p.text-dark.mb-1(style="font-size:1rem;")
+          | PayPal 계정이 필요하지 않습니다.
+          br
+          | 국내 신용/체크카드로 간편하게 결제하세요.
+        small.text-muted 결제 승인 후 즉시 이력서 열람권이 활성화됩니다.
 
-        // 주문 생성: 서버에 planId 전달
-        createOrder: async function(data, actions) {
-          const planId = getSelectedPlanId();
-          if (!planId) {
-            alert('Please select a plan.');
-            throw new Error('No plan selected');
-          }
-          const res = await fetch('/paypal/create-order', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ planId })
-          });
-          const json = await res.json();
-          if (!json.id) {
-            const msg = json.error || 'Failed to create order';
-            alert(msg);
-            throw new Error(msg);
-          }
-          return json.id; // PayPal SDK가 결제창을 엽니다
-        },
+  // ---- 국내 카드 결제 폼 (기간/원화) ----
+  .mt-3.text-center
+    form#kpayFormResume(method="POST" action="/pay/portone/ready")
+      input(type="hidden" name="item" value="resume_access")
+      select(name="period" id="kpay_resume_period" class="form-select d-inline w-auto")
+        option(value="30") 30일 (₩49,000)
+        option(value="90") 90일 (₩129,000)
+        option(value="365") 365일 (₩399,000)
+      button(type="submit" class="btn btn-primary btn-lg ml-2") 국내 카드로 결제
 
-        // 승인 시: 서버에서 캡처 실행
-        onApprove: async function(data, actions) {
-          const orderID = data.orderID;
-          const res = await fetch(`/paypal/capture-order/${orderID}`, {
-            method: 'POST'
-          });
-          const json = await res.json();
+  // PortOne SDK
+  script(src="https://cdn.iamport.kr/v1/iamport.js")
 
-          if (json.status === 'redirect' && json.url) {
-            window.location.href = json.url; // ex) /user/mypage-jobseeker
+  // ▶ TEST: 결제창까지 열리는지 확인용 (검증 주석 처리)
+  script.
+    (function(){
+      const form = document.getElementById('kpayFormResume');
+      if(!form) return;
+      form.addEventListener('submit', async (e)=>{
+        e.preventDefault();
+        const fd = new FormData(form);
+        const r = await fetch('/pay/portone/ready', { method:'POST', body: fd });
+        const j = await r.json();
+        if(!j || !j.ok){ alert('결제 준비 실패: ' + (j && j.message || '')); return; }
+
+        if(!window.IMP){ alert('결제 모듈 로드 실패(IMP)'); return; }
+        const IMP = window.IMP; IMP.init(j.merchant_id);
+
+        IMP.request_pay({
+          pg:'html5_inicis',
+          pay_method:'card',
+          merchant_uid:j.merchant_uid,
+          name:j.name,
+          amount:j.amount,
+          buyer_email:j.buyer?.email || '',
+          buyer_name:j.buyer?.name || '',
+          buyer_tel:j.buyer?.tel || ''
+        }, async (rsp)=>{
+          if(!rsp || !rsp.success){
+            alert('결제창 테스트: 실패/취소 (' + (rsp?.error_msg || 'unknown') + ')');
             return;
           }
-
-          // 폴백
-          alert('Payment captured. Redirecting to My Page...');
-          window.location.href = '/user/mypage-jobseeker';
-        },
-
-        onError: function(err) {
-          console.error('PayPal error:', err);
-          alert('PayPal error occurred. Please try again.');
-        }
-      }).render('#paypal-buttons');
+          // ===== 여기는 실제 결제 검증 단계입니다. 키 발급 후 주석 해제하세요. =====
+          // const vr = await fetch('/pay/portone/complete', {
+          //   method:'POST', headers:{'Content-Type':'application/json'},
+          //   body: JSON.stringify({ imp_uid:rsp.imp_uid, merchant_uid:j.merchant_uid })
+          // });
+          // const out = await vr.json();
+          // if(out.ok){ alert('✅ 결제 완료!'); location.href='/user/mypage'; }
+          // else alert('❌ 검증 실패: ' + (out.message || ''));
+          // =======================================================================
+          alert('✅ 결제창 테스트 성공! (콜백 수신). 검증 단계는 현재 비활성화되어 있습니다.');
+        });
+      });
     })();
