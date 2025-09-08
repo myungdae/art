@@ -17,6 +17,7 @@ const { requireLogin } = require('./middleware/auth');
 app.use("/pay/portone", require("./router/portone"));
 const { isFreeWindowOpen, FREE_UNTIL } = require('./utils/freeMode');
 const promoRouter = require('./router/promo');
+const mypageRedirect = require('./router/mypage-redirect');
 
 
 // Mailer (optional verify)
@@ -48,6 +49,25 @@ console.log("📌 app.js 시작됨");
 require("./router/config");
 connect();
 console.log("✅ DB 연결 시도");
+
+// ---- Simple redirects for mypage-* to register (year-end promo) ----
+const PROMO_CODE = 'yearend2025';
+
+function sendToRegister(roleHint) {
+  return (req, res) => {
+    const qs = new URLSearchParams({
+      promo: PROMO_CODE,
+      prefRole: roleHint,   // 등록 페이지가 역할 카드 미리 선택할 때 힌트로 사용
+    }).toString();
+    return res.redirect(`/user/register?${qs}`);
+  };
+}
+
+app.get('/mypage-employer',  sendToRegister('Employer'));
+app.get('/mypage-jobseeker', sendToRegister('Job Seeker'));
+app.get('/mypage-tutor',     sendToRegister('Online Tutor'));
+// -------------------------------------------------------------------
+
 
 // ── App settings
 app.set("views", path.join(__dirname, "views"));
@@ -122,6 +142,7 @@ app.use((req, res, next) => {
 app.get("/login", (_req, res) => res.redirect("/user/login"));
 
 // ── Router mounts (순서 중요하지 않은 특이 케이스 제외)
+app.use('/', mypageRedirect);
 app.use("/resource", resourceRouter);
 app.use("/rdf-resource", rdfResourceRouter);
 

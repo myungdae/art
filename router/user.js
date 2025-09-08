@@ -126,6 +126,14 @@ router.post("/login", async (req, res) => {
   }
 });
 
+router.get('/user/register', (req, res) => {
+  res.render('user/register', {
+    promo: req.query.promo || null,
+    prefRole: req.query.prefRole || null,
+  });
+});
+
+
 router.get("/logout", (req, res) =>
   req.session.destroy(() => res.redirect("/"))
 );

@@ -1,0 +1,26 @@
+//- /home/ubuntu/esl/views/promo/choose-role.pug
+extends ../layout
+
+block content
+  .container.mt-5.mb-5(style="max-width:960px")
+    h1.mb-3 Choose your role
+    p.text-muted.mb-4 Pick one to continue. (Promo: #{promoCode})
+
+    .row.g-4
+      .col-md-4
+        a.card.h-100.text-decoration-none(href="/mypage-employer")
+          .card-body
+            h3.h5.mb-2 Employer / Recruiter
+            p.mb-0 Post 1 job for free (no payment).
+
+      .col-md-4
+        a.card.h-100.text-decoration-none(href="/mypage-jobseeker")
+          .card-body
+            h3.h5.mb-2 Job Seeker
+            p.mb-0 List your profile free for 90 days.
+
+      .col-md-4
+        a.card.h-100.text-decoration-none(href="/mypage-tutor")
+          .card-body
+            h3.h5.mb-2 Online Tutor
+            p.mb-0 List your tutor profile free for 90 days.
