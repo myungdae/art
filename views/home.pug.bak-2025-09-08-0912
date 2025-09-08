@@ -1,0 +1,282 @@
+//- views/home.pug
+extends layout
+
+block home_below_search
+  // 스타일
+  style.
+    .stat-spinner{width:18px;height:18px;border:2px solid #e5e7eb;border-top-color:#f97316;border-radius:50%;animation:spin .8s linear infinite;display:inline-block;vertical-align:middle}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .hide{display:none !important}
+    .stat-number{color:#FF7A00;font-size:50px}
+    .stat-card{background:#F2F2F2;border:1px solid #FFEDD5;border-radius:20px;width:400px;height:240px;display:flex;flex-direction:column;justify-content:center;box-shadow:0 18px 40px rgba(0,0,0,.06);text-decoration:none}
+    .stat-card:hover{background:#FFEAD5;box-shadow:0 22px 46px rgba(249,115,22,.12)}
+    .stat-label{color:#6b7280;font-size:20px;font-weight:400;padding-top:20px}
+    .home-stats-belt{margin-top:18px}
+    @media (max-width:1200px){.stat-card{width:360px;height:220px}}
+    @media (max-width:992px){.stat-card{width:320px;height:200px}}
+    @media (max-width:768px){.stat-card{width:90vw;height:180px}}
+
+    /* --- Promo Modal --- */
+    .promo-backdrop{position:fixed;inset:0;background:rgba(15,23,42,0.55);z-index:60;display:flex;align-items:center;justify-content:center;padding:20px}
+    .promo-card{background:#fff;border-radius:16px;max-width:720px;width:100%;box-shadow:0 22px 60px rgba(0,0,0,.25);overflow:hidden}
+    .promo-header{padding:18px 22px;background:#EEF2FF;border-bottom:1px solid #E5E7EB}
+    .promo-body{padding:18px 22px}
+    .promo-footer{padding:14px 22px;background:#F9FAFB;border-top:1px solid #E5E7EB;display:flex;gap:10px;justify-content:flex-end}
+    .btn{padding:10px 14px;border-radius:10px;border:1px solid #E5E7EB;background:#fff;cursor:pointer;font-weight:600}
+    .btn-primary{background:#FF7A00;border-color:#FF7A00;color:#fff}
+    .btn-lg{padding:14px 22px;font-size:16px;border-radius:12px}
+    .btn-ghost{background:#fff;color:#111827 !important;border:1px solid #E5E7EB}
+    .btn-ghost:hover{background:#F3F4F6}
+    .promo-footer .btn{min-width:120px}
+    body.modal-open{overflow:hidden}
+
+  - var S = (typeof stats === 'object' && stats) || {};
+
+  //- --- Promo Modal (freeNow일 때만 DOM 주입) ---
+  if freeNow
+    //- data-ttl-days : 닫은 뒤 N일 후 재노출 (0=영구 미노출, "always"=항상 표시)
+    #promoModal.promo-backdrop.hide(
+      data-key="promo-2025-modal-v1"
+      data-free-open="1"
+      data-ttl-days="always"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="promoTitle"
+    )
+      .promo-card
+        .promo-header
+          h3#promoTitle(style="margin:0;font-weight:800;color:#111827") Year-end Free Registration
+        .promo-body
+          p(style="margin:0 0 10px 0;color:#374151") Enjoy free access until #{freeUntilStr}. Here’s what you get:
+          ul(style="margin:0 0 12px 18px;color:#111827")
+            li Employers: 1 free job posting token (no payment required)
+            li Job Seekers: profile listed free for 90 days
+            li Online Tutors: profile listed free for 90 days
+          p(style="margin:8px 0 0 0;color:#6B7280;font-size:12px") Posts remain after the promo; expired items are simply hidden from search.
+        .promo-footer
+          a#promoGetStarted.btn.btn-primary.btn-lg(href="/promo/choose-role" style="min-width:180px") Get Started
+          button#promoCloseBtn.btn.btn-ghost(type="button") Close
+
+  //- 통계 카드
+  section.home-stats-belt
+    .d-flex.flex-column.flex-md-row.align-items-center.justify-content-center.gap-3.gap-md-4
+      a.stat-card.text-center.px-4(href="/facet/Job_Vacancies" aria-label="Job Vacancies")
+        .d-flex.align-items-center.justify-content-center.gap-3
+          span#spin-v.stat-spinner.hide
+          #stat-v.stat-number= (S.vCount != null ? S.vCount : 0)
+        .stat-label.mt-1 Job Vacancies
+
+      a.stat-card.text-center.px-4(href="/facet/Job_Seekers" aria-label="Job Seekers")
+        .d-flex.align-items-center.justify-content-center.gap-3
+          span#spin-s.stat-spinner.hide
+          #stat-s.stat-number= (S.sCount != null ? S.sCount : 0)
+        .stat-label.mt-1 Job Seekers
+
+      a.stat-card.text-center.px-4(href="/facet/Online_Tutors" aria-label="Online Tutors")
+        .d-flex.align-items-center.justify-content-center.gap-3
+          span#spin-t.stat-spinner.hide
+          #stat-t.stat-number= (S.tCount != null ? S.tCount : 0)
+        .stat-label.mt-1 Online Tutors
+
+block content
+  - var enc = encodeURIComponent;
+  - var RV = Array.isArray(recentVacancies) ? recentVacancies : [];
+  - var RS = Array.isArray(recentSeekers) ? recentSeekers : [];
+  - var RT = Array.isArray(recentTutors) ? recentTutors : [];
+
+  .container.mx-auto.max-w-6xl.py-10
+    .text-center.mb-10
+      h1.text-4xl.font-extrabold.mb-3(style="font-size:50px")
+        span(style="color:#FF7A00") ESL
+        |  Plus
+      p.text-gray-600.mb-3 The fast ESL hiring & tutoring hub
+      p.text-lg.mt-1(style="font-size:18px;font-weight:500") Teach Beyond Borders. Inspire Minds. From ESL to STEM, Your Classroom Is Everywhere.
+
+    hr.my-3
+    .mb-12
+
+    // ===================== Video Section =====================
+    .container.mx-auto.max-w-6xl.py-10
+      .d-flex.flex-column.flex-md-row.align-items-center.gap-3
+        .w-100.w-md-33.text-center.text-md-start
+          h2.font-extrabold.mb-3 ESL Plus:
+          p.fs-4 Bridge to the World
+        .w-100.w-md-67.d-flex.justify-content-center
+          .position-relative.w-100(style="max-width:900px;border:4px solid #FF7A00;border-radius:24px;overflow:hidden")
+            .position-relative(style="padding-top:56.25%")
+              video#introVideo(src="/assets/video/eslplus.mp4" controls playsinline muted class="position-absolute top-0 start-0 w-100 h-100" style="border-radius:16px")
+              img(src="/assets/img/youtube_play.png" alt="Play Button" class="position-absolute top-50 start-50 translate-middle" style="width:96px;height:96px;cursor:pointer;opacity:.9" onclick="document.getElementById('introVideo').play(); this.style.display='none';")
+            a(href="/assets/video/eslplus.mp4" target="_blank" rel="noopener" class="position-absolute" style="right:12px;bottom:12px;background:#f97316;color:#fff;font-size:14px;padding:6px 10px;border-radius:9999px;text-decoration:none") Open in new tab
+
+    // ===================== Lists =====================
+    if RV.length
+      h2.text-xl.fw-semibold.mb-3 Latest Job Vacancies
+      .row.g-3.mb-4
+        each v in RV
+          .col-12.col-md-4
+            .border.rounded.p-4.d-flex.flex-column
+              a.fw-semibold.mb-1(href='/rdf-resource/Job_Vacancies/' + (v.id || ''))= (v.title || 'Untitled')
+              .text-muted.small.mb-2
+                if v.date
+                  - var d1 = new Date(v.date)
+                  span= d1.toISOString().slice(0,10)
+                if v.country
+                  span.mx-1 •
+                  span= v.country
+              if v.studentType
+                .d-flex.flex-wrap.gap-2.mb-2
+                  a.border.rounded.px-2.py-1.small(href='/facet/Job_Vacancies?studentType=' + enc(v.studentType))= v.studentType
+              if Array.isArray(v.teachingAreas) && v.teachingAreas.length
+                .d-flex.flex-wrap.gap-2.mt-auto
+                  each area in v.teachingAreas.slice(0,3)
+                    a.border.rounded.px-2.py-1.small(href='/facet/Job_Vacancies?teachingArea=' + enc(area))= area
+
+    if RS.length
+      h2.text-xl.fw-semibold.mb-3 Latest Job Seekers
+      .row.g-3.mb-4
+        each s in RS
+          .col-12.col-md-4
+            .border.rounded.p-4.d-flex.flex-column
+              a.fw-semibold.mb-1(href='/rdf-resource/Job_Seekers/' + (s.id || ''))= (s.title || 'Untitled')
+              .text-muted.small.mb-2
+                if s.date
+                  - var d2 = new Date(s.date)
+                  span= d2.toISOString().slice(0,10)
+                if s.country
+                  span.mx-1 •
+                  span= s.country
+              if Array.isArray(s.languages) && s.languages.length
+                .d-flex.flex-wrap.gap-2.mt-auto
+                  each lang in s.languages.slice(0,3)
+                    a.border.rounded.px-2.py-1.small(href='/facet/Job_Seekers?language=' + enc(lang))= lang
+
+    if RT.length
+      h2.text-xl.fw-semibold.mb-3 Latest Online Tutors
+      .row.g-3.mb-4
+        each t in RT
+          .col-12.col-md-4
+            .border.rounded.p-4.d-flex.flex-column
+              a.fw-semibold.mb-1(href='/rdf-resource/Online_Tutors/' + (t.id || ''))= (t.title || 'Untitled')
+              .text-muted.small.mb-2
+                if t.date
+                  - var d3 = new Date(t.date)
+                  span= d3.toISOString().slice(0,10)
+                if t.country
+                  span.mx-1 •
+                  span= t.country
+              if Array.isArray(t.languages) && t.languages.length
+                .d-flex.flex-wrap.gap-2.mt-auto
+                  each lang in t.languages.slice(0,3)
+                    a.border.rounded.px-2.py-1.small(href='/facet/Online_Tutors?language=' + enc(lang))= lang
+
+  // 통계 count-up 스크립트
+  script.
+    (function () {
+      function animateCount(el, from, to, ms, onDone) {
+        from = Number(from)||0; to = Number(to)||0;
+        if (ms <= 0 || from === to) { el.textContent = String(to); onDone && onDone(); return; }
+        var start = null;
+        function step(ts){
+          if(!start) start = ts;
+          var p = Math.min((ts - start) / ms, 1);
+          var eased = 1 - Math.pow(1 - p, 3);
+          var val = Math.round(from + (to - from) * eased);
+          el.textContent = String(val);
+          if(p < 1) requestAnimationFrame(step); else onDone && onDone();
+        }
+        requestAnimationFrame(step);
+      }
+      function hideSpinner(id){ var sp=document.getElementById(id); if(sp){ sp.classList.add('hide'); } }
+      async function hydrate() {
+        var ids = [
+          { num: 'stat-v', spin: 'spin-v', key: 'vCount' },
+          { num: 'stat-s', spin: 'spin-s', key: 'sCount' },
+          { num: 'stat-t', spin: 'spin-t', key: 'tCount' },
+        ];
+        try {
+          ids.forEach(o => { var sp=document.getElementById(o.spin); if (sp) sp.classList.remove('hide'); });
+          var res = await fetch('/api/home/stats', { headers: { 'Accept': 'application/json' }});
+          if(!res || !res.ok) throw new Error('stats http ' + (res && res.status));
+          var data = await res.json();
+          ids.forEach(o => {
+            var el = document.getElementById(o.num); if(!el) return;
+            var from = parseInt(el.textContent, 10) || 0;
+            var to   = Number(data && data[o.key]) || 0;
+            var dur  = Math.max(500, Math.min(1200, Math.abs(to - from) * 20));
+            animateCount(el, from, to, dur, function(){ hideSpinner(o.spin); });
+          });
+        } catch (e) {
+          setTimeout(function(){ ids.forEach(o => hideSpinner(o.spin)); }, 600);
+        }
+      }
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', hydrate);
+      else hydrate();
+    })();
+
+  // 모달 동작 스크립트 (?promo=show|reset|off + TTL + always)
+  script.
+    (function(){
+      function onReady(fn){ if(document.readyState!=='loading') fn(); else document.addEventListener('DOMContentLoaded', fn); }
+      function qs(name){
+        var m=location.search.match(new RegExp('[?&]'+name+'=([^&]+)'));
+        return m?decodeURIComponent(m[1]):null;
+      }
+      function show(m){ m.classList.remove('hide'); try{document.body.classList.add('modal-open');}catch(e){} }
+      function hide(m,key){
+        m.classList.add('hide'); try{document.body.classList.remove('modal-open');}catch(e){}
+        try{ localStorage.setItem(key, JSON.stringify({ dismissedAt: Date.now() })); }catch(e){}
+      }
+      // TTL 파싱 (숫자 or "always")
+      function ttlDays(m){
+        var raw = (m.getAttribute('data-ttl-days') || '').trim().toLowerCase();
+        if (raw === 'always') return -1;     // 항상 표시
+        var d = parseInt(raw, 10);
+        return isFinite(d) ? d : 7;          // 숫자 아니면 7일
+      }
+      // 재노출 판단
+      function shouldReopen(stored, ttl){
+        if (ttl < 0) return true;            // always
+        if (!stored) return true;            // 첫 방문
+        if (ttl === 0) return false;         // 영구 미노출
+        return (Date.now() - (stored.dismissedAt || 0)) >= ttl*24*60*60*1000;
+      }
+
+      onReady(function(){
+        var modal=document.getElementById('promoModal'); if(!modal) return;
+
+        var key  = modal.getAttribute('data-key') || 'promo-2025-modal-v1';
+        var ttl  = ttlDays(modal);
+        var p    = (qs('promo')||'').toLowerCase();   // show|reset|clear|off|1
+        var free = modal.getAttribute('data-free-open') === '1';
+
+        if (p==='reset' || p==='clear'){ try{ localStorage.removeItem(key); }catch(e){} }
+
+        var stored=null;
+        try{
+          var raw=localStorage.getItem(key);
+          stored = raw&&raw[0]==='{'?JSON.parse(raw):(raw?{dismissedAt:1}:null);
+        }catch(e){ stored=null; }
+
+        var wantShow =
+          (p==='show' || p==='1') ? true :
+          (p==='off')             ? false :
+          (free && shouldReopen(stored, ttl));
+
+        if (wantShow) show(modal);
+
+        var closeBtn=document.getElementById('promoCloseBtn');
+        if (closeBtn){
+          closeBtn.addEventListener('click', function(){ hide(modal,key); }, false);
+        }
+
+        // 배경 클릭 닫기
+        modal.addEventListener('click', function(ev){
+          if (ev.target === modal) hide(modal,key);
+        }, false);
+
+        // ESC 닫기
+        document.addEventListener('keydown', function(ev){
+          if (ev.key==='Escape' && !modal.classList.contains('hide')) hide(modal,key);
+        }, false);
+      });
+    })();

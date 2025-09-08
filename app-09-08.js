@@ -37,7 +37,9 @@ const promoRouter = require("./router/promo");
 
 // (선택) 메일러
 const mailer = require("./utils/mailer");
-try { mailer.verify(); } catch (e) {
+try {
+  mailer.verify();
+} catch (e) {
   console.error("SMTP verify failed at boot:", e?.message || e);
 }
 
@@ -46,7 +48,7 @@ require("./router/config");
 connect();
 console.log("✅ DB 연결 시도");
 
-// ---- year-end 간편 유도 ----
+// ---- mypage-* 단축 ----
 const PROMO_CODE = "yearend2025";
 function sendToRegister(roleHint) {
   return (req, res) => {
@@ -54,11 +56,11 @@ function sendToRegister(roleHint) {
     return res.redirect(`/user/register?${qs}`);
   };
 }
-// ✅ employer는 바로 신규등록 폼으로
+// 비회원도 바로 글쓰기 폼으로
 app.get("/mypage-employer", (req, res) => res.redirect(302, "/job-vacancies/new?source=promo"));
 app.get("/mypage-jobseeker", sendToRegister("Job Seeker"));
-app.get("/mypage-tutor",     sendToRegister("Online Tutor"));
-// --------------------------------
+app.get("/mypage-tutor", sendToRegister("Online Tutor"));
+// ----------------------
 
 // ── App settings
 app.set("views", path.join(__dirname, "views"));
@@ -107,7 +109,7 @@ app.use(
 // free-now 전역 값
 app.use((req, res, next) => {
   res.locals.freeNow = isFreeWindowOpen();
-  res.locals.freeUntilStr = FREE_UNTIL ? FREE_UNTIL.toISOString().slice(0,10) : null;
+  res.locals.freeUntilStr = FREE_UNTIL ? FREE_UNTIL.toISOString().slice(0, 10) : null;
   next();
 });
 
@@ -126,57 +128,54 @@ app.use((req, res, next) => {
   next();
 });
 
-// ✅ Host Country 선택창이 비지 않도록 전역 주입 (여러 키 동시 제공)
-const COUNTRY_OPTIONS = [
-  { code: "KR", name: "Korea, Republic of" },
-  { code: "US", name: "United States" },
-  { code: "JP", name: "Japan" },
-  { code: "CN", name: "China" },
-  { code: "VN", name: "Viet Nam" },
-  { code: "PH", name: "Philippines" },
-  { code: "TH", name: "Thailand" },
-  { code: "SG", name: "Singapore" },
-  { code: "GB", name: "United Kingdom" },
-  { code: "CA", name: "Canada" },
-  { code: "AU", name: "Australia" },
-  { code: "DE", name: "Germany" },
-];
-const COUNTRY_NAMES = COUNTRY_OPTIONS.map(o => o.name);
-app.use((req, res, next) => {
-  res.locals.countryOptions = COUNTRY_OPTIONS;
-  res.locals.countries = COUNTRY_OPTIONS;
-  res.locals.hostCountries = COUNTRY_OPTIONS;
-  res.locals.nationalities = COUNTRY_OPTIONS;
-  res.locals.countryNames = COUNTRY_NAMES;
-  next();
-});
-
 // ── Shortcuts
 app.get("/login", (_req, res) => res.redirect("/user/login"));
 
-// ── 보호 경로 가드 (게스트도 job-vacancies는 접근 허용)
+/**
+ * 비로그인 시 특정 보호 경로는 회원가입으로 유도.
+ * 단, /job-vacancies 는 게스트 글쓰기를 허용하므로 우회(bypass)한다.
+ */
 app.use((req, res, next) => {
-  const isAuth = !!(req.session && (req.session.userId || (req.session.user && req.session.user._id)));
+  const isAuth =
+    !!(req.session && (req.session.userId || (req.session.user && req.session.user._id)));
   const p = req.path;
 
+  // 1) 우회 경로
   const bypassPrefixes = [
-    '/user/register', '/user/login', '/user/logout',
-    '/promo', '/api', '/assets', '/public', '/favicon.ico',
-    '/robots.txt', '/sitemap', '/search', '/intro',
-    '/data', '/preview', '/pay', '/policy',
-    '/job-vacancies' // ← 게스트 입력 허용
+    "/user/register",
+    "/user/login",
+    "/user/logout",
+    "/promo",
+    "/api",
+    "/assets",
+    "/public",
+    "/favicon.ico",
+    "/robots.txt",
+    "/sitemap",
+    "/search",
+    "/intro",
+    "/data",
+    "/preview",
+    "/pay",
+    "/policy",
+    "/job-vacancies", // ← 게스트 폼/저장 허용
   ];
-  if (bypassPrefixes.some(x => p === x || p.startsWith(x))) {
-    return next();
-  }
+  if (bypassPrefixes.some((x) => p === x || p.startsWith(x))) return next();
 
+  // 2) 보호 경로
   const protectedPrefixes = [
-    '/user/mypage', '/resume-access', '/tutor-access',
-    '/billing', '/checkout', '/paypal', '/thread', '/admin'
+    "/user/mypage",
+    "/resume-access",
+    "/tutor-access",
+    "/billing",
+    "/checkout",
+    "/paypal",
+    "/thread",
+    "/admin",
   ];
-  if (!isAuth && protectedPrefixes.some(x => p.startsWith(x))) {
+  if (!isAuth && protectedPrefixes.some((x) => p.startsWith(x))) {
     const promo = req.query.promo || PROMO_CODE;
-    const prefRole = req.query.prefRole || 'Employer';
+    const prefRole = req.query.prefRole || "Employer";
     const qs = new URLSearchParams({ promo, prefRole }).toString();
     return res.redirect(`/user/register?${qs}`);
   }
@@ -184,21 +183,19 @@ app.use((req, res, next) => {
   return next();
 });
 
-// ── 게스트용: 신규 등록 폼 (기본값 포함)
+// ────────────────────────────────────────────────────────────────
+// Guest Job Vacancy quick entry (GET/POST) - 단일 최종 버전
+// ────────────────────────────────────────────────────────────────
+
+// 폼 열기 (게스트 최소 입력 폼)
 app.get("/job-vacancies/new", (req, res) => {
-  const values = {
-    title: req.query.title || "",
-    country: req.query.country || "KR",
-    email: req.query.email || "",
-  };
   return res.render("jobVacancy/new", {
     guestMode: true,
     pageTitle: "Post a Job (Fast)",
-    values,
   });
 });
 
-// ✅ 게스트 저장: 결제/로그인 로직보다 먼저 수신 (여러 action 경로 대응)
+// 저장 (먼저 mongoose.save; 실패 시 raw insert; facet 미러링은 일단 제외)
 app.post(
   ["/job-vacancies/new", "/job-vacancies", "/job-vacancies/create"],
   async (req, res, next) => {
@@ -206,76 +203,69 @@ app.post(
       const hp = (req.body.hp || "").trim();
       if (hp) return res.status(400).send("Bot suspected.");
 
-      // 다양한 이름 수용
-      const title = (req.body.title || req.body.jobTitle || "").trim();
-      const country = (
-        req.body.country ||
-        req.body.hostCountry ||
-        req.body.host_country ||
-        req.body.locationCountry ||
-        req.body.countryCode ||
-        req.body.country_name ||
-        ""
-      ).trim();
-      const email = (req.body.email || req.body.contactEmail || "").trim().toLowerCase();
-
-      // 선택값 (있으면)
-      const teachingAreas = []
-        .concat(req.body.teachingAreas || req.body["teachingAreas[]"] || [])
-        .filter(Boolean)
-        .map(String);
-
-      const studentType = (req.body.studentType || "").toString();
+      const title = (req.body.title || "").trim();
+      const country = (req.body.country || "").trim();
+      const email = (req.body.email || "").trim().toLowerCase();
 
       if (!title) {
         return res.status(400).render("jobVacancy/new", {
           guestMode: true,
           pageTitle: "Post a Job (Fast)",
           errors: { title: "Title is required." },
-          values: { title, country, email }
+          values: { title, country, email },
         });
       }
 
       const JobVacancy = require("./model/jobVacancy");
       const now = new Date();
 
-      // 목록 노출 가능성을 올려주는 필드들(스키마에 없으면 무시됨)
+      // 목록 노출 가능성을 높이는 필드(스키마에 없으면 무시됨)
       const baseDoc = {
         title,
         country: country || null,
         email: email || null,
+
         status: "published",
         isPublished: true,
         approved: true,
         isActive: true,
         visible: true,
+
         publishedAt: now,
         date: now,
-        teachingAreas: teachingAreas.length ? teachingAreas : undefined,
-        studentType: studentType || undefined,
+
         user: null, // guest
         createdBy: { type: "guest", at: now, email: email || null },
         createdAt: now,
         updatedAt: now,
       };
 
-      let createdId;
+      // 선택값 수집(있으면)
+      const teachingAreas = []
+        .concat(req.body.teachingAreas || req.body["teachingAreas[]"] || [])
+        .filter(Boolean);
+      if (teachingAreas.length) baseDoc.teachingAreas = teachingAreas;
+      if (req.body.studentType) baseDoc.studentType = String(req.body.studentType);
 
-      // 1) Mongoose save() 시도 (스키마 훅/기본값 유효)
+      let createdId;
       try {
+        // 1) mongoose save (훅/기본값 적용 시도)
         const doc = new JobVacancy(baseDoc);
         const saved = await doc.save();
         createdId = saved._id.toString();
         console.log("[guest vacancy create] saved via mongoose:", createdId, saved.title);
       } catch (e) {
-        // 2) 실패 시 raw insert (검증 우회)
-        console.warn("[guest vacancy create] mongoose save failed => raw insert fallback:", e.message || e);
+        // 2) 실패 시 raw insert (검증/훅 우회)
+        console.warn(
+          "[guest vacancy create] mongoose save failed => raw insert fallback:",
+          e.message || e
+        );
         const ins = await JobVacancy.collection.insertOne(baseDoc);
         createdId = ins.insertedId?.toString?.() || String(ins.insertedId);
         console.log("[guest vacancy create] saved via raw insert:", createdId, baseDoc.title);
       }
 
-      // 저장 확인을 확실히: 상세보기로 이동
+      // 저장 후 목록으로 이동
       return res.redirect(302, `/rdf-resource/Job_Vacancies/${createdId}`);
     } catch (e) {
       console.error("[guest vacancy create] error:", e);
@@ -304,7 +294,7 @@ app.use("/intro", require("./router/intro"));
 app.use("/sitemap", require("./router/sitemap"));
 app.use("/data", require("./router/data"));
 
-// ✅ user 라우터는 /user 에 마운트
+// ✅ user 라우터는 /user에 마운트
 app.use("/user", userRoutes);
 
 app.use("/thread", threadRouter);
