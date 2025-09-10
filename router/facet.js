@@ -18,13 +18,15 @@ const coalesce = (...fields) => {
 
 /* -------------------- 클래스별 패싯 설정 -------------------- */
 const FACET_MAP = {
-  Job_Vacancies: {
-    groups: [
-      { key: "country", aliases: ["Country"], label: "Country" },
-      { key: "studentType", aliases: ["StudentType"], label: "Student Type" },
-      { key: "teachingArea", aliases: ["Teaching_Area"], label: "Teaching Area", array: true },
-    ],
-    searchFields: ["_label", "title", "_description", "description"],
+Job_Vacancies: {
+  groups: [
+    // ▼ aliase에 중첩 경로 추가 (name, code)
+    { key: "country", aliases: ["Country", "country.name", "country.code"], label: "Country" },
+    { key: "studentType", aliases: ["StudentType"], label: "Student Type" },
+    { key: "teachingArea", aliases: ["Teaching_Area"], label: "Teaching Area", array: true },
+  ],
+  searchFields: ["_label", "title", "_description", "description"],
+  coll: (klass) => `${klass}_RDF`,
   },
   Job_Seekers: {
     groups: [
