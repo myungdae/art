@@ -25,7 +25,6 @@ const FACET_MAP = {
       { key: "teachingArea", aliases: ["Teaching_Area"], label: "Teaching Area", array: true },
     ],
     searchFields: ["_label", "title", "_description", "description"],
-    coll: (klass) => `${klass}_RDF`,
   },
   Job_Seekers: {
     groups: [
@@ -34,7 +33,6 @@ const FACET_MAP = {
       { key: "Major", label: "Major" },
     ],
     searchFields: ["_label", "title", "_description", "description"],
-    coll: (klass) => `${klass}_RDF`,
   },
   Online_Tutors: {
     groups: [
@@ -43,13 +41,10 @@ const FACET_MAP = {
       { key: "Gender", label: "Gender" },
     ],
     searchFields: ["_label", "title", "_description", "description"],
-    coll: (klass) => `${klass}_RDF`,
   },
 };
 
 /* -------------------- 사전(Dictionary) 컬렉션 매핑 -------------------- */
-/*  각 key는 화면 좌측 패싯 키, 값은 사전 컬렉션 이름
-    - 컬렉션이 실제로 없으면 자동으로 스킵됩니다. */
 const DICT_MAP = {
   Job_Seekers: {
     Nationality: "nationalities",
@@ -68,9 +63,7 @@ const DICT_MAP = {
   },
 };
 
-/*  집계 결과 + 사전 컬렉션 병합
-    - aggObj: $facet 전체 결과 객체(각 그룹은 by_<key> 배열로 들어있음)
-    - hideZero: true면 0건 항목은 숨김 */
+/*  집계 결과 + 사전 컬렉션 병합 */
 async function buildFacetsWithSeeds(db, klass, groups, aggObj, hideZero) {
   const out = {};
   for (const g of groups) {
@@ -78,13 +71,11 @@ async function buildFacetsWithSeeds(db, klass, groups, aggObj, hideZero) {
     const live = ((aggObj && aggObj[byName]) || []).filter((x) => x && x._id);
     const dictColl = DICT_MAP[klass]?.[g.key];
 
-    // 라이브 카운트를 Map으로
     const liveMap = new Map(live.map((x) => [x._id, x.c]));
 
     if (dictColl) {
       let seeds = [];
       try {
-        // 사전 컬렉션이 없거나 비어있어도 에러 없이 넘어가도록
         const colls = await db.listCollections({ name: dictColl }).toArray();
         if (colls && colls.length) {
           seeds = await db
@@ -93,25 +84,20 @@ async function buildFacetsWithSeeds(db, klass, groups, aggObj, hideZero) {
             .sort({ name: 1 })
             .toArray();
         }
-      } catch (_) {
-        // ignore
-      }
+      } catch (_) {}
 
       const merged = [];
       if (seeds.length) {
-        // 1) 사전 우선
         for (const s of seeds) {
           const key = s.name;
           const c = liveMap.get(key) ?? 0;
           if (!hideZero || c > 0) merged.push({ _id: key, c });
           liveMap.delete(key);
         }
-        // 2) 사전에 없지만 실제로 존재하는 값
         for (const [key, c] of liveMap) {
           if (!hideZero || c > 0) merged.push({ _id: key, c });
         }
       } else {
-        // 사전이 없으면 라이브 그대로
         for (const [key, c] of liveMap) {
           if (!hideZero || c > 0) merged.push({ _id: key, c });
         }
@@ -120,7 +106,6 @@ async function buildFacetsWithSeeds(db, klass, groups, aggObj, hideZero) {
       merged.sort((a, b) => (b.c - a.c) || a._id.localeCompare(b._id));
       out[g.key] = merged;
     } else {
-      // 사전 매핑이 없는 그룹은 라이브 그대로(옵션)
       let merged = live.slice();
       if (hideZero) merged = merged.filter((x) => x.c > 0);
       merged.sort((a, b) => (b.c - a.c) || a._id.localeCompare(b._id));
@@ -130,14 +115,58 @@ async function buildFacetsWithSeeds(db, klass, groups, aggObj, hideZero) {
   return out;
 }
 
+/* -------------------- 데이터 소스 선택 -------------------- */
+/**
+ * 우선순위:
+ *   1) 직결 컬렉션: Job_Vacancies (klass와 동일 이름)
+ *   2) RDF:        ${klass}_RDF (필드 _class = klass)
+ *   3) 리소스:     resources (필드 type  = klass)
+ */
+async function pickSource(db, klass) {
+  const directName = klass; // e.g., "Job_Vacancies"
+  const rdfName = `${klass}_RDF`;
+
+  // 1) direct
+  try {
+    const exists = await db.listCollections({ name: directName }).toArray();
+    if (exists.length) {
+      const one = await db.collection(directName).findOne({}, { projection: { _id: 1 } });
+      if (one) return { coll: directName, style: "direct", baseMatch: {} };
+    }
+  } catch {}
+
+  // 2) rdf
+  try {
+    const exists = await db.listCollections({ name: rdfName }).toArray();
+    if (exists.length) {
+      const one = await db.collection(rdfName).findOne({ _class: klass }, { projection: { _id: 1 } });
+      if (one) return { coll: rdfName, style: "rdf", baseMatch: { _class: klass } };
+    }
+  } catch {}
+
+  // 3) resources
+  try {
+    const exists = await db.listCollections({ name: "resources" }).toArray();
+    if (exists.length) {
+      const one = await db.collection("resources").findOne({ type: klass }, { projection: { _id: 1 } });
+      if (one) return { coll: "resources", style: "resources", baseMatch: { type: klass } };
+    }
+  } catch {}
+
+  // fallback
+  return { coll: rdfName, style: "rdf", baseMatch: { _class: klass } };
+}
+
 /* -------------------- facet 엔드포인트 -------------------- */
 router.get("/:klass", async (req, res, next) => {
   try {
     const klass = req.params.klass;
     const spec = FACET_MAP[klass] || FACET_MAP.Job_Vacancies;
-    const coll = spec.coll ? spec.coll(klass) : `${klass}_RDF`;
-
     const db = mongoose.connection.db;
+
+    // 데이터 소스 자동 선택
+    const src = await pickSource(db, klass);
+    res.set("X-Facet-Source", `${src.style}:${src.coll}`);
 
     // 선택된 필터 파싱 (aliases 포함)
     const selected = {};
@@ -158,7 +187,14 @@ router.get("/:klass", async (req, res, next) => {
       req.query.hideZero === "on";
 
     /* -------------------- match -------------------- */
-    const match = { _class: klass };
+    // src.baseMatch 에 클래스 구분이 들어있음(resources/type, rdf/_class, direct/없음)
+    const match = { ...(src.baseMatch || {}) };
+
+    // Job_Vacancies 직접 컬렉션일 때 적절한 필터(노이즈 제거)
+    if (src.style === "direct" && klass === "Job_Vacancies") {
+      match.visible = { $ne: false };
+      match.status = { $ne: "deleted" };
+    }
 
     if (qText) {
       const rx = new RegExp(sanitizeRegex(qText), "i");
@@ -178,7 +214,7 @@ router.get("/:klass", async (req, res, next) => {
     /* -------------------- facet 스테이지 -------------------- */
     const facetStages = {
       items: [
-        { $addFields: { _s_date: { $ifNull: ["$datePosted", "$updatedAt"] } } },
+        { $addFields: { _s_date: coalesce("$datePosted", "$date", "$updatedAt", "$createdAt") } },
         { $sort: { _s_date: -1, _id: -1 } },
         { $skip: skip },
         { $limit: limit },
@@ -187,23 +223,17 @@ router.get("/:klass", async (req, res, next) => {
             {
               _id: 1,
               "@id": 1,
-              displayLabel: coalesce(
-                "$_label",
-                "$title",
-                "$name",
-                "$jobTitle",
-                "$email",
-                "Untitled"
-              ),
+              displayLabel: coalesce("$_label", "$title", "$name", "$jobTitle", "$email", "Untitled"),
               displayDescription: coalesce("$_description", "$description"),
               _label: 1,
               title: 1,
               _description: 1,
               description: 1,
+              country: 1,
+              date: 1,
               datePosted: 1,
               updatedAt: 1,
             },
-            // 결과 카드에 쓸 수 있도록 모든 facet key도 project
             Object.fromEntries(
               spec.groups.flatMap((g) => {
                 const base = [[g.key, 1]];
@@ -217,7 +247,7 @@ router.get("/:klass", async (req, res, next) => {
       count: [{ $count: "total" }],
     };
 
-    // 그룹별 카운트 파이프라인
+    // 그룹별 카운트
     for (const g of spec.groups) {
       const name = `by_${g.key}`;
       const allKeys = [g.key, ...(g.aliases || [])];
@@ -245,12 +275,7 @@ router.get("/:klass", async (req, res, next) => {
             },
           },
         });
-        arr.push({
-          $unwind: {
-            path: "$__facet_list__",
-            preserveNullAndEmptyArrays: false,
-          },
-        });
+        arr.push({ $unwind: { path: "$__facet_list__", preserveNullAndEmptyArrays: false } });
         arr.push({ $match: { __facet_list__: { $ne: null, $ne: "" } } });
         arr.push({ $group: { _id: "$__facet_list__", c: { $sum: 1 } } });
       } else {
@@ -265,12 +290,12 @@ router.get("/:klass", async (req, res, next) => {
     }
 
     const pipeline = [{ $match: match }, { $facet: facetStages }];
-    const [agg] = await db.collection(coll).aggregate(pipeline).toArray();
+    const [agg] = await db.collection(src.coll).aggregate(pipeline).toArray();
 
     const docs = (agg && agg.items) || [];
     const total = (agg && agg.count && agg.count[0] && agg.count[0].total) || 0;
 
-    // 🔹 사전(Dictionary) 컬렉션과 병합하여 facets 구성
+    // 사전(Dictionary) 컬렉션과 병합하여 facets 구성
     const facets = await buildFacetsWithSeeds(db, klass, spec.groups, agg, hideZero);
 
     res.render("facet/list", {
@@ -283,7 +308,9 @@ router.get("/:klass", async (req, res, next) => {
       selected,
       facets,
       facetCfg: { groups: spec.groups },
-      hideZero, // 템플릿 토글용
+      hideZero,
+      facetSourceStyle: src.style,   // 템플릿 분기용(필요하면)
+      facetSourceColl: src.coll,
     });
   } catch (e) {
     console.error("[FACET] error:", e);

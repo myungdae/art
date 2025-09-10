@@ -9,9 +9,12 @@ block content
         ul
           each val, key in errors
             li #[strong #{key}] #{val}
-
-    form(method="POST", action=`/job-vacancies/${jobVacancy._id}?_method=PUT`, onsubmit="if(window.CKEDITOR){for (var n in CKEDITOR.instances){CKEDITOR.instances[n].updateElement();}} return true;")
-      .max-w-2xl.mx-auto.space-y-5
+      
+    form(
+      method="POST",
+      action="/job-vacancies/" + jobVacancy._id + "?_method=PUT",
+      onsubmit="if(window.CKEDITOR){for (var n in CKEDITOR.instances){CKEDITOR.instances[n].updateElement();}} return true;"
+    )
 
         // Title
         .space-y-1
@@ -23,13 +26,19 @@ block content
           label.block(for="description") Description
           textarea#description(name="description" rows="8" class="w-full border rounded px-3 py-2")= jobVacancy.description
 
-        // Host Country (자동완성: DB 값)
+        // Host Country
         .space-y-1
-          label.block(for="country") Host Country
-          select#country(name="country" required class="w-full border rounded px-3 py-2")
+          label.block(for="hostCountry") Host Country
+          select#hostCountry(name="country" required class="w-full border rounded px-3 py-2")
             option(value="") -- Select host country --
-            each c in (countries || [])
-              option(value=c, selected=(jobVacancy.country === c))= c
+            - var __countries = (typeof countries === 'object' && Array.isArray(countries)) ? countries : [];
+            each __c in __countries
+              - var __val = (__c && typeof __c === 'object') ? (__c.name || __c.code || '') : __c;
+              - __val = (__val == null) ? '' : String(__val);
+              if __val
+                option(value=__val selected=(values && values.country === __val))= __val
+
+
 
         // Student Type
         .space-y-1
@@ -98,7 +107,8 @@ block content
         button(type="submit" class="px-4 py-2 rounded bg-blue-600 text-white") Update
         a(href="/job-vacancies" class="px-4 py-2 rounded border") Cancel
 
-  script(src="https://cdn.ckeditor.com/4.22.1/standard/ckeditor.js")
+  script(src="https://cdn.ckeditor.com/4.25.1-lts/standard/ckeditor.js")
+
   script.
     (function () {
       function init() {

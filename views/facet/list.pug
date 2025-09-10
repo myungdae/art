@@ -7,23 +7,35 @@ block content
     .flex.items-center.justify-between.mb-2
       - var titleMap = { Job_Vacancies: 'Job Vacancies', Job_Seekers: 'Job Seekers', Online_Tutors: 'Online Tutors' };
       - var hz = (typeof hideZero !== 'undefined' && hideZero) ? true : false;
-      h1.text-2xl.font-bold
-        = (titleMap && titleMap[klass]) ? titleMap[klass] : (klass || 'List')
-        if typeof total !== 'undefined'
-          span.text-gray-500.text-base &nbsp;(#{total})
+      - var isPreview = (typeof facetSourceStyle !== 'undefined' && facetSourceStyle === 'resources') ? true : false;
+      - var showPreviewNote = isPreview && !(docs && docs.length);
+      - var sourceChip = (typeof facetSourceStyle !== 'undefined' && typeof facetSourceColl !== 'undefined') ? (String(facetSourceStyle) + ':' + String(facetSourceColl)) : null;
 
-      // 검색창 (현재 선택 유지)
-      form(method="GET", action=`/facet/${klass}`, class="flex gap-2")
-        input(type="text", name="q", value=q || "", placeholder="Search title/description...", class="border rounded px-3 py-2")
-        if facetCfg && facetCfg.groups
-          each g in facetCfg.groups
-            if selected && selected[g.key]
-              each v in selected[g.key]
-                input(type="hidden", name=g.key, value=v)
-        input(type="hidden", name="limit", value=limit)
-        if hz
-          input(type="hidden", name="hideZero", value="1")
-        button(type="submit", class="px-4 py-2 rounded bg-blue-600 text-white") Search
+      h1.text-2xl.font-bold.flex.items-center.gap-2
+        span= (titleMap && titleMap[klass]) ? titleMap[klass] : (klass || 'List')
+        if typeof total !== 'undefined'
+          span.text-gray-500.text-base (#{total})
+        if showPreviewNote
+          span.text-xs.text-gray-500.ml-1 (preview)
+
+      // 우측: 검색창 + 소스 배지
+      .flex.items-center.gap-2
+        if sourceChip
+          span.text-xs.border.rounded-full.px-2.py-1.bg-gray-50.text-gray-600(title="facet data source")= sourceChip
+        form(method="GET", action='/facet/' + klass, class="flex gap-2")
+          input(type="text", name="q", value=q || "", placeholder="Search title/description...", class="border rounded px-3 py-2")
+          if facetCfg && facetCfg.groups
+            each g in facetCfg.groups
+              if selected && selected[g.key]
+                each v in selected[g.key]
+                  input(type="hidden", name=g.key, value=v)
+          input(type="hidden", name="limit", value=limit)
+          if hz
+            input(type="hidden", name="hideZero", value="1")
+          button(type="submit", class="px-4 py-2 rounded bg-blue-600 text-white") Search
+
+    if showPreviewNote
+      p.text-sm.text-gray-500.mb-3 Temporary preview list (data from resources)
 
     // ───────── 모바일 전용: 상단 가로 필터바 + 계정 링크 ─────────
     //   ✅ style 속성 멀티라인 제거 → 아래 style 블록으로 이동(에러 방지)
@@ -47,7 +59,7 @@ block content
 
     // 모바일 바
     div(id="facetMobileBar" class="block md:hidden bg-white border-b py-2 mb-3 sticky top-0")
-      form(id="facetFormMobileInline" method="GET", action=`/facet/${klass}`, class="container mx-auto")
+      form(id="facetFormMobileInline" method="GET", action='/facet/' + klass, class="container mx-auto")
         // 유지 파라미터
         input(type="hidden", name="q", value=q || "")
         input(type="hidden", name="limit", value=limit)
@@ -99,7 +111,7 @@ block content
     .grid.grid-cols-12.gap-6
       // 좌측: 데스크탑 사이드 패싯
       div(class="hidden md:block md:col-span-3")
-        form#facetForm(method="GET", action=`/facet/${klass}`, class="space-y-6 border rounded p-3")
+        form#facetForm(method="GET", action='/facet/' + klass, class="space-y-6 border rounded p-3")
           input(type="hidden", name="q", value=q || "")
           input(type="hidden", name="limit", value=limit)
           if hz
@@ -128,7 +140,7 @@ block content
                     p.text-sm.text-gray-400 No values
 
           .pt-2.flex.items-center.gap-2
-            a(href=`/facet/${klass}${hz ? '?hideZero=1' : ''}`, class="px-3 py-2 rounded border inline-block") Clear
+            a(href='/facet/' + klass + (hz ? '?hideZero=1' : ''), class="px-3 py-2 rounded border inline-block") Clear
             if Object.keys(selected || {}).some(function(k){ return (selected[k]||[]).length; })
               span.text-xs.text-gray-500 Selected filters active
 
@@ -141,11 +153,12 @@ block content
             each d in docs
               - var posted = (d.datePosted && new Date(d.datePosted).toISOString().slice(0,10)) || (d.updatedAt && new Date(d.updatedAt).toISOString().slice(0,10)) || '-'
               - var titleText = d.displayLabel || d._label || d.title || d.name || d.jobTitle || d.email || '(no title)'
+              - var hrefDetail = '/rdf-resource/' + klass + '/' + d._id
               li.border.rounded.p-3
                 .flex.items-center.gap-3
                   .min-w-0.flex-1
                     h2.font-semibold.text-lg.truncate
-                      a(href=`/rdf-resource/${klass}/${d._id}`)= titleText
+                      a(href=hrefDetail)= titleText
                     // 메타
                     - var parts = []
                     - var fieldsForMeta = ['country','Country','studentType','StudentType','teachingArea','Teaching_Area','Nationality','Preferred_Work_Location','Major','Expertise','Tutoring_Experience','Gender']
@@ -159,7 +172,7 @@ block content
                       p(class="text-sm text-gray-600 mt-1")= parts.join(' · ')
                     p.text-sm.mt-1 Posted: #{posted}
                   .shrink-0
-                    a(href=`/rdf-resource/${klass}/${d._id}`, class="text-blue-700 underline") View
+                    a(href=hrefDetail, class="text-blue-700 underline") View
 
         // ───────── Pagination ─────────
         if typeof total !== 'undefined' && total > limit
@@ -178,10 +191,10 @@ block content
           - if (hz) { qs += '&hideZero=1' }
           nav.mt-6.flex.items-center.gap-2.flex-wrap
             if page > 1
-              a(href=`/facet/${klass}?page=${page-1}&limit=${limit}${qs}`, class="px-3 py-1 border rounded") Prev
+              a(href='/facet/' + klass + '?page=' + (page-1) + '&limit=' + limit + qs, class="px-3 py-1 border rounded") Prev
             span.text-sm Page #{page} / #{totalPages}
             if page < totalPages
-              a(href=`/facet/${klass}?page=${page+1}&limit=${limit}${qs}`, class="px-3 py-1 border rounded") Next
+              a(href='/facet/' + klass + '?page=' + (page+1) + '&limit=' + limit + qs, class="px-3 py-1 border rounded") Next
 
   // ───────── 스크립트 ─────────
   script.

@@ -1,0 +1,16 @@
+extends ../layout
+block content
+  .p-6
+    h1.text-2xl.font-bold.mb-4 Job Vacancies (preview fallback)
+    if !items || !items.length
+      p.text-gray-600 No results.
+    else
+      ul.space-y-2
+        each d in items
+          li.border.rounded.p-3
+            .font-semibold= d.title || '(no title)'
+            .text-sm.text-gray-600
+              = (d.country || '')
+              |  
+              span updated:
+              |  #{new Date(d.updatedAt || d.date || Date.now()).toISOString().slice(0,19).replace('T',' ')}

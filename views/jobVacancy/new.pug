@@ -1,116 +1,180 @@
-//- views/jobVacancy/new.pug  (Advanced RDF 섹션 제거판)
+//- views/jobVacancy/new.pug
 extends ../layout
 
 block content
   .container.py-6
     h1.text-2xl.font-bold.mb-6 New Job Vacancy
 
+    //- 에러 표시
     if errors && Object.keys(errors).length
       .max-w-2xl.mx-auto.bg-red-50.border.border-red-200.rounded.p-3.mb-5
         ul
           each val, key in errors
             li #[strong #{key}] #{val}
 
-    form(method="POST", action="/job-vacancies", onsubmit="if(window.CKEDITOR){for (var n in CKEDITOR.instances){CKEDITOR.instances[n].updateElement();}} return true;")
+    form(method="POST", action="/job-vacancies/create")
       .max-w-2xl.mx-auto.space-y-5
 
         // Title
         .space-y-1
           label.block(for="title") Title
-          input#title(type="text" name="title" required class="w-full border rounded px-3 py-2" value=(values && values.title) || "")
+          input#title(
+            type="text"
+            name="title"
+            required
+            class="w-full border rounded px-3 py-2"
+            value=((values && values.title) || "")
+            placeholder="e.g., ESL Teacher in Seoul"
+          )
 
-        // Description (CKEditor)
+        // Description (plain textarea, no CKEditor)
         .space-y-1
           label.block(for="description") Description
           textarea#description(name="description" rows="8" class="w-full border rounded px-3 py-2")= (values && values.description) || ""
 
-        // Host Country (자동완성: DB 값)
+        // Host Country
         .space-y-1
-          label.block(for="country") Host Country
-          select#country(name="country" required class="w-full border rounded px-3 py-2")
+          label.block(for="hostCountry") Host Country
+          select#hostCountry(
+            name="country"
+            required
+            class="w-full border rounded px-3 py-2"
+          )
             option(value="") -- Select host country --
-            each c in (countries || [])
-              option(value=c, selected=(values && values.country === c))= c
+            - var __countries = Array.isArray(_countries) ? _countries : [];
+            each c in __countries
+              - var val = (c && typeof c === 'object') ? (c.name || c.code || '') : (c || '');
+              - val = String(val);
+              if val
+                option(
+                  value=val
+                  selected=(values && values.country === val) ? true : false
+                )= val
 
         // Student Type
         .space-y-1
           label.block(for="studentType") Student Type
-          select#studentType(name="studentType" required class="w-full border rounded px-3 py-2")
+          select#studentType(name="studentType" class="w-full border rounded px-3 py-2" required)
             option(value="") -- Select student type --
-            each s in (studentTypes || [])
-              option(value=s, selected=(values && values.studentType === s))= s
+            - var __studentTypes = Array.isArray(_studentTypes) ? _studentTypes : [];
+            each s in __studentTypes
+              - var sval = String(s || '');
+              if sval
+                option(value=sval selected=(values && values.studentType === sval) ? true : false)= sval
 
-        // Teaching Area (checkbox grid)
+        // Teaching Area (checkboxes)
         .space-y-1
           label(for="teachingArea") Teaching Area
           .grid.grid-cols-2.gap-2(class="md:grid-cols-3")
-            each t in (teachingAreas || [])
-              - var _ta = values && values.teachingArea
-              - var picked = Array.isArray(_ta) ? _ta.includes(t) : (_ta ? (_ta === t) : false)
-              label.flex.items-center.gap-2
-                input(type="checkbox", name="teachingArea", value=t, checked=picked)
-                | #{t}
-          p.text-xs.text-gray-500 Select one or more.
+            - var pickedFromForm = [];
+            - if (Array.isArray(values && values["teachingAreas[]"])) pickedFromForm = values["teachingAreas[]"];
+            - else if (Array.isArray(values && values.teachingAreas)) pickedFromForm = values.teachingAreas;
+            - else if (Array.isArray(values && values.teachingArea)) pickedFromForm = values.teachingArea;
+            - else if (values && values.teachingArea) pickedFromForm = [values.teachingArea];
+            - var _picked = new Set((pickedFromForm || []).map(function(x){ return String(x); }));
+            - var __areas = Array.isArray(_teachingAreas) ? _teachingAreas : [];
+            each t in __areas
+              - var tv = String(t || '');
+              if tv
+                label.flex.items-center.gap-2
+                  input(
+                    type="checkbox"
+                    name="teachingArea"
+                    value=tv
+                    checked=_picked.has(tv) ? true : false
+                  )
+                  | #{tv}
 
         // Extra Teaching Areas
         .space-y-1
-          label(for="extraTeachingArea") Extra Teaching Areas (comma-separated)
-          input#extraTeachingArea(type="text" name="extraTeachingArea" value=(values && values.extraTeachingArea) || "")
+          label(for="extraTeachingArea") Extra Teaching Areas
+          input#extraTeachingArea(
+            type="text"
+            name="extraTeachingArea"
+            class="w-full border rounded px-3 py-2"
+            value=(values && values.extraTeachingArea) || ""
+          )
 
-        // Date Posted
+        // Date Posted (optional)
         .space-y-1
           label.block(for="datePosted") Date Posted
-          input#datePosted(type="date" name="datePosted" class="w-full border rounded px-3 py-2" value=(values && values.datePosted) || "")
+          input#datePosted(
+            type="date"
+            name="datePosted"
+            class="w-full border rounded px-3 py-2"
+            value=(values && values.datePosted) || ""
+          )
 
         // Contact Email
         .space-y-1
           label.block(for="email") Contact Email
-          input#email(type="email" name="email" class="w-full border rounded px-3 py-2" value=(values && values.email) || "")
+          input#email(
+            type="email"
+            name="email"
+            class="w-full border rounded px-3 py-2"
+            value=(values && values.email) || ""
+          )
 
         // Company Name
         .space-y-1
           label.block(for="companyName") Company Name
-          input#companyName(type="text" name="companyName" class="w-full border rounded px-3 py-2" value=(values && values.companyName) || "")
+          input#companyName(
+            type="text"
+            name="companyName"
+            class="w-full border rounded px-3 py-2"
+            value=(values && values.companyName) || ""
+          )
 
         // Job Location
         .space-y-1
           label.block(for="jobLocation") Job Location
-          input#jobLocation(type="text" name="jobLocation" class="w-full border rounded px-3 py-2" value=(values && values.jobLocation) || "")
+          input#jobLocation(
+            type="text"
+            name="jobLocation"
+            class="w-full border rounded px-3 py-2"
+            value=(values && values.jobLocation) || ""
+          )
 
         // Pay
         .space-y-1
           label.block(for="pay") Pay
-          input#pay(type="text" name="pay" class="w-full border rounded px-3 py-2" value=(values && values.pay) || "")
+          input#pay(
+            type="text"
+            name="pay"
+            class="w-full border rounded px-3 py-2"
+            value=(values && values.pay) || ""
+          )
 
         // Housing
         .space-y-1
           label.block(for="housing") Housing
-          input#housing(type="text" name="housing" class="w-full border rounded px-3 py-2" value=(values && values.housing) || "")
+          input#housing(
+            type="text"
+            name="housing"
+            class="w-full border rounded px-3 py-2"
+            value=(values && values.housing) || ""
+          )
 
         // Cellphone
         .space-y-1
           label.block(for="cellphoneNumber") Cellphone
-          input#cellphoneNumber(type="text" name="cellphoneNumber" class="w-full border rounded px-3 py-2" value=(values && values.cellphoneNumber) || "")
+          input#cellphoneNumber(
+            type="text"
+            name="cellphoneNumber"
+            class="w-full border rounded px-3 py-2"
+            value=(values && values.cellphoneNumber) || ""
+          )
 
         // Homepage
         .space-y-1
           label.block(for="homepage") Homepage
-          input#homepage(type="url" name="homepage" class="w-full border rounded px-3 py-2" value=(values && values.homepage) || "")
+          input#homepage(
+            type="url"
+            name="homepage"
+            class="w-full border rounded px-3 py-2"
+            value=(values && values.homepage) || ""
+          )
 
       .max-w-2xl.mx-auto.mt-6.flex.gap-3
-        button(type="submit" class="px-4 py-2 rounded bg-blue-600 text-white") Save
+        button(type="submit" class="px-4 py-2 rounded bg-blue-600 text-white") Post Vacancy
         a(href="/job-vacancies" class="px-4 py-2 rounded border") Cancel
-
-  // CKEditor 4
-  script(src="https://cdn.ckeditor.com/4.22.1/standard/ckeditor.js")
-  script.
-    (function () {
-      function init() {
-        if (window.CKEDITOR && document.getElementById('description')) {
-          CKEDITOR.replace('description', { removePlugins: 'cloudservices,easyimage', height: 260 });
-        }
-      }
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-      } else { init(); }
-    })();
