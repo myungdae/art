@@ -45,7 +45,7 @@ try {
 }
 
 // === GLOBAL BUILD MARKER (모든 응답에 헤더 추가) ===
-const BUILD = "20250910b";
+const BUILD = "20250910c";
 app.use((req, res, next) => {
   res.set("X-ESL-Build", BUILD);
   next();
@@ -170,10 +170,7 @@ async function bestEffortFacetMirror(createdId, src) {
         );
       console.log("[facet mirror] resources upsert:", createdId);
     } catch (e2) {
-      console.warn(
-        "[facet mirror] resources upsert skipped:",
-        e2.message || e2
-      );
+      console.warn("[facet mirror] resources upsert skipped:", e2.message || e2);
     }
   } catch (e) {
     console.warn("[facet mirror] skipped:", e.message || e);
@@ -182,8 +179,8 @@ async function bestEffortFacetMirror(createdId, src) {
 
 /* ─────────────────────────────────────────
  * /job-vacancies/new : 단일 우선순위 핸들러 (HEAD/GET)
- *  - 이 핸들러는 응답을 직접 완료하며 next()를 호출하지 않습니다.
- *  - 라우터 마운트들(app.use(...))보다 '위'에 둡니다.
+ *  - 이 핸들러는 next() 호출 없이 응답을 완료합니다.
+ *  - 라우터 마운트(app.use)보다 '위'에 둡니다.
  * ───────────────────────────────────────── */
 app.all("/job-vacancies/new", async (req, res) => {
   res.set("X-NewVac-Handler", "hotfix-20250910");
@@ -222,9 +219,7 @@ app.all("/job-vacancies/new", async (req, res) => {
       { $sort: { c: -1 } },
       { $limit: 50 },
     ]);
-    top = agg
-      .map((r) => (r && r._id ? String(r._id) : ""))
-      .filter(Boolean);
+    top = agg.map((r) => (r && r._id ? String(r._id) : "")).filter(Boolean);
   } catch {
     top = [];
   }
@@ -270,8 +265,7 @@ app.all("/job-vacancies/new", async (req, res) => {
         "University",
         "Adult",
         "Corporate",
-      ]
-  ).map(String);
+      ]).map(String);
 
   const teachingAreas = (seedAreas.length
     ? seedAreas
@@ -572,6 +566,70 @@ app.post(
 );
 
 /* ─────────────────────────────────────────
+ * 홈 스피너: /api/home/stats
+ *  - 1순위: resources 미러에서 타입별 집계
+ *  - 실패 시: 레거시 컬렉션 탐색 후 폴백
+ *  - vCount/sCount/tCount 레거시 키도 함께 반환(프런트 호환)
+ * ───────────────────────────────────────── */
+app.get("/api/home/stats", async (_req, res) => {
+  const db = mongoose.connection.db;
+
+  const out = {
+    Job_Vacancies: 0,
+    Job_Seekers: 0,
+    Online_Tutors: 0,
+  };
+
+  try {
+    const types = ["Job_Vacancies", "Job_Seekers", "Online_Tutors"];
+    const agg = await db
+      .collection("resources")
+      .aggregate([
+        { $match: { type: { $in: types } } },
+        { $group: { _id: "$type", c: { $sum: 1 } } },
+      ])
+      .toArray();
+
+    for (const row of agg) out[row._id] = row.c || 0;
+
+    res.set("X-Home-Stats-Source", "mirror:resources");
+    res.set("Cache-Control", "no-store");
+    return res.json({
+      ...out,
+      vCount: out.Job_Vacancies,
+      sCount: out.Job_Seekers,
+      tCount: out.Online_Tutors,
+    });
+  } catch (e) {
+    try {
+      const infos = await db.listCollections().toArray();
+      const getName = (re) => (infos.find((ci) => re.test(ci.name)) || {}).name;
+
+      const mainJV = getName(/job.?vacanc/i); // 예: jobvacancies
+      const mainJS = getName(/job.?seek/i);
+      const mainOT = getName(/online.?tutor/i);
+
+      if (mainJV) out.Job_Vacancies = await db.collection(mainJV).countDocuments({});
+      if (mainJS) out.Job_Seekers = await db.collection(mainJS).countDocuments({});
+      if (mainOT) out.Online_Tutors = await db.collection(mainOT).countDocuments({});
+
+      res.set("X-Home-Stats-Source", "fallback:legacy-collections");
+      res.set("Cache-Control", "no-store");
+      return res.json({
+        ...out,
+        vCount: out.Job_Vacancies,
+        sCount: out.Job_Seekers,
+        tCount: out.Online_Tutors,
+      });
+    } catch {
+      res.set("X-Home-Stats-Source", "error");
+      res.set("Cache-Control", "no-store");
+      return res.json({ ...out, vCount: 0, sCount: 0, tCount: 0 });
+    }
+  }
+});
+
+/* ─────────────────────────────────────────
  * 디버그/프리뷰 엔드포인트 (JSON 보장)
  * ───────────────────────────────────────── */
 app.get("/_debug/facet/job_vacancies", async (_req, res) => {
@@ -604,15 +662,9 @@ app.get("/_debug/facet/resources", async (_req, res) => {
 });
 app.post("/_debug/facet/rebuild", async (req, res) => {
   try {
-    const limit = Math.max(
-      1,
-      Math.min(500, parseInt(req.query.limit, 10) || 50)
-    );
+    const limit = Math.max(1, Math.min(500, parseInt(req.query.limit, 10) || 50));
     const JobVacancy = require("./model/jobVacancy");
-    const items = await JobVacancy.find({})
-      .sort({ updatedAt: -1 })
-      .limit(limit)
-      .lean();
+    const items = await JobVacancy.find({}).sort({ updatedAt: -1 }).limit(limit).lean();
     let mirrored = 0;
     for (const it of items) {
       try {
