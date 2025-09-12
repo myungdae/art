@@ -198,7 +198,7 @@ html(lang=(typeof htmlLang !== 'undefined' && htmlLang ? htmlLang : 'en'))
      div(class="mob-quickbar md:hidden")
       div(class="container mx-auto px-2 py-2 flex items-center gap-3 text-sm")
         if session && session.user
-          a(href="/job-vacancies/new", class="px-3 py-1 rounded border") Mypage
+          a(href="/user/mypage", class="px-3 py-1 rounded border") Mypage
           if session.user.adsAvailable !== undefined
             a(href="javascript:void(0)", class="px-3 py-1 rounded border") (#{session.user.adsAvailable} left)
           a(href="/inquiry", class="px-3 py-1 rounded border") Inquiry
@@ -230,7 +230,7 @@ html(lang=(typeof htmlLang !== 'undefined' && htmlLang ? htmlLang : 'en'))
                   a.nav-link.h5.my-0(class=(currentPage && currentPage.indexOf('/facet/Online_Tutors')===0) ? 'active' : '', href='/facet/Online_Tutors') ONLINE TUTORS
                 .account-menu
                   if session && session.user
-                    a.nav-link.h5.my-0(href="/job-vacancies/new") Mypage
+                    a.nav-link.h5.my-0(href="/user/mypage") Mypage
                     if session.user.adsAvailable !== undefined
                       | (#{session.user.adsAvailable} left)
                     a.nav-link.h5.my-0(href="/inquiry") Inquiry
@@ -276,7 +276,7 @@ html(lang=(typeof htmlLang !== 'undefined' && htmlLang ? htmlLang : 'en'))
                 a.nav-link.h5.my-0.black-text(class=(currentPage && currentPage.indexOf('/facet/Online_Tutors')===0) ? 'active' : '', href='/facet/Online_Tutors') ONLINE TUTORS
               .account-menu
                 if session && session.user
-                  a.gray-text.nav-link.h5(href="/job-vacancies/new") Mypage
+                  a.gray-text.nav-link.h5(href="/user/mypage") Mypage
                   if session.user.adsAvailable !== undefined
                     | (#{session.user.adsAvailable} left)
                   a.nav-link.h5.my-0.gray-text(href="/inquiry") Inquiry
@@ -295,7 +295,7 @@ html(lang=(typeof htmlLang !== 'undefined' && htmlLang ? htmlLang : 'en'))
             i.fa.fa-user
           .menu-drop#topMenuDrop
             if session && session.user
-              a(href="/job-vacancies/new") Mypage
+              a(href="/user/mypage") Mypage
               if session.user.adsAvailable !== undefined
                 a(href="javascript:void(0)") (#{session.user.adsAvailable} left)
               a(href="/inquiry") Inquiry

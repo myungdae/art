@@ -1,77 +1,95 @@
+//- views/rdf-resource/jobVacancyShow.pug
 extends ../layout
 
 block content
-  .container.mx-auto.max-w-5xl.py-8
-    // Title (가운데)
-    h1.text-3xl.font-bold.mb-6.text-center= vm.title || 'Job Seeker'
+  main.container.mx-auto.max-w-4xl.px-4.py-6
+    // Header
+    h1.text-2xl.font-bold.mb-2= vm && vm.title ? vm.title : 'Untitled Job Vacancy'
 
-    h3 Description
-    hr.my-3
-    // Description (왼쪽)
-    if vm.descriptionHtml
-      .prose.max-w-none.mb-8.mx-auto.text-left
-        != vm.descriptionHtml
-    ul.nav.nav-tabs.justify-center.mb-4(role="tablist")
-      li.nav-item
-        a.nav-link.active(
-          id="tab-basic",
-          data-toggle="tab",
-          href="#panel-basic",
-          role="tab",
-          aria-controls="panel-basic"
-        ) Basic Information
-      li.nav-item
-        a.nav-link(
-          id="tab-semantic",
-          data-toggle="tab",
-          href="#panel-semantic",
-          role="tab",
-          aria-controls="panel-semantic"
-        ) Semantic Browsing
-    // Tab panels
-    .tab-content.text-left
-      // Basic Information Panel
-      .tab-pane.fade.show.active#panel-basic(role="tabpanel" aria-labelledby="tab-basic")
-        if vm.meta.languages && vm.meta.languages.length
-          .border.rounded.p-3
-            div.text-xs.text-gray-500.uppercase Languages
-            div.mt-2.flex.flex-wrap.gap-2
-              each lang in vm.meta.languages
-                a(href=`/facet/${vm.facetBase}?language=${(lang)}` class="inline-flex items-center px-3 py-1 rounded-full border hover:bg-gray-50 transition")= lang
-
+    if vm && vm.meta
+      .text-sm.text-gray-600.mb-4
+        if vm.meta.companyName
+          span.mr-2 #{vm.meta.companyName}
         if vm.meta.jobLocation
-          .border.rounded.p-3
-            div.text-xs.text-gray-500.uppercase Location
-            div.mt-2= vm.meta.jobLocation
-
-        if vm.meta.email
-          .border.rounded.p-3
-            div.text-xs.text-gray-500.uppercase Email
-            div.mt-2
-              a.text-blue-600(href=`mailto:${vm.meta.email}`)= vm.meta.email
-
-        if vm.meta.homepage
-          .border.rounded.p-3
-            div.text-xs.text-gray-500.uppercase Homepage
-            div.mt-2
-              a.text-blue-600(href=vm.meta.homepage target="_blank" rel="noopener")= vm.meta.homepage
-
+          span.mr-2 · #{vm.meta.jobLocation}
+        if vm.meta.country
+          span.mr-2 · #{vm.meta.country}
         if vm.meta.datePosted
-          .border.rounded.p-3
-            div.text-xs.text-gray-500.uppercase Updated
-            - const d = new Date(vm.meta.datePosted)
-            div.mt-2= d.toISOString().slice(0,10)
+          - const _d = new Date(vm.meta.datePosted);
+          span · Posted: #{isNaN(_d) ? '' : _d.toISOString().slice(0,10)}
 
-      // Semantic Browsing Panel
-      .tab-pane.fade#panel-semantic(role="tabpanel" aria-labelledby="tab-semantic")
-        if vm.semanticChips && vm.semanticChips.length
-          .grid.grid-cols-1.md
-            each chip in vm.semanticChips
-              .border.rounded.p-3
-                div.text-xs.text-gray-500.uppercase= chip.label
-                div.mt-2.flex.flex-wrap.gap-2
-                  each val in chip.values
-                    a(
-                      href=`/facet/${vm.facetBase}?${encodeURIComponent(chip.key)}=${encodeURIComponent(val)}`,
-                      class="inline-flex items-center px-3 py-1 rounded-full border hover:bg-gray-50 transition"
-                    )= val
+    // Semantic chips
+    if vm && Array.isArray(vm.semanticChips) && vm.semanticChips.length
+      .mb-4
+        each chip in vm.semanticChips
+          - const vals = Array.isArray(chip && chip.values) ? chip.values : (chip && chip.values ? [chip.values] : []);
+          each val in vals
+            a(
+              class="inline-block px-3 py-1 mr-2 mb-2 rounded-full bg-blue-100 text-blue-800 text-sm font-medium hover:bg-blue-200"
+              href=('/facet/' + (vm && vm.facetBase ? vm.facetBase : 'Job_Vacancies') + '?' + chip.key + '=' + encodeURIComponent(val))
+              title=`Filter by ${chip.key}: ${val}`
+            )= val
+
+    // Description
+    if vm && vm.descriptionHtml
+      .prose.max-w-none
+        .content!= vm.descriptionHtml
+    else
+      p.text-gray-500.italic No description provided.
+
+    // Core meta
+    if vm && vm.meta
+      div(class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6")
+        if vm.meta.pay
+          .p-4.rounded-lg.border
+            div.text-xs.uppercase.tracking-wide.text-gray-500 Pay
+            div.mt-1.font-medium= vm.meta.pay
+        if vm.meta.housing
+          .p-4.rounded-lg.border
+            div.text-xs.uppercase.tracking-wide.text-gray-500 Housing
+            div.mt-1.font-medium= vm.meta.housing
+        if vm.meta.email
+          .p-4.rounded-lg.border
+            div.text-xs.uppercase.tracking-wide.text-gray-500 Contact
+            div.mt-1
+              a(
+                class="text-blue-700 underline hover:text-blue-900"
+                href=`mailto:${vm.meta.email}`
+              )= vm.meta.email
+        if vm.meta.homepage
+          .p-4.rounded-lg.border
+            div.text-xs.uppercase.tracking-wide.text-gray-500 Website
+            div.mt-1
+              a(
+                class="text-blue-700 underline hover:text-blue-900 break-all"
+                href=vm.meta.homepage
+                rel="noopener"
+                target="_blank"
+              )= vm.meta.homepage
+
+    // Extras
+    if vm && Array.isArray(vm.extras) && vm.extras.length
+      h2.text-xl.font-semibold.mt-8.mb-3 Additional Information
+      dl.divide-y.divide-gray-200.border.rounded-lg
+        each item in vm.extras
+          .px-4.py-3.grid.grid-cols-3.gap-3
+            dt.col-span-1.text-sm.text-gray-600= item.label
+            dd.col-span-2.font-medium= item.value
+
+    // Debug (optional)
+    if vm && Array.isArray(vm.descDebug) && vm.descDebug.length
+      details.mt-6
+        summary.cursor-pointer.text-sm.text-gray-600 Description candidates (debug)
+        ul.list-disc.pl-6.mt-2
+          each c in vm.descDebug
+            li.text-sm= c
+
+    // Back to list — 강제 절대경로 (Form GET)
+    - const facetBase = (vm && vm.facetBase) ? vm.facetBase : 'Job_Vacancies'
+    - const backHref  = '/facet/' + facetBase
+    form(action=backHref method="get" class="mt-8")
+      button(
+        type="submit"
+        class="inline-flex items-center px-4 py-2 rounded-md border text-blue-700 hover:bg-gray-50"
+        aria-label="Back to list"
+      ) ← Back to list

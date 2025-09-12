@@ -11,7 +11,7 @@ const flash = require("connect-flash");
 const methodOverride = require("method-override");
 const mongoose = require("mongoose");
 
-const connect = require("./model"); // (기존 연결 유틸 사용해도 무방)
+const connect = require("./model");
 const app = express();
 
 const { requireLogin } = require("./middleware/auth");
@@ -71,21 +71,11 @@ try { mailer.verify(); } catch (e) { console.error("SMTP verify failed at boot:"
 /* ─────────────────────────────────────────
  * 2) 전역 빌드 마커
  * ───────────────────────────────────────── */
-const BUILD = "20250912-redirect-to-facet";
+const BUILD = "20250911-fix";
 app.use((req, res, next) => {
   res.set("X-ESL-Build", BUILD);
   next();
 });
-
-app.get(
-  [
-    "/user/mypage",
-    "/mypage",
-    "/mypage-employer",
-    "/user/mypage-employer",
-  ],
-  (_req, res) => res.redirect(302, "/job-vacancies/new")
-);
 
 /* ─────────────────────────────────────────
  * 3) 디버그 라우트
@@ -109,11 +99,12 @@ app.post("/_debug/echo", (req, res) => res.json({ ok: true, body: req.body, ct: 
 
 /* ─────────────────────────────────────────
  * 4) Job Vacancies — 저장(우선순위 최상단)
- *    ✅ 생성/수정 성공 시 항상 /facet/Job_Vacancies 로 303 리다이렉트
+ *    - 이전에 facet 라우터가 가로채던 문제 해결
+ *    - app.locals.db 안전 사용
  * ───────────────────────────────────────── */
 function buildVacancyPayload(b = {}) {
   return {
-    type: "Job_Vacancies", // CREATE 기본값(UPDATE에서는 제거)
+    type: "Job_Vacancies",
     title: S(b.title),
     country: S(b.country) || S(b?.location?.country),
     description: S(b.description) || S(b.desc) || S(b.jobDescription),
@@ -135,8 +126,8 @@ function buildVacancyPayload(b = {}) {
   };
 }
 
-// CREATE: /job-vacancies  와  /job-vacancies/create  둘 다 받음
-app.post(["/job-vacancies", "/job-vacancies/create"], async (req, res, next) => {
+// CREATE
+app.post("/job-vacancies", async (req, res, next) => {
   try {
     const db = req.app.locals.db || mongoose.connection.db;
     if (!db) return res.status(503).send("DB not ready");
@@ -145,44 +136,31 @@ app.post(["/job-vacancies", "/job-vacancies/create"], async (req, res, next) => 
     payload.createdAt = new Date();
 
     const r = await db.collection("resources").insertOne(payload);
-
-    // 목록으로 이동 (절대경로, 303 See Other)
-    res.set("X-Post-Redirect", "/facet/Job_Vacancies");
-    return res.redirect(303, "/facet/Job_Vacancies");
+    return res.redirect(`/rdf-resource/Job_Vacancies/${r.insertedId}`);
   } catch (e) {
     console.error("[CREATE] /job-vacancies error:", e);
     return next(e);
   }
 });
 
-// UPDATE: /job-vacancies/:id (24자리 ObjectId만 매칭)
-//        완료 후에도 목록으로 이동
-app.post("/job-vacancies/:id([0-9a-fA-F]{24})", async (req, res, next) => {
+// UPDATE
+app.post("/job-vacancies/:id", async (req, res, next) => {
   try {
-    const db = req.app.locals.db || (mongoose.connection && mongoose.connection.db);
+    const db = req.app.locals.db || mongoose.connection.db;
     if (!db) return res.status(503).send("DB not ready");
 
     let _id;
-    try {
-      _id = new mongoose.Types.ObjectId(req.params.id);
-    } catch {
-      return res.status(400).send("Invalid id");
-    }
+    try { _id = new mongoose.Types.ObjectId(req.params.id); }
+    catch { return res.status(400).send("Invalid id"); }
 
     const payload = buildVacancyPayload(req.body);
-    if ("type" in payload) delete payload.type; // 업데이트 시 type 충돌 방지
 
     await db.collection("resources").updateOne(
       { _id },
-      {
-        $set: payload,
-        $setOnInsert: { createdAt: new Date(), type: "Job_Vacancies" },
-      },
+      { $set: payload, $setOnInsert: { createdAt: new Date(), type: "Job_Vacancies" } },
       { upsert: true }
     );
-
-    res.set("X-Post-Redirect", "/facet/Job_Vacancies");
-    return res.redirect(303, "/facet/Job_Vacancies");
+    return res.redirect(`/rdf-resource/Job_Vacancies/${_id}`);
   } catch (e) {
     console.error("[UPDATE] /job-vacancies/:id error:", e);
     return next(e);
@@ -207,7 +185,7 @@ function canonCountry(v) {
     const up = s.toUpperCase();
     if (COUNTRY_CANON.has(up)) return COUNTRY_CANON.get(up);
     return up;
-  }
+    }
   const upper = s.toUpperCase();
   if (COUNTRY_CANON.has(upper)) return COUNTRY_CANON.get(upper);
   return s;
@@ -231,10 +209,10 @@ function normalizeCountries(arr) {
 }
 
 /* ─────────────────────────────────────────
- * 6) /job-vacancies/new (입력 화면)
+ * 6) /job-vacancies/new (입력 화면) — 기존 유지
  * ───────────────────────────────────────── */
 app.all("/job-vacancies/new", async (req, res) => {
-  res.set("X-NewVac-Handler", "hotfix-20250912");
+  res.set("X-NewVac-Handler", "hotfix-20250911");
   if (req.method === "HEAD") return res.status(200).end();
 
   const JobVacancy = require("./model/jobVacancy");
@@ -320,7 +298,8 @@ app.all("/job-vacancies/new", async (req, res) => {
 });
 
 /* ─────────────────────────────────────────
- * 7) 레거시 게스트 저장 (여기도 목록으로 리다이렉트)
+ * 7) (중요) 레거시 게스트 저장 블록 경로 변경
+ *    - 예전에는 /job-vacancies POST를 가로챘음 → 충돌 제거
  * ───────────────────────────────────────── */
 app.post(
   ["/job-vacancies/legacy", "/job-vacancies/create-legacy"],
@@ -353,7 +332,7 @@ app.post(
       const saved = await new JobVacancy(baseDoc).save();
       console.log("[legacy vacancy] saved:", saved._id.toString(), baseDoc.title);
 
-      return res.redirect(303, "/facet/Job_Vacancies");
+      return res.redirect(302, "/facet/Job_Vacancies");
     } catch (e) {
       console.error("[legacy vacancy] error:", e);
       return next(e);
@@ -445,7 +424,7 @@ app.use((req, res, next) => {
 });
 
 /* ─────────────────────────────────────────
- * 9) 홈 스피너 API (생략 없이 유지)
+ * 9) 홈 스피너 API
  * ───────────────────────────────────────── */
 app.get("/api/home/stats", async (_req, res) => {
   const db = app.locals.db || mongoose.connection.db;
@@ -488,7 +467,7 @@ app.get("/api/home/stats", async (_req, res) => {
 });
 
 /* ─────────────────────────────────────────
- * 10) 디버그/프리뷰
+ * 10) 디버그/프리뷰 (db 안전 참조)
  * ───────────────────────────────────────── */
 app.get("/_debug/facet/job_vacancies", async (_req, res) => {
   try {
@@ -548,7 +527,7 @@ app.post("/_debug/facet/rebuild", async (req, res) => {
 });
 
 /* ─────────────────────────────────────────
- * 11) 라우터 마운트
+ * 11) 라우터 마운트 (우선 핸들러들 아래)
  * ───────────────────────────────────────── */
 app.use("/resource", resourceRouter);
 app.use("/rdf-resource", rdfResourceRouter);
@@ -592,6 +571,7 @@ app.use((req, res) => {
 });
 
 /* Error handler */
+/* eslint-disable no-unused-vars */
 app.use((err, req, res, next) => {
   console.error(err.stack || err);
   res.status(err.status || 500).render("error", {
@@ -599,6 +579,7 @@ app.use((err, req, res, next) => {
     error: app.get("env") === "development" ? err : {},
   });
 });
+/* eslint-enable no-unused-vars */
 
 /* Start */
 app.listen(app.get("port"), () => {

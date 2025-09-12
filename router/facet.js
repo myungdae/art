@@ -16,17 +16,32 @@ const coalesce = (...fields) => {
   return fields.reduceRight((acc, cur) => ({ $ifNull: [cur, acc] }));
 };
 
+// 정렬/키 통합 유틸
+const keyStr = (v) => {
+  if (v == null) return "";
+  if (typeof v === "string") return v;
+  if (typeof v === "number" || typeof v === "boolean") return String(v);
+  // 객체일 경우 name/code/_id 등을 우선 사용
+  if (typeof v === "object") {
+    if (v.name) return String(v.name);
+    if (v.code) return String(v.code);
+    if (v._id) return keyStr(v._id);
+  }
+  try { return String(v); } catch { return ""; }
+};
+const safeSortByCountThenKey = (a, b) =>
+  (Number(b.c || 0) - Number(a.c || 0)) ||
+  keyStr(a._id).localeCompare(keyStr(b._id));
+
 /* -------------------- 클래스별 패싯 설정 -------------------- */
 const FACET_MAP = {
   Job_Vacancies: {
     groups: [
-      // ✅ country는 countryStr로 표준화해서 사용 (aliases는 매치용 힌트로만)
       { key: "country", aliases: ["Country", "country.name", "country.code"], label: "Country" },
       { key: "studentType", aliases: ["StudentType"], label: "Student Type" },
       { key: "teachingArea", aliases: ["Teaching_Area"], label: "Teaching Area", array: true },
     ],
     searchFields: ["_label", "title", "_description", "description"],
-    coll: (klass) => `${klass}_RDF`,
   },
   Job_Seekers: {
     groups: [
@@ -65,14 +80,19 @@ const DICT_MAP = {
   },
 };
 
-/*  집계 결과 + 사전 컬렉션 병합 */
+/*  집계 결과 + 사전 컬렉션 병합 (정렬 안전화) */
 async function buildFacetsWithSeeds(db, klass, groups, aggObj, hideZero) {
   const out = {};
   for (const g of groups) {
     const byName = `by_${g.key}`;
-    const live = ((aggObj && aggObj[byName]) || []).filter((x) => x && x._id);
+
+    // 라이브 결과를 먼저 문자열 키로 정규화
+    const liveRaw = ((aggObj && aggObj[byName]) || []).filter((x) => x && x._id);
+    const live = liveRaw.map((x) => ({ _id: keyStr(x._id), c: Number(x.c || 0) }));
+
     const dictColl = DICT_MAP[klass]?.[g.key];
 
+    // Map은 항상 문자열 키를 사용
     const liveMap = new Map(live.map((x) => [x._id, x.c]));
 
     if (dictColl) {
@@ -91,26 +111,28 @@ async function buildFacetsWithSeeds(db, klass, groups, aggObj, hideZero) {
       const merged = [];
       if (seeds.length) {
         for (const s of seeds) {
-          const key = s.name;
-          const c = liveMap.get(key) ?? 0;
+          const key = keyStr(s && s.name);
+          if (!key) continue;
+          const c = Number(liveMap.get(key) ?? 0);
           if (!hideZero || c > 0) merged.push({ _id: key, c });
           liveMap.delete(key);
         }
         for (const [key, c] of liveMap) {
-          if (!hideZero || c > 0) merged.push({ _id: key, c });
+          if (!hideZero || c > 0) merged.push({ _id: keyStr(key), c: Number(c || 0) });
         }
       } else {
         for (const [key, c] of liveMap) {
-          if (!hideZero || c > 0) merged.push({ _id: key, c });
+          if (!hideZero || c > 0) merged.push({ _id: keyStr(key), c: Number(c || 0) });
         }
       }
 
-      merged.sort((a, b) => (b.c - a.c) || a._id.localeCompare(b._id));
+      merged.sort(safeSortByCountThenKey);
       out[g.key] = merged;
     } else {
+      // dict 없이 라이브만 사용하는 경우도 문자열 키로 정렬
       let merged = live.slice();
-      if (hideZero) merged = merged.filter((x) => x.c > 0);
-      merged.sort((a, b) => (b.c - a.c) || a._id.localeCompare(b._id));
+      if (hideZero) merged = merged.filter((x) => Number(x.c || 0) > 0);
+      merged.sort(safeSortByCountThenKey);
       out[g.key] = merged;
     }
   }
@@ -119,21 +141,23 @@ async function buildFacetsWithSeeds(db, klass, groups, aggObj, hideZero) {
 
 /* -------------------- 데이터 소스 선택 -------------------- */
 /**
- * 우선순위:
- *   1) 직결 컬렉션: Job_Vacancies (klass와 동일 이름)
- *   2) RDF:        ${klass}_RDF (필드 _class = klass)
- *   3) 리소스:     resources (필드 type  = klass)
+ * 중요: Job_Vacancies 는 무조건 resources 사용
+ *  - 폼 저장이 resources 로 들어가기 때문
+ * 그 외 클래스를 위해서만 resources → rdf → direct 순으로 폴백
  */
 async function pickSource(db, klass) {
-  const directName = klass; // e.g., "Job_Vacancies"
+  if (klass === "Job_Vacancies") {
+    return { coll: "resources", style: "resources", baseMatch: { type: "Job_Vacancies" } };
+  }
+
   const rdfName = `${klass}_RDF`;
 
-  // 1) direct
+  // 1) resources
   try {
-    const exists = await db.listCollections({ name: directName }).toArray();
+    const exists = await db.listCollections({ name: "resources" }).toArray();
     if (exists.length) {
-      const one = await db.collection(directName).findOne({}, { projection: { _id: 1 } });
-      if (one) return { coll: directName, style: "direct", baseMatch: {} };
+      const one = await db.collection("resources").findOne({ type: klass }, { projection: { _id: 1 } });
+      if (one) return { coll: "resources", style: "resources", baseMatch: { type: klass } };
     }
   } catch {}
 
@@ -146,12 +170,12 @@ async function pickSource(db, klass) {
     }
   } catch {}
 
-  // 3) resources
+  // 3) direct
   try {
-    const exists = await db.listCollections({ name: "resources" }).toArray();
+    const exists = await db.listCollections({ name: klass }).toArray();
     if (exists.length) {
-      const one = await db.collection("resources").findOne({ type: klass }, { projection: { _id: 1 } });
-      if (one) return { coll: "resources", style: "resources", baseMatch: { type: klass } };
+      const one = await db.collection(klass).findOne({}, { projection: { _id: 1 } });
+      if (one) return { coll: klass, style: "direct", baseMatch: {} };
     }
   } catch {}
 
@@ -160,7 +184,6 @@ async function pickSource(db, klass) {
 }
 
 /* -------------------- country → countryStr 정규화 스테이지 -------------------- */
-// resources, RDF, direct 어디서 오든 country 또는 Country를 문자열로 통일
 const addCountryStrStage = {
   $addFields: {
     countryStr: {
@@ -190,7 +213,7 @@ router.get("/:klass", async (req, res, next) => {
     const spec = FACET_MAP[klass] || FACET_MAP.Job_Vacancies;
     const db = mongoose.connection.db;
 
-    // 데이터 소스 자동 선택
+    // 데이터 소스 선택 (Job_Vacancies는 resources 고정)
     const src = await pickSource(db, klass);
     res.set("X-Facet-Source", `${src.style}:${src.coll}`);
 
@@ -213,14 +236,7 @@ router.get("/:klass", async (req, res, next) => {
       req.query.hideZero === "on";
 
     /* -------------------- match (pre) -------------------- */
-    // src.baseMatch 에 클래스 구분이 들어있음(resources/type, rdf/_class, direct/없음)
     const preMatch = { ...(src.baseMatch || {}) };
-
-    // Job_Vacancies 직접 컬렉션일 때 적절한 필터(노이즈 제거)
-    if (src.style === "direct" && klass === "Job_Vacancies") {
-      preMatch.visible = { $ne: false };
-      preMatch.status = { $ne: "deleted" };
-    }
 
     if (qText) {
       const rx = new RegExp(sanitizeRegex(qText), "i");
@@ -228,9 +244,9 @@ router.get("/:klass", async (req, res, next) => {
       preMatch.$or = fields.map((f) => ({ [f]: rx }));
     }
 
-    // ⚠️ country는 countryStr로만 필터할 것이므로 preMatch에는 넣지 않음
+    // country는 countryStr로만 필터 (preMatch에는 넣지 않음)
     for (const g of spec.groups) {
-      if (g.key === "country") continue; // ← here
+      if (g.key === "country") continue;
       const vals = selected[g.key];
       if (vals && vals.length) {
         const allKeys = [g.key, ...(g.aliases || [])];
@@ -241,16 +257,15 @@ router.get("/:klass", async (req, res, next) => {
 
     /* -------------------- facet 스테이지 -------------------- */
 
-    // country 전용 (countryStr) post-match
+    // country 전용 post-match
     const postCountryMatchStages =
       selected.country && selected.country.length
         ? [{ $match: { countryStr: { $in: selected.country } } }]
         : [];
 
-    // 모든 브랜치(items/count/by_* )에서 공통으로 쓸 inner 스테이지
     const commonInnerStages = [addCountryStrStage, ...postCountryMatchStages];
 
-    // items용 $project (⚠️ dot-path alias는 절대 넣지 말 것: 충돌 방지)
+    // 리스트 표시 필드
     const itemProject = {
       _id: 1,
       "@id": 1,
@@ -260,30 +275,26 @@ router.get("/:klass", async (req, res, next) => {
       title: 1,
       _description: 1,
       description: 1,
-      // ✅ 표준화된 country 문자열만 노출
       country: "$countryStr",
       date: 1,
       datePosted: 1,
       updatedAt: 1,
+      studentType: 1,
+      teachingArea: 1,
     };
-    // 나머지 그룹 키들(및 dot-path 제외한 alias)은 그대로 노출 (리스트 meta 표시용)
     for (const g of spec.groups) {
       if (g.key === "country") {
-        // 이미 countryStr로 매핑
-        // 필요시 원래 상단 키 "Country" 같은 대문자 별칭만 추가
         (g.aliases || [])
-          .filter((a) => a && !a.includes(".")) // dot-path 제외
+          .filter((a) => a && !a.includes("."))
           .forEach((a) => (itemProject[a] = 1));
         continue;
       }
-      itemProject[g.key] = 1;
       (g.aliases || [])
-        .filter((a) => a && !a.includes(".")) // dot-path 제외
+        .filter((a) => a && !a.includes("."))
         .forEach((a) => (itemProject[a] = 1));
     }
 
     const facetStages = {
-      // ── 문서 리스트
       items: [
         ...commonInnerStages,
         { $addFields: { _s_date: coalesce("$datePosted", "$date", "$updatedAt", "$createdAt") } },
@@ -292,27 +303,20 @@ router.get("/:klass", async (req, res, next) => {
         { $limit: limit },
         { $project: itemProject },
       ],
-      // ── 카운트(페이지네이션용) : country post match 반영
       count: [...commonInnerStages, { $count: "total" }],
     };
 
-    // ── 좌측 패싯(그룹별 카운트)
+    // 좌측 패싯
     for (const g of spec.groups) {
       const name = `by_${g.key}`;
       const allKeys = [g.key, ...(g.aliases || [])];
       const arr = [...commonInnerStages];
 
       if (g.key === "country") {
-        // ✅ country는 countryStr로만 집계
         arr.push({ $match: { countryStr: { $ne: null, $ne: "" } } });
         arr.push({ $group: { _id: "$countryStr", c: { $sum: 1 } } });
       } else if (g.array) {
-        // 배열 필드 (예: teachingArea/Expertise)
-        arr.push({
-          $set: {
-            __facet_value__: coalesce(...allKeys.map((k) => `$${k}`)),
-          },
-        });
+        arr.push({ $set: { __facet_value__: coalesce(...allKeys.map((k) => `$${k}`)) } });
         arr.push({
           $set: {
             __facet_list__: {
@@ -334,15 +338,12 @@ router.get("/:klass", async (req, res, next) => {
         arr.push({ $match: { __facet_list__: { $ne: null, $ne: "" } } });
         arr.push({ $group: { _id: "$__facet_list__", c: { $sum: 1 } } });
       } else {
-        // 단일 값
-        arr.push({
-          $set: { __facet_value__: coalesce(...allKeys.map((k) => `$${k}`)) },
-        });
+        arr.push({ $set: { __facet_value__: coalesce(...allKeys.map((k) => `$${k}`)) } });
         arr.push({ $match: { __facet_value__: { $ne: null, $ne: "" } } });
         arr.push({ $group: { _id: "$__facet_value__", c: { $sum: 1 } } });
       }
 
-      arr.push({ $sort: { c: -1, _id: 1 } });
+      arr.push({ $sort: { c: -1, _id: 1 } }); // 1차 정렬은 서버에서, 키 충돌은 JS에서 대비
       arr.push({ $limit: 400 });
 
       facetStages[name] = arr;
@@ -354,7 +355,6 @@ router.get("/:klass", async (req, res, next) => {
     const docs = (agg && agg.items) || [];
     const total = (agg && agg.count && agg.count[0] && agg.count[0].total) || 0;
 
-    // 사전(Dictionary) 컬렉션과 병합하여 facets 구성
     const facets = await buildFacetsWithSeeds(db, klass, spec.groups, agg, hideZero);
 
     res.render("facet/list", {
@@ -368,7 +368,7 @@ router.get("/:klass", async (req, res, next) => {
       facets,
       facetCfg: { groups: spec.groups },
       hideZero,
-      facetSourceStyle: src.style, // 템플릿에서 필요시 표시
+      facetSourceStyle: src.style,
       facetSourceColl: src.coll,
     });
   } catch (e) {

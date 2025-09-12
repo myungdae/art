@@ -2,17 +2,19 @@
 const mongoose = require('mongoose');
 
 const jobVacancySchema = new mongoose.Schema({
-  title: { type: String, required: [true, 'Job Title is required'], trim: true },
-  _label:{ type: String, required: [true, 'Job Title (_label) is required'], trim: true },
+  title:   { type: String, required: [true, 'Job Title is required'], trim: true },
+  _label:  { type: String, required: [true, 'Job Title (_label) is required'], trim: true },
 
-  description: { type: String },
-  _description:{ type: String },
+  description:   { type: String },
+  _description:  { type: String },
 
-  country:     { type: String, trim: true },
-  studentType: { type: String, trim: true },
+  country:       { type: String, trim: true },
 
-  // ✅ 배열로 통일
-  teachingArea:{ type: [String], default: [] },
+  // ✅ 배열로 통일 (폼/라우터와 일치)
+  studentType:   { type: [String], default: [] },
+
+  // ✅ 이미 배열: 유지
+  teachingArea:  { type: [String], default: [] },
 
   duration:        { type: String, trim: true },
   pay:             { type: String, trim: true },
@@ -23,11 +25,11 @@ const jobVacancySchema = new mongoose.Schema({
   cellphoneNumber: { type: String, trim: true },
   homepage:        { type: String, trim: true },
 
-  adPackage: { type: String, trim: true },
+  adPackage:     { type: String, trim: true },
 
-  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  user:         { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
 
-  datePosted: { type: Date, default: Date.now }
+  datePosted:   { type: Date, default: Date.now }
 }, { timestamps: true });
 
 // _label 자동 세팅

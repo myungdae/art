@@ -1,86 +1,154 @@
+// router/rdf-resource.js
 "use strict";
 
 const express = require("express");
 const router = express.Router();
 const mongoose = require("mongoose");
 
-/* ---------- helpers ---------- */
+const dbOf = () => mongoose.connection.db;
 
-function cleanHtml(html = "") {
-  return (html || "").replace(/\u00A0/g, " ").trim();
-}
-function toArray(v) {
-  if (v == null) return [];
-  return Array.isArray(v) ? v : [v];
-}
-function safeObjectId(id) {
-  try {
-    return new mongoose.Types.ObjectId(id);
-  } catch {
-    return null;
-  }
-}
-async function findOneById(db, preferred, fallback, _id) {
-  let doc = await db.collection(preferred).findOne({ _id });
-  if (!doc && fallback) {
-    doc = await db.collection(fallback).findOne({ _id });
-  }
-  return doc;
-}
-function pickFirst(obj, keys, def = "") {
-  for (const k of keys) if (obj[k]) return obj[k];
+/* =============== utils =============== */
+const cleanHtml = (html = "") => (html || "").replace(/\u00A0/g, " ").trim();
+const toArray = (v) =>
+  v == null ? [] : Array.isArray(v) ? v.filter(Boolean) : (v !== "" ? [v] : []);
+const safeObjectId = (id) => {
+  try { return new mongoose.Types.ObjectId(id); } catch { return null; }
+};
+const pickFirst = (obj, keys, def = "") => {
+  for (const k of keys) if (obj && obj[k]) return obj[k];
   return def;
-}
-function labelize(key) {
-  return key
-    .replace(/^_+/, "")
-    .replace(/([a-z])([A-Z])/g, "$1 $2")
-    .replace(/_/g, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .replace(/^\w/, (c) => c.toUpperCase());
-}
-function fmtValue(v) {
+};
+const labelize = (key) =>
+  key.replace(/^_+/, "")
+     .replace(/([a-z])([A-Z])/g, "$1 $2")
+     .replace(/_/g, " ")
+     .replace(/\s+/g, " ")
+     .trim()
+     .replace(/^\w/, (c) => c.toUpperCase());
+const fmtValue = (v) => {
   if (v == null) return "";
   if (v instanceof Date) return v.toISOString().slice(0, 10);
   if (typeof v === "object") {
     if (Array.isArray(v)) return v.join(", ");
-    try {
-      return JSON.stringify(v);
-    } catch {
-      return String(v);
-    }
+    try { return JSON.stringify(v); } catch { return String(v); }
   }
   return String(v);
+};
+
+/* =============== merge helpers (빈 값은 덮어쓰지 않기) =============== */
+function isNonEmpty(v) {
+  if (v == null) return false;
+  if (typeof v === "string") return v.trim() !== "";
+  if (Array.isArray(v)) return v.length > 0;
+  if (v instanceof Date) return true;
+  if (typeof v === "object") return Object.keys(v).length > 0;
+  return true;
+}
+function mergeNonEmpty(target, source) {
+  if (!source) return target;
+  for (const [k, v] of Object.entries(source)) {
+    if (!isNonEmpty(v)) continue;
+    const cur = target[k];
+    if (!isNonEmpty(cur)) target[k] = v;
+  }
+  return target;
 }
 
-/**
- * 공통 VM 빌더
- * - facetBase: 'Job_Vacancies' | 'Job_Seekers' | 'Online_Tutors'
- * - 제목/본문 라벨은 항상 Title / Description 으로 통일
- * - meta: 표준 필드
- * - extras: meta/제목/본문에 쓰이지 않은 나머지 원시 키 자동 표기
- */
-function buildVM(doc, facetBase, titleKeys = [], descKeys = []) {
-  const used = new Set(["_id", "_class", "createdAt", "updatedAt", "__v"]);
+/* =============== description 후보 추출 (RDF 네임스페이스 포함) =============== */
+function extractTexts(v) {
+  const out = [];
+  const push = (s) => { if (typeof s === "string" && s.trim()) out.push(s.trim()); };
+  if (typeof v === "string") { push(v); return out; }
+  if (Array.isArray(v)) { v.forEach((x) => out.push(...extractTexts(x))); return out; }
+  if (v && typeof v === "object") {
+    if (v["@value"]) push(String(v["@value"]));
+    const langs = ["ko", "en"];
+    for (const lang of langs) if (v[lang]) push(String(v[lang]));
+    for (const [k, val] of Object.entries(v)) {
+      if (["@value", "@language"].includes(k)) continue;
+      if (typeof val === "string") push(val);
+      else if (Array.isArray(val) || (val && typeof val === "object")) {
+        out.push(...extractTexts(val));
+      }
+    }
+  }
+  return out;
+}
+function pickBestDescription(src = {}) {
+  const keys = [
+    "_description",
+    "jobDescription", "job_description", "jobDesc",
+    "description", "desc", "Description",
+    "about", "bio", "details", "detail", "content", "body", "text",
+    // RDF-style
+    "dc:description", "dcterms:description", "dct:description",
+    "schema:description", "rdfs:comment"
+  ];
+  let candidates = [];
+  for (const k of keys) if (src[k] != null) candidates.push(...extractTexts(src[k]));
+  if (!candidates.length && Array.isArray(src["@graph"])) {
+    for (const node of src["@graph"]) {
+      for (const k of keys) if (node && node[k] != null) {
+        candidates.push(...extractTexts(node[k]));
+      }
+    }
+  }
+  if (!candidates.length) return { chosen: "", candidates: [] };
+  const isAuto = (s) => /^(\s*(Auto:|Position:))/i.test(s);
+  const nonAuto = candidates.filter((s) => s && !isAuto(s));
+  const pickLongest = (list) => list.reduce((a, b) => (b.length > a.length ? b : a));
+  const chosen = nonAuto.length ? pickLongest(nonAuto) : pickLongest(candidates);
+  return { chosen, candidates };
+}
 
-  const title = (doc._label || pickFirst(doc, titleKeys, "") || "")
-    .toString()
-    .trim();
-  if (doc._label) used.add("_label");
-  for (const k of titleKeys) used.add(k);
+/* =============== fetch + merge (RDF > 원본 > resources) =============== */
+async function fetchMergedById(db, facetBase, _id) {
+  const rdfCol = `${facetBase}_RDF`;
+  const [rdf, main, mirror] = await Promise.all([
+    db.collection(rdfCol).findOne({ _id }),
+    db.collection(facetBase).findOne({ _id }),
+    db.collection("resources").findOne({ _id, type: facetBase }),
+  ]);
+  if (!rdf && !main && !mirror) return null;
+  const merged = {};
+  mergeNonEmpty(merged, mirror || {});
+  mergeNonEmpty(merged, main || {});
+  mergeNonEmpty(merged, rdf || {});
+  return merged;
+}
+
+/* =============== 표준화 VM =============== */
+function normalize(doc = {}, facetBase) {
+  const title = String(doc._label || pickFirst(doc, ["title", "name"], "")).trim();
+
+  // 후보군은 항상 확보(ReferenceError 방지 & 디버그)
+  const { chosen: pickedDesc, candidates: descCandidates } = pickBestDescription(doc);
+
+  // description: 통합 규칙
+  const direct =
+    (doc && typeof doc.description === "string" && doc.description.trim())
+      ? doc.description.trim()
+      : "";
+
+  const explicit = cleanHtml(
+    doc._description ||
+    pickFirst(doc, [
+      "desc", "jobDescription", "about", "bio",
+      "dc:description", "dcterms:description",
+      "schema:description", "rdfs:comment"
+    ], "")
+  );
+
+  const fromCandidates = cleanHtml(pickedDesc || "");
 
   const descriptionHtml = cleanHtml(
-    doc._description || pickFirst(doc, descKeys, "")
+    direct || explicit || fromCandidates || ""
   );
-  if (doc._description) used.add("_description");
-  for (const k of descKeys) used.add(k);
 
-  // meta (표준화)
   const meta = {
-    country: doc.country || "",
-    studentType: doc.studentType || "",
-    teachingAreas: toArray(doc.teachingArea),
+    country: doc.country || doc?.location?.country || "",
+    studentType: toArray(doc.studentType || doc.student_type),
+    teachingArea: toArray(doc.teachingArea || doc.teachingAreas || doc.teaching_area),
     languages: toArray(doc.languages || doc.language),
     companyName: doc.companyName || doc.schoolName || "",
     jobLocation: doc.jobLocation || doc.location || doc.city || "",
@@ -97,74 +165,54 @@ function buildVM(doc, facetBase, titleKeys = [], descKeys = []) {
       : null,
   };
 
-  // 사용된 키 마킹
-  [
-    "country",
-    "studentType",
-    "teachingArea",
-    "languages",
-    "language",
-    "companyName",
-    "schoolName",
-    "jobLocation",
-    "location",
-    "city",
-    "pay",
-    "housing",
-    "email",
-    "homepage",
-    "website",
-    "datePosted",
-  ].forEach((k) => used.add(k));
+  const used = new Set([
+    "_id","_class","__v","_label","_description",
+    "title","name","description","desc","jobDescription","about","bio","details","detail",
+    "country","location","studentType","student_type",
+    "teachingArea","teachingAreas","teaching_area",
+    "languages","language",
+    "companyName","schoolName",
+    "jobLocation","city",
+    "pay","housing","email",
+    "homepage","website",
+    "datePosted","createdAt","updatedAt","type","status","visible",
+    "@graph","dc:description","dcterms:description","dct:description","schema:description","rdfs:comment"
+  ]);
 
-  // Additional Details: 아직 사용 안 된 원시 키들을 자동 렌더
   const extras = [];
   for (const [k, v] of Object.entries(doc)) {
-    if (used.has(k)) continue;
-    if (k.startsWith("@")) continue; // RDF 메타
-    if (k === "_id" || k === "__v") continue;
+    if (used.has(k) || (k && String(k).startsWith("@"))) continue;
     extras.push({ key: k, label: labelize(k), value: fmtValue(v) });
   }
 
+  const semanticChips = [];
+  if (meta.country) semanticChips.push({ key: "country", values: [meta.country] });
+  if (meta.studentType.length) semanticChips.push({ key: "studentType", values: meta.studentType });
+  if (meta.teachingArea.length) semanticChips.push({ key: "teachingArea", values: meta.teachingArea });
+
   return {
-    id: doc._id.toString(),
+    id: doc._id?.toString?.() || "",
     facetBase,
     title,
     descriptionHtml,
     meta,
     extras,
     raw: doc,
+    semanticChips,
+    // 템플릿에서 필요 없으면 출력 안 해도 됩니다.
+    descDebug: descCandidates,
   };
 }
 
-/* ---------- Routes ---------- */
-
+/* =============== Routes =============== */
 // Job Vacancies
 router.get("/Job_Vacancies/:id", async (req, res, next) => {
   try {
     const _id = safeObjectId(req.params.id);
     if (!_id) return res.status(404).send("Invalid id");
-
-    const db = mongoose.connection.db;
-    const doc = await findOneById(
-      db,
-      "Job_Vacancies_RDF",
-      "Job_Vacancies",
-      _id
-    );
-    if (!doc) return res.status(404).send("Not found");
-
-    const vm = buildVM(doc, "Job_Vacancies", ["title"], ["description"]);
-
-    const chipKeys = ["country", "studentType", "teachingArea"];
-    vm.semanticChips = chipKeys
-      .filter((k) => doc[k] != null && doc[k] !== "")
-      .map((k) => ({
-        key: k,
-        label: k.replace(/_/g, " "),
-        values: Array.isArray(doc[k]) ? doc[k] : [doc[k]],
-      }));
-
+    const merged = await fetchMergedById(dbOf(), "Job_Vacancies", _id);
+    if (!merged) return res.status(404).send("Not found");
+    const vm = normalize(merged, "Job_Vacancies");
     return res.render("rdf-resource/jobVacancyShow", { vm });
   } catch (err) {
     console.error("GET /rdf-resource/Job_Vacancies/:id", err);
@@ -172,33 +220,14 @@ router.get("/Job_Vacancies/:id", async (req, res, next) => {
   }
 });
 
-// Job Seekers (커스텀 시맨틱 칩 포함)
+// Job Seekers
 router.get("/Job_Seekers/:id", async (req, res, next) => {
   try {
     const _id = safeObjectId(req.params.id);
     if (!_id) return res.status(404).send("Invalid id");
-
-    const db = mongoose.connection.db;
-    const doc = await findOneById(db, "Job_Seekers_RDF", "Job_Seekers", _id);
-    if (!doc) return res.status(404).send("Not found");
-
-    const vm = buildVM(
-      doc,
-      "Job_Seekers",
-      ["title", "name"],
-      ["description", "about", "bio"]
-    );
-
-    // 커스텀 시맨틱 -> 칩으로 노출할 키들
-    const chipKeys = ["Nationality", "Preferred_Work_Location", "Major"];
-    vm.semanticChips = chipKeys
-      .filter((k) => doc[k] != null && doc[k] !== "")
-      .map((k) => ({
-        key: k,
-        label: k.replace(/_/g, " "),
-        values: Array.isArray(doc[k]) ? doc[k] : [doc[k]],
-      }));
-
+    const merged = await fetchMergedById(dbOf(), "Job_Seekers", _id);
+    if (!merged) return res.status(404).send("Not found");
+    const vm = normalize(merged, "Job_Seekers");
     return res.render("rdf-resource/jobSeekerShow", { vm });
   } catch (err) {
     console.error("GET /rdf-resource/Job_Seekers/:id error:", err);
@@ -211,36 +240,25 @@ router.get("/Online_Tutors/:id", async (req, res, next) => {
   try {
     const _id = safeObjectId(req.params.id);
     if (!_id) return res.status(404).send("Invalid id");
-
-    const db = mongoose.connection.db;
-    const doc = await findOneById(
-      db,
-      "Online_Tutors_RDF",
-      "Online_Tutors",
-      _id
-    );
-    if (!doc) return res.status(404).send("Not found");
-
-    const vm = buildVM(
-      doc,
-      "Online_Tutors",
-      ["title", "name"],
-      ["description", "about", "bio"]
-    );
-
-    const chipKeys = ["Expertise", "Gender", "Tutoring_Experience"];
-    vm.semanticChips = chipKeys
-      .filter((k) => doc[k] != null && doc[k] !== "")
-      .map((k) => ({
-        key: k,
-        label: k.replace(/_/g, " "),
-        values: Array.isArray(doc[k]) ? doc[k] : [doc[k]],
-      }));
+    const merged = await fetchMergedById(dbOf(), "Online_Tutors", _id);
+    if (!merged) return res.status(404).send("Not found");
+    const vm = normalize(merged, "Online_Tutors");
     return res.render("rdf-resource/onlineTutorShow", { vm });
   } catch (err) {
     console.error("GET /rdf-resource/Online_Tutors/:id", err);
     return next(err);
   }
 });
+
+/* ---- (옵션) description 후보 직접 확인 디버그 ----
+router.get("/_debug/Job_Vacancies/:id/desc", async (req, res) => {
+  const _id = safeObjectId(req.params.id);
+  if (!_id) return res.status(400).json({ ok:false, error:"bad id" });
+  const merged = await fetchMergedById(dbOf(), "Job_Vacancies", _id);
+  if (!merged) return res.status(404).json({ ok:false, error:"not found" });
+  const { chosen, candidates } = pickBestDescription(merged);
+  res.json({ ok:true, chosen, candidates, keys: Object.keys(merged) });
+});
+*/
 
 module.exports = router;
