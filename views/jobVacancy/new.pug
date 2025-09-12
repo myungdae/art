@@ -5,29 +5,34 @@ block content
   .container.py-6
     h1.text-2xl.font-bold.mb-6 New Job Vacancy
 
-    //- 에러 표시
+    //- 서버 검증 에러 표시
     if errors && Object.keys(errors).length
       .max-w-2xl.mx-auto.bg-red-50.border.border-red-200.rounded.p-3.mb-5
-        ul
+        ul.list-disc.pl-5
           each val, key in errors
-            li #[strong #{key}] #{val}
+            li
+              strong #{key}:
+              |  #{val}
 
-    form(method="POST", action="/job-vacancies/create")
+    //- ✅ 서버 라우트에 맞춤: POST /job-vacancies
+    form(method="POST", action="/job-vacancies")
       .max-w-2xl.mx-auto.space-y-5
 
-        // Title
+        // Title (영문/숫자/기호/공백만 허용)
         .space-y-1
           label.block(for="title") Title
           input#title(
             type="text"
             name="title"
             required
+            pattern="^[\\x20-\\x7E]+$"
+            title="Use English letters/numbers/symbols only (ASCII)."
             class="w-full border rounded px-3 py-2"
             value=((values && values.title) || "")
             placeholder="e.g., ESL Teacher in Seoul"
           )
 
-        // Description (plain textarea, no CKEditor)
+        // Description (CKEditor가 이 textarea를 감쌉니다)
         .space-y-1
           label.block(for="description") Description
           textarea#description(name="description" rows="8" class="w-full border rounded px-3 py-2")= (values && values.description) || ""
@@ -51,7 +56,7 @@ block content
                   selected=(values && values.country === val) ? true : false
                 )= val
 
-        // Student Type
+        // Student Type (단일 선택)
         .space-y-1
           label.block(for="studentType") Student Type
           select#studentType(name="studentType" class="w-full border rounded px-3 py-2" required)
@@ -62,12 +67,12 @@ block content
               if sval
                 option(value=sval selected=(values && values.studentType === sval) ? true : false)= sval
 
-        // Teaching Area (checkboxes)
+        // Teaching Area (멀티 체크)  → name="teachingArea[]" 로 명시적 배열
         .space-y-1
           label(for="teachingArea") Teaching Area
           .grid.grid-cols-2.gap-2(class="md:grid-cols-3")
             - var pickedFromForm = [];
-            - if (Array.isArray(values && values["teachingAreas[]"])) pickedFromForm = values["teachingAreas[]"];
+            - if (Array.isArray(values && values["teachingArea[]"])) pickedFromForm = values["teachingArea[]"];
             - else if (Array.isArray(values && values.teachingAreas)) pickedFromForm = values.teachingAreas;
             - else if (Array.isArray(values && values.teachingArea)) pickedFromForm = values.teachingArea;
             - else if (values && values.teachingArea) pickedFromForm = [values.teachingArea];
@@ -79,13 +84,13 @@ block content
                 label.flex.items-center.gap-2
                   input(
                     type="checkbox"
-                    name="teachingArea"
+                    name="teachingArea[]"
                     value=tv
                     checked=_picked.has(tv) ? true : false
                   )
                   | #{tv}
 
-        // Extra Teaching Areas
+        // Extra Teaching Areas (쉼표로 구분해도 됨 — 서버에서 합치려면 추후 처리)
         .space-y-1
           label(for="extraTeachingArea") Extra Teaching Areas
           input#extraTeachingArea(
@@ -93,6 +98,7 @@ block content
             name="extraTeachingArea"
             class="w-full border rounded px-3 py-2"
             value=(values && values.extraTeachingArea) || ""
+            placeholder="e.g., Debate, TOEFL"
           )
 
         // Date Posted (optional)
@@ -175,6 +181,16 @@ block content
             value=(values && values.homepage) || ""
           )
 
-      .max-w-2xl.mx-auto.mt-6.flex.gap-3
-        button(type="submit" class="px-4 py-2 rounded bg-blue-600 text-white") Post Vacancy
-        a(href="/job-vacancies" class="px-4 py-2 rounded border") Cancel
+        //- ✅ 버튼은 반드시 form 안에!
+        .mt-6.flex.gap-3
+          button(type="submit" class="px-4 py-2 rounded bg-blue-600 text-white") Post Vacancy
+          a(href="/facet/Job_Vacancies" class="px-4 py-2 rounded border") Cancel
+
+  //- CKEditor (문제 생기면 아래 두 스크립트만 주석 처리하시면 됩니다)
+  script(src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js")
+  script.
+    (function () {
+      var el = document.querySelector('textarea[name="description"]');
+      if (!el) return;
+      ClassicEditor.create(el).catch(function(e){ console.warn('CKEditor init failed:', e); });
+    })();

@@ -118,15 +118,157 @@ const mailer = require("./utils/mailer");
 try { mailer.verify(); } catch (e) { console.error("SMTP verify failed at boot:", e?.message || e); }
 
 /* ─────────────────────────────────────────
- * 4) 전역 빌드 마커 & 리다이렉트
+ * 4) Job Vacancies — 저장(우선순위 최상단)
+ *    - 제목은 ASCII(영문/숫자/기호/공백)만 허용
+ *    - 설명은 sanitize-html 로 안전하게 보관
+ *    - 생성 성공 시 목록(facet)으로 이동
  * ───────────────────────────────────────── */
-const BUILD = "20250912-semantic-fix-flash";
-app.use((req, res, next) => { res.set("X-ESL-Build", BUILD); next(); });
+const sanitizeHtml = require("sanitize-html");
 
-app.get(
-  ["/user/mypage", "/mypage", "/mypage-employer", "/user/mypage-employer"],
-  (_req, res) => res.redirect(302, "/job-vacancies/new")
-);
+function isAsciiOnly(str = "") {
+  // \x20-\x7E : 사람이 쓰는 가시 문자(탭/개행 제외). 한글/이모지 등 비-ASCII 차단
+  return /^[\x20-\x7E]+$/.test(str);
+}
+function normalizeSpaces(s = "") {
+  return String(s).replace(/\s+/g, " ").trim();
+}
+function validateEnglishTitle(raw) {
+  const t = normalizeSpaces(raw || "");
+  if (!t) return { ok: false, msg: "Title is required." };
+  if (!isAsciiOnly(t)) {
+    return {
+      ok: false,
+      msg: "Title must use English letters/numbers/symbols only (ASCII).",
+    };
+  }
+  // 영문자가 1개도 없는 순수 기호/숫자만도 거르고 싶다면 주석 해제
+  // if (!/[A-Za-z]/.test(t)) { return { ok:false, msg:"Title must include at least one English letter (A–Z)." }; }
+  return { ok: true, value: t };
+}
+
+const SAFE_HTML = {
+  allowedTags: [
+    "p", "br", "ul", "ol", "li",
+    "b", "i", "strong", "em", "u",
+    "blockquote", "code", "pre",
+    "a", "span"
+  ],
+  allowedAttributes: {
+    a: ["href", "target", "rel"],
+    span: []
+  },
+  allowedSchemes: ["http", "https", "mailto"],
+  transformTags: {
+    a: sanitizeHtml.simpleTransform("a", { rel: "nofollow noopener", target: "_blank" }, true),
+  }
+};
+
+const A = (v) => Array.isArray(v) ? v.filter(Boolean) : (v ? [v] : []);
+const S = (s) => (typeof s === "string" ? s.trim() : "");
+
+function buildVacancyPayload(b = {}) {
+  // 설명은 여러 필드 중 우선값을 고른 뒤 sanitize
+  const rawDesc = S(b.description) || S(b.desc) || S(b.jobDescription);
+  const safeDesc = rawDesc ? sanitizeHtml(rawDesc, SAFE_HTML) : "";
+
+  return {
+    type: "Job_Vacancies", // CREATE에서만 의미. UPDATE에서는 제거
+    title: S(b.title), // 실제 검증은 아래 라우트에서 수행
+    country: S(b.country) || S(b?.location?.country),
+    description: safeDesc,
+
+    studentType: A(b.studentType || b["studentType[]"] || b.Student_Type || b["Student_Type[]"]),
+    teachingArea: A(b.teachingArea || b["teachingArea[]"] || b.Teaching_Area || b["Teaching_Area[]"]),
+
+    languages: A(b.languages || b.language || b["languages[]"] || b["language[]"]),
+    companyName: S(b.companyName || b.schoolName),
+    jobLocation: S(b.jobLocation || b.location || b.city),
+    pay: S(b.pay),
+    housing: S(b.housing),
+    email: S(b.email),
+    homepage: S(b.homepage || b.website),
+
+    status: S(b.status) || "published",
+    visible: b.visible !== "false",
+    updatedAt: new Date(),
+  };
+}
+
+// CREATE
+app.post("/job-vacancies", async (req, res, next) => {
+  try {
+    const db = req.app.locals.db || mongoose.connection.db;
+    if (!db) return res.status(503).send("DB not ready");
+
+    // 1) 제목 검증
+    const v = validateEnglishTitle(req.body.title);
+    if (!v.ok) {
+      // 폼 재표시 (flash 없이 서버에서 바로 렌더)
+      // new.pug에서 errors.title 표시 가능
+      const values = { ...req.body, title: S(req.body.title) };
+      return res.status(400).render("jobVacancy/new", {
+        pageTitle: "New Job Vacancy",
+        guestMode: true,
+        _countries: [], _studentTypes: [], _teachingAreas: [],
+        values,
+        errors: { title: v.msg }
+      });
+    }
+
+    // 2) 페이로드 구성(+ sanitize 된 description)
+    const payload = buildVacancyPayload(req.body);
+    payload.title = v.value;
+    payload.createdAt = new Date();
+
+    const r = await db.collection("resources").insertOne(payload);
+
+    // ✅ 생성 후 목록으로
+    return res.redirect(302, "/facet/Job_Vacancies");
+  } catch (e) {
+    console.error("[CREATE] /job-vacancies error:", e);
+    return next(e);
+  }
+});
+
+// UPDATE: /job-vacancies/:id
+app.post("/job-vacancies/:id([0-9a-fA-F]{24})", async (req, res, next) => {
+  try {
+    const db = req.app.locals.db || (mongoose.connection && mongoose.connection.db);
+    if (!db) return res.status(503).send("DB not ready");
+
+    let _id;
+    try { _id = new mongoose.Types.ObjectId(req.params.id); }
+    catch { return res.status(400).send("Invalid id"); }
+
+    // 제목이 들어오면 검증(미입력인 경우는 기존 값 유지 의미로 통과)
+    let titleToSet = undefined;
+    if (typeof req.body.title !== "undefined") {
+      const v = validateEnglishTitle(req.body.title);
+      if (!v.ok) {
+        return res.status(400).send(v.msg);
+      }
+      titleToSet = v.value;
+    }
+
+    const payload = buildVacancyPayload(req.body);
+    if ("type" in payload) delete payload.type; // 충돌 방지
+    if (typeof titleToSet !== "undefined") payload.title = titleToSet;
+
+    await db.collection("resources").updateOne(
+      { _id },
+      {
+        $set: payload,
+        $setOnInsert: { createdAt: new Date(), type: "Job_Vacancies" },
+      },
+      { upsert: true }
+    );
+
+    return res.redirect(`/rdf-resource/Job_Vacancies/${_id.toString()}`);
+  } catch (e) {
+    console.error("[UPDATE] /job-vacancies/:id error:", e);
+    return next(e);
+  }
+});
 
 /* ─────────────────────────────────────────
  * 5) 디버그 라우트
