@@ -5,7 +5,7 @@ block content
   .container.py-6
     h1.text-2xl.font-bold.mb-6 New Job Vacancy
 
-    //- 서버 검증 에러 표시
+    //- 서버측 에러 표시
     if errors && Object.keys(errors).length
       .max-w-2xl.mx-auto.bg-red-50.border.border-red-200.rounded.p-3.mb-5
         ul.list-disc.pl-5
@@ -14,25 +14,31 @@ block content
               strong #{key}:
               |  #{val}
 
-    //- ✅ 서버 라우트에 맞춤: POST /job-vacancies
-    form(method="POST", action="/job-vacancies")
+    //- 서버는 /job-vacancies 와 /job-vacancies/create 모두 지원합니다.
+    form(method="POST", action="/job-vacancies/create")
       .max-w-2xl.mx-auto.space-y-5
 
-        // Title (영문/숫자/기호/공백만 허용)
+        // Title (영어만 허용)
         .space-y-1
-          label.block(for="title") Title
+          label.block(for="title") Title (English only)
           input#title(
             type="text"
             name="title"
             required
-            pattern="^[\\x20-\\x7E]+$"
-            title="Use English letters/numbers/symbols only (ASCII)."
             class="w-full border rounded px-3 py-2"
             value=((values && values.title) || "")
             placeholder="e.g., ESL Teacher in Seoul"
+            pattern="^[\\x20-\\x7E]+$"
+            title="English (ASCII) characters only."
+            maxlength="150"
+            autocomplete="off"
+            spellcheck="false"
+            inputmode="latin"
           )
+          .text-xs.text-gray-500
+            | Only English (ASCII) characters are allowed. (No Korean/emoji)
 
-        // Description (CKEditor가 이 textarea를 감쌉니다)
+        // Description (CKEditor)
         .space-y-1
           label.block(for="description") Description
           textarea#description(name="description" rows="8" class="w-full border rounded px-3 py-2")= (values && values.description) || ""
@@ -56,7 +62,7 @@ block content
                   selected=(values && values.country === val) ? true : false
                 )= val
 
-        // Student Type (단일 선택)
+        // Student Type
         .space-y-1
           label.block(for="studentType") Student Type
           select#studentType(name="studentType" class="w-full border rounded px-3 py-2" required)
@@ -67,12 +73,12 @@ block content
               if sval
                 option(value=sval selected=(values && values.studentType === sval) ? true : false)= sval
 
-        // Teaching Area (멀티 체크)  → name="teachingArea[]" 로 명시적 배열
+        // Teaching Area (checkboxes)
         .space-y-1
           label(for="teachingArea") Teaching Area
           .grid.grid-cols-2.gap-2(class="md:grid-cols-3")
             - var pickedFromForm = [];
-            - if (Array.isArray(values && values["teachingArea[]"])) pickedFromForm = values["teachingArea[]"];
+            - if (Array.isArray(values && values["teachingAreas[]"])) pickedFromForm = values["teachingAreas[]"];
             - else if (Array.isArray(values && values.teachingAreas)) pickedFromForm = values.teachingAreas;
             - else if (Array.isArray(values && values.teachingArea)) pickedFromForm = values.teachingArea;
             - else if (values && values.teachingArea) pickedFromForm = [values.teachingArea];
@@ -82,115 +88,98 @@ block content
               - var tv = String(t || '');
               if tv
                 label.flex.items-center.gap-2
-                  input(
-                    type="checkbox"
-                    name="teachingArea[]"
-                    value=tv
-                    checked=_picked.has(tv) ? true : false
-                  )
+                  input(type="checkbox" name="teachingArea" value=tv checked=_picked.has(tv) ? true : false)
                   | #{tv}
 
-        // Extra Teaching Areas (쉼표로 구분해도 됨 — 서버에서 합치려면 추후 처리)
+        // Extra Teaching Areas
         .space-y-1
           label(for="extraTeachingArea") Extra Teaching Areas
-          input#extraTeachingArea(
-            type="text"
-            name="extraTeachingArea"
-            class="w-full border rounded px-3 py-2"
-            value=(values && values.extraTeachingArea) || ""
-            placeholder="e.g., Debate, TOEFL"
-          )
+          input#extraTeachingArea(type="text" name="extraTeachingArea" class="w-full border rounded px-3 py-2" value=(values && values.extraTeachingArea) || "")
 
         // Date Posted (optional)
         .space-y-1
           label.block(for="datePosted") Date Posted
-          input#datePosted(
-            type="date"
-            name="datePosted"
-            class="w-full border rounded px-3 py-2"
-            value=(values && values.datePosted) || ""
-          )
+          input#datePosted(type="date" name="datePosted" class="w-full border rounded px-3 py-2" value=(values && values.datePosted) || "")
 
         // Contact Email
         .space-y-1
           label.block(for="email") Contact Email
-          input#email(
-            type="email"
-            name="email"
-            class="w-full border rounded px-3 py-2"
-            value=(values && values.email) || ""
-          )
+          input#email(type="email" name="email" class="w-full border rounded px-3 py-2" value=(values && values.email) || "")
 
         // Company Name
         .space-y-1
           label.block(for="companyName") Company Name
-          input#companyName(
-            type="text"
-            name="companyName"
-            class="w-full border rounded px-3 py-2"
-            value=(values && values.companyName) || ""
-          )
+          input#companyName(type="text" name="companyName" class="w-full border rounded px-3 py-2" value=(values && values.companyName) || "")
 
         // Job Location
         .space-y-1
           label.block(for="jobLocation") Job Location
-          input#jobLocation(
-            type="text"
-            name="jobLocation"
-            class="w-full border rounded px-3 py-2"
-            value=(values && values.jobLocation) || ""
-          )
+          input#jobLocation(type="text" name="jobLocation" class="w-full border rounded px-3 py-2" value=(values && values.jobLocation) || "")
 
         // Pay
         .space-y-1
           label.block(for="pay") Pay
-          input#pay(
-            type="text"
-            name="pay"
-            class="w-full border rounded px-3 py-2"
-            value=(values && values.pay) || ""
-          )
+          input#pay(type="text" name="pay" class="w-full border rounded px-3 py-2" value=(values && values.pay) || "")
 
         // Housing
         .space-y-1
           label.block(for="housing") Housing
-          input#housing(
-            type="text"
-            name="housing"
-            class="w-full border rounded px-3 py-2"
-            value=(values && values.housing) || ""
-          )
+          input#housing(type="text" name="housing" class="w-full border rounded px-3 py-2" value=(values && values.housing) || "")
 
         // Cellphone
         .space-y-1
           label.block(for="cellphoneNumber") Cellphone
-          input#cellphoneNumber(
-            type="text"
-            name="cellphoneNumber"
-            class="w-full border rounded px-3 py-2"
-            value=(values && values.cellphoneNumber) || ""
-          )
+          input#cellphoneNumber(type="text" name="cellphoneNumber" class="w-full border rounded px-3 py-2" value=(values && values.cellphoneNumber) || "")
 
         // Homepage
         .space-y-1
           label.block(for="homepage") Homepage
-          input#homepage(
-            type="url"
-            name="homepage"
-            class="w-full border rounded px-3 py-2"
-            value=(values && values.homepage) || ""
-          )
+          input#homepage(type="url" name="homepage" class="w-full border rounded px-3 py-2" value=(values && values.homepage) || "")
 
-        //- ✅ 버튼은 반드시 form 안에!
-        .mt-6.flex.gap-3
-          button(type="submit" class="px-4 py-2 rounded bg-blue-600 text-white") Post Vacancy
-          a(href="/facet/Job_Vacancies" class="px-4 py-2 rounded border") Cancel
+      .max-w-2xl.mx-auto.mt-6.flex.gap-3
+        button(type="submit" class="px-4 py-2 rounded bg-blue-600 text-white") Post Vacancy
+        a(href="/job-vacancies" class="px-4 py-2 rounded border") Cancel
 
-  //- CKEditor (문제 생기면 아래 두 스크립트만 주석 처리하시면 됩니다)
-  script(src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js")
-  script.
-    (function () {
-      var el = document.querySelector('textarea[name="description"]');
-      if (!el) return;
-      ClassicEditor.create(el).catch(function(e){ console.warn('CKEditor init failed:', e); });
-    })();
+      // CKEditor
+      script(src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js")
+      script.
+        (function () {
+          var el = document.querySelector('textarea[name="description"]');
+          if (el) ClassicEditor.create(el).catch(function(e){ console.warn('CKEditor init failed:', e); });
+        })();
+
+      // Title: 즉시 경고(ASCII만) - reportValidity()로 즉시 표시
+      script.
+        (function () {
+          var form = document.querySelector('form[action="/job-vacancies/create"], form[action="/job-vacancies"]');
+          var ti = document.getElementById('title');
+          if (!ti) return;
+
+          var reASCII = /^[\x20-\x7E]+$/;
+
+          function checkAscii() {
+            var v = ti.value || '';
+            var ok = reASCII.test(v);
+            ti.setCustomValidity(ok ? '' : 'English (ASCII) only. Remove non-English characters.');
+            return ok;
+          }
+
+          function liveCheck() {
+            checkAscii();
+            // 즉시 풍선 도움말 표시
+            if (ti.value) ti.reportValidity();
+          }
+
+          ti.addEventListener('input', liveCheck);
+          ti.addEventListener('blur', liveCheck);
+
+          if (form) {
+            form.addEventListener('submit', function (e) {
+              if (!checkAscii()) {
+                e.preventDefault();
+                ti.reportValidity();
+                ti.focus();
+              }
+            });
+          }
+        })();

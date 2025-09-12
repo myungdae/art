@@ -2,87 +2,89 @@
 extends ../layout
 
 block content
-  .max-w-5xl.mx-auto.py-8
-    // ── Title
-    h1.text-3xl.font-bold.text-gray-900= vm.title || 'Untitled'
+  .container.py-8
+    if vm
+      // Title
+      h1.text-3xl.font-bold.mb-4= vm.title || 'Untitled'
 
-    // ── Semantic Browsing (bold)
-    if vm.semanticChips && vm.semanticChips.length
+      // ── Semantic Browsing
+      .mb-6
+        div.text-sm.font-semibold.uppercase.text-gray-500 SEMANTIC BROWSING
+        if vm.semanticChips && vm.semanticChips.length
+          ul.mt-3.flex.flex-wrap.gap-2
+            each chip in vm.semanticChips
+              - const vals = Array.isArray(chip && chip.values) ? chip.values : (chip && chip.values ? [chip.values] : [])
+              each val in vals
+                a.inline-block.px-3.py-1.rounded-full.text-sm.font-medium(
+                  class="bg-blue-100 text-blue-800 hover:bg-blue-200"
+                  href=`/facet/${vm.facetBase}?${chip.key}=${encodeURIComponent(val)}`
+                  title=`Filter by ${chip.key}: ${val}`
+                )= val
+        else
+          .text-gray-400.text-sm No tags
+
+      // ── Description
+      .mb-8
+        div.text-sm.font-semibold.uppercase.text-gray-500 DESCRIPTION
+        .mt-3.rounded-2xl.border.bg-white
+          .p-4.prose(max-width="none")
+            if vm.descriptionHtml
+              != vm.descriptionHtml
+            else
+              span.text-gray-400 No description provided.
+
+      // ── Details
+      .rounded-2xl.border.bg-white
+        .p-4.text-sm.uppercase.tracking-wide.text-gray-500.font-semibold DETAILS
+        .p-6.grid.gap-4(class="grid-cols-1 md:grid-cols-2")
+          if vm.meta && vm.meta.companyName
+            .p-3.rounded-lg.bg-gray-50
+              div.text-xs.uppercase.tracking-wide.text-gray-500 COMPANY
+              div.mt-1= vm.meta.companyName
+
+          if vm.meta && vm.meta.jobLocation
+            .p-3.rounded-lg.bg-gray-50
+              div.text-xs.uppercase.tracking-wide.text-gray-500 LOCATION
+              div.mt-1= vm.meta.jobLocation
+
+          if vm.meta && (vm.meta.country || (vm.raw && vm.raw.country))
+            .p-3.rounded-lg.bg-gray-50
+              div.text-xs.uppercase.tracking-wide.text-gray-500 COUNTRY
+              div.mt-1= vm.meta.country || (vm.raw && vm.raw.country)
+
+          if vm.meta && vm.meta.datePosted
+            .p-3.rounded-lg.bg-gray-50
+              div.text-xs.uppercase.tracking-wide.text-gray-500 POSTED
+              div.mt-1= (new Date(vm.meta.datePosted)).toISOString().slice(0,10)
+
+          if vm.meta && vm.meta.email
+            .p-3.rounded-lg.bg-gray-50
+              div.text-xs.uppercase.tracking-wide.text-gray-500 EMAIL
+              a.mt-1.inline-block.text-blue-700(href=`mailto:${vm.meta.email}`)= vm.meta.email
+
+          if vm.meta && vm.meta.pay
+            .p-3.rounded-lg.bg-gray-50
+              div.text-xs.uppercase.tracking-wide.text-gray-500 PAY
+              div.mt-1= vm.meta.pay
+
+          if vm.meta && vm.meta.housing
+            .p-3.rounded-lg.bg-gray-50
+              div.text-xs.uppercase.tracking-wide.text-gray-500 HOUSING
+              div.mt-1= vm.meta.housing
+
+          if vm.meta && vm.meta.homepage
+            .p-3.rounded-lg.bg-gray-50
+              div.text-xs.uppercase.tracking-wide.text-gray-500 WEBSITE
+              a.mt-1.inline-block.break-words.text-blue-700(href=vm.meta.homepage target="_blank" rel="noopener")= vm.meta.homepage
+
+      // ── Debug
+      if vm.descDebug && vm.descDebug.length
+        details.mt-8
+          summary.text-sm.text-gray-500 Description candidates (debug)
+          ul.mt-2.list-disc.pl-5.text-sm.text-gray-600
+            each d in vm.descDebug
+              li= d
+
+      // ── Back
       .mt-8
-        div.text-xs.uppercase.tracking-wide.text-gray-600.font-bold SEMANTIC BROWSING
-        .mt-3.flex.flex-wrap.gap-2
-          each chip in vm.semanticChips
-            - const vals = Array.isArray(chip && chip.values) ? chip.values : (chip && chip.values ? [chip.values] : []);
-            each val in vals
-              a.inline-block.px-3.py-1.rounded-full.bg-blue-100.text-blue-800.text-sm.font-medium(
-                href=`/facet/${vm.facetBase}?${encodeURIComponent(chip.key)}=${encodeURIComponent(val)}`
-                title=`Filter by ${chip.key}: ${val}`
-              )= val
-
-    // ── Description (bold heading + boxed content)
-    if vm.descriptionHtml
-      .mt-8
-        div.text-xs.uppercase.tracking-wide.text-gray-600.font-bold DESCRIPTION
-        .mt-3.rounded-xl.border.bg-white
-          .p-6.prose.max-w-none!= vm.descriptionHtml
-
-    // ── Details
-    if vm && vm.meta
-      .mt-10
-        .rounded-2xl.border.bg-white
-          .p-4.text-sm.uppercase.tracking-wide.text-gray-500.font-semibold DETAILS
-          //- ⚠️ Pug와 충돌하는 md: 접두사는 class 속성으로 넣기
-          div(class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4")
-            if vm.meta.companyName
-              .p-3.rounded-lg.bg-gray-50
-                div.text-xs.uppercase.tracking-wide.text-gray-500 COMPANY
-                div.mt-1= vm.meta.companyName
-
-            if vm.meta.jobLocation
-              .p-3.rounded-lg.bg-gray-50
-                div.text-xs.uppercase.tracking-wide.text-gray-500 LOCATION
-                div.mt-1= vm.meta.jobLocation
-
-            if vm.meta.country
-              .p-3.rounded-lg.bg-gray-50
-                div.text-xs.uppercase.tracking-wide.text-gray-500 COUNTRY
-                div.mt-1= vm.meta.country
-
-            if vm.meta.datePosted
-              .p-3.rounded-lg.bg-gray-50
-                div.text-xs.uppercase.tracking-wide.text-gray-500 POSTED
-                div.mt-1= vm.meta.datePosted.toISOString().slice(0,10)
-
-            if vm.meta.email
-              .p-3.rounded-lg.bg-gray-50
-                div.text-xs.uppercase.tracking-wide.text-gray-500 EMAIL
-                a.mt-1.inline-block.text-blue-700(href=`mailto:${vm.meta.email}`)= vm.meta.email
-
-            if vm.meta.pay
-              .p-3.rounded-lg.bg-gray-50
-                div.text-xs.uppercase.tracking-wide.text-gray-500 PAY
-                div.mt-1= vm.meta.pay
-
-            if vm.meta.housing
-              .p-3.rounded-lg.bg-gray-50
-                div.text-xs.uppercase.tracking-wide.text-gray-500 HOUSING
-                div.mt-1= vm.meta.housing
-
-            if vm.meta.homepage
-              .p-3.rounded-lg.bg-gray-50
-                div.text-xs.uppercase.tracking-wide.text-gray-500 WEBSITE
-                a.mt-1.inline-block.text-blue-700(href=vm.meta.homepage target="_blank" rel="noopener")= vm.meta.homepage
-
-    // ── Debug
-    if vm.descDebug && vm.descDebug.length
-      details.mt-8
-        summary.text-sm.text-gray-500 Description candidates (debug)
-        ul.mt-3.list-disc.ml-5
-          each c in vm.descDebug
-            li.text-gray-600= c
-
-    // ── Back button
-    .mt-8
-      a.inline-flex.items-center.gap-2.px-4.py-2.rounded-lg.border.text-gray-700(href=`/facet/${vm.facetBase}`)
-        span ←
-        span Back to list
+        a.inline-flex.items-center.gap-2.px-4.py-2.rounded.border(href=`/facet/${vm.facetBas

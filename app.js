@@ -42,72 +42,30 @@ const promoRouter = require("./router/promo");
 const A = (v) => Array.isArray(v) ? v.filter(Boolean) : (v ? [v] : []);
 const S = (s) => (typeof s === "string" ? s.trim() : "");
 
-// 제목 영어(ASCII) 전용 검증
-function isAsciiTitle(s) {
-  if (typeof s !== "string") return false;
-  const t = s.trim();
-  if (!t) return false;
-  // 허용: 공백 포함 ASCII 0x20~0x7E, 길이 2~120, 영문자 1개 이상 포함
-  if (!/^[ -~]{2,120}$/.test(t)) return false;
-  if (!/[A-Za-z]/.test(t)) return false;
-  return true;
+/** 제목 영어(ASCII)만 허용 */
+function titleLooksEnglish(title) {
+  if (!title) return false;
+  // U+0000 ~ U+007F 범위만 허용 (개행 제외)
+  return /^[\u0020-\u007E]+$/.test(title);
 }
 
 /* ─────────────────────────────────────────
- * 0) 파서 (라우트보다 위)
+ * 0) 파서 (반드시 라우트보다 위)
  * ───────────────────────────────────────── */
 app.use(express.urlencoded({ extended: true, limit: "2mb" }));
 app.use(express.json({ limit: "2mb" }));
 
 /* ─────────────────────────────────────────
- * 1) 세션/플래시 (⚠ 라우트보다 위)
+ * 1) Mongo 연결 및 db 주입
  * ───────────────────────────────────────── */
 const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/eventpool";
 
-app.set("trust proxy", 1);
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || "change-me",
-    resave: false,
-    saveUninitialized: false,
-    store: MongoStore.create({
-      mongoUrl: process.env.MONGO_URI || MONGO_URI,
-      ttl: 14 * 24 * 60 * 60,
-    }),
-    cookie: { httpOnly: true, sameSite: "lax", secure: false },
-  })
-);
-app.use(flash()); // ← req.flash 사용 가능해짐
-
-// 전역 locals (message/success만 소비; error는 폼 라우트가 직접 사용)
-app.use((req, res, next) => {
-  res.locals.currentPage = req.path;
-  res.locals.session = req.session;
-  res.locals.message = req.flash("message")[0];
-  res.locals.success = req.flash("success")[0];
-  res.locals.showPayment = req.flash("showPayment")[0] === "true";
-  res.locals.siteBrand = process.env.SITE_BRAND || "ESL Plus";
-  res.locals.siteBrandLink = process.env.SITE_BRAND_LINK || "/";
-  res.locals.pageTitle = res.locals.pageTitle || res.locals.siteBrand;
-  next();
-});
-
-/* ─────────────────────────────────────────
- * 2) 기타 미들웨어
- * ───────────────────────────────────────── */
-app.use(methodOverride("_method"));
-app.use(express.static(path.join(__dirname, "public")));
-app.use((req, _res, next) => { console.log(`🔹 ${req.method} ${req.url}`); next(); });
-app.use((req, res, next) => { res.set("Content-Language", "en"); res.locals.htmlLang = "en"; next(); });
-
-/* ─────────────────────────────────────────
- * 3) Mongo 연결 및 db 주입
- * ───────────────────────────────────────── */
 if (mongoose.connection.readyState === 0) {
   mongoose
     .connect(MONGO_URI, { dbName: "eventpool" })
     .catch((err) => console.error("Mongoose connect error:", err));
 }
+
 mongoose.connection.on("connected", () => {
   app.locals.db = mongoose.connection.db;
   console.log("[DB] connected and app.locals.db set");
@@ -118,180 +76,45 @@ const mailer = require("./utils/mailer");
 try { mailer.verify(); } catch (e) { console.error("SMTP verify failed at boot:", e?.message || e); }
 
 /* ─────────────────────────────────────────
- * 4) Job Vacancies — 저장(우선순위 최상단)
- *    - 제목은 ASCII(영문/숫자/기호/공백)만 허용
- *    - 설명은 sanitize-html 로 안전하게 보관
- *    - 생성 성공 시 목록(facet)으로 이동
+ * 2) 전역 빌드 마커
  * ───────────────────────────────────────── */
-const sanitizeHtml = require("sanitize-html");
-
-function isAsciiOnly(str = "") {
-  // \x20-\x7E : 사람이 쓰는 가시 문자(탭/개행 제외). 한글/이모지 등 비-ASCII 차단
-  return /^[\x20-\x7E]+$/.test(str);
-}
-function normalizeSpaces(s = "") {
-  return String(s).replace(/\s+/g, " ").trim();
-}
-function validateEnglishTitle(raw) {
-  const t = normalizeSpaces(raw || "");
-  if (!t) return { ok: false, msg: "Title is required." };
-  if (!isAsciiOnly(t)) {
-    return {
-      ok: false,
-      msg: "Title must use English letters/numbers/symbols only (ASCII).",
-    };
-  }
-  // 영문자가 1개도 없는 순수 기호/숫자만도 거르고 싶다면 주석 해제
-  // if (!/[A-Za-z]/.test(t)) { return { ok:false, msg:"Title must include at least one English letter (A–Z)." }; }
-  return { ok: true, value: t };
-}
-
-const SAFE_HTML = {
-  allowedTags: [
-    "p", "br", "ul", "ol", "li",
-    "b", "i", "strong", "em", "u",
-    "blockquote", "code", "pre",
-    "a", "span"
-  ],
-  allowedAttributes: {
-    a: ["href", "target", "rel"],
-    span: []
-  },
-  allowedSchemes: ["http", "https", "mailto"],
-  transformTags: {
-    a: sanitizeHtml.simpleTransform("a", { rel: "nofollow noopener", target: "_blank" }, true),
-  }
-};
-
-const A = (v) => Array.isArray(v) ? v.filter(Boolean) : (v ? [v] : []);
-const S = (s) => (typeof s === "string" ? s.trim() : "");
-
-function buildVacancyPayload(b = {}) {
-  // 설명은 여러 필드 중 우선값을 고른 뒤 sanitize
-  const rawDesc = S(b.description) || S(b.desc) || S(b.jobDescription);
-  const safeDesc = rawDesc ? sanitizeHtml(rawDesc, SAFE_HTML) : "";
-
-  return {
-    type: "Job_Vacancies", // CREATE에서만 의미. UPDATE에서는 제거
-    title: S(b.title), // 실제 검증은 아래 라우트에서 수행
-    country: S(b.country) || S(b?.location?.country),
-    description: safeDesc,
-
-    studentType: A(b.studentType || b["studentType[]"] || b.Student_Type || b["Student_Type[]"]),
-    teachingArea: A(b.teachingArea || b["teachingArea[]"] || b.Teaching_Area || b["Teaching_Area[]"]),
-
-    languages: A(b.languages || b.language || b["languages[]"] || b["language[]"]),
-    companyName: S(b.companyName || b.schoolName),
-    jobLocation: S(b.jobLocation || b.location || b.city),
-    pay: S(b.pay),
-    housing: S(b.housing),
-    email: S(b.email),
-    homepage: S(b.homepage || b.website),
-
-    status: S(b.status) || "published",
-    visible: b.visible !== "false",
-    updatedAt: new Date(),
-  };
-}
-
-// CREATE
-app.post("/job-vacancies", async (req, res, next) => {
-  try {
-    const db = req.app.locals.db || mongoose.connection.db;
-    if (!db) return res.status(503).send("DB not ready");
-
-    // 1) 제목 검증
-    const v = validateEnglishTitle(req.body.title);
-    if (!v.ok) {
-      // 폼 재표시 (flash 없이 서버에서 바로 렌더)
-      // new.pug에서 errors.title 표시 가능
-      const values = { ...req.body, title: S(req.body.title) };
-      return res.status(400).render("jobVacancy/new", {
-        pageTitle: "New Job Vacancy",
-        guestMode: true,
-        _countries: [], _studentTypes: [], _teachingAreas: [],
-        values,
-        errors: { title: v.msg }
-      });
-    }
-
-    // 2) 페이로드 구성(+ sanitize 된 description)
-    const payload = buildVacancyPayload(req.body);
-    payload.title = v.value;
-    payload.createdAt = new Date();
-
-    const r = await db.collection("resources").insertOne(payload);
-
-    // ✅ 생성 후 목록으로
-    return res.redirect(302, "/facet/Job_Vacancies");
-  } catch (e) {
-    console.error("[CREATE] /job-vacancies error:", e);
-    return next(e);
-  }
+const BUILD = "20250912-title-en-only";
+app.use((req, res, next) => {
+  res.set("X-ESL-Build", BUILD);
+  next();
 });
 
-// UPDATE: /job-vacancies/:id
-app.post("/job-vacancies/:id([0-9a-fA-F]{24})", async (req, res, next) => {
-  try {
-    const db = req.app.locals.db || (mongoose.connection && mongoose.connection.db);
-    if (!db) return res.status(503).send("DB not ready");
-
-    let _id;
-    try { _id = new mongoose.Types.ObjectId(req.params.id); }
-    catch { return res.status(400).send("Invalid id"); }
-
-    // 제목이 들어오면 검증(미입력인 경우는 기존 값 유지 의미로 통과)
-    let titleToSet = undefined;
-    if (typeof req.body.title !== "undefined") {
-      const v = validateEnglishTitle(req.body.title);
-      if (!v.ok) {
-        return res.status(400).send(v.msg);
-      }
-      titleToSet = v.value;
-    }
-
-    const payload = buildVacancyPayload(req.body);
-    if ("type" in payload) delete payload.type; // 충돌 방지
-    if (typeof titleToSet !== "undefined") payload.title = titleToSet;
-
-    await db.collection("resources").updateOne(
-      { _id },
-      {
-        $set: payload,
-        $setOnInsert: { createdAt: new Date(), type: "Job_Vacancies" },
-      },
-      { upsert: true }
-    );
-
-    return res.redirect(`/rdf-resource/Job_Vacancies/${_id.toString()}`);
-  } catch (e) {
-    console.error("[UPDATE] /job-vacancies/:id error:", e);
-    return next(e);
-  }
-});
+app.get(
+  ["/user/mypage", "/mypage", "/mypage-employer", "/user/mypage-employer"],
+  (_req, res) => res.redirect(302, "/job-vacancies/new")
+);
 
 /* ─────────────────────────────────────────
- * 5) 디버그 라우트
+ * 3) 디버그 라우트
  * ───────────────────────────────────────── */
 app.get("/__whoami", (req, res) => {
   res.json({
-    build: BUILD, pid: process.pid, cwd: process.cwd(),
+    build: BUILD,
+    pid: process.pid,
+    cwd: process.cwd(),
     main: (require.main && require.main.filename) || null,
-    appDir: __dirname, port_app: app.get("port"),
+    appDir: __dirname,
+    port_app: app.get("port"),
     env_PORT: process.env.PORT || null,
     env_SVR_BASE_PORT: process.env.SVR_BASE_PORT || null,
-    node: process.version, method: req.method,
+    node: process.version,
+    method: req.method,
   });
 });
-app.get("/_debug/ping", (_req, res) => res.json({ ok: true, where: "app.js override" }));
+app.get("/_debug/ping", (_req, res) => res.json({ ok: true, where: "app.js ok" }));
 app.post("/_debug/echo", (req, res) => res.json({ ok: true, body: req.body, ct: req.headers["content-type"] || null }));
 
 /* ─────────────────────────────────────────
- * 6) Job Vacancies — 저장(우선순위 최상단)
+ * 4) Job Vacancies — 저장(우선순위 최상단)
  * ───────────────────────────────────────── */
 function buildVacancyPayload(b = {}) {
   return {
-    type: "Job_Vacancies", // CREATE에서만 사용. UPDATE에서는 제거
+    type: "Job_Vacancies", // ← CREATE 에서만 실제 쓰임. UPDATE에서는 $setOnInsert로만 지정
     title: S(b.title),
     country: S(b.country) || S(b?.location?.country),
     description: S(b.description) || S(b.desc) || S(b.jobDescription),
@@ -313,58 +136,8 @@ function buildVacancyPayload(b = {}) {
   };
 }
 
-// CREATE
-app.post("/job-vacancies", async (req, res, next) => {
-  try {
-    const db = req.app.locals.db || mongoose.connection.db;
-    if (!db) return res.status(503).send("DB not ready");
-
-    // 제목 영어(ASCII) 전용 검사 (실패 시 값 보존 & 에러)
-    if (!isAsciiTitle(req.body.title || "")) {
-      req.flash("error", "Title must be English (letters/numbers/spaces), 2–120 chars.");
-      req.session.formValues = req.body || {};
-      return res.redirect(302, "/job-vacancies/new");
-    }
-
-    const payload = buildVacancyPayload(req.body);
-    payload.createdAt = new Date();
-
-    const r = await db.collection("resources").insertOne(payload);
-    return res.redirect(`/rdf-resource/Job_Vacancies/${r.insertedId}`);
-  } catch (e) {
-    console.error("[CREATE] /job-vacancies error:", e);
-    return next(e);
-  }
-});
-
-// UPDATE: /job-vacancies/:id (24자리 ObjectId만 매칭)
-app.post("/job-vacancies/:id([0-9a-fA-F]{24})", async (req, res, next) => {
-  try {
-    const db = req.app.locals.db || (mongoose.connection && mongoose.connection.db);
-    if (!db) return res.status(503).send("DB not ready");
-
-    let _id;
-    try { _id = new mongoose.Types.ObjectId(req.params.id); }
-    catch { return res.status(400).send("Invalid id"); }
-
-    const payload = buildVacancyPayload(req.body);
-    if ("type" in payload) delete payload.type; // 충돌 방지
-
-    await db.collection("resources").updateOne(
-      { _id },
-      { $set: payload, $setOnInsert: { createdAt: new Date(), type: "Job_Vacancies" } },
-      { upsert: true }
-    );
-
-    return res.redirect(`/rdf-resource/Job_Vacancies/${_id.toString()}`);
-  } catch (e) {
-    console.error("[UPDATE] /job-vacancies/:id error:", e);
-    return next(e);
-  }
-});
-
 /* ─────────────────────────────────────────
- * 7) Country 정규화 유틸
+ * 4-1) 폼 seed 로딩 + 렌더 헬퍼 (GET/POST 공용)
  * ───────────────────────────────────────── */
 const COUNTRY_CANON = new Map([
   ["KR", "Korea (South)"], ["KOREA, REPUBLIC OF (SOUTH KOREA)", "Korea (South)"], ["SOUTH KOREA", "Korea (South)"], ["REPUBLIC OF KOREA", "Korea (South)"],
@@ -395,32 +168,36 @@ function normalizeCountries(arr) {
     v = canonCountry(v);
     if (!v) continue;
     const key = v.toLowerCase();
-    if (!seen.has(key)) { seen.add(key); out.push(v); }
+    if (!seen.has(key)) {
+      seen.add(key);
+      out.push(v);
+    }
   }
   out.sort((a, b) => a.localeCompare(b));
   return out;
 }
 
-/* ─────────────────────────────────────────
- * 8) /job-vacancies/new (입력 화면)
- * ───────────────────────────────────────── */
-app.all("/job-vacancies/new", async (req, res) => {
-  res.set("X-NewVac-Handler", "hotfix-20250912");
-  if (req.method === "HEAD") return res.status(200).end();
+async function loadDict(db, name) {
+  try {
+    const exists = await db.listCollections({ name }).toArray();
+    if (!exists.length) return [];
+    const rows = await db
+      .collection(name)
+      .find({}, { projection: { _id: 0, name: 1, code: 1 } })
+      .sort({ name: 1 })
+      .limit(1000)
+      .toArray();
+    return rows
+      .map((x) => (x && (x.name || x.code) ? String(x.name || x.code) : ""))
+      .filter(Boolean);
+  } catch {
+    return [];
+  }
+}
 
+async function renderNewForm(req, res, values = {}, errors = {}) {
   const JobVacancy = require("./model/jobVacancy");
   const db = req.app.locals.db || mongoose.connection.db;
-
-  async function loadDict(name) {
-    try {
-      const exists = await db.listCollections({ name }).toArray();
-      if (!exists.length) return [];
-      const rows = await db.collection(name)
-        .find({}, { projection: { _id: 0, name: 1, code: 1 } })
-        .sort({ name: 1 }).limit(1000).toArray();
-      return rows.map((x) => (x && (x.name || x.code) ? String(x.name || x.code) : "")).filter(Boolean);
-    } catch { return []; }
-  }
 
   // 상위 국가(문자열)만 뽑기
   let top = [];
@@ -428,23 +205,35 @@ app.all("/job-vacancies/new", async (req, res) => {
     const agg = await JobVacancy.aggregate([
       { $match: { country: { $type: "string", $ne: "" } } },
       { $group: { _id: "$country", c: { $sum: 1 } } },
-      { $sort: { c: -1 } }, { $limit: 50 },
+      { $sort: { c: -1 } },
+      { $limit: 50 },
     ]);
     top = agg.map((r) => (r && r._id ? String(r._id) : "")).filter(Boolean);
-  } catch { top = []; }
+  } catch {
+    top = [];
+  }
 
   const [seedCountries, seedStudentTypes, seedAreas] = await Promise.all([
-    loadDict("countries"),
-    loadDict("student_types"),
-    loadDict("teaching_areas"),
+    loadDict(db, "countries"),
+    loadDict(db, "student_types"),
+    loadDict(db, "teaching_areas"),
   ]);
 
   let countries = normalizeCountries([
-    ...seedCountries, ...top,
-    "Korea (South)", "United States", "Japan", "United Kingdom", "Canada", "Australia",
+    ...seedCountries,
+    ...top,
+    "Korea (South)",
+    "United States",
+    "Japan",
+    "United Kingdom",
+    "Canada",
+    "Australia",
   ]);
   if (!countries.length) {
-    countries = ["Korea (South)","United States","Japan","United Kingdom","Canada","Australia","Taiwan","Singapore","Thailand","Vietnam"];
+    countries = [
+      "Korea (South)", "United States", "Japan", "United Kingdom",
+      "Canada", "Australia", "Taiwan", "Singapore", "Thailand", "Vietnam",
+    ];
   }
 
   const studentTypes = (seedStudentTypes.length
@@ -457,75 +246,196 @@ app.all("/job-vacancies/new", async (req, res) => {
     : ["ESL","Conversation","Test Prep","Science","STEM","Math","Coding","English"]
   ).map(String);
 
-  console.log("[/job-vacancies/new] seeds=%d top=%d final=%d",
-    seedCountries.length, top.length, countries.length);
-
-  // 이전 제출값 복구 + 에러 메시지(제목 규칙 실패 등)
-  const flashedError = req.flash("error")[0] || null;
-  const savedValues = req.session.formValues || {};
-  delete req.session.formValues;
-
   return res.render("jobVacancy/new", {
     pageTitle: "New Job Vacancy",
     guestMode: true,
     _countries: countries,
     _studentTypes: studentTypes,
     _teachingAreas: teachingAreas,
-    values: savedValues || {},
-    errors: flashedError ? { title: flashedError } : {},
+    values: values || {},
+    errors: errors || {},
   });
-});
+}
 
 /* ─────────────────────────────────────────
- * 9) 게스트 레거시 저장
+ * CREATE (서버 측 검증 포함)
  * ───────────────────────────────────────── */
-app.post(["/job-vacancies/legacy", "/job-vacancies/create-legacy"], async (req, res, next) => {
+async function createOrInsert(req, res, next) {
   try {
-    const title = (req.body.title || "").trim();
-    const country = canonCountry(req.body.country || "");
-    const email = (req.body.email || "").trim().toLowerCase();
-    const now = new Date();
-    const JobVacancy = require("./model/jobVacancy");
+    const db = req.app.locals.db || mongoose.connection.db;
+    if (!db) return res.status(503).send("DB not ready");
 
-    const baseDoc = {
-      title, country: country || null, email: email || null,
-      status: "published", isPublished: true, approved: true, isActive: true, visible: true,
-      publishedAt: now, date: now, user: null,
-      createdBy: { type: "guest", at: now, email: email || null },
-      createdAt: now, updatedAt: now,
-    };
+    const payload = buildVacancyPayload(req.body);
 
-    const saved = await new JobVacancy(baseDoc).save();
-    console.log("[legacy vacancy] saved:", saved._id.toString(), baseDoc.title);
-    return res.redirect(302, "/facet/Job_Vacancies");
+    // 서버측 유효성 검사: 제목 영어(ASCII)만
+    const errors = {};
+    if (!payload.title) {
+      errors.title = "Title is required.";
+    } else if (!titleLooksEnglish(payload.title)) {
+      errors.title = "Title must be English (ASCII only).";
+    }
+
+    if (Object.keys(errors).length) {
+      return renderNewForm(req, res, req.body, errors);
+    }
+
+    payload.createdAt = new Date();
+    const r = await db.collection("resources").insertOne(payload);
+    return res.redirect(`/rdf-resource/Job_Vacancies/${r.insertedId}`);
   } catch (e) {
-    console.error("[legacy vacancy] error:", e);
+    console.error("[CREATE] /job-vacancies error:", e);
+    return next(e);
+  }
+}
+
+// 두 경로 모두 허용 (기존 폼 호환)
+app.post("/job-vacancies", createOrInsert);
+app.post("/job-vacancies/create", createOrInsert);
+
+/* ─────────────────────────────────────────
+ * UPDATE: /job-vacancies/:id (24자리 ObjectId만 매칭)
+ *  - 제목 영어(ASCII) 검증 포함
+ * ───────────────────────────────────────── */
+app.post("/job-vacancies/:id([0-9a-fA-F]{24})", async (req, res, next) => {
+  try {
+    const db = req.app.locals.db || (mongoose.connection && mongoose.connection.db);
+    if (!db) return res.status(503).send("DB not ready");
+
+    let _id;
+    try {
+      _id = new mongoose.Types.ObjectId(req.params.id);
+    } catch {
+      return res.status(400).send("Invalid id");
+    }
+
+    const payload = buildVacancyPayload(req.body);
+
+    // 제목 영어(ASCII) 검증 (제목을 수정하려는 경우만 체크)
+    if (payload.title && !titleLooksEnglish(payload.title)) {
+      // 에디트 폼이 별도 없으므로 상세 페이지로 에러 플래시 후 리다이렉트
+      req.flash("error", "Title must be English (ASCII only).");
+      return res.redirect(`/rdf-resource/Job_Vacancies/${_id.toString()}`);
+    }
+
+    if ("type" in payload) delete payload.type; // 업데이트에서 type 충돌 방지
+
+    await db.collection("resources").updateOne(
+      { _id },
+      {
+        $set: payload,
+        $setOnInsert: { createdAt: new Date(), type: "Job_Vacancies" },
+      },
+      { upsert: true }
+    );
+
+    return res.redirect(`/rdf-resource/Job_Vacancies/${_id.toString()}`);
+  } catch (e) {
+    console.error("[UPDATE] /job-vacancies/:id error:", e);
     return next(e);
   }
 });
 
 /* ─────────────────────────────────────────
- * 10) free-now 전역 값
+ * 6) /job-vacancies/new (입력 화면)
  * ───────────────────────────────────────── */
-app.use((req, res, next) => {
-  res.locals.freeNow = isFreeWindowOpen();
-  res.locals.freeUntilStr = FREE_UNTIL ? FREE_UNTIL.toISOString().slice(0, 10) : null;
-  next();
+app.all("/job-vacancies/new", async (req, res) => {
+  res.set("X-NewVac-Handler", "title-en-only");
+  if (req.method === "HEAD") return res.status(200).end();
+  console.log("[/job-vacancies/new] page render");
+  return renderNewForm(req, res, {}, {});
 });
 
 /* ─────────────────────────────────────────
- * 11) 홈 스피너 API (기존 유지)
+ * 8) 앱 설정/미들웨어
+ * ───────────────────────────────────────── */
+app.set("views", path.join(__dirname, "views"));
+app.set("view engine", "pug");
+app.set("port", process.env.SVR_BASE_PORT || process.env.PORT || 8608);
+app.set("view cache", false);
+
+app.use(methodOverride("_method"));
+app.use(express.static(path.join(__dirname, "public")));
+
+app.use((req, _res, next) => {
+  console.log(`🔹 ${req.method} ${req.url}`);
+  next();
+});
+app.use((req, res, next) => {
+  res.set("Content-Language", "en");
+  res.locals.htmlLang = "en";
+  next();
+});
+
+app.set("trust proxy", 1);
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "change-me",
+    resave: false,
+    saveUninitialized: false,
+    store: MongoStore.create({
+      mongoUrl: process.env.MONGO_URI || MONGO_URI,
+      ttl: 14 * 24 * 60 * 60,
+    }),
+    cookie: { httpOnly: true, sameSite: "lax", secure: false },
+  })
+);
+
+app.use(flash());
+app.use((req, res, next) => {
+  res.locals.currentPage = req.path;
+  res.locals.session = req.session;
+  res.locals.message = req.flash("message")[0];
+  res.locals.success = req.flash("success")[0];
+  res.locals.error = req.flash("error")[0];
+  res.locals.showPayment = req.flash("showPayment")[0] === "true";
+  res.locals.siteBrand = process.env.SITE_BRAND || "ESL Plus";
+  res.locals.siteBrandLink = process.env.SITE_BRAND_LINK || "/";
+  res.locals.pageTitle = res.locals.pageTitle || res.locals.siteBrand;
+  next();
+});
+
+// Shortcuts
+app.get("/login", (_req, res) => res.redirect("/user/login"));
+
+/* Guard: /job-vacancies* 는 게스트 허용 */
+app.use((req, res, next) => {
+  const isAuth = !!(req.session && (req.session.userId || (req.session.user && req.session.user._id)));
+  const p = req.path;
+
+  const bypassPrefixes = [
+    "/user/register","/user/login","/user/logout",
+    "/promo","/api","/assets","/public","/favicon.ico","/robots.txt",
+    "/sitemap","/search","/intro","/data","/preview","/pay","/policy",
+    "/job-vacancies"
+  ];
+  if (bypassPrefixes.some((x) => p === x || p.startsWith(x))) return next();
+
+  const protectedPrefixes = ["/user/mypage","/resume-access","/tutor-access","/billing","/checkout","/paypal","/thread","/admin"];
+  if (!isAuth && protectedPrefixes.some((x) => p.startsWith(x))) {
+    const promo = req.query.promo || "yearend2025";
+    const prefRole = req.query.prefRole || "Employer";
+    const qs = new URLSearchParams({ promo, prefRole }).toString();
+    return res.redirect(`/user/register?${qs}`);
+  }
+  return next();
+});
+
+/* ─────────────────────────────────────────
+ * 9) 홈 스피너 API
  * ───────────────────────────────────────── */
 app.get("/api/home/stats", async (_req, res) => {
   const db = app.locals.db || mongoose.connection.db;
   const out = { Job_Vacancies: 0, Job_Seekers: 0, Online_Tutors: 0 };
+
   try {
     const types = ["Job_Vacancies", "Job_Seekers", "Online_Tutors"];
     const agg = await db.collection("resources").aggregate([
       { $match: { type: { $in: types } } },
       { $group: { _id: "$type", c: { $sum: 1 } } },
     ]).toArray();
+
     for (const row of agg) out[row._id] = row.c || 0;
+
     res.set("X-Home-Stats-Source", "mirror:resources");
     res.set("Cache-Control", "no-store");
     return res.json({ ...out, vCount: out.Job_Vacancies, sCount: out.Job_Seekers, tCount: out.Online_Tutors });
@@ -533,12 +443,15 @@ app.get("/api/home/stats", async (_req, res) => {
     try {
       const infos = await db.listCollections().toArray();
       const getName = (re) => (infos.find((ci) => re.test(ci.name)) || {}).name;
+
       const mainJV = getName(/job.?vacanc/i);
       const mainJS = getName(/job.?seek/i);
       const mainOT = getName(/online.?tutor/i);
+
       if (mainJV) out.Job_Vacancies = await db.collection(mainJV).countDocuments({});
       if (mainJS) out.Job_Seekers = await db.collection(mainJS).countDocuments({});
       if (mainOT) out.Online_Tutors = await db.collection(mainOT).countDocuments({});
+
       res.set("X-Home-Stats-Source", "fallback:legacy-collections");
       res.set("Cache-Control", "no-store");
       return res.json({ ...out, vCount: out.Job_Vacancies, sCount: out.Job_Seekers, tCount: out.Online_Tutors });
@@ -551,7 +464,35 @@ app.get("/api/home/stats", async (_req, res) => {
 });
 
 /* ─────────────────────────────────────────
- * 12) 라우터 마운트
+ * 10) 디버그/프리뷰 (db 안전 참조)
+ * ───────────────────────────────────────── */
+app.get("/_debug/facet/job_vacancies", async (_req, res) => {
+  try {
+    const col = (app.locals.db || mongoose.connection.db).collection("Job_Vacancies");
+    const docs = await col.find({})
+      .project({ title: 1, country: 1, date: 1, updatedAt: 1 })
+      .sort({ updatedAt: -1 })
+      .limit(50).toArray();
+    res.json({ ok: true, count: docs.length, docs });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: String(e?.message || e) });
+  }
+});
+app.get("/_debug/facet/resources", async (_req, res) => {
+  try {
+    const col = (app.locals.db || mongoose.connection.db).collection("resources");
+    const docs = await col.find({ type: "Job_Vacancies" })
+      .project({ title: 1, country: 1, date: 1, updatedAt: 1, type: 1 })
+      .sort({ updatedAt: -1 })
+      .limit(50).toArray();
+    res.json({ ok: true, count: docs.length, docs });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: String(e?.message || e) });
+  }
+});
+
+/* ─────────────────────────────────────────
+ * 11) 라우터 마운트
  * ───────────────────────────────────────── */
 app.use("/resource", resourceRouter);
 app.use("/rdf-resource", rdfResourceRouter);
@@ -582,9 +523,12 @@ app.use("/", homeRouter);
 app.use("/preview", previewRoutes);
 
 app.use("/pay/portone", require("./router/portone"));
+
 app.use("/promo", promoRouter);
 
-app.get("/billing/credits", requireLogin, (_req, res) => res.redirect(302, "/paypal/checkout"));
+app.get("/billing/credits", requireLogin, (_req, res) => {
+  return res.redirect(302, "/paypal/checkout");
+});
 
 /* 404 */
 app.use((req, res) => {
@@ -601,11 +545,6 @@ app.use((err, req, res, next) => {
 });
 
 /* Start */
-app.set("views", path.join(__dirname, "views"));
-app.set("view engine", "pug");
-app.set("port", process.env.SVR_BASE_PORT || process.env.PORT || 8608);
-app.set("view cache", false);
-
 app.listen(app.get("port"), () => {
   console.log(`✅ Listening on port ${app.get("port")}`);
 });
