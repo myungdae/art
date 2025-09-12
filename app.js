@@ -11,7 +11,7 @@ const flash = require("connect-flash");
 const methodOverride = require("method-override");
 const mongoose = require("mongoose");
 
-const connect = require("./model"); // (기존 연결 유틸 사용해도 무방)
+const connect = require("./model");
 const app = express();
 
 const { requireLogin } = require("./middleware/auth");
@@ -42,23 +42,72 @@ const promoRouter = require("./router/promo");
 const A = (v) => Array.isArray(v) ? v.filter(Boolean) : (v ? [v] : []);
 const S = (s) => (typeof s === "string" ? s.trim() : "");
 
+// 제목 영어(ASCII) 전용 검증
+function isAsciiTitle(s) {
+  if (typeof s !== "string") return false;
+  const t = s.trim();
+  if (!t) return false;
+  // 허용: 공백 포함 ASCII 0x20~0x7E, 길이 2~120, 영문자 1개 이상 포함
+  if (!/^[ -~]{2,120}$/.test(t)) return false;
+  if (!/[A-Za-z]/.test(t)) return false;
+  return true;
+}
+
 /* ─────────────────────────────────────────
- * 0) 파서 (반드시 라우트보다 위)
+ * 0) 파서 (라우트보다 위)
  * ───────────────────────────────────────── */
 app.use(express.urlencoded({ extended: true, limit: "2mb" }));
 app.use(express.json({ limit: "2mb" }));
 
 /* ─────────────────────────────────────────
- * 1) Mongo 연결 및 db 주입
+ * 1) 세션/플래시 (⚠ 라우트보다 위)
  * ───────────────────────────────────────── */
 const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/eventpool";
 
+app.set("trust proxy", 1);
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "change-me",
+    resave: false,
+    saveUninitialized: false,
+    store: MongoStore.create({
+      mongoUrl: process.env.MONGO_URI || MONGO_URI,
+      ttl: 14 * 24 * 60 * 60,
+    }),
+    cookie: { httpOnly: true, sameSite: "lax", secure: false },
+  })
+);
+app.use(flash()); // ← req.flash 사용 가능해짐
+
+// 전역 locals (message/success만 소비; error는 폼 라우트가 직접 사용)
+app.use((req, res, next) => {
+  res.locals.currentPage = req.path;
+  res.locals.session = req.session;
+  res.locals.message = req.flash("message")[0];
+  res.locals.success = req.flash("success")[0];
+  res.locals.showPayment = req.flash("showPayment")[0] === "true";
+  res.locals.siteBrand = process.env.SITE_BRAND || "ESL Plus";
+  res.locals.siteBrandLink = process.env.SITE_BRAND_LINK || "/";
+  res.locals.pageTitle = res.locals.pageTitle || res.locals.siteBrand;
+  next();
+});
+
+/* ─────────────────────────────────────────
+ * 2) 기타 미들웨어
+ * ───────────────────────────────────────── */
+app.use(methodOverride("_method"));
+app.use(express.static(path.join(__dirname, "public")));
+app.use((req, _res, next) => { console.log(`🔹 ${req.method} ${req.url}`); next(); });
+app.use((req, res, next) => { res.set("Content-Language", "en"); res.locals.htmlLang = "en"; next(); });
+
+/* ─────────────────────────────────────────
+ * 3) Mongo 연결 및 db 주입
+ * ───────────────────────────────────────── */
 if (mongoose.connection.readyState === 0) {
   mongoose
     .connect(MONGO_URI, { dbName: "eventpool" })
     .catch((err) => console.error("Mongoose connect error:", err));
 }
-
 mongoose.connection.on("connected", () => {
   app.locals.db = mongoose.connection.db;
   console.log("[DB] connected and app.locals.db set");
@@ -69,51 +118,38 @@ const mailer = require("./utils/mailer");
 try { mailer.verify(); } catch (e) { console.error("SMTP verify failed at boot:", e?.message || e); }
 
 /* ─────────────────────────────────────────
- * 2) 전역 빌드 마커
+ * 4) 전역 빌드 마커 & 리다이렉트
  * ───────────────────────────────────────── */
-const BUILD = "20250912-redirect-to-facet";
-app.use((req, res, next) => {
-  res.set("X-ESL-Build", BUILD);
-  next();
-});
+const BUILD = "20250912-semantic-fix-flash";
+app.use((req, res, next) => { res.set("X-ESL-Build", BUILD); next(); });
 
 app.get(
-  [
-    "/user/mypage",
-    "/mypage",
-    "/mypage-employer",
-    "/user/mypage-employer",
-  ],
+  ["/user/mypage", "/mypage", "/mypage-employer", "/user/mypage-employer"],
   (_req, res) => res.redirect(302, "/job-vacancies/new")
 );
 
 /* ─────────────────────────────────────────
- * 3) 디버그 라우트
+ * 5) 디버그 라우트
  * ───────────────────────────────────────── */
 app.get("/__whoami", (req, res) => {
   res.json({
-    build: BUILD,
-    pid: process.pid,
-    cwd: process.cwd(),
+    build: BUILD, pid: process.pid, cwd: process.cwd(),
     main: (require.main && require.main.filename) || null,
-    appDir: __dirname,
-    port_app: app.get("port"),
+    appDir: __dirname, port_app: app.get("port"),
     env_PORT: process.env.PORT || null,
     env_SVR_BASE_PORT: process.env.SVR_BASE_PORT || null,
-    node: process.version,
-    method: req.method,
+    node: process.version, method: req.method,
   });
 });
 app.get("/_debug/ping", (_req, res) => res.json({ ok: true, where: "app.js override" }));
 app.post("/_debug/echo", (req, res) => res.json({ ok: true, body: req.body, ct: req.headers["content-type"] || null }));
 
 /* ─────────────────────────────────────────
- * 4) Job Vacancies — 저장(우선순위 최상단)
- *    ✅ 생성/수정 성공 시 항상 /facet/Job_Vacancies 로 303 리다이렉트
+ * 6) Job Vacancies — 저장(우선순위 최상단)
  * ───────────────────────────────────────── */
 function buildVacancyPayload(b = {}) {
   return {
-    type: "Job_Vacancies", // CREATE 기본값(UPDATE에서는 제거)
+    type: "Job_Vacancies", // CREATE에서만 사용. UPDATE에서는 제거
     title: S(b.title),
     country: S(b.country) || S(b?.location?.country),
     description: S(b.description) || S(b.desc) || S(b.jobDescription),
@@ -135,20 +171,24 @@ function buildVacancyPayload(b = {}) {
   };
 }
 
-// CREATE: /job-vacancies  와  /job-vacancies/create  둘 다 받음
-app.post(["/job-vacancies", "/job-vacancies/create"], async (req, res, next) => {
+// CREATE
+app.post("/job-vacancies", async (req, res, next) => {
   try {
     const db = req.app.locals.db || mongoose.connection.db;
     if (!db) return res.status(503).send("DB not ready");
+
+    // 제목 영어(ASCII) 전용 검사 (실패 시 값 보존 & 에러)
+    if (!isAsciiTitle(req.body.title || "")) {
+      req.flash("error", "Title must be English (letters/numbers/spaces), 2–120 chars.");
+      req.session.formValues = req.body || {};
+      return res.redirect(302, "/job-vacancies/new");
+    }
 
     const payload = buildVacancyPayload(req.body);
     payload.createdAt = new Date();
 
     const r = await db.collection("resources").insertOne(payload);
-
-    // 목록으로 이동 (절대경로, 303 See Other)
-    res.set("X-Post-Redirect", "/facet/Job_Vacancies");
-    return res.redirect(303, "/facet/Job_Vacancies");
+    return res.redirect(`/rdf-resource/Job_Vacancies/${r.insertedId}`);
   } catch (e) {
     console.error("[CREATE] /job-vacancies error:", e);
     return next(e);
@@ -156,33 +196,25 @@ app.post(["/job-vacancies", "/job-vacancies/create"], async (req, res, next) => 
 });
 
 // UPDATE: /job-vacancies/:id (24자리 ObjectId만 매칭)
-//        완료 후에도 목록으로 이동
 app.post("/job-vacancies/:id([0-9a-fA-F]{24})", async (req, res, next) => {
   try {
     const db = req.app.locals.db || (mongoose.connection && mongoose.connection.db);
     if (!db) return res.status(503).send("DB not ready");
 
     let _id;
-    try {
-      _id = new mongoose.Types.ObjectId(req.params.id);
-    } catch {
-      return res.status(400).send("Invalid id");
-    }
+    try { _id = new mongoose.Types.ObjectId(req.params.id); }
+    catch { return res.status(400).send("Invalid id"); }
 
     const payload = buildVacancyPayload(req.body);
-    if ("type" in payload) delete payload.type; // 업데이트 시 type 충돌 방지
+    if ("type" in payload) delete payload.type; // 충돌 방지
 
     await db.collection("resources").updateOne(
       { _id },
-      {
-        $set: payload,
-        $setOnInsert: { createdAt: new Date(), type: "Job_Vacancies" },
-      },
+      { $set: payload, $setOnInsert: { createdAt: new Date(), type: "Job_Vacancies" } },
       { upsert: true }
     );
 
-    res.set("X-Post-Redirect", "/facet/Job_Vacancies");
-    return res.redirect(303, "/facet/Job_Vacancies");
+    return res.redirect(`/rdf-resource/Job_Vacancies/${_id.toString()}`);
   } catch (e) {
     console.error("[UPDATE] /job-vacancies/:id error:", e);
     return next(e);
@@ -190,7 +222,7 @@ app.post("/job-vacancies/:id([0-9a-fA-F]{24})", async (req, res, next) => {
 });
 
 /* ─────────────────────────────────────────
- * 5) Country 정규화 유틸 (기존 유지)
+ * 7) Country 정규화 유틸
  * ───────────────────────────────────────── */
 const COUNTRY_CANON = new Map([
   ["KR", "Korea (South)"], ["KOREA, REPUBLIC OF (SOUTH KOREA)", "Korea (South)"], ["SOUTH KOREA", "Korea (South)"], ["REPUBLIC OF KOREA", "Korea (South)"],
@@ -221,17 +253,14 @@ function normalizeCountries(arr) {
     v = canonCountry(v);
     if (!v) continue;
     const key = v.toLowerCase();
-    if (!seen.has(key)) {
-      seen.add(key);
-      out.push(v);
-    }
+    if (!seen.has(key)) { seen.add(key); out.push(v); }
   }
   out.sort((a, b) => a.localeCompare(b));
   return out;
 }
 
 /* ─────────────────────────────────────────
- * 6) /job-vacancies/new (입력 화면)
+ * 8) /job-vacancies/new (입력 화면)
  * ───────────────────────────────────────── */
 app.all("/job-vacancies/new", async (req, res) => {
   res.set("X-NewVac-Handler", "hotfix-20250912");
@@ -244,18 +273,11 @@ app.all("/job-vacancies/new", async (req, res) => {
     try {
       const exists = await db.listCollections({ name }).toArray();
       if (!exists.length) return [];
-      const rows = await db
-        .collection(name)
+      const rows = await db.collection(name)
         .find({}, { projection: { _id: 0, name: 1, code: 1 } })
-        .sort({ name: 1 })
-        .limit(1000)
-        .toArray();
-      return rows
-        .map((x) => (x && (x.name || x.code) ? String(x.name || x.code) : ""))
-        .filter(Boolean);
-    } catch {
-      return [];
-    }
+        .sort({ name: 1 }).limit(1000).toArray();
+      return rows.map((x) => (x && (x.name || x.code) ? String(x.name || x.code) : "")).filter(Boolean);
+    } catch { return []; }
   }
 
   // 상위 국가(문자열)만 뽑기
@@ -264,13 +286,10 @@ app.all("/job-vacancies/new", async (req, res) => {
     const agg = await JobVacancy.aggregate([
       { $match: { country: { $type: "string", $ne: "" } } },
       { $group: { _id: "$country", c: { $sum: 1 } } },
-      { $sort: { c: -1 } },
-      { $limit: 50 },
+      { $sort: { c: -1 } }, { $limit: 50 },
     ]);
     top = agg.map((r) => (r && r._id ? String(r._id) : "")).filter(Boolean);
-  } catch {
-    top = [];
-  }
+  } catch { top = []; }
 
   const [seedCountries, seedStudentTypes, seedAreas] = await Promise.all([
     loadDict("countries"),
@@ -279,20 +298,11 @@ app.all("/job-vacancies/new", async (req, res) => {
   ]);
 
   let countries = normalizeCountries([
-    ...seedCountries,
-    ...top,
-    "Korea (South)",
-    "United States",
-    "Japan",
-    "United Kingdom",
-    "Canada",
-    "Australia",
+    ...seedCountries, ...top,
+    "Korea (South)", "United States", "Japan", "United Kingdom", "Canada", "Australia",
   ]);
   if (!countries.length) {
-    countries = [
-      "Korea (South)", "United States", "Japan", "United Kingdom",
-      "Canada", "Australia", "Taiwan", "Singapore", "Thailand", "Vietnam",
-    ];
+    countries = ["Korea (South)","United States","Japan","United Kingdom","Canada","Australia","Taiwan","Singapore","Thailand","Vietnam"];
   }
 
   const studentTypes = (seedStudentTypes.length
@@ -308,158 +318,72 @@ app.all("/job-vacancies/new", async (req, res) => {
   console.log("[/job-vacancies/new] seeds=%d top=%d final=%d",
     seedCountries.length, top.length, countries.length);
 
+  // 이전 제출값 복구 + 에러 메시지(제목 규칙 실패 등)
+  const flashedError = req.flash("error")[0] || null;
+  const savedValues = req.session.formValues || {};
+  delete req.session.formValues;
+
   return res.render("jobVacancy/new", {
     pageTitle: "New Job Vacancy",
     guestMode: true,
     _countries: countries,
     _studentTypes: studentTypes,
     _teachingAreas: teachingAreas,
-    values: {},
-    errors: {},
+    values: savedValues || {},
+    errors: flashedError ? { title: flashedError } : {},
   });
 });
 
 /* ─────────────────────────────────────────
- * 7) 레거시 게스트 저장 (여기도 목록으로 리다이렉트)
+ * 9) 게스트 레거시 저장
  * ───────────────────────────────────────── */
-app.post(
-  ["/job-vacancies/legacy", "/job-vacancies/create-legacy"],
-  async (req, res, next) => {
-    try {
-      const title = (req.body.title || "").trim();
-      const country = canonCountry(req.body.country || "");
-      const email = (req.body.email || "").trim().toLowerCase();
-      const now = new Date();
+app.post(["/job-vacancies/legacy", "/job-vacancies/create-legacy"], async (req, res, next) => {
+  try {
+    const title = (req.body.title || "").trim();
+    const country = canonCountry(req.body.country || "");
+    const email = (req.body.email || "").trim().toLowerCase();
+    const now = new Date();
+    const JobVacancy = require("./model/jobVacancy");
 
-      const JobVacancy = require("./model/jobVacancy");
+    const baseDoc = {
+      title, country: country || null, email: email || null,
+      status: "published", isPublished: true, approved: true, isActive: true, visible: true,
+      publishedAt: now, date: now, user: null,
+      createdBy: { type: "guest", at: now, email: email || null },
+      createdAt: now, updatedAt: now,
+    };
 
-      const baseDoc = {
-        title,
-        country: country || null,
-        email: email || null,
-        status: "published",
-        isPublished: true,
-        approved: true,
-        isActive: true,
-        visible: true,
-        publishedAt: now,
-        date: now,
-        user: null,
-        createdBy: { type: "guest", at: now, email: email || null },
-        createdAt: now,
-        updatedAt: now,
-      };
-
-      const saved = await new JobVacancy(baseDoc).save();
-      console.log("[legacy vacancy] saved:", saved._id.toString(), baseDoc.title);
-
-      return res.redirect(303, "/facet/Job_Vacancies");
-    } catch (e) {
-      console.error("[legacy vacancy] error:", e);
-      return next(e);
-    }
+    const saved = await new JobVacancy(baseDoc).save();
+    console.log("[legacy vacancy] saved:", saved._id.toString(), baseDoc.title);
+    return res.redirect(302, "/facet/Job_Vacancies");
+  } catch (e) {
+    console.error("[legacy vacancy] error:", e);
+    return next(e);
   }
-);
+});
 
 /* ─────────────────────────────────────────
- * 8) 앱 설정/미들웨어
+ * 10) free-now 전역 값
  * ───────────────────────────────────────── */
-app.set("views", path.join(__dirname, "views"));
-app.set("view engine", "pug");
-app.set("port", process.env.SVR_BASE_PORT || process.env.PORT || 8608);
-app.set("view cache", false);
-
-app.use(methodOverride("_method"));
-app.use(express.static(path.join(__dirname, "public")));
-
-app.use((req, _res, next) => {
-  console.log(`🔹 ${req.method} ${req.url}`);
-  next();
-});
-app.use((req, res, next) => {
-  res.set("Content-Language", "en");
-  res.locals.htmlLang = "en";
-  next();
-});
-
-app.set("trust proxy", 1);
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || "change-me",
-    resave: false,
-    saveUninitialized: false,
-    store: MongoStore.create({
-      mongoUrl: process.env.MONGO_URI || MONGO_URI,
-      ttl: 14 * 24 * 60 * 60,
-    }),
-    cookie: { httpOnly: true, sameSite: "lax", secure: false },
-  })
-);
-
-// free-now 전역 값
 app.use((req, res, next) => {
   res.locals.freeNow = isFreeWindowOpen();
   res.locals.freeUntilStr = FREE_UNTIL ? FREE_UNTIL.toISOString().slice(0, 10) : null;
   next();
 });
 
-// Flash & locals
-app.use(flash());
-app.use((req, res, next) => {
-  res.locals.currentPage = req.path;
-  res.locals.session = req.session;
-  res.locals.message = req.flash("message")[0];
-  res.locals.success = req.flash("success")[0];
-  res.locals.error = req.flash("error")[0];
-  res.locals.showPayment = req.flash("showPayment")[0] === "true";
-  res.locals.siteBrand = process.env.SITE_BRAND || "ESL Plus";
-  res.locals.siteBrandLink = process.env.SITE_BRAND_LINK || "/";
-  res.locals.pageTitle = res.locals.pageTitle || res.locals.siteBrand;
-  next();
-});
-
-// Shortcuts
-app.get("/login", (_req, res) => res.redirect("/user/login"));
-
-/* Guard: /job-vacancies* 는 게스트 허용 */
-app.use((req, res, next) => {
-  const isAuth = !!(req.session && (req.session.userId || (req.session.user && req.session.user._id)));
-  const p = req.path;
-
-  const bypassPrefixes = [
-    "/user/register","/user/login","/user/logout",
-    "/promo","/api","/assets","/public","/favicon.ico","/robots.txt",
-    "/sitemap","/search","/intro","/data","/preview","/pay","/policy",
-    "/job-vacancies"
-  ];
-  if (bypassPrefixes.some((x) => p === x || p.startsWith(x))) return next();
-
-  const protectedPrefixes = ["/user/mypage","/resume-access","/tutor-access","/billing","/checkout","/paypal","/thread","/admin"];
-  if (!isAuth && protectedPrefixes.some((x) => p.startsWith(x))) {
-    const promo = req.query.promo || "yearend2025";
-    const prefRole = req.query.prefRole || "Employer";
-    const qs = new URLSearchParams({ promo, prefRole }).toString();
-    return res.redirect(`/user/register?${qs}`);
-  }
-  return next();
-});
-
 /* ─────────────────────────────────────────
- * 9) 홈 스피너 API (생략 없이 유지)
+ * 11) 홈 스피너 API (기존 유지)
  * ───────────────────────────────────────── */
 app.get("/api/home/stats", async (_req, res) => {
   const db = app.locals.db || mongoose.connection.db;
   const out = { Job_Vacancies: 0, Job_Seekers: 0, Online_Tutors: 0 };
-
   try {
     const types = ["Job_Vacancies", "Job_Seekers", "Online_Tutors"];
     const agg = await db.collection("resources").aggregate([
       { $match: { type: { $in: types } } },
       { $group: { _id: "$type", c: { $sum: 1 } } },
     ]).toArray();
-
     for (const row of agg) out[row._id] = row.c || 0;
-
     res.set("X-Home-Stats-Source", "mirror:resources");
     res.set("Cache-Control", "no-store");
     return res.json({ ...out, vCount: out.Job_Vacancies, sCount: out.Job_Seekers, tCount: out.Online_Tutors });
@@ -467,15 +391,12 @@ app.get("/api/home/stats", async (_req, res) => {
     try {
       const infos = await db.listCollections().toArray();
       const getName = (re) => (infos.find((ci) => re.test(ci.name)) || {}).name;
-
       const mainJV = getName(/job.?vacanc/i);
       const mainJS = getName(/job.?seek/i);
       const mainOT = getName(/online.?tutor/i);
-
       if (mainJV) out.Job_Vacancies = await db.collection(mainJV).countDocuments({});
       if (mainJS) out.Job_Seekers = await db.collection(mainJS).countDocuments({});
       if (mainOT) out.Online_Tutors = await db.collection(mainOT).countDocuments({});
-
       res.set("X-Home-Stats-Source", "fallback:legacy-collections");
       res.set("Cache-Control", "no-store");
       return res.json({ ...out, vCount: out.Job_Vacancies, sCount: out.Job_Seekers, tCount: out.Online_Tutors });
@@ -488,67 +409,7 @@ app.get("/api/home/stats", async (_req, res) => {
 });
 
 /* ─────────────────────────────────────────
- * 10) 디버그/프리뷰
- * ───────────────────────────────────────── */
-app.get("/_debug/facet/job_vacancies", async (_req, res) => {
-  try {
-    const col = (app.locals.db || mongoose.connection.db).collection("Job_Vacancies");
-    const docs = await col.find({})
-      .project({ title: 1, country: 1, date: 1, updatedAt: 1 })
-      .sort({ updatedAt: -1 })
-      .limit(50).toArray();
-    res.json({ ok: true, count: docs.length, docs });
-  } catch (e) {
-    res.status(500).json({ ok: false, error: String(e?.message || e) });
-  }
-});
-app.get("/_debug/facet/resources", async (_req, res) => {
-  try {
-    const col = (app.locals.db || mongoose.connection.db).collection("resources");
-    const docs = await col.find({ type: "Job_Vacancies" })
-      .project({ title: 1, country: 1, date: 1, updatedAt: 1, type: 1 })
-      .sort({ updatedAt: -1 })
-      .limit(50).toArray();
-    res.json({ ok: true, count: docs.length, docs });
-  } catch (e) {
-    res.status(500).json({ ok: false, error: String(e?.message || e) });
-  }
-});
-app.post("/_debug/facet/rebuild", async (req, res) => {
-  try {
-    const limit = Math.max(1, Math.min(500, parseInt(req.query.limit, 10) || 50));
-    const JobVacancy = require("./model/jobVacancy");
-    const items = await JobVacancy.find({}).sort({ updatedAt: -1 }).limit(limit).lean();
-    let mirrored = 0;
-    for (const it of items) {
-      try {
-        const _id = it._id;
-        const now = new Date();
-        const base = {
-          _id,
-          title: it.title,
-          country: it.country || null,
-          date: it.publishedAt || now,
-          createdAt: now,
-          updatedAt: now,
-          status: "published",
-          visible: true,
-          type: "Job_Vacancies",
-        };
-        await (app.locals.db || mongoose.connection.db)
-          .collection("resources")
-          .updateOne({ _id }, { $set: base }, { upsert: true });
-        mirrored++;
-      } catch {}
-    }
-    res.json({ ok: true, mirrored, total: items.length });
-  } catch (e) {
-    res.status(500).json({ ok: false, error: String(e?.message || e) });
-  }
-});
-
-/* ─────────────────────────────────────────
- * 11) 라우터 마운트
+ * 12) 라우터 마운트
  * ───────────────────────────────────────── */
 app.use("/resource", resourceRouter);
 app.use("/rdf-resource", rdfResourceRouter);
@@ -579,12 +440,9 @@ app.use("/", homeRouter);
 app.use("/preview", previewRoutes);
 
 app.use("/pay/portone", require("./router/portone"));
-
 app.use("/promo", promoRouter);
 
-app.get("/billing/credits", requireLogin, (_req, res) => {
-  return res.redirect(302, "/paypal/checkout");
-});
+app.get("/billing/credits", requireLogin, (_req, res) => res.redirect(302, "/paypal/checkout"));
 
 /* 404 */
 app.use((req, res) => {
@@ -601,6 +459,11 @@ app.use((err, req, res, next) => {
 });
 
 /* Start */
+app.set("views", path.join(__dirname, "views"));
+app.set("view engine", "pug");
+app.set("port", process.env.SVR_BASE_PORT || process.env.PORT || 8608);
+app.set("view cache", false);
+
 app.listen(app.get("port"), () => {
   console.log(`✅ Listening on port ${app.get("port")}`);
 });
