@@ -2,94 +2,110 @@
 extends ../layout
 
 block content
-  main.container.mx-auto.max-w-4xl.px-4.py-6
-    // Header
-    h1.text-2xl.font-bold.mb-2= vm && vm.title ? vm.title : 'Untitled Job Vacancy'
+  .max-w-5xl.mx-auto.px-4.py-10
+    if vm
+      // Title
+      h1.text-3xl.font-semibold.text-gray-900= vm.title || 'Untitled'
 
-    if vm && vm.meta
-      .text-sm.text-gray-600.mb-4
-        if vm.meta.companyName
-          span.mr-2 #{vm.meta.companyName}
-        if vm.meta.jobLocation
-          span.mr-2 · #{vm.meta.jobLocation}
-        if vm.meta.country
-          span.mr-2 · #{vm.meta.country}
-        if vm.meta.datePosted
-          - const _d = new Date(vm.meta.datePosted);
-          span · Posted: #{isNaN(_d) ? '' : _d.toISOString().slice(0,10)}
+      // Top meta line (country · posted)
+      .mt-2.text-gray-600
+        if vm.meta && (vm.meta.country || vm.meta.datePosted)
+          - const _dateTop = vm.meta.datePosted ? new Date(vm.meta.datePosted).toISOString().slice(0,10) : null
+          if vm.meta.country
+            | #{vm.meta.country}
+          if vm.meta.country && _dateTop
+            |  · 
+          if _dateTop
+            | Posted: #{_dateTop}
 
-    // Semantic chips
-    if vm && Array.isArray(vm.semanticChips) && vm.semanticChips.length
-      .mb-4
-        each chip in vm.semanticChips
-          - const vals = Array.isArray(chip && chip.values) ? chip.values : (chip && chip.values ? [chip.values] : []);
-          each val in vals
-            a(
-              class="inline-block px-3 py-1 mr-2 mb-2 rounded-full bg-blue-100 text-blue-800 text-sm font-medium hover:bg-blue-200"
-              href=('/facet/' + (vm && vm.facetBase ? vm.facetBase : 'Job_Vacancies') + '?' + chip.key + '=' + encodeURIComponent(val))
-              title=`Filter by ${chip.key}: ${val}`
-            )= val
+      // Semantic chips
+      if vm.semanticChips && vm.semanticChips.length
+        .mt-4
+          .flex.flex-wrap.gap-2
+            each chip in vm.semanticChips
+              - const vals = Array.isArray(chip && chip.values) ? chip.values : (chip && chip.values ? [chip.values] : []);
+              each val in vals
+                a(
+                  href=`/facet/${vm.facetBase}?${chip.key}=${encodeURIComponent(val)}`
+                  title=`Filter by ${chip.key}: ${val}`
+                  class="inline-block px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-sm font-medium hover:bg-blue-200"
+                )= val
 
-    // Description
-    if vm && vm.descriptionHtml
-      .prose.max-w-none
-        .content!= vm.descriptionHtml
+      // Description
+      if vm.descriptionHtml
+        .prose.max-w-none.mt-8.text-gray-900
+          != vm.descriptionHtml
+
+      // Details card (회사/지역/국가/게시일 + 선택 필드)
+      - const hasDetails = vm.meta && (vm.meta.companyName || vm.meta.jobLocation || vm.meta.country || vm.meta.datePosted || vm.meta.email || vm.meta.pay || vm.meta.housing || vm.meta.homepage);
+      if hasDetails
+        .mt-8.rounded-xl.border.bg-white.shadow-sm
+          .p-5
+            h3.text-sm.uppercase.tracking-wide.text-gray-500.mb-3 Details
+
+            // grid (콜론 클래스는 class 속성으로)
+            .grid.grid-cols-1.gap-4(class="md:grid-cols-2")
+              if vm.meta.companyName
+                .p-3.rounded-lg.bg-gray-50
+                  div.text-xs.uppercase.tracking-wide.text-gray-500 Company
+                  div.mt-1.text-gray-900= vm.meta.companyName
+
+              if vm.meta.jobLocation
+                .p-3.rounded-lg.bg-gray-50
+                  div.text-xs.uppercase.tracking-wide.text-gray-500 Location
+                  div.mt-1.text-gray-900= vm.meta.jobLocation
+
+              if vm.meta.country
+                .p-3.rounded-lg.bg-gray-50
+                  div.text-xs.uppercase.tracking-wide.text-gray-500 Country
+                  div.mt-1.text-gray-900= vm.meta.country
+
+              if vm.meta.datePosted
+                - const _d = new Date(vm.meta.datePosted).toISOString().slice(0,10)
+                .p-3.rounded-lg.bg-gray-50
+                  div.text-xs.uppercase.tracking-wide.text-gray-500 Posted
+                  div.mt-1.text-gray-900= _d
+
+              if vm.meta.email
+                .p-3.rounded-lg.bg-gray-50
+                  div.text-xs.uppercase.tracking-wide.text-gray-500 Email
+                  a(
+                    href=`mailto:${vm.meta.email}`
+                    class="mt-1 inline-block text-blue-700 hover:underline"
+                  )= vm.meta.email
+
+              if vm.meta.pay
+                .p-3.rounded-lg.bg-gray-50
+                  div.text-xs.uppercase.tracking-wide.text-gray-500 Pay
+                  div.mt-1.text-gray-900= vm.meta.pay
+
+              if vm.meta.housing
+                .p-3.rounded-lg.bg-gray-50
+                  div.text-xs.uppercase.tracking-wide.text-gray-500 Housing
+                  div.mt-1.text-gray-900= vm.meta.housing
+
+              if vm.meta.homepage
+                .p-3.rounded-lg.bg-gray-50(class="md:col-span-2")
+                  div.text-xs.uppercase.tracking-wide.text-gray-500 Website
+                  a(
+                    target="_blank" rel="noopener" href=vm.meta.homepage
+                    class="mt-1 block text-blue-700 truncate hover:underline"
+                  )= vm.meta.homepage
+
+      // Debug: description candidates
+      if vm.descDebug && vm.descDebug.length
+        details.mt-8
+          summary.text-sm.text-gray-500 Description candidates (debug)
+          ul.mt-2.text-xs.text-gray-600.list-disc.pl-6
+            each cand in vm.descDebug
+              li= cand
+
+      // Back
+      .mt-10
+        a(
+          href=`/facet/${vm.facetBase}`
+          class="inline-flex items-center gap-2 px-4 py-2 rounded-md border hover:bg-gray-50"
+        )
+          span ← Back to list
     else
-      p.text-gray-500.italic No description provided.
-
-    // Core meta
-    if vm && vm.meta
-      div(class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6")
-        if vm.meta.pay
-          .p-4.rounded-lg.border
-            div.text-xs.uppercase.tracking-wide.text-gray-500 Pay
-            div.mt-1.font-medium= vm.meta.pay
-        if vm.meta.housing
-          .p-4.rounded-lg.border
-            div.text-xs.uppercase.tracking-wide.text-gray-500 Housing
-            div.mt-1.font-medium= vm.meta.housing
-        if vm.meta.email
-          .p-4.rounded-lg.border
-            div.text-xs.uppercase.tracking-wide.text-gray-500 Contact
-            div.mt-1
-              a(
-                class="text-blue-700 underline hover:text-blue-900"
-                href=`mailto:${vm.meta.email}`
-              )= vm.meta.email
-        if vm.meta.homepage
-          .p-4.rounded-lg.border
-            div.text-xs.uppercase.tracking-wide.text-gray-500 Website
-            div.mt-1
-              a(
-                class="text-blue-700 underline hover:text-blue-900 break-all"
-                href=vm.meta.homepage
-                rel="noopener"
-                target="_blank"
-              )= vm.meta.homepage
-
-    // Extras
-    if vm && Array.isArray(vm.extras) && vm.extras.length
-      h2.text-xl.font-semibold.mt-8.mb-3 Additional Information
-      dl.divide-y.divide-gray-200.border.rounded-lg
-        each item in vm.extras
-          .px-4.py-3.grid.grid-cols-3.gap-3
-            dt.col-span-1.text-sm.text-gray-600= item.label
-            dd.col-span-2.font-medium= item.value
-
-    // Debug (optional)
-    if vm && Array.isArray(vm.descDebug) && vm.descDebug.length
-      details.mt-6
-        summary.cursor-pointer.text-sm.text-gray-600 Description candidates (debug)
-        ul.list-disc.pl-6.mt-2
-          each c in vm.descDebug
-            li.text-sm= c
-
-    // Back to list — 강제 절대경로 (Form GET)
-    - const facetBase = (vm && vm.facetBase) ? vm.facetBase : 'Job_Vacancies'
-    - const backHref  = '/facet/' + facetBase
-    form(action=backHref method="get" class="mt-8")
-      button(
-        type="submit"
-        class="inline-flex items-center px-4 py-2 rounded-md border text-blue-700 hover:bg-gray-50"
-        aria-label="Back to list"
-      ) ← Back to list
+      .text-center.py-16.text-gray-500 Not found

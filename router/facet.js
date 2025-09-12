@@ -16,23 +16,6 @@ const coalesce = (...fields) => {
   return fields.reduceRight((acc, cur) => ({ $ifNull: [cur, acc] }));
 };
 
-// 정렬/키 통합 유틸
-const keyStr = (v) => {
-  if (v == null) return "";
-  if (typeof v === "string") return v;
-  if (typeof v === "number" || typeof v === "boolean") return String(v);
-  // 객체일 경우 name/code/_id 등을 우선 사용
-  if (typeof v === "object") {
-    if (v.name) return String(v.name);
-    if (v.code) return String(v.code);
-    if (v._id) return keyStr(v._id);
-  }
-  try { return String(v); } catch { return ""; }
-};
-const safeSortByCountThenKey = (a, b) =>
-  (Number(b.c || 0) - Number(a.c || 0)) ||
-  keyStr(a._id).localeCompare(keyStr(b._id));
-
 /* -------------------- 클래스별 패싯 설정 -------------------- */
 const FACET_MAP = {
   Job_Vacancies: {
@@ -42,6 +25,7 @@ const FACET_MAP = {
       { key: "teachingArea", aliases: ["Teaching_Area"], label: "Teaching Area", array: true },
     ],
     searchFields: ["_label", "title", "_description", "description"],
+    coll: (klass) => `${klass}_RDF`,
   },
   Job_Seekers: {
     groups: [
@@ -80,20 +64,15 @@ const DICT_MAP = {
   },
 };
 
-/*  집계 결과 + 사전 컬렉션 병합 (정렬 안전화) */
+/*  집계 결과 + 사전 컬렉션 병합 */
 async function buildFacetsWithSeeds(db, klass, groups, aggObj, hideZero) {
   const out = {};
   for (const g of groups) {
     const byName = `by_${g.key}`;
-
-    // 라이브 결과를 먼저 문자열 키로 정규화
-    const liveRaw = ((aggObj && aggObj[byName]) || []).filter((x) => x && x._id);
-    const live = liveRaw.map((x) => ({ _id: keyStr(x._id), c: Number(x.c || 0) }));
-
+    const live = ((aggObj && aggObj[byName]) || []).filter((x) => x && x._id != null);
     const dictColl = DICT_MAP[klass]?.[g.key];
 
-    // Map은 항상 문자열 키를 사용
-    const liveMap = new Map(live.map((x) => [x._id, x.c]));
+    const liveMap = new Map(live.map((x) => [String(x._id), x.c]));
 
     if (dictColl) {
       let seeds = [];
@@ -106,33 +85,31 @@ async function buildFacetsWithSeeds(db, klass, groups, aggObj, hideZero) {
             .sort({ name: 1 })
             .toArray();
         }
-      } catch (_) {}
+      } catch {}
 
       const merged = [];
       if (seeds.length) {
         for (const s of seeds) {
-          const key = keyStr(s && s.name);
-          if (!key) continue;
-          const c = Number(liveMap.get(key) ?? 0);
+          const key = String(s.name || "");
+          const c = liveMap.get(key) ?? 0;
           if (!hideZero || c > 0) merged.push({ _id: key, c });
           liveMap.delete(key);
         }
         for (const [key, c] of liveMap) {
-          if (!hideZero || c > 0) merged.push({ _id: keyStr(key), c: Number(c || 0) });
+          if (!hideZero || c > 0) merged.push({ _id: key, c });
         }
       } else {
         for (const [key, c] of liveMap) {
-          if (!hideZero || c > 0) merged.push({ _id: keyStr(key), c: Number(c || 0) });
+          if (!hideZero || c > 0) merged.push({ _id: key, c });
         }
       }
 
-      merged.sort(safeSortByCountThenKey);
+      merged.sort((a, b) => (b.c - a.c) || String(a._id).localeCompare(String(b._id)));
       out[g.key] = merged;
     } else {
-      // dict 없이 라이브만 사용하는 경우도 문자열 키로 정렬
-      let merged = live.slice();
-      if (hideZero) merged = merged.filter((x) => Number(x.c || 0) > 0);
-      merged.sort(safeSortByCountThenKey);
+      let merged = live.map((x) => ({ _id: String(x._id), c: x.c }));
+      if (hideZero) merged = merged.filter((x) => x.c > 0);
+      merged.sort((a, b) => (b.c - a.c) || String(a._id).localeCompare(String(b._id)));
       out[g.key] = merged;
     }
   }
@@ -141,49 +118,55 @@ async function buildFacetsWithSeeds(db, klass, groups, aggObj, hideZero) {
 
 /* -------------------- 데이터 소스 선택 -------------------- */
 /**
- * 중요: Job_Vacancies 는 무조건 resources 사용
- *  - 폼 저장이 resources 로 들어가기 때문
- * 그 외 클래스를 위해서만 resources → rdf → direct 순으로 폴백
+ * 새 글이 resources에 저장되므로 기본 우선순위를
+ *   1) resources (type=klass)
+ *   2) direct   (Job_Vacancies 등 원본)
+ *   3) RDF      (${klass}_RDF, _class=klass)
+ * 로 변경. ?source=resources|direct|rdf 로 강제 선택 지원.
  */
-async function pickSource(db, klass) {
-  if (klass === "Job_Vacancies") {
-    return { coll: "resources", style: "resources", baseMatch: { type: "Job_Vacancies" } };
-  }
-
+async function pickSource(db, klass, prefer) {
+  const directName = klass;
   const rdfName = `${klass}_RDF`;
 
-  // 1) resources
-  try {
-    const exists = await db.listCollections({ name: "resources" }).toArray();
-    if (exists.length) {
-      const one = await db.collection("resources").findOne({ type: klass }, { projection: { _id: 1 } });
-      if (one) return { coll: "resources", style: "resources", baseMatch: { type: klass } };
+  const hasOne = async (coll, match) => {
+    try {
+      const exists = await db.listCollections({ name: coll }).toArray();
+      if (!exists.length) return false;
+      const one = await db.collection(coll).findOne(match || {}, { projection: { _id: 1 } });
+      return !!one;
+    } catch {
+      return false;
     }
-  } catch {}
+  };
 
-  // 2) rdf
-  try {
-    const exists = await db.listCollections({ name: rdfName }).toArray();
-    if (exists.length) {
-      const one = await db.collection(rdfName).findOne({ _class: klass }, { projection: { _id: 1 } });
-      if (one) return { coll: rdfName, style: "rdf", baseMatch: { _class: klass } };
-    }
-  } catch {}
+  // 강제 선택
+  if (prefer === "resources" && (await hasOne("resources", { type: klass }))) {
+    return { coll: "resources", style: "resources", baseMatch: { type: klass }, reason: "forced" };
+  }
+  if (prefer === "direct" && (await hasOne(directName))) {
+    return { coll: directName, style: "direct", baseMatch: {}, reason: "forced" };
+  }
+  if (prefer === "rdf" && (await hasOne(rdfName, { _class: klass }))) {
+    return { coll: rdfName, style: "rdf", baseMatch: { _class: klass }, reason: "forced" };
+  }
 
-  // 3) direct
-  try {
-    const exists = await db.listCollections({ name: klass }).toArray();
-    if (exists.length) {
-      const one = await db.collection(klass).findOne({}, { projection: { _id: 1 } });
-      if (one) return { coll: klass, style: "direct", baseMatch: {} };
-    }
-  } catch {}
+  // 자동 선택: resources → direct → rdf
+  if (await hasOne("resources", { type: klass })) {
+    return { coll: "resources", style: "resources", baseMatch: { type: klass }, reason: "auto" };
+  }
+  if (await hasOne(directName)) {
+    return { coll: directName, style: "direct", baseMatch: {}, reason: "auto" };
+  }
+  if (await hasOne(rdfName, { _class: klass })) {
+    return { coll: rdfName, style: "rdf", baseMatch: { _class: klass }, reason: "auto" };
+  }
 
   // fallback
-  return { coll: rdfName, style: "rdf", baseMatch: { _class: klass } };
+  return { coll: rdfName, style: "rdf", baseMatch: { _class: klass }, reason: "fallback" };
 }
 
-/* -------------------- country → countryStr 정규화 스테이지 -------------------- */
+/* -------------------- country 정규화 스테이지 -------------------- */
+// 1) country / Country -> countryStr
 const addCountryStrStage = {
   $addFields: {
     countryStr: {
@@ -206,6 +189,74 @@ const addCountryStrStage = {
   },
 };
 
+// 2) countryStr -> countryCanon
+const addCountryCanonStage = {
+  $addFields: {
+    countryCanon: {
+      $let: {
+        vars: {
+          s0: { $trim: { input: { $ifNull: ["$countryStr", ""] } } },
+        },
+        in: {
+          $let: {
+            vars: {
+              s1: {
+                $cond: [
+                  { $regexMatch: { input: "$$s0", regex: /^\s*\{.*\}\s*$/ } },
+                  {
+                    $let: {
+                      vars: {
+                        code: { $regexFind: { input: "$$s0", regex: /"code"\s*:\s*"([^"]+)"/i } },
+                        name: { $regexFind: { input: "$$s0", regex: /"name"\s*:\s*"([^"]+)"/i } },
+                      },
+                      in: {
+                        $cond: [
+                          { $ne: ["$$code", null] },
+                          { $arrayElemAt: ["$$code.captures", 0] },
+                          {
+                            $cond: [
+                              { $ne: ["$$name", null] },
+                              { $arrayElemAt: ["$$name.captures", 0] },
+                              "",
+                            ],
+                          },
+                        ],
+                      },
+                    },
+                  },
+                  "$$s0",
+                ],
+              },
+            },
+            in: {
+              $let: {
+                vars: { up: { $toUpper: "$$s1" } },
+                in: {
+                  $switch: {
+                    branches: [
+                      { case: { $in: ["$$up", ["KOREA", "KOREA (SOUTH)", "REPUBLIC OF KOREA", "KOREA, REPUBLIC OF (SOUTH KOREA)", "KR"]] }, then: "Korea" },
+                      { case: { $in: ["$$up", ["US", "USA", "UNITED STATES", "UNITED STATES OF AMERICA", "U.S.", "U. S."]] }, then: "US" },
+                      { case: { $in: ["$$up", ["UNITED KINGDOM", "UK", "GB"]] }, then: "United Kingdom" },
+                      { case: { $in: ["$$up", ["AUSTRALIA", "AU"]] }, then: "Australia" },
+                      { case: { $in: ["$$up", ["CANADA", "CA"]] }, then: "Canada" },
+                      { case: { $in: ["$$up", ["JAPAN", "JP"]] }, then: "Japan" },
+                      { case: { $in: ["$$up", ["CHINA", "CN"]] }, then: "China" },
+                      { case: { $in: ["$$up", ["TAIWAN", "TW"]] }, then: "Taiwan" },
+                      { case: { $in: ["$$up", ["HONG KONG", "HK"]] }, then: "Hong Kong" },
+                      { case: { $in: ["$$up", ["VIETNAM", "VN"]] }, then: "Vietnam" },
+                    ],
+                    default: "$$s1",
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
 /* -------------------- facet 엔드포인트 -------------------- */
 router.get("/:klass", async (req, res, next) => {
   try {
@@ -213,9 +264,11 @@ router.get("/:klass", async (req, res, next) => {
     const spec = FACET_MAP[klass] || FACET_MAP.Job_Vacancies;
     const db = mongoose.connection.db;
 
-    // 데이터 소스 선택 (Job_Vacancies는 resources 고정)
-    const src = await pickSource(db, klass);
+    // 소스 선택 (쿼리로 강제 가능)
+    const prefer = (req.query.source || req.query.src || "").toLowerCase();
+    const src = await pickSource(db, klass, prefer);
     res.set("X-Facet-Source", `${src.style}:${src.coll}`);
+    if (prefer) res.set("X-Facet-Source-Forced", prefer);
 
     // 선택된 필터 파싱 (aliases 포함)
     const selected = {};
@@ -238,13 +291,18 @@ router.get("/:klass", async (req, res, next) => {
     /* -------------------- match (pre) -------------------- */
     const preMatch = { ...(src.baseMatch || {}) };
 
+    if (src.style === "direct" && klass === "Job_Vacancies") {
+      preMatch.visible = { $ne: false };
+      preMatch.status = { $ne: "deleted" };
+    }
+
     if (qText) {
       const rx = new RegExp(sanitizeRegex(qText), "i");
       const fields = spec.searchFields || ["_label", "title", "_description"];
       preMatch.$or = fields.map((f) => ({ [f]: rx }));
     }
 
-    // country는 countryStr로만 필터 (preMatch에는 넣지 않음)
+    // country는 countryCanon으로만 필터 (preMatch에는 넣지 않음)
     for (const g of spec.groups) {
       if (g.key === "country") continue;
       const vals = selected[g.key];
@@ -256,16 +314,13 @@ router.get("/:klass", async (req, res, next) => {
     }
 
     /* -------------------- facet 스테이지 -------------------- */
-
-    // country 전용 post-match
     const postCountryMatchStages =
       selected.country && selected.country.length
-        ? [{ $match: { countryStr: { $in: selected.country } } }]
+        ? [{ $match: { countryCanon: { $in: selected.country } } }]
         : [];
 
-    const commonInnerStages = [addCountryStrStage, ...postCountryMatchStages];
+    const commonInnerStages = [addCountryStrStage, addCountryCanonStage, ...postCountryMatchStages];
 
-    // 리스트 표시 필드
     const itemProject = {
       _id: 1,
       "@id": 1,
@@ -275,12 +330,12 @@ router.get("/:klass", async (req, res, next) => {
       title: 1,
       _description: 1,
       description: 1,
-      country: "$countryStr",
+      country: "$countryCanon",
+      studentType: 1,
+      teachingArea: 1,
       date: 1,
       datePosted: 1,
       updatedAt: 1,
-      studentType: 1,
-      teachingArea: 1,
     };
     for (const g of spec.groups) {
       if (g.key === "country") {
@@ -306,15 +361,14 @@ router.get("/:klass", async (req, res, next) => {
       count: [...commonInnerStages, { $count: "total" }],
     };
 
-    // 좌측 패싯
     for (const g of spec.groups) {
       const name = `by_${g.key}`;
       const allKeys = [g.key, ...(g.aliases || [])];
       const arr = [...commonInnerStages];
 
       if (g.key === "country") {
-        arr.push({ $match: { countryStr: { $ne: null, $ne: "" } } });
-        arr.push({ $group: { _id: "$countryStr", c: { $sum: 1 } } });
+        arr.push({ $match: { countryCanon: { $ne: null, $ne: "" } } });
+        arr.push({ $group: { _id: "$countryCanon", c: { $sum: 1 } } });
       } else if (g.array) {
         arr.push({ $set: { __facet_value__: coalesce(...allKeys.map((k) => `$${k}`)) } });
         arr.push({
@@ -343,7 +397,7 @@ router.get("/:klass", async (req, res, next) => {
         arr.push({ $group: { _id: "$__facet_value__", c: { $sum: 1 } } });
       }
 
-      arr.push({ $sort: { c: -1, _id: 1 } }); // 1차 정렬은 서버에서, 키 충돌은 JS에서 대비
+      arr.push({ $sort: { c: -1, _id: 1 } });
       arr.push({ $limit: 400 });
 
       facetStages[name] = arr;
