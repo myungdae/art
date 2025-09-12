@@ -114,7 +114,7 @@ app.post("/_debug/echo", (req, res) => res.json({ ok: true, body: req.body, ct: 
  * ───────────────────────────────────────── */
 function buildVacancyPayload(b = {}) {
   return {
-    type: "Job_Vacancies", // ← CREATE 에서만 실제 쓰임. UPDATE에서는 $setOnInsert로만 지정
+    type: "Job_Vacancies", // CREATE에서만 실제 쓰임. UPDATE에서는 $setOnInsert로만 지정
     title: S(b.title),
     country: S(b.country) || S(b?.location?.country),
     description: S(b.description) || S(b.desc) || S(b.jobDescription),
@@ -312,7 +312,6 @@ app.post("/job-vacancies/:id([0-9a-fA-F]{24})", async (req, res, next) => {
 
     // 제목 영어(ASCII) 검증 (제목을 수정하려는 경우만 체크)
     if (payload.title && !titleLooksEnglish(payload.title)) {
-      // 에디트 폼이 별도 없으므로 상세 페이지로 에러 플래시 후 리다이렉트
       req.flash("error", "Title must be English (ASCII only).");
       return res.redirect(`/rdf-resource/Job_Vacancies/${_id.toString()}`);
     }
@@ -391,6 +390,18 @@ app.use((req, res, next) => {
   res.locals.siteBrand = process.env.SITE_BRAND || "ESL Plus";
   res.locals.siteBrandLink = process.env.SITE_BRAND_LINK || "/";
   res.locals.pageTitle = res.locals.pageTitle || res.locals.siteBrand;
+  next();
+});
+
+/* ── ✅ 프로모션 전역 로컬 주입 (자동 노출/문구 날짜용) ── */
+app.use((req, res, next) => {
+  try {
+    res.locals.freeNow = isFreeWindowOpen(); // true면 home.pug에서 data-free-open="1"
+    res.locals.freeUntilStr = FREE_UNTIL ? FREE_UNTIL.toISOString().slice(0,10) : '';
+  } catch (_) {
+    res.locals.freeNow = false;
+    res.locals.freeUntilStr = '';
+  }
   next();
 });
 
@@ -526,8 +537,21 @@ app.use("/pay/portone", require("./router/portone"));
 
 app.use("/promo", promoRouter);
 
-app.get("/billing/credits", requireLogin, (_req, res) => {
-  return res.redirect(302, "/paypal/checkout");
+// ---- Health checks (JSON) ----
+// (404 핸들러보다 위에 위치해야 합니다)
+app.get("/healthz", (req, res) => {
+  const mongoReady = (mongoose.connection && mongoose.connection.readyState) === 1;
+  res.type("application/json").status(mongoReady ? 200 : 503).json({
+    ok: mongoReady,
+    build: BUILD,
+    env: process.env.NODE_ENV || "development",
+    now: new Date().toISOString(),
+  });
+});
+app.get("/livez", (_req, res) => res.json({ ok: true }));
+app.get("/readyz", (_req, res) => {
+  const mongoReady = (mongoose.connection && mongoose.connection.readyState) === 1;
+  res.status(mongoReady ? 200 : 503).json({ ok: mongoReady });
 });
 
 /* 404 */

@@ -1,0 +1,84 @@
+//- views/rdf-resource/jobVacancyShow.pug  (또는 views/resource/jobVacancyShow.pug)
+extends ../layout
+
+block content
+  // ---------- Breadcrumb ----------
+  nav.text-sm.text-gray-500.mb-4
+    a.text-gray-600.hover-underline(href="/facet/Job_Vacancies") Job Vacancies
+    span.mx-2 /
+    span.text-gray-800 #{vm && vm.title ? vm.title : 'Detail'}
+
+  // ---------- Title & Actions ----------
+  h1.text-3xl.font-extrabold.mb-6 #{vm && vm.title ? vm.title : 'Untitled'}
+
+  .d-flex.justify-content-end.gap-2.mb-4
+    a.btn.btn-outline-secondary(href=`/facet/${facetBase || 'Job_Vacancies'}`) View more
+    a.btn.btn-outline-secondary(href="javascript:history.back()") Back
+
+  // ---------- Main Grid (2 cols on md+) ----------
+  //- 부트스트랩/테일윈드 혼용 구간을 Pug에서 안전하게: div(class="...") 사용
+  div(class="grid grid-cols-1 md:grid-cols-3 gap-6")
+    // ===== Left (span 2) =====
+    div(class="md:col-span-2")
+      // --- Semantic Browsing ---
+      div(class="rounded-2xl border bg-white")
+        div(class="p-4 text-sm uppercase tracking-wide text-gray-500 font-semibold") SEMANTIC BROWSING
+        // description fallback
+        -
+          const desc = (vm && (vm.description || vm.desc || vm.detail || vm.body || vm.summary)) || '';
+        if desc
+          div(class="px-4 pb-4")
+            div(class="prose max-w-none")
+              pre(class="whitespace-pre-wrap text-gray-800")= desc
+        else
+          div(class="px-4 pb-4")
+            p(class="text-gray-500") No description provided.
+
+      // --- Details ---
+      div(class="rounded-2xl border bg-white mt-6")
+        div(class="p-4 text-sm uppercase tracking-wide text-gray-500 font-semibold") DETAILS
+        div(class="p-4")
+          // 각 필드 한 줄 레이아웃
+          - const L = (k,v)=>[
+          -   {k:'Company', v: vm && (vm.companyName || vm.company || '-')},
+          -   {k:'Country', v: vm && (vm.country || '-')},
+          -   {k:'Student Type', v: vm && (Array.isArray(vm.studentType)? vm.studentType.join(', ') : (vm.studentType || '-'))},
+          -   {k:'Teaching Area', v: vm && (Array.isArray(vm.teachingAreas)? vm.teachingAreas.join(', ') : (vm.teachingArea || '-'))},
+          -   {k:'Languages', v: vm && (Array.isArray(vm.languages)? vm.languages.join(', ') : (vm.language || '-'))},
+          -   {k:'Location', v: vm && (vm.jobLocation || vm.city || '-')},
+          -   {k:'Pay', v: vm && (vm.pay || '-')},
+          -   {k:'Housing', v: vm && (vm.housing || '-')},
+          - ]
+          each row in L()
+            div(class="py-3 border-bottom")
+              div(class="text-sm text-gray-500 mb-1")= row.k
+              div(class="text-base")= row.v
+
+    // ===== Right =====
+    div
+      // --- Quick Facts ---
+      div(class="rounded-2xl border bg-white")
+        div(class="p-4 text-sm uppercase tracking-wide text-gray-500 font-semibold") QUICK FACTS
+        div(class="p-4")
+          ul(class="list-unstyled mb-0")
+            li
+              span(class="text-gray-500 me-2") Updated:
+              span= (vm && vm.updatedAt ? new Date(vm.updatedAt).toISOString().slice(0,10) : '-')
+            li
+              span(class="text-gray-500 me-2") Visible:
+              span= (vm && (vm.visible !== false) ? 'Yes' : 'No')
+
+      // --- Contact ---
+      div(class="rounded-2xl border bg-white mt-6")
+        div(class="p-4 text-sm uppercase tracking-wide text-gray-500 font-semibold") CONTACT
+        div(class="p-4")
+          if vm && vm.email
+            a(href=`mailto:${vm.email}`)= vm.email
+          else
+            span(class="text-gray-500") -
+
+      // --- Explore Facet ---
+      div(class="rounded-2xl border bg-white mt-6")
+        div(class="p-4 text-sm uppercase tracking-wide text-gray-500 font-semibold") EXPLORE FACET
+        div(class="p-4")
+          a.btn.btn-outline-secondary(href=`/facet/${facetBase || 'Job_Vacancies'}`) View more in this facet

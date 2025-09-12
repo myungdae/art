@@ -2,89 +2,82 @@
 extends ../layout
 
 block content
-  .container.py-8
-    if vm
-      // Title
-      h1.text-3xl.font-bold.mb-4= vm.title || 'Untitled'
+  // ---------- Breadcrumb ----------
+  nav.text-sm.text-gray-500.mb-4
+    a.text-gray-600.hover-underline(href="/facet/Job_Vacancies") Job Vacancies
+    span.mx-2 /
+    span.text-gray-800 #{vm && vm.title ? vm.title : 'Detail'}
 
-      // ── Semantic Browsing
-      .mb-6
-        div.text-sm.font-semibold.uppercase.text-gray-500 SEMANTIC BROWSING
-        if vm.semanticChips && vm.semanticChips.length
-          ul.mt-3.flex.flex-wrap.gap-2
-            each chip in vm.semanticChips
-              - const vals = Array.isArray(chip && chip.values) ? chip.values : (chip && chip.values ? [chip.values] : [])
-              each val in vals
-                a.inline-block.px-3.py-1.rounded-full.text-sm.font-medium(
-                  class="bg-blue-100 text-blue-800 hover:bg-blue-200"
-                  href=`/facet/${vm.facetBase}?${chip.key}=${encodeURIComponent(val)}`
-                  title=`Filter by ${chip.key}: ${val}`
-                )= val
+  // ---------- Title & Actions ----------
+  h1.text-3xl.font-extrabold.mb-6 #{vm && vm.title ? vm.title : 'Untitled'}
+
+  .d-flex.justify-content-end.gap-2.mb-4
+    a.btn.btn-outline-secondary(href=`/facet/${facetBase || 'Job_Vacancies'}`) View more
+    a.btn.btn-outline-secondary(href="javascript:history.back()") Back
+
+  // ---------- Main Grid (2 cols on md+) ----------
+  //- 부트스트랩/테일윈드 혼용은 class="..." 로 안전하게 작성
+  div(class="grid grid-cols-1 md:grid-cols-3 gap-6")
+    // ===== Left (span 2) =====
+    div(class="md:col-span-2")
+      // --- Semantic Browsing ---
+      div(class="rounded-2xl border bg-white")
+        div(class="p-4 text-sm uppercase tracking-wide text-gray-500 font-semibold") SEMANTIC BROWSING
+        -
+          const desc = (vm && (vm.description || vm.desc || vm.detail || vm.body || vm.summary)) || '';
+        if desc
+          div(class="px-4 pb-4")
+            div(class="prose max-w-none")
+              pre(class="whitespace-pre-wrap text-gray-800")= desc
         else
-          .text-gray-400.text-sm No tags
+          div(class="px-4 pb-4")
+            p(class="text-gray-500") No description provided.
 
-      // ── Description
-      .mb-8
-        div.text-sm.font-semibold.uppercase.text-gray-500 DESCRIPTION
-        .mt-3.rounded-2xl.border.bg-white
-          .p-4.prose(max-width="none")
-            if vm.descriptionHtml
-              != vm.descriptionHtml
-            else
-              span.text-gray-400 No description provided.
+      // --- Details ---
+      div(class="rounded-2xl border bg-white mt-6")
+        div(class="p-4 text-sm uppercase tracking-wide text-gray-500 font-semibold") DETAILS
+        div(class="p-4")
+          -
+            const rows = [
+              { k: 'Company',       v: vm && (vm.companyName || vm.company || '-') },
+              { k: 'Country',       v: vm && (vm.country || '-') },
+              { k: 'Student Type',  v: vm && (Array.isArray(vm.studentType)   ? vm.studentType.join(', ')   : (vm.studentType   || '-')) },
+              { k: 'Teaching Area', v: vm && (Array.isArray(vm.teachingAreas) ? vm.teachingAreas.join(', ') : (vm.teachingArea  || '-')) },
+              { k: 'Languages',     v: vm && (Array.isArray(vm.languages)     ? vm.languages.join(', ')     : (vm.language      || '-')) },
+              { k: 'Location',      v: vm && (vm.jobLocation || vm.city || '-') },
+              { k: 'Pay',           v: vm && (vm.pay || '-') },
+              { k: 'Housing',       v: vm && (vm.housing || '-') },
+            ];
+          each row in rows
+            div(class="py-3 border-bottom")
+              div(class="text-sm text-gray-500 mb-1")= row.k
+              div(class="text-base")= row.v
 
-      // ── Details
-      .rounded-2xl.border.bg-white
-        .p-4.text-sm.uppercase.tracking-wide.text-gray-500.font-semibold DETAILS
-        .p-6.grid.gap-4(class="grid-cols-1 md:grid-cols-2")
-          if vm.meta && vm.meta.companyName
-            .p-3.rounded-lg.bg-gray-50
-              div.text-xs.uppercase.tracking-wide.text-gray-500 COMPANY
-              div.mt-1= vm.meta.companyName
+    // ===== Right =====
+    div
+      // --- Quick Facts ---
+      div(class="rounded-2xl border bg-white")
+        div(class="p-4 text-sm uppercase tracking-wide text-gray-500 font-semibold") QUICK FACTS
+        div(class="p-4")
+          ul(class="list-unstyled mb-0")
+            li
+              span(class="text-gray-500 me-2") Updated:
+              span= (vm && vm.updatedAt ? new Date(vm.updatedAt).toISOString().slice(0,10) : '-')
+            li
+              span(class="text-gray-500 me-2") Visible:
+              span= (vm && (vm.visible !== false) ? 'Yes' : 'No')
 
-          if vm.meta && vm.meta.jobLocation
-            .p-3.rounded-lg.bg-gray-50
-              div.text-xs.uppercase.tracking-wide.text-gray-500 LOCATION
-              div.mt-1= vm.meta.jobLocation
+      // --- Contact ---
+      div(class="rounded-2xl border bg-white mt-6")
+        div(class="p-4 text-sm uppercase tracking-wide text-gray-500 font-semibold") CONTACT
+        div(class="p-4")
+          if vm && vm.email
+            a(href=`mailto:${vm.email}`)= vm.email
+          else
+            span(class="text-gray-500") -
 
-          if vm.meta && (vm.meta.country || (vm.raw && vm.raw.country))
-            .p-3.rounded-lg.bg-gray-50
-              div.text-xs.uppercase.tracking-wide.text-gray-500 COUNTRY
-              div.mt-1= vm.meta.country || (vm.raw && vm.raw.country)
-
-          if vm.meta && vm.meta.datePosted
-            .p-3.rounded-lg.bg-gray-50
-              div.text-xs.uppercase.tracking-wide.text-gray-500 POSTED
-              div.mt-1= (new Date(vm.meta.datePosted)).toISOString().slice(0,10)
-
-          if vm.meta && vm.meta.email
-            .p-3.rounded-lg.bg-gray-50
-              div.text-xs.uppercase.tracking-wide.text-gray-500 EMAIL
-              a.mt-1.inline-block.text-blue-700(href=`mailto:${vm.meta.email}`)= vm.meta.email
-
-          if vm.meta && vm.meta.pay
-            .p-3.rounded-lg.bg-gray-50
-              div.text-xs.uppercase.tracking-wide.text-gray-500 PAY
-              div.mt-1= vm.meta.pay
-
-          if vm.meta && vm.meta.housing
-            .p-3.rounded-lg.bg-gray-50
-              div.text-xs.uppercase.tracking-wide.text-gray-500 HOUSING
-              div.mt-1= vm.meta.housing
-
-          if vm.meta && vm.meta.homepage
-            .p-3.rounded-lg.bg-gray-50
-              div.text-xs.uppercase.tracking-wide.text-gray-500 WEBSITE
-              a.mt-1.inline-block.break-words.text-blue-700(href=vm.meta.homepage target="_blank" rel="noopener")= vm.meta.homepage
-
-      // ── Debug
-      if vm.descDebug && vm.descDebug.length
-        details.mt-8
-          summary.text-sm.text-gray-500 Description candidates (debug)
-          ul.mt-2.list-disc.pl-5.text-sm.text-gray-600
-            each d in vm.descDebug
-              li= d
-
-      // ── Back
-      .mt-8
-        a.inline-flex.items-center.gap-2.px-4.py-2.rounded.border(href=`/facet/${vm.facetBas
+      // --- Explore Facet ---
+      div(class="rounded-2xl border bg-white mt-6")
+        div(class="p-4 text-sm uppercase tracking-wide text-gray-500 font-semibold") EXPLORE FACET
+        div(class="p-4")
+          a.btn.btn-outline-secondary(href=`/facet/${facetBase || 'Job_Vacancies'}`) View more in this facet
