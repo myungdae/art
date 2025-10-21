@@ -145,4 +145,82 @@ router.get('/dashboard', requireAdmin, async (req, res) => {
   }
 });
 
+/* ---------------------- Bulk Delete Inactive/No Credits Users ---------------------- */
+router.post('/delete-inactive', requireAdmin, async (req, res) => {
+  try {
+    const { userType } = req.body;
+
+    let deleteResult = { deletedCount: 0 };
+    let deletedUsers = [];
+
+    if (userType === 'employers') {
+      // Delete Employers with no credits
+      const employersToDelete = await User.find({ 
+        role: 'Employer',
+        $or: [
+          { adsAvailable: { $exists: false } },
+          { adsAvailable: null },
+          { adsAvailable: 0 }
+        ]
+      }).lean();
+
+      deletedUsers = employersToDelete.map(e => e.email);
+      deleteResult = await User.deleteMany({ 
+        _id: { $in: employersToDelete.map(e => e._id) }
+      });
+    } 
+    else if (userType === 'jobseekers') {
+      // Delete Job Seekers with no active access
+      const allJobSeekers = await User.find({ role: 'Job_Seeker' }).lean();
+      const inactiveJobSeekers = allJobSeekers.filter(js => {
+        const remainingDays = daysRemainingFromDoc({ resumeAccess: js.resumeAccess });
+        return remainingDays <= 0;
+      });
+
+      deletedUsers = inactiveJobSeekers.map(js => js.email);
+      deleteResult = await User.deleteMany({ 
+        _id: { $in: inactiveJobSeekers.map(js => js._id) }
+      });
+
+      // Also delete their JobSeeker profiles if any
+      await JobSeeker.deleteMany({ 
+        email: { $in: deletedUsers }
+      });
+    } 
+    else if (userType === 'tutors') {
+      // Delete Tutors with no active access
+      const allTutors = await User.find({ role: 'Online_Tutor' }).lean();
+      const inactiveTutors = allTutors.filter(ot => {
+        const remainingDays = daysRemainingFromDoc({ resumeAccess: ot.tutorAccess });
+        return remainingDays <= 0;
+      });
+
+      deletedUsers = inactiveTutors.map(ot => ot.email);
+      deleteResult = await User.deleteMany({ 
+        _id: { $in: inactiveTutors.map(ot => ot._id) }
+      });
+
+      // Also delete their OnlineTutor profiles if any
+      await OnlineTutor.deleteMany({ 
+        email: { $in: deletedUsers }
+      });
+    }
+
+    console.log(`✅ Deleted ${deleteResult.deletedCount} inactive ${userType}:`, deletedUsers);
+
+    res.json({ 
+      success: true, 
+      deletedCount: deleteResult.deletedCount,
+      deletedUsers,
+      message: `Successfully deleted ${deleteResult.deletedCount} inactive ${userType}`
+    });
+  } catch (err) {
+    console.error('❌ Delete inactive users error:', err);
+    res.status(500).json({ 
+      success: false, 
+      error: err.message 
+    });
+  }
+});
+
 module.exports = router;

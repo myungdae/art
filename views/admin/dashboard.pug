@@ -31,6 +31,11 @@ block content
           .flex.justify-between
             span.text-gray-600 Without Credits:
             span.font-semibold.text-red-600= stats.employers.withoutCredits
+        if stats.employers.withoutCredits > 0
+          .mt-4.pt-4.border-t.border-red-200
+            button.btn.btn-sm.btn-danger.w-full(onclick="deleteInactive('employers')")
+              i.fas.fa-trash-alt.mr-1
+              | Delete All Without Credits (#{stats.employers.withoutCredits})
 
       // Job Seekers Card
       .bg-gradient-to-br.from-green-50.to-green-100.rounded-xl.shadow-lg.p-6
@@ -46,6 +51,11 @@ block content
           .flex.justify-between
             span.text-gray-600 Inactive:
             span.font-semibold.text-red-600= stats.jobSeekers.inactive
+        if stats.jobSeekers.inactive > 0
+          .mt-4.pt-4.border-t.border-green-200
+            button.btn.btn-sm.btn-danger.w-full(onclick="deleteInactive('jobseekers')")
+              i.fas.fa-trash-alt.mr-1
+              | Delete All Inactive (#{stats.jobSeekers.inactive})
 
       // Online Tutors Card
       .bg-gradient-to-br.from-blue-50.to-blue-100.rounded-xl.shadow-lg.p-6
@@ -61,6 +71,11 @@ block content
           .flex.justify-between
             span.text-gray-600 Inactive:
             span.font-semibold.text-red-600= stats.onlineTutors.inactive
+        if stats.onlineTutors.inactive > 0
+          .mt-4.pt-4.border-t.border-blue-200
+            button.btn.btn-sm.btn-danger.w-full(onclick="deleteInactive('tutors')")
+              i.fas.fa-trash-alt.mr-1
+              | Delete All Inactive (#{stats.onlineTutors.inactive})
 
     // ==================== Employers ====================
     .bg-white.rounded-xl.shadow-lg.p-6.mb-8
@@ -414,3 +429,51 @@ block content
         {id: 'otFilterInactive', filter: 'inactive'}
       ]);
     })();
+    
+    // =============== Delete Inactive Users Function ===============
+    function deleteInactive(userType) {
+      const typeNames = {
+        'employers': 'Employers without credits',
+        'jobseekers': 'Inactive Job Seekers',
+        'tutors': 'Inactive Online Tutors'
+      };
+      
+      const typeName = typeNames[userType] || userType;
+      
+      if (!confirm(`⚠️ WARNING: This will permanently delete all ${typeName}!\n\nAre you sure you want to continue?`)) {
+        return;
+      }
+      
+      // Show loading state
+      const btn = event.target.closest('button');
+      const originalHTML = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Deleting...';
+      
+      // Send delete request
+      fetch('/admin/delete-inactive', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ userType })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert(`✅ Success!\n\nDeleted ${data.deletedCount} ${typeName}\n\n${data.deletedUsers.length > 0 ? 'Deleted users:\n' + data.deletedUsers.join('\n') : ''}`);
+          // Reload page to reflect changes
+          window.location.reload();
+        } else {
+          alert('❌ Error: ' + (data.error || 'Failed to delete users'));
+          btn.disabled = false;
+          btn.innerHTML = originalHTML;
+        }
+      })
+      .catch(error => {
+        console.error('Delete error:', error);
+        alert('❌ Error: ' + error.message);
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+      });
+    }
