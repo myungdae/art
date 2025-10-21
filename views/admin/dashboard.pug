@@ -5,143 +5,272 @@ block content
   .max-w-7xl.mx-auto.px-4.py-8
     // Header
     .flex.items-center.justify-between.mb-8
-      h1.text-3xl.font-bold Admin Dashboard
-      span.text-sm.text-gray-500 Last updated (KST): #{new Date(Date.now() + 9*60*60*1000).toISOString().replace('T',' ').slice(0,16)}
+      div
+        h1.text-3xl.font-bold.mb-2
+          i.fas.fa-tachometer-alt.mr-2
+          | Admin Dashboard
+        p.text-sm.text-gray-500 Manage users, monitor access, and track statistics
+      div.text-right
+        a.btn.btn-sm.btn-outline-secondary(href='/admin/logout')
+          i.fas.fa-sign-out-alt.mr-1
+          | Logout
 
-    // Summary cards
-    div(class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8")
-      .rounded-xl.shadow.p-5.bg-white
-        div.text-gray-500.text-sm Employers
-        div.text-3xl.font-bold #{employers && employers.length || 0}
-      .rounded-xl.shadow.p-5.bg-white
-        div.text-gray-500.text-sm Job Seekers
-        div.text-3xl.font-bold #{jobSeekers && jobSeekers.length || 0}
-      .rounded-xl.shadow.p-5.bg-white
-        div.text-gray-500.text-sm Online Tutors
-        div.text-3xl.font-bold #{onlineTutors && onlineTutors.length || 0}
+    // Summary Statistics
+    .grid.grid-cols-1.md_grid-cols-3.gap-6.mb-10
+      // Employers Card
+      .bg-gradient-to-br.from-red-50.to-red-100.rounded-xl.shadow-lg.p-6
+        .flex.items-center.justify-between.mb-4
+          h3.text-lg.font-semibold.text-red-700
+            i.fas.fa-briefcase.mr-2
+            | Employers
+          span.text-3xl.font-bold.text-red-600= stats.employers.total
+        .space-y-2.text-sm
+          .flex.justify-between
+            span.text-gray-600 With Credits:
+            span.font-semibold.text-green-600= stats.employers.withCredits
+          .flex.justify-between
+            span.text-gray-600 Without Credits:
+            span.font-semibold.text-red-600= stats.employers.withoutCredits
+
+      // Job Seekers Card
+      .bg-gradient-to-br.from-green-50.to-green-100.rounded-xl.shadow-lg.p-6
+        .flex.items-center.justify-between.mb-4
+          h3.text-lg.font-semibold.text-green-700
+            i.fas.fa-users.mr-2
+            | Job Seekers
+          span.text-3xl.font-bold.text-green-600= stats.jobSeekers.total
+        .space-y-2.text-sm
+          .flex.justify-between
+            span.text-gray-600 Active Access:
+            span.font-semibold.text-green-600= stats.jobSeekers.active
+          .flex.justify-between
+            span.text-gray-600 Inactive:
+            span.font-semibold.text-red-600= stats.jobSeekers.inactive
+
+      // Online Tutors Card
+      .bg-gradient-to-br.from-blue-50.to-blue-100.rounded-xl.shadow-lg.p-6
+        .flex.items-center.justify-between.mb-4
+          h3.text-lg.font-semibold.text-blue-700
+            i.fas.fa-chalkboard-teacher.mr-2
+            | Online Tutors
+          span.text-3xl.font-bold.text-blue-600= stats.onlineTutors.total
+        .space-y-2.text-sm
+          .flex.justify-between
+            span.text-gray-600 Active Access:
+            span.font-semibold.text-green-600= stats.onlineTutors.active
+          .flex.justify-between
+            span.text-gray-600 Inactive:
+            span.font-semibold.text-red-600= stats.onlineTutors.inactive
 
     // ==================== Employers ====================
-    h2(class="text-2xl font-semibold mb-3 text-red-600") Employers
-    // Search bar
-    div(class="flex items-center gap-3 mb-3")
-      input#empSearch(
-        type="text"
-        placeholder="Search by username or email..."
-        class="w-full md:w-96 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring"
-      )
-      span#empCount(class="text-sm text-gray-500") #{employers && employers.length || 0} rows
-    .overflow-x-auto.mb-10
-      if employers && employers.length
-        table#empTable(class="table-auto min-w-full border rounded bg-white")
-          thead(class="bg-gray-100")
-            tr
-              th(data-key="username" class="sortable border px-3 py-2 text-left cursor-pointer select-none") Username
-              th(data-key="email" class="sortable border px-3 py-2 text-left cursor-pointer select-none") Email
-              th(data-key="remainingTokens" class="sortable border px-3 py-2 text-right cursor-pointer select-none") Remaining Tokens
-              th(data-key="createdAtDisplay" class="sortable border px-3 py-2 text-left cursor-pointer select-none") Created At (KST)
-              th(class="border px-3 py-2 text-left select-none") Actions
-          tbody
-            each emp in employers
+    .bg-white.rounded-xl.shadow-lg.p-6.mb-8
+      .flex.items-center.justify-between.mb-4
+        h2.text-2xl.font-bold.text-red-600
+          i.fas.fa-briefcase.mr-2
+          | Employers
+        .flex.gap-2
+          button#empFilterAll.btn.btn-sm.btn-primary All
+          button#empFilterWithCredits.btn.btn-sm.btn-outline-primary With Credits
+          button#empFilterNoCredits.btn.btn-sm.btn-outline-primary No Credits
+
+      .flex.items-center.gap-3.mb-4
+        input#empSearch.flex-1(
+          type="text"
+          placeholder="Search by username or email..."
+          class="border rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+        )
+        span#empCount.text-sm.text-gray-500.font-semibold 0 / 0 rows
+
+      .overflow-x-auto
+        if employers && employers.length
+          table#empTable.table-auto.w-full.border-collapse
+            thead.bg-gray-100
               tr
-                td(class="border px-3 py-2") #{emp.username}
-                td(class="border px-3 py-2") #{emp.email}
-                td(class="border px-3 py-2 text-right") #{emp.remainingTokens}
-                td(class="border px-3 py-2") #{emp.createdAtDisplay}
-                td(class="border px-3 py-2")
-                  if emp.id
-                    // NOTE: 사용자 편집 라우트 경로는 프로젝트에 맞게 조정하세요.
-                    // 통상 /users/:id/edit 를 사용합니다.
-                    a(href=`/users/${emp.id}/edit` class="text-blue-600 hover:underline") Edit
-                  else
-                    span.text-gray-400 —
+                th.sortable.border.px-4.py-3.text-left.cursor-pointer.hover_bg-gray-200(data-key="username")
+                  | Username 
+                  i.fas.fa-sort.ml-1.text-gray-400
+                th.sortable.border.px-4.py-3.text-left.cursor-pointer.hover_bg-gray-200(data-key="email")
+                  | Email 
+                  i.fas.fa-sort.ml-1.text-gray-400
+                th.sortable.border.px-4.py-3.text-center.cursor-pointer.hover_bg-gray-200(data-key="remainingTokens")
+                  | Ad Credits 
+                  i.fas.fa-sort.ml-1.text-gray-400
+                th.sortable.border.px-4.py-3.text-left.cursor-pointer.hover_bg-gray-200(data-key="createdAtDisplay")
+                  | Registered 
+                  i.fas.fa-sort.ml-1.text-gray-400
+                th.border.px-4.py-3.text-center Status
+            tbody
+              each emp in employers
+                tr(data-has-credits=emp.hasCredits)
+                  td.border.px-4.py-2= emp.username
+                  td.border.px-4.py-2= emp.email
+                  td.border.px-4.py-2.text-center
+                    if emp.remainingTokens > 0
+                      span.bg-green-100.text-green-700.px-3.py-1.rounded-full.font-semibold= emp.remainingTokens
+                    else
+                      span.bg-red-100.text-red-700.px-3.py-1.rounded-full.font-semibold 0
+                  td.border.px-4.py-2= emp.createdAtDisplay
+                  td.border.px-4.py-2.text-center
+                    if emp.remainingTokens > 0
+                      span.bg-green-100.text-green-600.px-3.py-1.rounded-full.text-xs.font-semibold
+                        i.fas.fa-check-circle.mr-1
+                        | Active
+                    else
+                      span.bg-red-100.text-red-600.px-3.py-1.rounded-full.text-xs.font-semibold
+                        i.fas.fa-times-circle.mr-1
+                        | No Credits
+        else
+          p.text-center.text-gray-500.py-8 No employers found
 
     // ==================== Job Seekers ====================
-    .flex.items-center.justify-between.mb-3
-      h2(class="text-2xl font-semibold text-green-700") Job Seekers
-      a(href="/job-seekers/new" class="px-3 py-1 rounded bg-blue-600 text-white hover:bg-blue-700") New
-    div(class="flex items-center gap-3 mb-3")
-      input#jsSearch(
-        type="text"
-        placeholder="Search by username, email, remaining days, expires..."
-        class="w-full md:w-96 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring"
-      )
-      span#jsCount(class="text-sm text-gray-500") #{jobSeekers && jobSeekers.length || 0} rows
-    .overflow-x-auto.mb-10
-      if jobSeekers && jobSeekers.length
-        table#jsTable(class="table-auto min-w-full border rounded bg-white")
-          thead(class="bg-gray-100")
-            tr
-              th(data-key="username" class="sortable border px-3 py-2 text-left cursor-pointer select-none") Username
-              th(data-key="email" class="sortable border px-3 py-2 text-left cursor-pointer select-none") Email
-              th(data-key="remainingDays" class="sortable border px-3 py-2 text-right cursor-pointer select-none") Remaining Days
-              th(data-key="expiresAtDisplay" class="sortable border px-3 py-2 text-left cursor-pointer select-none") Expires At (KST)
-              th(data-key="createdAtDisplay" class="sortable border px-3 py-2 text-left cursor-pointer select-none") Created At (KST)
-              th(class="border px-3 py-2 text-left select-none") Actions
-          tbody
-            each js in jobSeekers
+    .bg-white.rounded-xl.shadow-lg.p-6.mb-8
+      .flex.items-center.justify-between.mb-4
+        h2.text-2xl.font-bold.text-green-600
+          i.fas.fa-users.mr-2
+          | Job Seekers
+        .flex.gap-2
+          button#jsFilterAll.btn.btn-sm.btn-primary All
+          button#jsFilterActive.btn.btn-sm.btn-outline-primary Active
+          button#jsFilterInactive.btn.btn-sm.btn-outline-primary Inactive
+
+      .flex.items-center.gap-3.mb-4
+        input#jsSearch.flex-1(
+          type="text"
+          placeholder="Search by username, email, or remaining days..."
+          class="border rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+        )
+        span#jsCount.text-sm.text-gray-500.font-semibold 0 / 0 rows
+
+      .overflow-x-auto
+        if jobSeekers && jobSeekers.length
+          table#jsTable.table-auto.w-full.border-collapse
+            thead.bg-gray-100
               tr
-                td(class="border px-3 py-2") #{js.username}
-                td(class="border px-3 py-2") #{js.email}
-                td(class="border px-3 py-2 text-right") #{js.remainingDays}
-                td(class="border px-3 py-2") #{js.expiresAtDisplay}
-                td(class="border px-3 py-2") #{js.createdAtDisplay}
-                td(class="border px-3 py-2")
-                  if js.id
-                    a(href=`/job-seekers/${js.id}/edit` class="text-blue-600 hover:underline") Edit
-                  else
-                    span.text-gray-400 —
+                th.sortable.border.px-4.py-3.text-left.cursor-pointer.hover_bg-gray-200(data-key="username")
+                  | Username 
+                  i.fas.fa-sort.ml-1.text-gray-400
+                th.sortable.border.px-4.py-3.text-left.cursor-pointer.hover_bg-gray-200(data-key="email")
+                  | Email 
+                  i.fas.fa-sort.ml-1.text-gray-400
+                th.sortable.border.px-4.py-3.text-center.cursor-pointer.hover_bg-gray-200(data-key="remainingDays")
+                  | Days Left 
+                  i.fas.fa-sort.ml-1.text-gray-400
+                th.sortable.border.px-4.py-3.text-left.cursor-pointer.hover_bg-gray-200(data-key="expiresAtDisplay")
+                  | Expires 
+                  i.fas.fa-sort.ml-1.text-gray-400
+                th.sortable.border.px-4.py-3.text-left.cursor-pointer.hover_bg-gray-200(data-key="createdAtDisplay")
+                  | Registered 
+                  i.fas.fa-sort.ml-1.text-gray-400
+                th.border.px-4.py-3.text-center Status
+            tbody
+              each js in jobSeekers
+                tr(data-is-active=js.isActive)
+                  td.border.px-4.py-2= js.username
+                  td.border.px-4.py-2= js.email
+                  td.border.px-4.py-2.text-center
+                    if js.remainingDays > 0
+                      span.bg-green-100.text-green-700.px-3.py-1.rounded-full.font-semibold= js.remainingDays
+                    else
+                      span.bg-red-100.text-red-700.px-3.py-1.rounded-full.font-semibold 0
+                  td.border.px-4.py-2= js.expiresAtDisplay
+                  td.border.px-4.py-2= js.createdAtDisplay
+                  td.border.px-4.py-2.text-center
+                    if js.isActive
+                      span.bg-green-100.text-green-600.px-3.py-1.rounded-full.text-xs.font-semibold
+                        i.fas.fa-check-circle.mr-1
+                        | Active
+                    else
+                      span.bg-red-100.text-red-600.px-3.py-1.rounded-full.text-xs.font-semibold
+                        i.fas.fa-times-circle.mr-1
+                        | Inactive
+        else
+          p.text-center.text-gray-500.py-8 No job seekers found
 
     // ==================== Online Tutors ====================
-    .flex.items-center.justify-between.mb-3
-      h2(class="text-2xl font-semibold text-blue-700") Online Tutors
-      a(href="/online-tutors/new" class="px-3 py-1 rounded bg-blue-600 text-white hover:bg-blue-700") New
-    div(class="flex.items-center gap-3 mb-3")
-      input#otSearch(
-        type="text"
-        placeholder="Search by username, email, remaining days, expires..."
-        class="w-full md:w-96 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring"
-      )
-      span#otCount(class="text-sm text-gray-500") #{onlineTutors && onlineTutors.length || 0} rows
-    .overflow-x-auto.mb-4
-      if onlineTutors && onlineTutors.length
-        table#otTable(class="table-auto min-w-full border rounded bg-white")
-          thead(class="bg-gray-100")
-            tr
-              th(data-key="username" class="sortable border px-3 py-2 text-left cursor-pointer select-none") Username
-              th(data-key="email" class="sortable border px-3 py-2 text-left cursor-pointer select-none") Email
-              th(data-key="remainingDays" class="sortable border px-3 py-2 text-right cursor-pointer select-none") Remaining Days
-              th(data-key="expiresAtDisplay" class="sortable border px-3 py-2 text-left cursor-pointer select-none") Expires At (KST)
-              th(data-key="createdAtDisplay" class="sortable border px-3 py-2 text-left cursor-pointer select-none") Created At (KST)
-              th(class="border px-3 py-2 text-left select-none") Actions
-          tbody
-            each ot in onlineTutors
+    .bg-white.rounded-xl.shadow-lg.p-6.mb-8
+      .flex.items-center.justify-between.mb-4
+        h2.text-2xl.font-bold.text-blue-600
+          i.fas.fa-chalkboard-teacher.mr-2
+          | Online Tutors
+        .flex.gap-2
+          button#otFilterAll.btn.btn-sm.btn-primary All
+          button#otFilterActive.btn.btn-sm.btn-outline-primary Active
+          button#otFilterInactive.btn.btn-sm.btn-outline-primary Inactive
+
+      .flex.items-center.gap-3.mb-4
+        input#otSearch.flex-1(
+          type="text"
+          placeholder="Search by username, email, or remaining days..."
+          class="border rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        )
+        span#otCount.text-sm.text-gray-500.font-semibold 0 / 0 rows
+
+      .overflow-x-auto
+        if onlineTutors && onlineTutors.length
+          table#otTable.table-auto.w-full.border-collapse
+            thead.bg-gray-100
               tr
-                td(class="border px-3 py-2") #{ot.username}
-                td(class="border px-3 py-2") #{ot.email}
-                td(class="border px-3 py-2 text-right") #{ot.remainingDays}
-                td(class="border px-3 py-2") #{ot.expiresAtDisplay}
-                td(class="border px-3 py-2") #{ot.createdAtDisplay}
-                td(class="border px-3 py-2")
-                  if ot.id
-                    a(href=`/online-tutors/${ot.id}/edit` class="text-blue-600 hover:underline") Edit
-                  else
-                    span.text-gray-400 —
+                th.sortable.border.px-4.py-3.text-left.cursor-pointer.hover_bg-gray-200(data-key="username")
+                  | Username 
+                  i.fas.fa-sort.ml-1.text-gray-400
+                th.sortable.border.px-4.py-3.text-left.cursor-pointer.hover_bg-gray-200(data-key="email")
+                  | Email 
+                  i.fas.fa-sort.ml-1.text-gray-400
+                th.sortable.border.px-4.py-3.text-center.cursor-pointer.hover_bg-gray-200(data-key="remainingDays")
+                  | Days Left 
+                  i.fas.fa-sort.ml-1.text-gray-400
+                th.sortable.border.px-4.py-3.text-left.cursor-pointer.hover_bg-gray-200(data-key="expiresAtDisplay")
+                  | Expires 
+                  i.fas.fa-sort.ml-1.text-gray-400
+                th.sortable.border.px-4.py-3.text-left.cursor-pointer.hover_bg-gray-200(data-key="createdAtDisplay")
+                  | Registered 
+                  i.fas.fa-sort.ml-1.text-gray-400
+                th.border.px-4.py-3.text-center Status
+            tbody
+              each ot in onlineTutors
+                tr(data-is-active=ot.isActive)
+                  td.border.px-4.py-2= ot.username
+                  td.border.px-4.py-2= ot.email
+                  td.border.px-4.py-2.text-center
+                    if ot.remainingDays > 0
+                      span.bg-green-100.text-green-700.px-3.py-1.rounded-full.font-semibold= ot.remainingDays
+                    else
+                      span.bg-red-100.text-red-700.px-3.py-1.rounded-full.font-semibold 0
+                  td.border.px-4.py-2= ot.expiresAtDisplay
+                  td.border.px-4.py-2= ot.createdAtDisplay
+                  td.border.px-4.py-2.text-center
+                    if ot.isActive
+                      span.bg-green-100.text-green-600.px-3.py-1.rounded-full.text-xs.font-semibold
+                        i.fas.fa-check-circle.mr-1
+                        | Active
+                    else
+                      span.bg-red-100.text-red-600.px-3.py-1.rounded-full.text-xs.font-semibold
+                        i.fas.fa-times-circle.mr-1
+                        | Inactive
+        else
+          p.text-center.text-gray-500.py-8 No online tutors found
 
-    // Footer note
-    p(class="text-xs text-gray-400 mt-6")
-      | * Click column headers to sort. Type in the search boxes to filter rows (client-side). All times are KST (UTC+9).
+    // Footer
+    .text-center.text-xs.text-gray-400.mt-8.pb-4
+      p
+        i.fas.fa-info-circle.mr-1
+        | Click column headers to sort. Use search boxes and filter buttons to refine results.
+      p.mt-1 All times are in KST (UTC+9). Last updated: #{new Date(Date.now() + 9*60*60*1000).toISOString().replace('T',' ').slice(0,16)}
 
-  // =============== Client-side Search & Sort Script ===============
+  // =============== Client-side Search, Sort & Filter Script ===============
   script.
     (function(){
+      // Utility functions
       function text(row, idx){
         const cell = row.children[idx];
         return (cell ? cell.textContent : '').trim();
       }
+      
       function parseNumber(v){
         const n = Number(String(v).replace(/[^0-9.-]/g,''));
         return isNaN(n) ? null : n;
       }
+      
       function compare(a, b, keyIdx, numeric){
         const av = text(a, keyIdx);
         const bv = text(b, keyIdx);
@@ -154,12 +283,14 @@ block content
         }
         return av.localeCompare(bv);
       }
+      
       function applySort(tableId, th, dir){
         const table = document.getElementById(tableId);
+        if (!table) return;
         const thead = table.querySelector('thead tr');
         const headers = Array.from(thead.children);
         const keyIdx = headers.indexOf(th);
-        const numeric = /(Remaining|Days|Tokens)/i.test(th.textContent);
+        const numeric = /(Days|Credits|Tokens)/i.test(th.textContent);
         const tbody = table.querySelector('tbody');
         const rows = Array.from(tbody.children);
         rows.sort((r1, r2) => {
@@ -167,29 +298,53 @@ block content
           return dir === 'asc' ? c : -c;
         });
         rows.forEach(r => tbody.appendChild(r));
+        
+        // Visual feedback
         headers.forEach(h => h.classList.remove('bg-gray-200'));
         th.classList.add('bg-gray-200');
       }
-      function applyFilter(tableId, inputId, countId){
-        const q = (document.getElementById(inputId).value || '').toLowerCase();
+      
+      function applyFilter(tableId, inputId, countId, statusFilter){
+        const q = (document.getElementById(inputId)?.value || '').toLowerCase();
         const table = document.getElementById(tableId);
+        if (!table) return;
         const tbody = table.querySelector('tbody');
         const rows = Array.from(tbody.children);
         let shown = 0;
+        
         rows.forEach(row => {
           const cells = Array.from(row.children).map(td => td.textContent.toLowerCase());
-          const hit = cells.some(v => v.includes(q));
-          row.style.display = hit ? '' : 'none';
-          if (hit) shown++;
+          const textMatch = !q || cells.some(v => v.includes(q));
+          
+          let statusMatch = true;
+          if (statusFilter === 'active') {
+            statusMatch = row.dataset.isActive === 'true' || row.dataset.hasCredits === 'true';
+          } else if (statusFilter === 'inactive') {
+            statusMatch = row.dataset.isActive === 'false' || row.dataset.hasCredits === 'false';
+          } else if (statusFilter === 'with-credits') {
+            statusMatch = row.dataset.hasCredits === 'true';
+          } else if (statusFilter === 'no-credits') {
+            statusMatch = row.dataset.hasCredits === 'false';
+          }
+          
+          const show = textMatch && statusMatch;
+          row.style.display = show ? '' : 'none';
+          if (show) shown++;
         });
+        
         if (countId){
           const el = document.getElementById(countId);
-          if (el) el.textContent = shown + ' rows';
+          if (el) el.textContent = shown + ' / ' + rows.length + ' rows';
         }
       }
-      function wire(tableId, inputId, countId){
-        // sort
-        const thead = document.getElementById(tableId)?.querySelector('thead');
+      
+      function wire(tableId, inputId, countId, filterButtons){
+        let currentFilter = 'all';
+        
+        // Sort functionality
+        const table = document.getElementById(tableId);
+        if (!table) return;
+        const thead = table.querySelector('thead');
         if (thead){
           Array.from(thead.querySelectorAll('th.sortable')).forEach(th => {
             let dir = 'asc';
@@ -199,18 +354,63 @@ block content
             });
           });
         }
-        // filter (debounced)
+        
+        // Search functionality
         const input = document.getElementById(inputId);
         if (input){
           let t;
           input.addEventListener('input', () => {
             clearTimeout(t);
-            t = setTimeout(() => applyFilter(tableId, inputId, countId), 160);
+            t = setTimeout(() => applyFilter(tableId, inputId, countId, currentFilter), 200);
           });
         }
+        
+        // Filter buttons
+        if (filterButtons) {
+          filterButtons.forEach(({id, filter}) => {
+            const btn = document.getElementById(id);
+            if (btn) {
+              btn.addEventListener('click', () => {
+                currentFilter = filter;
+                
+                // Update button styles
+                filterButtons.forEach(fb => {
+                  const b = document.getElementById(fb.id);
+                  if (b) {
+                    b.classList.remove('btn-primary');
+                    b.classList.add('btn-outline-primary');
+                  }
+                });
+                btn.classList.remove('btn-outline-primary');
+                btn.classList.add('btn-primary');
+                
+                // Apply filter
+                applyFilter(tableId, inputId, countId, currentFilter);
+              });
+            }
+          });
+        }
+        
+        // Initial count
+        applyFilter(tableId, inputId, countId, currentFilter);
       }
-      // wire all three tables
-      wire('empTable', 'empSearch', 'empCount');
-      wire('jsTable', 'jsSearch', 'jsCount');
-      wire('otTable', 'otSearch', 'otCount');
+      
+      // Wire all three tables
+      wire('empTable', 'empSearch', 'empCount', [
+        {id: 'empFilterAll', filter: 'all'},
+        {id: 'empFilterWithCredits', filter: 'with-credits'},
+        {id: 'empFilterNoCredits', filter: 'no-credits'}
+      ]);
+      
+      wire('jsTable', 'jsSearch', 'jsCount', [
+        {id: 'jsFilterAll', filter: 'all'},
+        {id: 'jsFilterActive', filter: 'active'},
+        {id: 'jsFilterInactive', filter: 'inactive'}
+      ]);
+      
+      wire('otTable', 'otSearch', 'otCount', [
+        {id: 'otFilterAll', filter: 'all'},
+        {id: 'otFilterActive', filter: 'active'},
+        {id: 'otFilterInactive', filter: 'inactive'}
+      ]);
     })();

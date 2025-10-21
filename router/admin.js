@@ -62,106 +62,80 @@ router.get('/logout', (req, res) => {
 /* ---------------------- Dashboard ---------------------- */
 router.get('/dashboard', requireAdmin, async (req, res) => {
   try {
-    /* ===== EMPLOYERS: dedup by email (없으면 개별 문서), 최신 문서 기준 ===== */
-    const rawEmployers = await User.aggregate([
-      {
-        $addFields: {
-          _emailKey: {
-            $ifNull: ['$email', { $concat: ['ID:', { $toString: '$_id' }] }]
-          }
-        }
-      },
-      { $sort: { _emailKey: 1, createdAt: -1 } }, // 동일 이메일 내 최신 문서가 먼저
-      {
-        $group: {
-          _id: '$_emailKey',
-          firstId: { $first: '$_id' },
-          username: { $first: '$username' },
-          email: { $first: '$email' },
-          adsAvailable: { $first: { $ifNull: ['$adsAvailable', 0] } },
-          createdAt: { $first: '$createdAt' }
-        }
-      },
-      { $sort: { createdAt: -1 } } // 테이블은 최신 가입순
-    ]);
+    /* ===== EMPLOYERS: Get all Employer users ===== */
+    const allEmployers = await User.find({ role: 'Employer' })
+      .sort({ createdAt: -1 })
+      .lean();
 
-    const employers = rawEmployers.map(e => ({
-      id: e.firstId, // 필요 시 Edit 링크 등에 사용 가능
+    const employers = allEmployers.map(e => ({
+      id: e._id,
       username: e.username || '—',
       email: e.email || '—',
       remainingTokens: Number(e.adsAvailable || 0),
+      hasCredits: Number(e.adsAvailable || 0) > 0,
       createdAtDisplay: toKST(e.createdAt)
     }));
 
-    /* ===== JOB SEEKERS: dedup by email (없으면 개별 문서), resumeAccess 지원 ===== */
-    const rawSeekers = await JobSeeker.aggregate([
-      {
-        $addFields: {
-          _emailKey: {
-            $ifNull: ['$email', { $concat: ['ID:', { $toString: '$_id' }] }]
-          }
-        }
-      },
-      { $sort: { _emailKey: 1, createdAt: -1 } },
-      {
-        $group: {
-          _id: '$_emailKey',
-          firstId: { $first: '$_id' },
-          username: { $first: '$username' },
-          name: { $first: '$name' },
-          email: { $first: '$email' },
-          createdAt: { $first: '$createdAt' },
-          expiresAt: { $first: '$expiresAt' },
-          resumeAccess: { $first: '$resumeAccess' }
-        }
-      },
-      { $sort: { createdAt: -1 } }
-    ]);
+    /* ===== JOB SEEKERS: Get all Job_Seeker users with resumeAccess ===== */
+    const allJobSeekers = await User.find({ role: 'Job_Seeker' })
+      .sort({ createdAt: -1 })
+      .lean();
 
-    const jobSeekers = rawSeekers.map(js => ({
-      id: js.firstId, // ← Edit 링크에 사용
-      username: js.name || js.username || '—',
-      email: js.email || '—',
-      remainingDays: daysRemainingFromDoc(js),
-      expiresAtDisplay: js.expiresAt ? toKST(js.expiresAt) : '—',
-      createdAtDisplay: toKST(js.createdAt)
-    }));
+    const jobSeekers = allJobSeekers.map(js => {
+      const remainingDays = daysRemainingFromDoc({ resumeAccess: js.resumeAccess });
+      return {
+        id: js._id,
+        username: js.username || '—',
+        email: js.email || '—',
+        remainingDays,
+        isActive: remainingDays > 0,
+        expiresAtDisplay: js.resumeAccess?.startDate 
+          ? toKST(new Date(new Date(js.resumeAccess.startDate).getTime() + (js.resumeAccess.durationDays || 0) * 86400000))
+          : '—',
+        createdAtDisplay: toKST(js.createdAt)
+      };
+    });
 
-    /* ===== ONLINE TUTORS: 동일 처리 ===== */
-    const rawTutors = await OnlineTutor.aggregate([
-      {
-        $addFields: {
-          _emailKey: {
-            $ifNull: ['$email', { $concat: ['ID:', { $toString: '$_id' }] }]
-          }
-        }
+    /* ===== ONLINE TUTORS: Get all Online_Tutor users ===== */
+    const allTutors = await User.find({ role: 'Online_Tutor' })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const onlineTutors = allTutors.map(ot => {
+      const remainingDays = daysRemainingFromDoc({ resumeAccess: ot.tutorAccess });
+      return {
+        id: ot._id,
+        username: ot.username || '—',
+        email: ot.email || '—',
+        remainingDays,
+        isActive: remainingDays > 0,
+        expiresAtDisplay: ot.tutorAccess?.startDate 
+          ? toKST(new Date(new Date(ot.tutorAccess.startDate).getTime() + (ot.tutorAccess.durationDays || 0) * 86400000))
+          : '—',
+        createdAtDisplay: toKST(ot.createdAt)
+      };
+    });
+
+    /* ===== STATISTICS ===== */
+    const stats = {
+      employers: {
+        total: employers.length,
+        withCredits: employers.filter(e => e.hasCredits).length,
+        withoutCredits: employers.filter(e => !e.hasCredits).length
       },
-      { $sort: { _emailKey: 1, createdAt: -1 } },
-      {
-        $group: {
-          _id: '$_emailKey',
-          firstId: { $first: '$_id' },
-          username: { $first: '$username' },
-          name: { $first: '$name' },
-          email: { $first: '$email' },
-          createdAt: { $first: '$createdAt' },
-          expiresAt: { $first: '$expiresAt' },
-          resumeAccess: { $first: '$resumeAccess' }
-        }
+      jobSeekers: {
+        total: jobSeekers.length,
+        active: jobSeekers.filter(js => js.isActive).length,
+        inactive: jobSeekers.filter(js => !js.isActive).length
       },
-      { $sort: { createdAt: -1 } }
-    ]);
+      onlineTutors: {
+        total: onlineTutors.length,
+        active: onlineTutors.filter(ot => ot.isActive).length,
+        inactive: onlineTutors.filter(ot => !ot.isActive).length
+      }
+    };
 
-    const onlineTutors = rawTutors.map(ot => ({
-      id: ot.firstId, // ← Edit 링크에 사용
-      username: ot.username || ot.name || '—',
-      email: ot.email || '—',
-      remainingDays: daysRemainingFromDoc(ot),
-      expiresAtDisplay: ot.expiresAt ? toKST(ot.expiresAt) : '—',
-      createdAtDisplay: toKST(ot.createdAt)
-    }));
-
-    res.render('admin/dashboard', { employers, jobSeekers, onlineTutors });
+    res.render('admin/dashboard', { employers, jobSeekers, onlineTutors, stats });
   } catch (err) {
     console.error('❌ Admin dashboard error:', err);
     res.status(500).render('error', {
