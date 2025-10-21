@@ -12,6 +12,40 @@ const defaultTeachingAreas = require('../config/teachingAreaConfig');
 const validateObjectId = require('../middleware/validateObjectId');
 const { requireLogin, requireRole } = require('../middleware/auth');
 
+/* ------------ Standard Country List ------------ */
+const STANDARD_COUNTRIES = [
+  'Afghanistan', 'Albania', 'Algeria', 'Andorra', 'Angola', 'Argentina', 'Armenia', 'Australia', 'Austria', 'Azerbaijan',
+  'Bahamas', 'Bahrain', 'Bangladesh', 'Barbados', 'Belarus', 'Belgium', 'Belize', 'Benin', 'Bhutan', 'Bolivia',
+  'Bosnia and Herzegovina', 'Botswana', 'Brazil', 'Brunei', 'Bulgaria', 'Burkina Faso', 'Burundi',
+  'Cambodia', 'Cameroon', 'Canada', 'Cape Verde', 'Central African Republic', 'Chad', 'Chile', 'China', 'Colombia',
+  'Comoros', 'Congo', 'Costa Rica', 'Croatia', 'Cuba', 'Cyprus', 'Czech Republic',
+  'Denmark', 'Djibouti', 'Dominica', 'Dominican Republic',
+  'Ecuador', 'Egypt', 'El Salvador', 'Equatorial Guinea', 'Eritrea', 'Estonia', 'Eswatini', 'Ethiopia',
+  'Fiji', 'Finland', 'France',
+  'Gabon', 'Gambia', 'Georgia', 'Germany', 'Ghana', 'Greece', 'Grenada', 'Guatemala', 'Guinea', 'Guinea-Bissau', 'Guyana',
+  'Haiti', 'Honduras', 'Hong Kong', 'Hungary',
+  'Iceland', 'India', 'Indonesia', 'Iran', 'Iraq', 'Ireland', 'Israel', 'Italy',
+  'Jamaica', 'Japan', 'Jordan',
+  'Kazakhstan', 'Kenya', 'Kiribati', 'Kosovo', 'Kuwait', 'Kyrgyzstan',
+  'Laos', 'Latvia', 'Lebanon', 'Lesotho', 'Liberia', 'Libya', 'Liechtenstein', 'Lithuania', 'Luxembourg',
+  'Macau', 'Madagascar', 'Malawi', 'Malaysia', 'Maldives', 'Mali', 'Malta', 'Marshall Islands', 'Mauritania', 'Mauritius',
+  'Mexico', 'Micronesia', 'Moldova', 'Monaco', 'Mongolia', 'Montenegro', 'Morocco', 'Mozambique', 'Myanmar',
+  'Namibia', 'Nauru', 'Nepal', 'Netherlands', 'New Zealand', 'Nicaragua', 'Niger', 'Nigeria', 'North Korea', 'North Macedonia', 'Norway',
+  'Oman',
+  'Pakistan', 'Palau', 'Palestine', 'Panama', 'Papua New Guinea', 'Paraguay', 'Peru', 'Philippines', 'Poland', 'Portugal',
+  'Qatar',
+  'Romania', 'Russia', 'Rwanda',
+  'Saint Kitts and Nevis', 'Saint Lucia', 'Saint Vincent and the Grenadines', 'Samoa', 'San Marino', 'Sao Tome and Principe',
+  'Saudi Arabia', 'Senegal', 'Serbia', 'Seychelles', 'Sierra Leone', 'Singapore', 'Slovakia', 'Slovenia', 'Solomon Islands',
+  'Somalia', 'South Africa', 'South Korea', 'South Sudan', 'Spain', 'Sri Lanka', 'Sudan', 'Suriname', 'Sweden', 'Switzerland', 'Syria',
+  'Taiwan', 'Tajikistan', 'Tanzania', 'Thailand', 'Timor-Leste', 'Togo', 'Tonga', 'Trinidad and Tobago', 'Tunisia', 'Turkey',
+  'Turkmenistan', 'Tuvalu',
+  'Uganda', 'Ukraine', 'United Arab Emirates', 'United Kingdom', 'United States', 'Uruguay', 'Uzbekistan',
+  'Vanuatu', 'Vatican City', 'Venezuela', 'Vietnam',
+  'Yemen',
+  'Zambia', 'Zimbabwe'
+];
+
 router.use(methodOverride('_method'));
 
 // :id 유효성 검사 (중복 핸들러 제거, 이 한 줄만 사용)
@@ -165,11 +199,10 @@ async function ensureAdCredit(req, res, next) {
   }
 }
 
-// ✅ Country 리스트 반환 API
+// ✅ Country 리스트 반환 API (표준 국가 목록 사용)
 router.get('/countries', async (req, res) => {
   try {
-    const countries = await JobVacancy.distinct('country');
-    res.json((countries || []).filter(Boolean).sort());
+    res.json(STANDARD_COUNTRIES);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -191,7 +224,6 @@ router.get(
       return res.redirect('/stripe/checkout?type=employer');
     }
 
-    const countries    = await JobVacancy.distinct("country");
     const studentTypes = await JobVacancy.distinct("studentType");
     const teaching     = await JobVacancy.distinct("teachingArea");
 
@@ -199,7 +231,7 @@ router.get(
     const allTeachingAreas = Array.from(new Set([...defaultTeachingAreas, ...teaching]));
 
     return res.render('jobVacancy/new', {
-      countries: countries.sort(),
+      countries: STANDARD_COUNTRIES,
       studentTypes: studentTypes.sort(),
       teachingAreas: allTeachingAreas.sort(),
       values: {},
@@ -244,8 +276,7 @@ router.post(
       taOut         = mergeExtraAreas(taOut, req.body.extraTeachingArea);
 
       if (Object.keys(errors).length) {
-        const [countries, studentTypes, teaching] = await Promise.all([
-          JobVacancy.distinct('country'),
+        const [studentTypes, teaching] = await Promise.all([
           JobVacancy.distinct('studentType'),
           JobVacancy.distinct('teachingArea'),
         ]);
@@ -254,7 +285,7 @@ router.post(
         await User.findByIdAndUpdate(userId, { $inc: { adsAvailable: +1 } });
 
         return res.status(422).render('jobVacancy/new', {
-          countries: (countries || []).filter(Boolean).sort(),
+          countries: STANDARD_COUNTRIES,
           studentTypes: (studentTypes || []).filter(Boolean).sort(),
           teachingAreas: (teaching || []).filter(Boolean).sort(),
           values: {
@@ -362,15 +393,14 @@ router.get(
       return res.redirect(`/rdf-resource/Job_Vacancies/${id}`);
     }
 
-    const [countries, studentTypes, teaching] = await Promise.all([
-      JobVacancy.distinct('country'),
+    const [studentTypes, teaching] = await Promise.all([
       JobVacancy.distinct('studentType'),
       JobVacancy.distinct('teachingArea'),
     ]);
 
     res.render('jobVacancy/edit', {
       jobVacancy,
-      countries: (countries || []).filter(Boolean).sort(),
+      countries: STANDARD_COUNTRIES,
       studentTypes: (studentTypes || []).filter(Boolean).sort(),
       teachingAreas: (teaching || []).filter(Boolean).sort(),
       errors: {}
@@ -405,15 +435,14 @@ router.put(
       taOut = mergeExtraAreas(taOut, req.body.extraTeachingArea);
 
       if (Object.keys(errors).length) {
-        const [countries, studentTypes, teaching] = await Promise.all([
-          JobVacancy.distinct('country'),
+        const [studentTypes, teaching] = await Promise.all([
           JobVacancy.distinct('studentType'),
           JobVacancy.distinct('teachingArea'),
         ]);
 
         return res.status(422).render('jobVacancy/edit', {
           jobVacancy: { ...jobVacancy.toObject(), ...payload },
-          countries: (countries || []).filter(Boolean).sort(),
+          countries: STANDARD_COUNTRIES,
           studentTypes: (studentTypes || []).filter(Boolean).sort(),
           teachingAreas: (teaching || []).filter(Boolean).sort(),
           errors

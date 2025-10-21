@@ -99,11 +99,22 @@ block content
         a(href="/job-vacancies" class="px-4 py-2 rounded border") Cancel
 
   script(src="https://cdn.ckeditor.com/4.22.1/standard/ckeditor.js")
+  style.
+    /* Hide CKEditor license notification */
+    .cke_notification_warning,
+    .cke_notification {
+      display: none !important;
+    }
   script.
     (function () {
       function init() {
         if (window.CKEDITOR && document.getElementById('description')) {
-          CKEDITOR.replace('description', { removePlugins: 'cloudservices,easyimage', height: 260 });
+          CKEDITOR.replace('description', { 
+            removePlugins: 'cloudservices,easyimage,notification', 
+            height: 260,
+            // Suppress license warnings
+            versionCheck: false
+          });
         }
       }
       if (document.readyState === 'loading') {
