@@ -195,18 +195,40 @@ function calcRemainingDays(resumeAccess) {
   return diff > 0 ? Math.ceil(diff / 86400000) : 0;
 }
 
+function calcExpiryDate(resumeAccess) {
+  if (!resumeAccess || !resumeAccess.startDate || !resumeAccess.durationDays)
+    return null;
+  const start = new Date(resumeAccess.startDate);
+  const durationMs = resumeAccess.durationDays * 86400000;
+  return new Date(start.getTime() + durationMs);
+}
+
 router.get("/mypage-jobseeker", requireLogin, async (req, res) => {
-  const user = await User.findById(req.session.user._id).lean();
+  try {
+    const user = await User.findById(req.session.user._id).lean();
+    if (!user) return res.status(404).send("User not found");
 
-  const remainingDays = calcRemainingDays(user?.resumeAccess);
-  const hasActiveResumeAccess = remainingDays > 0;
+    const remainingDays = calcRemainingDays(user?.resumeAccess);
+    const hasActiveResumeAccess = remainingDays > 0;
+    const expiryDate = calcExpiryDate(user?.resumeAccess);
 
-  return res.render("user/mypage-jobseeker", {
-    user,
-    remainingDays,
-    hasActiveResumeAccess,
-    purchaseLink: "/user/job-seekers/resume-access",
-  });
+    // Find user's resume if exists
+    const userResume = await JobSeeker.findOne({ email: user.email })
+      .sort({ updatedAt: -1 })
+      .lean();
+
+    return res.render("user/mypage-jobseeker", {
+      user,
+      remainingDays,
+      hasActiveResumeAccess,
+      expiryDate,
+      userResume,
+      hasResume: !!userResume,
+    });
+  } catch (err) {
+    console.error("Job Seeker mypage error:", err.message);
+    return res.status(500).send("❌ Failed to load Job Seeker Dashboard");
+  }
 });
 
 router.get("/job-seekers/resume-access", requireLogin, (req, res) => {

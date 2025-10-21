@@ -1,39 +1,96 @@
 extends ../layout
 
 block content
-  .container.mt-5
-    .text-center
-      h2.mb-4(
-        style="font-size: 2.5rem; font-weight: bold; color: #333;"
-      ) My Page (Job Seeker)
+  .container.mx-auto.px-4.py-10
+    h1.text-2xl.text-center.mb-8 Job Seeker Dashboard
 
-    .card.shadow.p-4(
-      style="max-width: 500px; margin: 0 auto; border-radius: 1rem; background: #f9f9f9;"
-    )
-      p.mb-2(style="font-size: 1.2rem;")
-        strong Username:
-        |  #{user.username}
+    // User info
+    .max-w-xl.mx-auto.bg-white.rounded-xl.shadow.p-6
+      p Username: #{user.username}
+      p Email: #{user.email}
+      p Role: #{user.role}
 
-      p.mb-2(style="font-size: 1.2rem;")
-        strong Email:
-        |  #{user.email}
+    // My Resume card
+    if hasResume
+      .max-w-xl.mx-auto.mt-6.bg-gray-50.rounded-xl.shadow.p-6
+        h3.text-lg.font-bold.mb-3
+          i.fas.fa-file-alt.mr-2
+          | My Resume
+        if userResume
+          p.mb-2
+            strong Title: 
+            span #{userResume.title || 'No title'}
+          p.mb-2
+            strong Nationality: 
+            span #{userResume.nationality || 'N/A'}
+          p.mb-2
+            strong Preferred Location: 
+            span #{userResume.preferredWorkLocation || 'N/A'}
+          p.mb-2.text-sm.text-gray-600
+            | Last updated: #{userResume.updatedAt ? new Date(userResume.updatedAt).toLocaleDateString() : 'N/A'}
+        .flex.gap-3.mt-4
+          a.btn.btn-outline-primary(href=`/job-seekers/${userResume._id}/edit`)
+            i.fas.fa-edit.mr-2
+            | Edit Resume
+          a.btn.btn-outline-secondary(href='/facet/Job_Seekers')
+            i.fas.fa-search.mr-2
+            | View All Resumes
 
-      p.mb-2(style="font-size: 1.2rem;")
-        strong Role:
-        |  #{user.role}
-
-      p.mb-4(style="font-size: 1.3rem; color: #28a745;")
-        span 🔑
-        | Remaining Days of Resume Access:
-        strong #{remainingDays}
-
-      .d-flex.justify-content-center.gap-3
-        a.btn.btn-lg.btn-success(
-          href="/job-seekers/new"
-        ) Register Resume
-        if remainingDays <= 0
-          a.btn.btn-lg.btn-primary(
-            href="/paypal/checkout-resume"
-          ) Purchase Resume Visibility
+    // Resume Access Status card
+    .max-w-xl.mx-auto.mt-6.bg-gray-50.rounded-xl.shadow.p-6
+      p.mb-2
+        strong Resume Access Status: 
+        if hasActiveResumeAccess
+          span.text-green-600.font-bold
+            i.fas.fa-check-circle.mr-1
+            | Active
         else
-          a.btn.btn-lg.btn-secondary.disabled Purchase Resume Visibility
+          span.text-red-600.font-bold
+            i.fas.fa-times-circle.mr-1
+            | Inactive
+
+      if hasActiveResumeAccess
+        p.mb-2
+          strong Remaining Days: 
+          span.text-green-600.font-bold #{remainingDays} days
+        if expiryDate
+          p.mb-2
+            strong Expires on: 
+            span #{new Date(expiryDate).toLocaleDateString()}
+      else
+        p.mb-2
+          strong Remaining Days: 
+          span.text-red-600.font-bold 0 days
+
+      // Actions
+      .flex.flex-col.gap-3.mt-4
+        if !hasResume
+          // No resume yet - show register button
+          .w-full
+            p.text-blue-600.mb-3.text-center
+              i.fas.fa-info-circle.mr-2
+              | Create your resume first to start applying for jobs
+            a.btn.btn-success.w-full(href='/job-seekers/new')
+              i.fas.fa-plus-circle.mr-2
+              | Register Resume
+        else if hasActiveResumeAccess
+          // Has resume and active access - show search link
+          .w-full
+            p.text-green-600.mb-3.text-center
+              i.fas.fa-check-circle.mr-2
+              | Your resume access is active. You can search for jobs!
+            a.btn.btn-success.w-full(href='/job-vacancies')
+              i.fas.fa-briefcase.mr-2
+              | Search Job Vacancies
+            a.btn.btn-outline-primary.w-full.mt-2(href='/stripe/checkout?type=resume&accessPeriod=30')
+              i.fas.fa-sync.mr-2
+              | Extend Resume Access
+        else
+          // Has resume but no active access - show purchase button
+          .w-full
+            p.text-red-600.mb-3.text-center
+              i.fas.fa-exclamation-circle.mr-2
+              | Your resume access has expired. Purchase to search for jobs again.
+            a.btn.btn-primary.w-full(href='/stripe/checkout?type=resume&accessPeriod=30')
+              i.fas.fa-credit-card.mr-2
+              | Purchase Resume Access
