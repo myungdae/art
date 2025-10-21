@@ -82,7 +82,24 @@ function requireRole(roles) {
 
     const userCanon = canonRole(u.role);
     if (!allowedCanon.has(userCanon)) {
-      return res.status(403).send("Forbidden: insufficient role");
+      console.log('🚫 Role check failed:', {
+        userRole: u.role,
+        userCanon,
+        allowedCanon: Array.from(allowedCanon),
+        url: req.originalUrl,
+        sessionUser: req.session?.user,
+        reqUser: req.user
+      });
+      return res.status(403).send(`
+        <h3>Access Denied</h3>
+        <p>Your role: <strong>${u.role || 'undefined'}</strong></p>
+        <p>Required role: <strong>${Array.from(allowedCanon).join(', ')}</strong></p>
+        <p>This might be a session issue. Please try:</p>
+        <ol>
+          <li><a href="/user/logout">Logout</a> and login again</li>
+          <li>If problem persists, contact administrator</li>
+        </ol>
+      `);
     }
     next();
   };
