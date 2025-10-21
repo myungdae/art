@@ -27,7 +27,7 @@ block content
             strong Preferred Location: 
             span #{userResume.preferredWorkLocation || 'N/A'}
           p.mb-2.text-sm.text-gray-600
-            | Last updated: #{userResume.updatedAt ? new Date(userResume.updatedAt).toLocaleDateString() : 'N/A'}
+            | Last updated: #{formattedUpdatedAt}
         .flex.gap-3.mt-4
           a.btn.btn-outline-primary(href=`/job-seekers/${userResume._id}/edit`)
             i.fas.fa-edit.mr-2
@@ -56,7 +56,7 @@ block content
         if expiryDate
           p.mb-2
             strong Expires on: 
-            span #{new Date(expiryDate).toLocaleDateString()}
+            span #{expiryDate}
       else
         p.mb-2
           strong Remaining Days: 

@@ -217,13 +217,31 @@ router.get("/mypage-jobseeker", requireLogin, async (req, res) => {
       .sort({ updatedAt: -1 })
       .lean();
 
+    // Format dates for display
+    const formattedExpiryDate = expiryDate
+      ? expiryDate.toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        })
+      : null;
+
+    const formattedUpdatedAt = userResume?.updatedAt
+      ? new Date(userResume.updatedAt).toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        })
+      : "N/A";
+
     return res.render("user/mypage-jobseeker", {
       user,
       remainingDays,
       hasActiveResumeAccess,
-      expiryDate,
+      expiryDate: formattedExpiryDate,
       userResume,
       hasResume: !!userResume,
+      formattedUpdatedAt,
     });
   } catch (err) {
     console.error("Job Seeker mypage error:", err.message);
