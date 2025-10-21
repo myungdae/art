@@ -1,0 +1,26 @@
+// config/teachingAreaConfig.js
+module.exports = [
+  'English',
+  'Math',
+  'Science',
+  'Social Studies',
+  'Art',
+  'Music',
+  'Physical Education',
+  'Computer Science',
+  'Foreign Language',
+  'Special Education',
+  'ESL/EFL',
+  'Test Preparation',
+  'Business English',
+  'Conversation',
+  'Writing',
+  'Reading',
+  'Grammar',
+  'Pronunciation',
+  'TOEFL',
+  'IELTS',
+  'TOEIC',
+  'SAT',
+  'ACT'
+];

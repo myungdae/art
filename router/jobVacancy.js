@@ -7,6 +7,7 @@ const mongoose = require('mongoose');
 
 const JobVacancy = require('../model/jobVacancy');
 const User = require('../model/user');
+const defaultTeachingAreas = require('../config/teachingAreaConfig');
 
 const validateObjectId = require('../middleware/validateObjectId');
 const { requireLogin, requireRole } = require('../middleware/auth');
@@ -194,10 +195,13 @@ router.get(
     const studentTypes = await JobVacancy.distinct("studentType");
     const teaching     = await JobVacancy.distinct("teachingArea");
 
+    // Merge DB values with defaults
+    const allTeachingAreas = Array.from(new Set([...defaultTeachingAreas, ...teaching]));
+
     return res.render('jobVacancy/new', {
       countries: countries.sort(),
       studentTypes: studentTypes.sort(),
-      teachingAreas: teaching.sort(),
+      teachingAreas: allTeachingAreas.sort(),
       values: {},
       errors: {}
     });
