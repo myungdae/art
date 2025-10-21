@@ -378,6 +378,78 @@ router.get(
   }
 );
 
+// Update (PUT)
+router.put(
+  '/job-vacancies/:id',
+  requireLogin,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const jobVacancy = await JobVacancy.findById(id);
+      if (!jobVacancy) return res.status(404).send('Not found');
+
+      // Check if user is owner or admin
+      const currentUser = req.user;
+      const isAdmin = req.session?.isAdmin || req.user?.isAdmin || false;
+      const isOwner = currentUser && jobVacancy.email && currentUser.email === jobVacancy.email;
+      
+      if (!isAdmin && !isOwner) {
+        req.flash?.('error', 'You do not have permission to edit this job vacancy');
+        return res.redirect(`/rdf-resource/Job_Vacancies/${id}`);
+      }
+
+      // Validate and update
+      const payload = normalizePayload(req.body);
+      const errors = validatePayload(payload);
+      let taOut = toStringArray(payload.teachingArea);
+      taOut = mergeExtraAreas(taOut, req.body.extraTeachingArea);
+
+      if (Object.keys(errors).length) {
+        const [countries, studentTypes, teaching] = await Promise.all([
+          JobVacancy.distinct('country'),
+          JobVacancy.distinct('studentType'),
+          JobVacancy.distinct('teachingArea'),
+        ]);
+
+        return res.status(422).render('jobVacancy/edit', {
+          jobVacancy: { ...jobVacancy.toObject(), ...payload },
+          countries: (countries || []).filter(Boolean).sort(),
+          studentTypes: (studentTypes || []).filter(Boolean).sort(),
+          teachingAreas: (teaching || []).filter(Boolean).sort(),
+          errors
+        });
+      }
+
+      const title = (payload.title || '').trim();
+      const _label = (req.body._labelOverride || title).trim();
+      const _description = (req.body._descriptionOverride || payload.description || '').trim();
+
+      // Update document
+      Object.assign(jobVacancy, {
+        ...payload,
+        teachingArea: taOut,
+        title,
+        _label,
+        _description,
+        datePosted: payload.datePosted || jobVacancy.datePosted
+      });
+
+      await jobVacancy.save();
+      await mirrorToRDF(jobVacancy);
+
+      req.flash?.('success', 'Job vacancy updated successfully.');
+      return res.redirect(`/rdf-resource/Job_Vacancies/${id}`);
+
+    } catch (err) {
+      console.error('[UPDATE] job-vacancy error:', err);
+      return res.status(500).render('error', { 
+        message: 'Failed to update job vacancy', 
+        error: err 
+      });
+    }
+  }
+);
+
 // List (public)
 router.get('/job-vacancies', async (req, res, next) => {
   try {

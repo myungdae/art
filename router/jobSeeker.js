@@ -264,14 +264,24 @@ router.get("/job-seekers/:id/edit", requireLogin, async (req, res) => {
 router.put("/job-seekers/:id", requireLogin, async (req, res) => {
   const { id } = req.params;
   try {
+    const jobSeeker = await JobSeeker.findById(id);
+    if (!jobSeeker) return res.status(404).send("Not found");
+
+    // Check if user is owner or admin
+    const currentUser = req.user;
+    const isAdmin = req.session?.isAdmin || req.user?.isAdmin || false;
+    const isOwner = currentUser && jobSeeker.email && currentUser.email === jobSeeker.email;
+    
+    if (!isAdmin && !isOwner) {
+      req.flash?.('error', 'You do not have permission to edit this job seeker profile');
+      return res.redirect(`/rdf-resource/Job_Seekers/${id}`);
+    }
+
     const payload = normalizePayload(req.body);
     const errors = validatePayload(payload);
     if (Object.keys(errors).length) {
-      const jobSeeker = await JobSeeker.findById(id);
       return res.status(422).render("jobSeeker/edit", {
-        jobSeeker: jobSeeker
-          ? { ...jobSeeker.toObject(), ...payload }
-          : payload,
+        jobSeeker: { ...jobSeeker.toObject(), ...payload },
         nationalities: defaultNationalities,
         preferredWorkLocations: defaultPrefWorkLocs,
         majors: defaultMajors,

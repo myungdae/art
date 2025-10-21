@@ -306,10 +306,23 @@ router.delete(
 router.put(
   "/online-tutors/:id",
   requireLogin,
-  requireRole(["Online_Tutor", "Tutor"]),
   async (req, res) => {
     const { id } = req.params;
     try {
+      const onlineTutor = await OnlineTutor.findById(id);
+      if (!onlineTutor) return res.status(404).send("Not found");
+
+      // Check if user is owner or admin
+      const currentUser = req.user;
+      const isAdmin = req.session?.isAdmin || req.user?.isAdmin || false;
+      const isOwnerByUserId = currentUser && onlineTutor.user && String(onlineTutor.user) === String(currentUser._id);
+      const isOwnerByEmail = currentUser && onlineTutor.email && currentUser.email === onlineTutor.email;
+      
+      if (!isAdmin && !isOwnerByUserId && !isOwnerByEmail) {
+        req.flash?.('error', 'You do not have permission to edit this online tutor profile');
+        return res.redirect(`/rdf-resource/Online_Tutors/${id}`);
+      }
+
       const payload = normalizePayload(req.body);
       if (!payload.email && (req.user?.email || req.session?.user?.email)) {
         payload.email = String(
@@ -319,11 +332,8 @@ router.put(
 
       const errors = validatePayload(payload);
       if (Object.keys(errors).length) {
-        const onlineTutor = await OnlineTutor.findById(id);
         return res.status(422).render("onlineTutor/edit", {
-          onlineTutor: onlineTutor
-            ? { ...onlineTutor.toObject(), ...payload }
-            : payload,
+          onlineTutor: { ...onlineTutor.toObject(), ...payload },
           expertiseList: defaultExpertise,
           expList: defaultExperiences,
           genderList: defaultGenders,
