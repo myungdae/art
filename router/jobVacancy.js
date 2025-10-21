@@ -11,6 +11,7 @@ const defaultTeachingAreas = require('../config/teachingAreaConfig');
 
 const validateObjectId = require('../middleware/validateObjectId');
 const { requireLogin, requireRole } = require('../middleware/auth');
+const { validateFields, validateHtmlContent } = require('../utils/contentValidator');
 
 /* ------------ Standard Country List ------------ */
 const STANDARD_COUNTRIES = [
@@ -107,25 +108,32 @@ function mergeExtraAreas(arr, extraCsv) {
   return Array.from(new Set([...(arr || []), ...extra]));
 }
 
-// 간단 검증
+// 간단 검증 (Enhanced with content validation)
 function validatePayload(p) {
   const errors = {};
 
+  // Required fields
   if (!p.title || typeof p.title !== 'string') {
     errors.title = 'Title is required.';
-  } else {
-    const emojiRegex = /[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu;
-    const koreanRegex = /[ㄱ-ㅎㅏ-ㅣ가-힣]/;
-    if (emojiRegex.test(p.title) || koreanRegex.test(p.title)) {
-      errors.title = 'Emojis or Korean are not allowed in title.';
-    }
   }
-
   if (!p.country)     errors.country = 'Host Country is required.';
   if (!p.studentType) errors.studentType = 'Student Type is required.';
 
   const taLen = toStringArray(p.teachingArea).length;
   if (!taLen) errors.teachingArea = 'Teaching Area is required.';
+
+  // Content validation for text fields
+  const textFields = ['title', 'companyName', 'jobLocation', 'pay', 'housing'];
+  const contentErrors = validateFields(p, textFields);
+  Object.assign(errors, contentErrors);
+
+  // Validate HTML description
+  if (p.description) {
+    const descError = validateHtmlContent(p.description);
+    if (descError) {
+      errors.description = descError;
+    }
+  }
 
   return errors;
 }

@@ -117,19 +117,151 @@ block content
     .cke_notification {
       display: none !important;
     }
+    .validation-warning {
+      background-color: #fff3cd;
+      border: 1px solid #ffc107;
+      color: #856404;
+      padding: 8px 12px;
+      border-radius: 4px;
+      margin-top: 5px;
+      font-size: 0.875rem;
+      display: none;
+    }
   script.
     (function () {
+      // ===== Content Validation =====
+      function containsNonEnglish(text) {
+        // Detect: Korean, Chinese, Japanese, Emojis, and excessive special characters
+        const nonEnglishRegex = /[\u3000-\u303f\u3040-\u309f\u30a0-\u30ff\uff00-\uff9f\u4e00-\u9faf\u3400-\u4dbf\uac00-\ud7a3]|[\u{1F300}-\u{1F9FF}]|[\u2600-\u27BF]/u;
+        const excessiveSpecialChars = /[^a-zA-Z0-9\s.,!?;:()\-'"\/&%$@#+=]/g;
+        
+        if (nonEnglishRegex.test(text)) {
+          return 'Non-English characters detected (Korean, Chinese, Japanese, or emojis)';
+        }
+        
+        const specialCharCount = (text.match(excessiveSpecialChars) || []).length;
+        if (specialCharCount > text.length * 0.15) {
+          return 'Excessive special characters detected';
+        }
+        
+        return null;
+      }
+
+      function showWarning(inputId, message) {
+        let warning = document.getElementById(inputId + '-warning');
+        if (!warning) {
+          warning = document.createElement('div');
+          warning.id = inputId + '-warning';
+          warning.className = 'validation-warning';
+          const input = document.getElementById(inputId);
+          input.parentNode.insertBefore(warning, input.nextSibling);
+        }
+        warning.textContent = '⚠️ ' + message + ' - Please use English only with standard punctuation.';
+        warning.style.display = 'block';
+      }
+
+      function hideWarning(inputId) {
+        const warning = document.getElementById(inputId + '-warning');
+        if (warning) {
+          warning.style.display = 'none';
+        }
+      }
+
+      function validateField(inputId) {
+        const input = document.getElementById(inputId);
+        if (!input || !input.value) return true;
+        
+        const error = containsNonEnglish(input.value);
+        if (error) {
+          showWarning(inputId, error);
+          return false;
+        } else {
+          hideWarning(inputId);
+          return true;
+        }
+      }
+
+      // ===== Apply validation to all text inputs =====
+      const textFields = ['title', 'companyName', 'jobLocation', 'pay', 'housing', 'extraTeachingArea'];
+      
+      textFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+          field.addEventListener('blur', () => validateField(fieldId));
+          field.addEventListener('input', () => {
+            // Real-time validation after first warning
+            if (document.getElementById(fieldId + '-warning')) {
+              validateField(fieldId);
+            }
+          });
+        }
+      });
+
+      // ===== Form submission validation =====
+      const form = document.querySelector('form');
+      if (form) {
+        form.addEventListener('submit', function(e) {
+          // Update CKEditor content
+          if (window.CKEDITOR) {
+            for (var n in CKEDITOR.instances) {
+              CKEDITOR.instances[n].updateElement();
+            }
+          }
+
+          // Validate description from CKEditor
+          const description = document.getElementById('description');
+          if (description && description.value) {
+            const descError = containsNonEnglish(description.value);
+            if (descError) {
+              e.preventDefault();
+              showWarning('description', descError);
+              alert('⚠️ Please remove non-English characters, emojis, or excessive special characters from your content before submitting.');
+              return false;
+            }
+          }
+
+          // Validate all text fields
+          let hasErrors = false;
+          textFields.forEach(fieldId => {
+            if (!validateField(fieldId)) {
+              hasErrors = true;
+            }
+          });
+
+          if (hasErrors) {
+            e.preventDefault();
+            alert('⚠️ Please fix the validation errors before submitting.\n\nOnly English characters and standard punctuation are allowed.');
+            return false;
+          }
+        });
+      }
+
+      // ===== CKEditor initialization =====
       function init() {
         if (window.CKEDITOR && document.getElementById('description')) {
           CKEDITOR.replace('description', { 
             removePlugins: 'cloudservices,easyimage,notification', 
             height: 260,
-            // Suppress license warnings
             versionCheck: false
+          });
+          
+          // Add validation on CKEditor change
+          CKEDITOR.instances.description.on('blur', function() {
+            const data = CKEDITOR.instances.description.getData();
+            const plainText = data.replace(/<[^>]*>/g, ''); // Strip HTML tags
+            const error = containsNonEnglish(plainText);
+            if (error) {
+              showWarning('description', error);
+            } else {
+              hideWarning('description');
+            }
           });
         }
       }
+      
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
-      } else { init(); }
+      } else { 
+        init(); 
+      }
     })();
