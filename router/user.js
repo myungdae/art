@@ -146,6 +146,8 @@ router.get(
         activeJobs,
         credits,
         canPost,
+        totalSlots: activeJobs + credits,
+        remainingSlots: credits,
       });
     } catch (err) {
       console.error("Employer mypage error:", err.message);

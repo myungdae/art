@@ -12,19 +12,27 @@ block content
 
     // Slots card
     .max-w-xl.mx-auto.mt-6.bg-gray-50.rounded-xl.shadow.p-6
-      p Current postings: #{activeJobs} / #{totalSlots}
-      p Remaining slots: #{remainingSlots}
-      if nextExpireAt
-        p Soonest expiration: #{nextExpireTitle ? `${nextExpireTitle} — ` : ''}#{nextExpireAt} (#{expireTag})
+      p.mb-2
+        strong Current postings: 
+        span #{activeJobs}
+      p.mb-2
+        strong Ad Credits Available: 
+        span(class=credits > 0 ? 'text-green-600 font-bold' : 'text-red-600 font-bold') #{credits}
 
       // Actions
       .flex.gap-3.mt-4
         if canPost
-          a.btn.btn-success(href='/job-vacancies/new') Register
-          a.btn(href='/job-vacancies/mine') My Job Vacancies
+          a.btn.btn-success(href='/job-vacancies/new') Post New Job
+          a.btn.btn-outline-secondary(href='/job-vacancies/mine') My Job Vacancies
         else
-          a.btn.btn-primary(href="/job-vacancies/new") Buy Ad Credits
-          a.btn(href='/job-vacancies/mine') My Job Vacancies
+          .w-full
+            p.text-red-600.mb-3.text-center
+              i.fas.fa-exclamation-circle.mr-2
+              | You need to purchase ad credits to post job vacancies
+            a.btn.btn-primary.w-full(href="/stripe/checkout") 
+              i.fas.fa-credit-card.mr-2
+              | Buy Ad Credits
+            a.btn.btn-outline-secondary.w-full.mt-2(href='/job-vacancies/mine') My Job Vacancies
 
     // Job list
     if activeJobs > 0
