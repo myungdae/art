@@ -110,6 +110,13 @@ router.get("/mypage", requireLogin, async (req, res) => {
     const user = await User.findById(req.session.user._id).lean();
     if (!user) return res.status(404).send("User not found");
 
+    // Sync session role with DB role (in case it changed)
+    if (user.role !== req.session.user.role) {
+      console.log(`🔄 Updating session role: ${req.session.user.role} → ${user.role}`);
+      req.session.user.role = user.role;
+      req.user.role = user.role;
+    }
+
     if (user.role === "Employer") return res.redirect("/user/mypage-employer");
     if (user.role === "Job_Seeker")
       return res.redirect("/user/mypage-jobseeker");
@@ -126,11 +133,27 @@ router.get("/mypage", requireLogin, async (req, res) => {
 router.get(
   "/mypage-employer",
   requireLogin,
-  requireRole("Employer"),
   async (req, res, next) => {
     try {
       const user = await User.findById(req.session.user._id).lean();
       if (!user) return res.status(404).send("User not found");
+
+      // Sync session role with DB role (in case it changed)
+      if (user.role !== req.session.user.role) {
+        console.log(`🔄 [mypage-employer] Updating session role: ${req.session.user.role} → ${user.role}`);
+        req.session.user.role = user.role;
+        req.user.role = user.role;
+      }
+
+      // Check role after sync
+      if (user.role !== "Employer") {
+        return res.status(403).send(`
+          <h3>Access Denied</h3>
+          <p>This page is for Employers only.</p>
+          <p>Your role: <strong>${user.role}</strong></p>
+          <p><a href="/user/mypage">Go to My Page</a></p>
+        `);
+      }
 
       // 남은 광고 크레딧
       const credits = Number(user.adsAvailable || 0);
