@@ -3,6 +3,7 @@
 const express = require("express");
 const router = express.Router();
 const mongoose = require("mongoose");
+const { requireLogin } = require("../middleware/auth");
 
 /* ---------- helpers ---------- */
 
@@ -166,7 +167,13 @@ router.get("/Job_Vacancies/:id", async (req, res, next) => {
       }));
 
     // Check if current user can edit (owner or admin)
-    const currentUser = req.user;
+    // Get user from session (manually check since this route doesn't require login)
+    const currentUser = req.session?.user ? {
+      ...req.session.user,
+      _id: req.session.user._id ? new mongoose.Types.ObjectId(req.session.user._id) : undefined,
+      email: req.session.user.email,
+      role: req.session.user.role
+    } : null;
     const isAdmin = req.session?.isAdmin || req.user?.isAdmin || false;
     // Job Vacancy can only be edited by Employer with matching email
     const isOwner = currentUser && 
@@ -175,17 +182,25 @@ router.get("/Job_Vacancies/:id", async (req, res, next) => {
                     currentUser.role === 'Employer';
     vm.canEdit = isAdmin || isOwner;
     
-    // Debug logging
-    if (currentUser && !vm.canEdit) {
-      console.log('🔍 [Job Vacancy] Edit check failed:', {
-        docId: doc._id,
+    // Debug logging - always log for this specific job
+    if (String(doc._id) === '68f7d2c40de4207945a7130d') {
+      console.log('🔍 [Job Vacancy 68f7d2c40de4207945a7130d] Edit check:', {
         docEmail: doc.email,
-        currentUserEmail: currentUser.email,
-        currentUserRole: currentUser.role,
+        currentUser: currentUser ? {
+          email: currentUser.email,
+          role: currentUser.role,
+          _id: currentUser._id
+        } : null,
         isAdmin,
         isOwner,
-        emailMatch: currentUser.email === doc.email,
-        roleMatch: currentUser.role === 'Employer'
+        emailMatch: currentUser?.email === doc.email,
+        roleMatch: currentUser?.role === 'Employer',
+        canEdit: vm.canEdit,
+        session: {
+          isAdmin: req.session?.isAdmin,
+          userRole: req.session?.user?.role,
+          userEmail: req.session?.user?.email
+        }
       });
     }
 
@@ -224,8 +239,14 @@ router.get("/Job_Seekers/:id", async (req, res, next) => {
       }));
 
     // Check if current user can edit (owner or admin)
-    const currentUser = req.user;
-    const isAdmin = req.session?.isAdmin || req.user?.isAdmin || false;
+    // Get user from session (manually check since this route doesn't require login)
+    const currentUser = req.session?.user ? {
+      ...req.session.user,
+      _id: req.session.user._id ? new mongoose.Types.ObjectId(req.session.user._id) : undefined,
+      email: req.session.user.email,
+      role: req.session.user.role
+    } : null;
+    const isAdmin = req.session?.isAdmin || false;
     // Job Seeker can only be edited by Job_Seeker with matching email
     const isOwner = currentUser && 
                     doc.email && 
@@ -286,8 +307,14 @@ router.get("/Online_Tutors/:id", async (req, res, next) => {
       }));
     
     // Check if current user can edit (owner or admin)
-    const currentUser = req.user;
-    const isAdmin = req.session?.isAdmin || req.user?.isAdmin || false;
+    // Get user from session (manually check since this route doesn't require login)
+    const currentUser = req.session?.user ? {
+      ...req.session.user,
+      _id: req.session.user._id ? new mongoose.Types.ObjectId(req.session.user._id) : undefined,
+      email: req.session.user.email,
+      role: req.session.user.role
+    } : null;
+    const isAdmin = req.session?.isAdmin || false;
     // Online Tutor can only be edited by Online_Tutor with matching email
     const isOwner = currentUser && 
                     doc.email && 
