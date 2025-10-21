@@ -62,35 +62,39 @@ block content
           strong Remaining Days: 
           span.text-red-600.font-bold 0 days
 
-      // Actions
+      // Actions (Same logic as Employer: Check Access FIRST, then Resume)
       .flex.flex-col.gap-3.mt-4
-        if !hasResume
-          // No resume yet - show register button
+        if !hasActiveResumeAccess
+          // No active access - show purchase button (Like Employer "Buy Credits")
+          .w-full
+            p.text-red-600.mb-3.text-center
+              i.fas.fa-exclamation-circle.mr-2
+              | You need to purchase resume access to search for jobs
+            a.btn.btn-primary.w-full(href='/stripe/checkout?type=resume&accessPeriod=30')
+              i.fas.fa-credit-card.mr-2
+              | Purchase Resume Access
+            if hasResume
+              a.btn.btn-outline-secondary.w-full.mt-2(href=`/job-seekers/${userResume._id}/edit`)
+                i.fas.fa-edit.mr-2
+                | Edit My Resume
+        else if !hasResume
+          // Has access but no resume - show register button (Like Employer "Post New Job")
           .w-full
             p.text-blue-600.mb-3.text-center
               i.fas.fa-info-circle.mr-2
-              | Create your resume first to start applying for jobs
+              | You have resume access! Create your resume to start applying for jobs
             a.btn.btn-success.w-full(href='/job-seekers/new')
               i.fas.fa-plus-circle.mr-2
               | Register Resume
-        else if hasActiveResumeAccess
-          // Has resume and active access - show search link
+        else
+          // Has access and resume - show search links
           .w-full
             p.text-green-600.mb-3.text-center
               i.fas.fa-check-circle.mr-2
-              | Your resume access is active. You can search for jobs!
+              | Your resume is active. You can search for jobs!
             a.btn.btn-success.w-full(href='/job-vacancies')
               i.fas.fa-briefcase.mr-2
               | Search Job Vacancies
             a.btn.btn-outline-primary.w-full.mt-2(href='/stripe/checkout?type=resume&accessPeriod=30')
               i.fas.fa-sync.mr-2
               | Extend Resume Access
-        else
-          // Has resume but no active access - show purchase button
-          .w-full
-            p.text-red-600.mb-3.text-center
-              i.fas.fa-exclamation-circle.mr-2
-              | Your resume access has expired. Purchase to search for jobs again.
-            a.btn.btn-primary.w-full(href='/stripe/checkout?type=resume&accessPeriod=30')
-              i.fas.fa-credit-card.mr-2
-              | Purchase Resume Access
