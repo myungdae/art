@@ -10,13 +10,22 @@ block content
 
   .container.mx-auto.max-w-6xl.py-10
 
-    // Hero (검색 폼 제거)
+    // Hero with Search Bar
     .text-center.mb-10
       h1(class="text-4xl font-extrabold mb-3" style="font-size: 50px;")
         span(style="color: #FF7A00") ESL
         |  Plus
       p(class="text-gray-600 mb-3") The fast ESL hiring & tutoring hub
-      p(class="text-lg text-black-300 mt-1" style="font-size: 18px; font-weight: 500") Teach Beyond Borders. Inspire Minds. From ESL to STEM, Your Classroom Is Everywhere.
+      p(class="text-lg text-black-300 mt-1 mb-6" style="font-size: 18px; font-weight: 500") Teach Beyond Borders. Inspire Minds. From ESL to STEM, Your Classroom Is Everywhere.
+
+      // Search bar
+      form.flex.flex-col.md_flex-row.items-stretch.gap-3.justify-center.mb-8(action="/go" method="GET" style="max-width: 800px; margin: 0 auto;")
+        select.border.rounded.px-3.py-2(name="facet" required style="min-width: 150px;")
+          option(value="Job_Vacancies") Job Vacancies
+          option(value="Job_Seekers") Job Seekers
+          option(value="Online_Tutors") Online Tutors
+        input.flex-1.border.rounded.px-4.py-2(type="text" name="q" placeholder="Search by keyword (e.g., Seoul, ESL, Kindergarten)")
+        button.text-white.rounded.px-6.py-2(type="submit" style="background-color: #FF7A00;") Search
 
     // Stats (clickable + spinner + count-up, light orange theme)
     style.
