@@ -80,9 +80,14 @@ app.use(
     saveUninitialized: false,
     store: MongoStore.create({
       mongoUrl: process.env.MONGO_URI,
-      ttl: 14 * 24 * 60 * 60,
+      ttl: 30 * 24 * 60 * 60, // 30 days (increased from 14 days)
     }),
-    cookie: { httpOnly: true, sameSite: "lax", secure: false },
+    cookie: { 
+      httpOnly: true, 
+      sameSite: "lax", 
+      secure: false,
+      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days in milliseconds
+    },
   })
 );
 
