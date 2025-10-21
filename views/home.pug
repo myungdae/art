@@ -8,7 +8,7 @@ block content
   - var RS = Array.isArray(recentSeekers) ? recentSeekers : [];
   - var RT = Array.isArray(recentTutors) ? recentTutors : [];
 
-  // Stats (clickable + spinner + count-up, light orange theme) - 큰 검색창 바로 아래 위치
+  // Stats (clickable + spinner + count-up, light orange theme) - 배경 이미지 위로 겹치기
   style.
     .stat-spinner{width:18px;height:18px;border:2px solid #e5e7eb;border-top-color:#f97316;border-radius:50%;animation:spin .8s linear infinite;display:inline-block;vertical-align:middle}
     @keyframes spin{to{transform:rotate(360deg)}}
@@ -16,7 +16,6 @@ block content
     .stat-number {
       color: #FF7A00;
       font-size: 50px;
-
     }
     .stat-card {
       background: #F2F2F2;
@@ -24,14 +23,20 @@ block content
       border-radius: 20px;
       width: 400px;
       height: 240px;
-      display: flex; /* Flexbox 컨테이너로 만듦 */
-      flex-direction: column; /* 자식 요소들을 세로로 정렬 */
-      justify-content: center; /* 세로 방향으로 가운데 정렬 */
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
     .stat-card:hover{background:#FFEAD5;box-shadow:0 6px 18px rgba(249,115,22,.12)}
     .stat-label{color:#6b7280; font-size:20px; font-weight: 400; padding-top: 20px;}
+    .stats-overlay {
+      margin-top: -180px;
+      position: relative;
+      z-index: 10;
+    }
   
-  .container.mx-auto.max-w-6xl.py-10
+  // 통계 카드를 배경 이미지 위로 올리기 (음수 마진 사용)
+  .stats-overlay
     div(class="flex flex-col md:flex-row items-center justify-center gap-6 mb-12")
       a(href="/facet/Job_Vacancies" aria-label="Browse Job Vacancies" 
         class="stat-card block p-5 text-center transition transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-orange-400"
@@ -52,7 +57,9 @@ block content
           span#spin-t.stat-spinner
           div#stat-t.text-3xl.font-bold.stat-number= (S.tCount != null ? S.tCount : 0)
         div.stat-label.mt-1 Online Tutors
-    
+  
+  // 나머지 콘텐츠
+  .container.mx-auto.max-w-6xl.py-10
     hr.my-3
     .mb-15
     div(class="flex flex-col md:flex-row items-center md:items-start gap-12")
