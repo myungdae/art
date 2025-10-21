@@ -438,11 +438,12 @@ a:active {
 
 /* ========================================
    Orange Border Theme for Content Boxes
+   Subtle, thin borders for elegant look
    ======================================== */
 
 /* Description section */
 .prose {
-  border: 2px solid #FF7A00;
+  border: 1px solid rgba(255, 122, 0, 0.3);
   border-radius: 8px;
   padding: 20px;
   background-color: #fff;
@@ -450,12 +451,12 @@ a:active {
 
 /* All content boxes with .border class */
 .border.rounded {
-  border: 2px solid #FF7A00 !important;
+  border: 1px solid rgba(255, 122, 0, 0.3) !important;
 }
 
 /* Tab panels */
 .tab-content {
-  border: 2px solid #FF7A00;
+  border: 1px solid rgba(255, 122, 0, 0.3);
   border-radius: 8px;
   padding: 20px;
   background-color: #fff;
@@ -463,35 +464,35 @@ a:active {
 
 /* Card containers */
 .card, .card-body {
-  border: 2px solid #FF7A00 !important;
+  border: 1px solid rgba(255, 122, 0, 0.3) !important;
   border-radius: 8px;
 }
 
 /* Form containers */
 form .border,
 form .card {
-  border: 2px solid #FF7A00 !important;
+  border: 1px solid rgba(255, 122, 0, 0.3) !important;
 }
 
 /* List items in index pages */
 .list-group-item {
-  border-left: 3px solid #FF7A00 !important;
+  border-left: 2px solid rgba(255, 122, 0, 0.4) !important;
 }
 
 /* Table containers */
 table {
-  border: 2px solid #FF7A00 !important;
+  border: 1px solid rgba(255, 122, 0, 0.3) !important;
   border-radius: 8px;
 }
 
 /* Admin dashboard cards */
 .bg-gradient-to-br {
-  border: 2px solid #FF7A00 !important;
+  border: 1px solid rgba(255, 122, 0, 0.3) !important;
   border-radius: 12px;
 }
 
 /* White background containers */
 .bg-white.rounded-xl,
 .bg-white.rounded {
-  border: 2px solid #FF7A00 !important;
+  border: 1px solid rgba(255, 122, 0, 0.3) !important;
 }
