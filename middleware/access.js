@@ -25,7 +25,7 @@ function isActiveByAccess(user) {
   return endMs > Date.now();
 }
 
-module.exports.requireActiveResumeAccess = (req, res, next) => {
+module.exports.requireActiveResumeAccess = async (req, res, next) => {
   const u = req.user;
 
   // 로그인 안 된 경우
@@ -34,19 +34,33 @@ module.exports.requireActiveResumeAccess = (req, res, next) => {
     return res.redirect("/user/login");
   }
 
-  // 유효성 판단 (신형/구형 둘 중 하나라도 통과하면 OK)
-  const hasActiveResumeAccess = isActiveByFlag(u) || isActiveByAccess(u);
+  // 데이터베이스에서 최신 user 정보 가져오기 (결제 후 세션 불일치 방지)
+  try {
+    const User = require("../model/user");
+    const dbUser = await User.findById(u._id).lean();
+    
+    if (!dbUser) {
+      req.flash?.("error", "User not found.");
+      return res.redirect("/user/login");
+    }
 
-  if (!hasActiveResumeAccess) {
-    // 미결제/만기 → 결제/갱신 페이지로 유도
-    req.flash?.(
-      "error",
-      "Please purchase or renew Resume Visibility before registering your resume."
-    );
-    return res.redirect("/user/job-seekers/resume-access"); // 현재 프로젝트의 실제 경로
+    // 유효성 판단 (신형/구형 둘 중 하나라도 통과하면 OK)
+    const hasActiveResumeAccess = isActiveByFlag(dbUser) || isActiveByAccess(dbUser);
+
+    if (!hasActiveResumeAccess) {
+      // 미결제/만기 → 결제/갱신 페이지로 유도
+      req.flash?.(
+        "error",
+        "Please purchase or renew Resume Visibility before registering your resume."
+      );
+      return res.redirect("/user/job-seekers/resume-access"); // 현재 프로젝트의 실제 경로
+    }
+
+    return next();
+  } catch (err) {
+    console.error("requireActiveResumeAccess error:", err);
+    return res.status(500).send("Error checking resume access");
   }
-
-  return next();
 };
 
 /* ================= Tutor(튜터) ================= */
@@ -70,7 +84,7 @@ function isTutorActiveByAccess(user) {
   return endMs > Date.now();
 }
 
-module.exports.requireActiveTutorAccess = (req, res, next) => {
+module.exports.requireActiveTutorAccess = async (req, res, next) => {
   const u = req.user;
 
   if (!u) {
@@ -78,16 +92,30 @@ module.exports.requireActiveTutorAccess = (req, res, next) => {
     return res.redirect("/user/login");
   }
 
-  const hasActiveTutorAccess =
-    isTutorActiveByFlag(u) || isTutorActiveByAccess(u);
+  // 데이터베이스에서 최신 user 정보 가져오기 (결제 후 세션 불일치 방지)
+  try {
+    const User = require("../model/user");
+    const dbUser = await User.findById(u._id).lean();
+    
+    if (!dbUser) {
+      req.flash?.("error", "User not found.");
+      return res.redirect("/user/login");
+    }
 
-  if (!hasActiveTutorAccess) {
-    req.flash?.(
-      "error",
-      "Please purchase or renew Tutor Visibility before creating your tutor profile."
-    );
-    return res.redirect("/user/online-tutors/visibility"); // 튜터 결제/구매 페이지 경로
+    const hasActiveTutorAccess =
+      isTutorActiveByFlag(dbUser) || isTutorActiveByAccess(dbUser);
+
+    if (!hasActiveTutorAccess) {
+      req.flash?.(
+        "error",
+        "Please purchase or renew Tutor Visibility before creating your tutor profile."
+      );
+      return res.redirect("/user/online-tutors/visibility"); // 튜터 결제/구매 페이지 경로
+    }
+
+    return next();
+  } catch (err) {
+    console.error("requireActiveTutorAccess error:", err);
+    return res.status(500).send("Error checking tutor access");
   }
-
-  return next();
 };
