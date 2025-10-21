@@ -68,10 +68,10 @@ block content
         h1(class="text-5.3xl font-extrabold mb-3") ESL Plus:
         p(class="text-4xl") Bridge to the World
 
-      // 우측 영상/이미지 컨테이너 (최소형 비디오)
+      // 우측 영상/이미지 컨테이너 (비디오가 꽉 차도록)
       div(class="w-full md:w-2/3 flex justify-center")
-        div(class="relative w-full max-w-[840px] aspect-video bg-white p-4 md:p-6 rounded-3xl border-4 border-orange-500 shadow-sm" style="border-color:#FF7A00")
-          video.controls.rounded-xl.w-full(autoplay muted loop playsinline preload="metadata" controls)
+        div(class="relative w-full max-w-[840px] aspect-video rounded-3xl border-4 shadow-sm overflow-hidden" style="border-color:#FF7A00")
+          video.w-full.h-full(autoplay muted loop playsinline preload="metadata" controls style="object-fit: cover;")
             source(src="/assets/video/eslplus.mp4?v=20251014a" type="video/mp4")
             | Your browser does not support the video tag.
 
