@@ -174,6 +174,20 @@ router.get("/Job_Vacancies/:id", async (req, res, next) => {
                     currentUser.email === doc.email &&
                     currentUser.role === 'Employer';
     vm.canEdit = isAdmin || isOwner;
+    
+    // Debug logging
+    if (currentUser && !vm.canEdit) {
+      console.log('🔍 [Job Vacancy] Edit check failed:', {
+        docId: doc._id,
+        docEmail: doc.email,
+        currentUserEmail: currentUser.email,
+        currentUserRole: currentUser.role,
+        isAdmin,
+        isOwner,
+        emailMatch: currentUser.email === doc.email,
+        roleMatch: currentUser.role === 'Employer'
+      });
+    }
 
     return res.render("rdf-resource/jobVacancyShow", { vm });
   } catch (err) {
@@ -218,6 +232,20 @@ router.get("/Job_Seekers/:id", async (req, res, next) => {
                     currentUser.email === doc.email &&
                     currentUser.role === 'Job_Seeker';
     vm.canEdit = isAdmin || isOwner;
+    
+    // Debug logging
+    if (currentUser && !vm.canEdit) {
+      console.log('🔍 [Job Seeker] Edit check failed:', {
+        docId: doc._id,
+        docEmail: doc.email,
+        currentUserEmail: currentUser.email,
+        currentUserRole: currentUser.role,
+        isAdmin,
+        isOwner,
+        emailMatch: currentUser.email === doc.email,
+        roleMatch: currentUser.role === 'Job_Seeker'
+      });
+    }
 
     return res.render("rdf-resource/jobSeekerShow", { vm });
   } catch (err) {
@@ -266,6 +294,20 @@ router.get("/Online_Tutors/:id", async (req, res, next) => {
                     currentUser.email === doc.email &&
                     currentUser.role === 'Online_Tutor';
     vm.canEdit = isAdmin || isOwner;
+    
+    // Debug logging
+    if (currentUser && !vm.canEdit) {
+      console.log('🔍 [Online Tutor] Edit check failed:', {
+        docId: doc._id,
+        docEmail: doc.email,
+        currentUserEmail: currentUser.email,
+        currentUserRole: currentUser.role,
+        isAdmin,
+        isOwner,
+        emailMatch: currentUser.email === doc.email,
+        roleMatch: currentUser.role === 'Online_Tutor'
+      });
+    }
     
     return res.render("rdf-resource/onlineTutorShow", { vm });
   } catch (err) {
