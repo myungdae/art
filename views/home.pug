@@ -70,10 +70,9 @@ block content
 
       // 우측 영상/이미지 컨테이너
       div(class="w-full md:w-2/3 flex justify-center")
-        div(class="relative w-full max-w-[840px] rounded-3xl border-4 shadow-sm overflow-hidden" style="border-color:#FF7A00;")
-          video.rounded-3xl.w-full(autoplay muted loop playsinline preload="metadata" controls)
-            source(src="/assets/video/eslplus.mp4?v=20251014a" type="video/mp4")
-            | Your browser does not support the video tag.
+        video.rounded-3xl.w-full(autoplay muted loop playsinline preload="metadata" controls style="border: 4px solid #FF7A00; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: block;")
+          source(src="/assets/video/eslplus.mp4?v=20251014a" type="video/mp4")
+          | Your browser does not support the video tag.
 
     // Latest Job Vacancies
     if RV.length
