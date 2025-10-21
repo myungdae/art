@@ -165,6 +165,12 @@ router.get("/Job_Vacancies/:id", async (req, res, next) => {
         values: Array.isArray(doc[k]) ? doc[k] : [doc[k]],
       }));
 
+    // Check if current user can edit (owner or admin)
+    const currentUser = req.session?.user || req.user;
+    const isAdmin = req.session?.isAdmin || false;
+    const isOwner = currentUser && doc.email && currentUser.email === doc.email;
+    vm.canEdit = isAdmin || isOwner;
+
     return res.render("rdf-resource/jobVacancyShow", { vm });
   } catch (err) {
     console.error("GET /rdf-resource/Job_Vacancies/:id", err);
@@ -198,6 +204,12 @@ router.get("/Job_Seekers/:id", async (req, res, next) => {
         label: k.replace(/_/g, " "),
         values: Array.isArray(doc[k]) ? doc[k] : [doc[k]],
       }));
+
+    // Check if current user can edit (owner or admin)
+    const currentUser = req.session?.user || req.user;
+    const isAdmin = req.session?.isAdmin || false;
+    const isOwner = currentUser && doc.email && currentUser.email === doc.email;
+    vm.canEdit = isAdmin || isOwner;
 
     return res.render("rdf-resource/jobSeekerShow", { vm });
   } catch (err) {
@@ -236,6 +248,13 @@ router.get("/Online_Tutors/:id", async (req, res, next) => {
         label: k.replace(/_/g, " "),
         values: Array.isArray(doc[k]) ? doc[k] : [doc[k]],
       }));
+    
+    // Check if current user can edit (owner or admin)
+    const currentUser = req.session?.user || req.user;
+    const isAdmin = req.session?.isAdmin || false;
+    const isOwner = currentUser && doc.email && currentUser.email === doc.email;
+    vm.canEdit = isAdmin || isOwner;
+    
     return res.render("rdf-resource/onlineTutorShow", { vm });
   } catch (err) {
     console.error("GET /rdf-resource/Online_Tutors/:id", err);
