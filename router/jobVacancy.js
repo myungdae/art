@@ -388,7 +388,21 @@ router.get(
   requireLogin,
   async (req, res) => {
     const { id } = req.params;
-    const jobVacancy = await JobVacancy.findById(id);
+    // Try to find in both collections (job_vacancies and Job_Vacancies_RDF)
+    let jobVacancy = await JobVacancy.findById(id);
+    
+    // If not found in job_vacancies, try RDF collection
+    if (!jobVacancy) {
+      const db = mongoose.connection.db;
+      const rdfDoc = await db.collection('Job_Vacancies_RDF').findOne({ 
+        _id: new mongoose.Types.ObjectId(id) 
+      });
+      if (rdfDoc) {
+        // Convert RDF document to JobVacancy-like object
+        jobVacancy = rdfDoc;
+      }
+    }
+    
     if (!jobVacancy) return res.status(404).send('Not found');
 
     // Check if user is owner or admin
@@ -427,7 +441,22 @@ router.put(
   async (req, res) => {
     try {
       const { id } = req.params;
-      const jobVacancy = await JobVacancy.findById(id);
+      // Try to find in both collections (job_vacancies and Job_Vacancies_RDF)
+      let jobVacancy = await JobVacancy.findById(id);
+      let isRdfOnly = false;
+      
+      // If not found in job_vacancies, try RDF collection
+      if (!jobVacancy) {
+        const db = mongoose.connection.db;
+        const rdfDoc = await db.collection('Job_Vacancies_RDF').findOne({ 
+          _id: new mongoose.Types.ObjectId(id) 
+        });
+        if (rdfDoc) {
+          jobVacancy = rdfDoc;
+          isRdfOnly = true;
+        }
+      }
+      
       if (!jobVacancy) return res.status(404).send('Not found');
 
       // Check if user is owner or admin
@@ -457,7 +486,10 @@ router.put(
         ]);
 
         return res.status(422).render('jobVacancy/edit', {
-          jobVacancy: { ...jobVacancy.toObject(), ...payload },
+          jobVacancy: { 
+            ...(jobVacancy.toObject ? jobVacancy.toObject() : jobVacancy), 
+            ...payload 
+          },
           countries: STANDARD_COUNTRIES,
           studentTypes: (studentTypes || []).filter(Boolean).sort(),
           teachingAreas: (teaching || []).filter(Boolean).sort(),
@@ -469,18 +501,29 @@ router.put(
       const _label = (req.body._labelOverride || title).trim();
       const _description = (req.body._descriptionOverride || payload.description || '').trim();
 
-      // Update document
-      Object.assign(jobVacancy, {
+      const updateData = {
         ...payload,
         teachingArea: taOut,
         title,
         _label,
         _description,
         datePosted: payload.datePosted || jobVacancy.datePosted
-      });
+      };
 
-      await jobVacancy.save();
-      await mirrorToRDF(jobVacancy);
+      // Update document based on collection type
+      if (isRdfOnly) {
+        // Update RDF collection directly
+        const db = mongoose.connection.db;
+        await db.collection('Job_Vacancies_RDF').updateOne(
+          { _id: new mongoose.Types.ObjectId(id) },
+          { $set: updateData }
+        );
+      } else {
+        // Update Mongoose model
+        Object.assign(jobVacancy, updateData);
+        await jobVacancy.save();
+        await mirrorToRDF(jobVacancy);
+      }
 
       req.flash?.('success', 'Job vacancy updated successfully.');
       return res.redirect(`/rdf-resource/Job_Vacancies/${id}`);
