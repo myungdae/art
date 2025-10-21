@@ -435,3 +435,63 @@ a:active {
 .btn-blue {
   background-color: #007bff;
 }
+
+/* ========================================
+   Orange Border Theme for Content Boxes
+   ======================================== */
+
+/* Description section */
+.prose {
+  border: 2px solid #FF7A00;
+  border-radius: 8px;
+  padding: 20px;
+  background-color: #fff;
+}
+
+/* All content boxes with .border class */
+.border.rounded {
+  border: 2px solid #FF7A00 !important;
+}
+
+/* Tab panels */
+.tab-content {
+  border: 2px solid #FF7A00;
+  border-radius: 8px;
+  padding: 20px;
+  background-color: #fff;
+}
+
+/* Card containers */
+.card, .card-body {
+  border: 2px solid #FF7A00 !important;
+  border-radius: 8px;
+}
+
+/* Form containers */
+form .border,
+form .card {
+  border: 2px solid #FF7A00 !important;
+}
+
+/* List items in index pages */
+.list-group-item {
+  border-left: 3px solid #FF7A00 !important;
+}
+
+/* Table containers */
+table {
+  border: 2px solid #FF7A00 !important;
+  border-radius: 8px;
+}
+
+/* Admin dashboard cards */
+.bg-gradient-to-br {
+  border: 2px solid #FF7A00 !important;
+  border-radius: 12px;
+}
+
+/* White background containers */
+.bg-white.rounded-xl,
+.bg-white.rounded {
+  border: 2px solid #FF7A00 !important;
+}
