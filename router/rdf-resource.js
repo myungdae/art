@@ -87,6 +87,7 @@ function buildVM(doc, facetBase, titleKeys = [], descKeys = []) {
     jobLocation: doc.jobLocation || doc.location || doc.city || "",
     pay: doc.pay || "",
     housing: doc.housing || "",
+    cellphoneNumber: doc.cellphoneNumber || doc.cellphone || "",
     email: doc.email || "",
     homepage: doc.homepage || doc.website || "",
     datePosted: doc.datePosted
@@ -112,6 +113,8 @@ function buildVM(doc, facetBase, titleKeys = [], descKeys = []) {
     "city",
     "pay",
     "housing",
+    "cellphoneNumber",
+    "cellphone",
     "email",
     "homepage",
     "website",

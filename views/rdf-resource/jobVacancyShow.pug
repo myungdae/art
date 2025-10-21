@@ -37,35 +37,55 @@ block content
     .tab-content.text-left
       // Basic Information Panel
       .tab-pane.fade.show.active#panel-basic(role="tabpanel" aria-labelledby="tab-basic")
-        if vm.meta.languages && vm.meta.languages.length
-          .border.rounded.p-3
-            div.text-xs.text-gray-500.uppercase Languages
-            div.mt-2.flex.flex-wrap.gap-2
-              each lang in vm.meta.languages
-                a(href=`/facet/${vm.facetBase}?language=${(lang)}` class="inline-flex items-center px-3 py-1 rounded-full border hover:bg-gray-50 transition")= lang
-
-        if vm.meta.jobLocation
-          .border.rounded.p-3
-            div.text-xs.text-gray-500.uppercase Location
-            div.mt-2= vm.meta.jobLocation
+        if vm.meta.datePosted
+          .border.rounded.p-3.mb-3
+            div.text-xs.text-gray-500.uppercase Date Posted
+            - const d = new Date(vm.meta.datePosted)
+            div.mt-2= d.toISOString().slice(0,10).replace(/-/g, '/')
 
         if vm.meta.email
-          .border.rounded.p-3
-            div.text-xs.text-gray-500.uppercase Email
+          .border.rounded.p-3.mb-3
+            div.text-xs.text-gray-500.uppercase Contact Email
             div.mt-2
               a.text-blue-600(href=`mailto:${vm.meta.email}`)= vm.meta.email
 
+        if vm.meta.companyName
+          .border.rounded.p-3.mb-3
+            div.text-xs.text-gray-500.uppercase Company Name
+            div.mt-2= vm.meta.companyName
+
+        if vm.meta.jobLocation
+          .border.rounded.p-3.mb-3
+            div.text-xs.text-gray-500.uppercase Job Location
+            div.mt-2= vm.meta.jobLocation
+
+        if vm.meta.pay
+          .border.rounded.p-3.mb-3
+            div.text-xs.text-gray-500.uppercase Pay
+            div.mt-2= vm.meta.pay
+
+        if vm.meta.housing
+          .border.rounded.p-3.mb-3
+            div.text-xs.text-gray-500.uppercase Housing
+            div.mt-2= vm.meta.housing
+
+        if vm.meta.cellphoneNumber
+          .border.rounded.p-3.mb-3
+            div.text-xs.text-gray-500.uppercase Cellphone
+            div.mt-2= vm.meta.cellphoneNumber
+
         if vm.meta.homepage
-          .border.rounded.p-3
+          .border.rounded.p-3.mb-3
             div.text-xs.text-gray-500.uppercase Homepage
             div.mt-2
               a.text-blue-600(href=vm.meta.homepage target="_blank" rel="noopener")= vm.meta.homepage
 
-        if vm.meta.datePosted
-          .border.rounded.p-3
-            div.text-xs.text-gray-500.uppercase Updated
-            - const d = new Date(vm.meta.datePosted)
-            div.mt-2= d.toISOString().slice(0,10)
+        if vm.meta.languages && vm.meta.languages.length
+          .border.rounded.p-3.mb-3
+            div.text-xs.text-gray-500.uppercase Languages
+            div.mt-2.flex.flex-wrap.gap-2
+              each lang in vm.meta.languages
+                a(href=`/facet/${vm.facetBase}?language=${(lang)}` class="inline-flex items-center px-3 py-1 rounded-full border hover:bg-gray-50 transition")= lang
 
       // Semantic Browsing Panel
       .tab-pane.fade#panel-semantic(role="tabpanel" aria-labelledby="tab-semantic")
