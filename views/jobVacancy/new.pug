@@ -44,9 +44,7 @@ block content
           label(for="teachingArea") Teaching Area
           .grid.grid-cols-2.gap-2(class="md:grid-cols-3")
             each t in (teachingAreas || [])
-              - const picked = Array.isArray(values && values.teachingArea)
-              -   ? values.teachingArea.includes(t)
-              -   : ((values && values.teachingArea) ? values.teachingArea === t : false)
+              - const picked = Array.isArray(values && values.teachingArea) ? values.teachingArea.includes(t) : ((values && values.teachingArea) ? values.teachingArea === t : false)
               label.flex.items-center.gap-2
                 input(type="checkbox", name="teachingArea", value=t, checked=picked)
                 | #{t}
