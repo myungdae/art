@@ -234,7 +234,16 @@ router.get("/job-seekers/:id/edit", requireLogin, async (req, res) => {
     const jobSeeker = await JobSeeker.findById(id);
     if (!jobSeeker) return res.status(404).send("Not found");
 
-    // (선택) 본인/관리자만 접근하도록 강화하려면 여기서 검사
+    // Check if user is owner or admin
+    const currentUser = req.session?.user || req.user;
+    const isAdmin = req.session?.isAdmin || false;
+    const isOwner = currentUser && jobSeeker.email && currentUser.email === jobSeeker.email;
+    
+    if (!isAdmin && !isOwner) {
+      req.flash?.('error', 'You do not have permission to edit this job seeker profile');
+      return res.redirect(`/rdf-resource/Job_Seekers/${id}`);
+    }
+
     res.render("jobSeeker/edit", {
       jobSeeker,
       nationalities: defaultNationalities,

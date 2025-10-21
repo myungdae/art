@@ -249,14 +249,20 @@ router.post(
 router.get(
   "/online-tutors/:id/edit",
   requireLogin,
-  requireRole(["Online_Tutor", "Tutor"]),
   async (req, res) => {
     const { id } = req.params;
     const onlineTutor = await OnlineTutor.findById(id);
     if (!onlineTutor) return res.status(404).send("Not found");
 
-    if (String(onlineTutor.user || "") !== String(req.session.user._id || "")) {
-      return res.status(403).send("Forbidden: not owner");
+    // Check if user is owner or admin
+    const currentUser = req.session?.user || req.user;
+    const isAdmin = req.session?.isAdmin || false;
+    const isOwnerByUserId = currentUser && onlineTutor.user && String(onlineTutor.user) === String(currentUser._id);
+    const isOwnerByEmail = currentUser && onlineTutor.email && currentUser.email === onlineTutor.email;
+    
+    if (!isAdmin && !isOwnerByUserId && !isOwnerByEmail) {
+      req.flash?.('error', 'You do not have permission to edit this online tutor profile');
+      return res.redirect(`/rdf-resource/Online_Tutors/${id}`);
     }
 
     res.render("onlineTutor/edit", {

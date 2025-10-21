@@ -347,11 +347,20 @@ router.get(
 router.get(
   '/job-vacancies/:id/edit',
   requireLogin,
-  requireRole('Employer'),
   async (req, res) => {
     const { id } = req.params;
     const jobVacancy = await JobVacancy.findById(id);
     if (!jobVacancy) return res.status(404).send('Not found');
+
+    // Check if user is owner or admin
+    const currentUser = req.session?.user || req.user;
+    const isAdmin = req.session?.isAdmin || false;
+    const isOwner = currentUser && jobVacancy.email && currentUser.email === jobVacancy.email;
+    
+    if (!isAdmin && !isOwner) {
+      req.flash?.('error', 'You do not have permission to edit this job vacancy');
+      return res.redirect(`/rdf-resource/Job_Vacancies/${id}`);
+    }
 
     const [countries, studentTypes, teaching] = await Promise.all([
       JobVacancy.distinct('country'),
