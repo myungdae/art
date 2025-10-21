@@ -8,47 +8,30 @@ block content
   - var RS = Array.isArray(recentSeekers) ? recentSeekers : [];
   - var RT = Array.isArray(recentTutors) ? recentTutors : [];
 
+  // Stats (clickable + spinner + count-up, light orange theme) - 큰 검색창 바로 아래 위치
+  style.
+    .stat-spinner{width:18px;height:18px;border:2px solid #e5e7eb;border-top-color:#f97316;border-radius:50%;animation:spin .8s linear infinite;display:inline-block;vertical-align:middle}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .hide{display:none}
+    .stat-number {
+      color: #FF7A00;
+      font-size: 50px;
+
+    }
+    .stat-card {
+      background: #F2F2F2;
+      border: 1px solid #FFEDD5;
+      border-radius: 20px;
+      width: 400px;
+      height: 240px;
+      display: flex; /* Flexbox 컨테이너로 만듦 */
+      flex-direction: column; /* 자식 요소들을 세로로 정렬 */
+      justify-content: center; /* 세로 방향으로 가운데 정렬 */
+    }
+    .stat-card:hover{background:#FFEAD5;box-shadow:0 6px 18px rgba(249,115,22,.12)}
+    .stat-label{color:#6b7280; font-size:20px; font-weight: 400; padding-top: 20px;}
+  
   .container.mx-auto.max-w-6xl.py-10
-
-    // Hero with Search Bar
-    .text-center.mb-10
-      h1(class="text-4xl font-extrabold mb-3" style="font-size: 50px;")
-        span(style="color: #FF7A00") ESL
-        |  Plus
-      p(class="text-gray-600 mb-3") The fast ESL hiring & tutoring hub
-      p(class="text-lg text-black-300 mt-1 mb-6" style="font-size: 18px; font-weight: 500") Teach Beyond Borders. Inspire Minds. From ESL to STEM, Your Classroom Is Everywhere.
-
-      // Search bar
-      form.flex.flex-col.md_flex-row.items-stretch.gap-3.justify-center.mb-8(action="/go" method="GET" style="max-width: 800px; margin: 0 auto;")
-        select.border.rounded.px-3.py-2(name="facet" required style="min-width: 150px;")
-          option(value="Job_Vacancies") Job Vacancies
-          option(value="Job_Seekers") Job Seekers
-          option(value="Online_Tutors") Online Tutors
-        input.flex-1.border.rounded.px-4.py-2(type="text" name="q" placeholder="Search by keyword (e.g., Seoul, ESL, Kindergarten)")
-        button.text-white.rounded.px-6.py-2(type="submit" style="background-color: #FF7A00;") Search
-
-    // Stats (clickable + spinner + count-up, light orange theme)
-    style.
-      .stat-spinner{width:18px;height:18px;border:2px solid #e5e7eb;border-top-color:#f97316;border-radius:50%;animation:spin .8s linear infinite;display:inline-block;vertical-align:middle}
-      @keyframes spin{to{transform:rotate(360deg)}}
-      .hide{display:none}
-      .stat-number {
-        color: #FF7A00;
-        font-size: 50px;
-
-      }
-      .stat-card {
-        background: #F2F2F2;
-        border: 1px solid #FFEDD5;
-        border-radius: 20px;
-        width: 400px;
-        height: 240px;
-        display: flex; /* Flexbox 컨테이너로 만듦 */
-        flex-direction: column; /* 자식 요소들을 세로로 정렬 */
-        justify-content: center; /* 세로 방향으로 가운데 정렬 */
-      }
-      .stat-card:hover{background:#FFEAD5;box-shadow:0 6px 18px rgba(249,115,22,.12)}
-      .stat-label{color:#6b7280; font-size:20px; font-weight: 400; padding-top: 20px;}
     div(class="flex flex-col md:flex-row items-center justify-center gap-6 mb-12")
       a(href="/facet/Job_Vacancies" aria-label="Browse Job Vacancies" 
         class="stat-card block p-5 text-center transition transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-orange-400"
@@ -72,25 +55,22 @@ block content
     
     hr.my-3
     .mb-15
-    div(class="container mx-auto max-w-6xl py-10")
-      div(class="flex flex-col md:flex-row items-center md:items-start gap-12")
-        // 좌측 텍스트 영역
-        div(class="w-full md:w-1/3 text-center md:text-left")
-          h1(class="text-5.3xl font-extrabold mb-3") ESL Plus:
-          p(class="text-4xl") Bridge to the World
+    div(class="flex flex-col md:flex-row items-center md:items-start gap-12")
+      // 좌측 텍스트 영역
+      div(class="w-full md:w-1/3 text-center md:text-left")
+        h1(class="text-5.3xl font-extrabold mb-3") ESL Plus:
+        p(class="text-4xl") Bridge to the World
 
-        // 우측 영상/이미지 컨테이너 (최소형 비디오)
-        div(class="w-full md:w-2/3 flex justify-center")
-          div(class="relative w-full max-w-[840px] aspect-video bg-white p-4 md:p-6 rounded-3xl border-4 border-orange-500 shadow-sm" style="border-color:#FF7A00")
-            video.controls.rounded-xl.w-full(autoplay muted loop playsinline preload="metadata" controls)
-              source(src="/assets/video/eslplus.mp4?v=20251014a" type="video/mp4")
-              | Your browser does not support the video tag.
-           
-      
+      // 우측 영상/이미지 컨테이너 (최소형 비디오)
+      div(class="w-full md:w-2/3 flex justify-center")
+        div(class="relative w-full max-w-[840px] aspect-video bg-white p-4 md:p-6 rounded-3xl border-4 border-orange-500 shadow-sm" style="border-color:#FF7A00")
+          video.controls.rounded-xl.w-full(autoplay muted loop playsinline preload="metadata" controls)
+            source(src="/assets/video/eslplus.mp4?v=20251014a" type="video/mp4")
+            | Your browser does not support the video tag.
 
     // Latest Job Vacancies
     if RV.length
-      h2(class="text-xl font-semibold mb-3") Latest Job Vacancies
+      h2(class="text-xl font-semibold mb-3 mt-10") Latest Job Vacancies
       div(class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12")
         each v in RV
           .border.rounded.p-4.flex.flex-col
