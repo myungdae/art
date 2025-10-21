@@ -1,0 +1,63 @@
+extends ../layout
+
+block content
+  .container.mt-5
+    .row.justify-content-center
+      .col-md-8.col-lg-6
+        .card.shadow-lg.rounded
+          .card-header.text-center(style="background-color: #635bff;")
+            h3.text-white.mb-0(style="font-weight: bold; font-size: 1.6rem") Tutor Listing Visibility
+
+          .card-body.px-4.py-4(style="background-color: white; color: black; font-size: 16px;")
+            h4.text-center.mb-4 Welcome, #{user.username}!
+            p.text-center.text-muted Make your tutor profile visible to students
+
+            .alert.alert-info.text-center
+              h5.mb-2= label
+              h3.mb-0 $#{price}
+              small For #{days} days
+
+            button#checkout-button.btn.btn-success.btn-lg.btn-block.mt-4(type="button") 
+              i.fas.fa-credit-card.mr-2
+              | Continue to Payment
+
+            .text-center.mt-4
+              a.btn.btn-outline-secondary.btn-lg(href="/user/mypage-tutor") Back to My Page
+
+  script(src="https://js.stripe.com/v3/")
+  script.
+    const stripe = Stripe('#{stripePublicKey}');
+    const tutorDays = #{days};
+
+    document.getElementById('checkout-button').addEventListener('click', async () => {
+      const button = document.getElementById('checkout-button');
+      button.disabled = true;
+      button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+
+      try {
+        const response = await fetch('/stripe/create-checkout-session', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ tutorDays: tutorDays })
+        });
+
+        const data = await response.json();
+
+        if (data.error) {
+          alert('❌ ' + data.error);
+          button.disabled = false;
+          button.innerHTML = '<i class="fas fa-credit-card mr-2"></i>Continue to Payment';
+          return;
+        }
+
+        // Redirect to Stripe Checkout
+        window.location.href = data.url;
+      } catch (error) {
+        console.error('Error:', error);
+        alert('❌ Payment failed. Please try again.');
+        button.disabled = false;
+        button.innerHTML = '<i class="fas fa-credit-card mr-2"></i>Continue to Payment';
+      }
+    });

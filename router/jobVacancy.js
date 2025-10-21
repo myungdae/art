@@ -155,7 +155,7 @@ async function ensureAdCredit(req, res, next) {
     const credits = u?.adsAvailable || 0;
     if (credits <= 0) {
       // 결제 유도
-      return res.redirect('/paypal/checkout');
+      return res.redirect('/stripe/checkout');
     }
     return next();
   } catch (e) {
@@ -187,7 +187,7 @@ router.get(
     const credits = Number(me?.adsAvailable || 0);
     if (credits <= 0) {
       // 결제 플로우로
-      return res.redirect('/paypal/checkout?type=employer');
+      return res.redirect('/stripe/checkout?type=employer');
     }
 
     const countries    = await JobVacancy.distinct("country");
@@ -230,7 +230,7 @@ router.post(
 
     if (!dec) {
       // 크레딧 없음 → 결제 페이지로
-      return res.redirect('/paypal/checkout');
+      return res.redirect('/stripe/checkout');
     }
 
     try {

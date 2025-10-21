@@ -174,7 +174,7 @@ router.post(
         return res.status(400).send("❌ Invalid employer plan period");
       }
       return res.redirect(
-        `/paypal/checkout?type=employer&employerPeriod=${periodDays}`
+        `/stripe/checkout?type=employer&employerPeriod=${periodDays}`
       );
     } catch (err) {
       console.error("❌ Employer plan error:", err.message);
@@ -221,7 +221,7 @@ router.post("/job-seekers/resume-access", requireLogin, async (req, res) => {
     }
 
     // 결제 페이지로 이동 (레거시 경로 유지)
-    return res.redirect(`/paypal/checkout?accessPeriod=${periodDays}`);
+    return res.redirect(`/stripe/checkout?accessPeriod=${periodDays}`);
   } catch (err) {
     console.error("❌ Failed to process resume access:", err.message);
     return res.status(500).send("❌ Failed to process resume access");
@@ -265,7 +265,7 @@ router.get("/online-tutors/visibility/start", requireLogin, (req, res) => {
   if (![30, 90, 365].includes(days)) {
     return res.status(400).send("❌ Invalid tutor visibility period");
   }
-  return res.redirect(`/paypal/checkout?type=tutor&accessPeriod=${days}`);
+  return res.redirect(`/stripe/checkout?type=tutor&accessPeriod=${days}`);
 });
 
 // 설명/선택 페이지 (필요 시)
@@ -283,7 +283,7 @@ router.post("/online-tutors/visibility", requireLogin, async (req, res) => {
     if (![30, 90, 365].includes(days)) {
       return res.status(400).send("❌ Invalid tutor visibility period");
     }
-    return res.redirect(`/paypal/checkout?type=tutor&accessPeriod=${days}`);
+    return res.redirect(`/stripe/checkout?type=tutor&accessPeriod=${days}`);
   } catch (e) {
     console.error("[tutor visibility] error:", e.message || e);
     return res.status(500).send("❌ Failed to process tutor visibility");
