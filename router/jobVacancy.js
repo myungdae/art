@@ -394,7 +394,11 @@ router.get(
     // Check if user is owner or admin
     const currentUser = req.user;
     const isAdmin = req.session?.isAdmin || req.user?.isAdmin || false;
-    const isOwner = currentUser && jobVacancy.email && currentUser.email === jobVacancy.email;
+    // Job Vacancy can only be edited by Employer with matching email
+    const isOwner = currentUser && 
+                    jobVacancy.email && 
+                    currentUser.email === jobVacancy.email &&
+                    currentUser.role === 'Employer';
     
     if (!isAdmin && !isOwner) {
       req.flash?.('error', 'You do not have permission to edit this job vacancy');
@@ -429,7 +433,11 @@ router.put(
       // Check if user is owner or admin
       const currentUser = req.user;
       const isAdmin = req.session?.isAdmin || req.user?.isAdmin || false;
-      const isOwner = currentUser && jobVacancy.email && currentUser.email === jobVacancy.email;
+      // Job Vacancy can only be edited by Employer with matching email
+      const isOwner = currentUser && 
+                      jobVacancy.email && 
+                      currentUser.email === jobVacancy.email &&
+                      currentUser.role === 'Employer';
       
       if (!isAdmin && !isOwner) {
         req.flash?.('error', 'You do not have permission to edit this job vacancy');

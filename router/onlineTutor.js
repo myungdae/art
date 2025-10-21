@@ -259,8 +259,10 @@ router.get(
     const isAdmin = req.session?.isAdmin || req.user?.isAdmin || false;
     const isOwnerByUserId = currentUser && onlineTutor.user && String(onlineTutor.user) === String(currentUser._id);
     const isOwnerByEmail = currentUser && onlineTutor.email && currentUser.email === onlineTutor.email;
+    // Online Tutor can only be edited by Online_Tutor role
+    const hasCorrectRole = currentUser && currentUser.role === 'Online_Tutor';
     
-    if (!isAdmin && !isOwnerByUserId && !isOwnerByEmail) {
+    if (!isAdmin && !(hasCorrectRole && (isOwnerByUserId || isOwnerByEmail))) {
       req.flash?.('error', 'You do not have permission to edit this online tutor profile');
       return res.redirect(`/rdf-resource/Online_Tutors/${id}`);
     }
@@ -317,8 +319,10 @@ router.put(
       const isAdmin = req.session?.isAdmin || req.user?.isAdmin || false;
       const isOwnerByUserId = currentUser && onlineTutor.user && String(onlineTutor.user) === String(currentUser._id);
       const isOwnerByEmail = currentUser && onlineTutor.email && currentUser.email === onlineTutor.email;
+      // Online Tutor can only be edited by Online_Tutor role
+      const hasCorrectRole = currentUser && currentUser.role === 'Online_Tutor';
       
-      if (!isAdmin && !isOwnerByUserId && !isOwnerByEmail) {
+      if (!isAdmin && !(hasCorrectRole && (isOwnerByUserId || isOwnerByEmail))) {
         req.flash?.('error', 'You do not have permission to edit this online tutor profile');
         return res.redirect(`/rdf-resource/Online_Tutors/${id}`);
       }

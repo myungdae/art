@@ -168,7 +168,11 @@ router.get("/Job_Vacancies/:id", async (req, res, next) => {
     // Check if current user can edit (owner or admin)
     const currentUser = req.user;
     const isAdmin = req.session?.isAdmin || req.user?.isAdmin || false;
-    const isOwner = currentUser && doc.email && currentUser.email === doc.email;
+    // Job Vacancy can only be edited by Employer with matching email
+    const isOwner = currentUser && 
+                    doc.email && 
+                    currentUser.email === doc.email &&
+                    currentUser.role === 'Employer';
     vm.canEdit = isAdmin || isOwner;
 
     return res.render("rdf-resource/jobVacancyShow", { vm });
@@ -208,7 +212,11 @@ router.get("/Job_Seekers/:id", async (req, res, next) => {
     // Check if current user can edit (owner or admin)
     const currentUser = req.user;
     const isAdmin = req.session?.isAdmin || req.user?.isAdmin || false;
-    const isOwner = currentUser && doc.email && currentUser.email === doc.email;
+    // Job Seeker can only be edited by Job_Seeker with matching email
+    const isOwner = currentUser && 
+                    doc.email && 
+                    currentUser.email === doc.email &&
+                    currentUser.role === 'Job_Seeker';
     vm.canEdit = isAdmin || isOwner;
 
     return res.render("rdf-resource/jobSeekerShow", { vm });
@@ -252,7 +260,11 @@ router.get("/Online_Tutors/:id", async (req, res, next) => {
     // Check if current user can edit (owner or admin)
     const currentUser = req.user;
     const isAdmin = req.session?.isAdmin || req.user?.isAdmin || false;
-    const isOwner = currentUser && doc.email && currentUser.email === doc.email;
+    // Online Tutor can only be edited by Online_Tutor with matching email
+    const isOwner = currentUser && 
+                    doc.email && 
+                    currentUser.email === doc.email &&
+                    currentUser.role === 'Online_Tutor';
     vm.canEdit = isAdmin || isOwner;
     
     return res.render("rdf-resource/onlineTutorShow", { vm });

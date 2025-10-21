@@ -237,7 +237,11 @@ router.get("/job-seekers/:id/edit", requireLogin, async (req, res) => {
     // Check if user is owner or admin
     const currentUser = req.user;
     const isAdmin = req.session?.isAdmin || req.user?.isAdmin || false;
-    const isOwner = currentUser && jobSeeker.email && currentUser.email === jobSeeker.email;
+    // Job Seeker can only be edited by Job_Seeker with matching email
+    const isOwner = currentUser && 
+                    jobSeeker.email && 
+                    currentUser.email === jobSeeker.email &&
+                    currentUser.role === 'Job_Seeker';
     
     if (!isAdmin && !isOwner) {
       req.flash?.('error', 'You do not have permission to edit this job seeker profile');
@@ -270,7 +274,11 @@ router.put("/job-seekers/:id", requireLogin, async (req, res) => {
     // Check if user is owner or admin
     const currentUser = req.user;
     const isAdmin = req.session?.isAdmin || req.user?.isAdmin || false;
-    const isOwner = currentUser && jobSeeker.email && currentUser.email === jobSeeker.email;
+    // Job Seeker can only be edited by Job_Seeker with matching email
+    const isOwner = currentUser && 
+                    jobSeeker.email && 
+                    currentUser.email === jobSeeker.email &&
+                    currentUser.role === 'Job_Seeker';
     
     if (!isAdmin && !isOwner) {
       req.flash?.('error', 'You do not have permission to edit this job seeker profile');
