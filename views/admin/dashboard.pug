@@ -83,10 +83,10 @@ block content
         h2.text-2xl.font-bold.text-red-600
           i.fas.fa-briefcase.mr-2
           | Employers
-        .flex.gap-2
+        div(style="display: flex; gap: 0.5rem;")
           button#empFilterAll.btn.btn-sm.btn-primary All
-          button#empFilterWithCredits.btn.btn-sm.btn-outline-primary With Credits
-          button#empFilterNoCredits.btn.btn-sm.btn-outline-primary No Credits
+          button#empFilterWithCredits.btn.btn-sm.btn-outline-primary(style="margin-left: 0.5rem;") With Credits
+          button#empFilterNoCredits.btn.btn-sm.btn-outline-primary(style="margin-left: 0.5rem;") No Credits
 
       .flex.items-center.gap-3.mb-4
         input#empSearch.flex-1(
@@ -143,10 +143,10 @@ block content
         h2.text-2xl.font-bold.text-green-600
           i.fas.fa-users.mr-2
           | Job Seekers
-        .flex.gap-2
+        div(style="display: flex; gap: 0.5rem;")
           button#jsFilterAll.btn.btn-sm.btn-primary All
-          button#jsFilterActive.btn.btn-sm.btn-outline-primary Active
-          button#jsFilterInactive.btn.btn-sm.btn-outline-primary Inactive
+          button#jsFilterActive.btn.btn-sm.btn-outline-primary(style="margin-left: 0.5rem;") Active
+          button#jsFilterInactive.btn.btn-sm.btn-outline-primary(style="margin-left: 0.5rem;") Inactive
 
       .flex.items-center.gap-3.mb-4
         input#jsSearch.flex-1(
@@ -207,10 +207,10 @@ block content
         h2.text-2xl.font-bold.text-blue-600
           i.fas.fa-chalkboard-teacher.mr-2
           | Online Tutors
-        .flex.gap-2
+        div(style="display: flex; gap: 0.5rem;")
           button#otFilterAll.btn.btn-sm.btn-primary All
-          button#otFilterActive.btn.btn-sm.btn-outline-primary Active
-          button#otFilterInactive.btn.btn-sm.btn-outline-primary Inactive
+          button#otFilterActive.btn.btn-sm.btn-outline-primary(style="margin-left: 0.5rem;") Active
+          button#otFilterInactive.btn.btn-sm.btn-outline-primary(style="margin-left: 0.5rem;") Inactive
 
       .flex.items-center.gap-3.mb-4
         input#otSearch.flex-1(
