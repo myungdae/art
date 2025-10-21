@@ -353,8 +353,8 @@ router.get(
     if (!jobVacancy) return res.status(404).send('Not found');
 
     // Check if user is owner or admin
-    const currentUser = req.session?.user || req.user;
-    const isAdmin = req.session?.isAdmin || false;
+    const currentUser = req.user;
+    const isAdmin = req.session?.isAdmin || req.user?.isAdmin || false;
     const isOwner = currentUser && jobVacancy.email && currentUser.email === jobVacancy.email;
     
     if (!isAdmin && !isOwner) {

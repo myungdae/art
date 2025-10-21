@@ -235,8 +235,8 @@ router.get("/job-seekers/:id/edit", requireLogin, async (req, res) => {
     if (!jobSeeker) return res.status(404).send("Not found");
 
     // Check if user is owner or admin
-    const currentUser = req.session?.user || req.user;
-    const isAdmin = req.session?.isAdmin || false;
+    const currentUser = req.user;
+    const isAdmin = req.session?.isAdmin || req.user?.isAdmin || false;
     const isOwner = currentUser && jobSeeker.email && currentUser.email === jobSeeker.email;
     
     if (!isAdmin && !isOwner) {

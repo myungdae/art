@@ -255,8 +255,8 @@ router.get(
     if (!onlineTutor) return res.status(404).send("Not found");
 
     // Check if user is owner or admin
-    const currentUser = req.session?.user || req.user;
-    const isAdmin = req.session?.isAdmin || false;
+    const currentUser = req.user;
+    const isAdmin = req.session?.isAdmin || req.user?.isAdmin || false;
     const isOwnerByUserId = currentUser && onlineTutor.user && String(onlineTutor.user) === String(currentUser._id);
     const isOwnerByEmail = currentUser && onlineTutor.email && currentUser.email === onlineTutor.email;
     

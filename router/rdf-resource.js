@@ -166,8 +166,8 @@ router.get("/Job_Vacancies/:id", async (req, res, next) => {
       }));
 
     // Check if current user can edit (owner or admin)
-    const currentUser = req.session?.user || req.user;
-    const isAdmin = req.session?.isAdmin || false;
+    const currentUser = req.user;
+    const isAdmin = req.session?.isAdmin || req.user?.isAdmin || false;
     const isOwner = currentUser && doc.email && currentUser.email === doc.email;
     vm.canEdit = isAdmin || isOwner;
 
@@ -206,8 +206,8 @@ router.get("/Job_Seekers/:id", async (req, res, next) => {
       }));
 
     // Check if current user can edit (owner or admin)
-    const currentUser = req.session?.user || req.user;
-    const isAdmin = req.session?.isAdmin || false;
+    const currentUser = req.user;
+    const isAdmin = req.session?.isAdmin || req.user?.isAdmin || false;
     const isOwner = currentUser && doc.email && currentUser.email === doc.email;
     vm.canEdit = isAdmin || isOwner;
 
@@ -250,8 +250,8 @@ router.get("/Online_Tutors/:id", async (req, res, next) => {
       }));
     
     // Check if current user can edit (owner or admin)
-    const currentUser = req.session?.user || req.user;
-    const isAdmin = req.session?.isAdmin || false;
+    const currentUser = req.user;
+    const isAdmin = req.session?.isAdmin || req.user?.isAdmin || false;
     const isOwner = currentUser && doc.email && currentUser.email === doc.email;
     vm.canEdit = isAdmin || isOwner;
     

@@ -3,8 +3,21 @@
 
 const mongoose = require("mongoose");
 
-/** 로그인 여부 체크 */
+/** 로그인 여부 체크 (Admin 또는 일반 User) */
 function requireLogin(req, res, next) {
+  // Admin으로 로그인된 경우
+  if (req.session && req.session.isAdmin) {
+    req.user = {
+      _id: undefined,
+      username: 'Admin',
+      email: process.env.ADMIN_EMAIL,
+      role: 'Admin',
+      isAdmin: true
+    };
+    return next();
+  }
+
+  // 일반 User로 로그인된 경우
   if (!req.session || !req.session.user) {
     if (req.originalUrl) req.session.returnTo = req.originalUrl;
     return res.redirect("/user/login"); // 통일
