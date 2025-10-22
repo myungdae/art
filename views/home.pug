@@ -70,8 +70,8 @@ block content
 
       // 우측 영상/이미지 컨테이너
       div(class="w-full md:w-2/3 flex justify-center")
-        div(class="relative" style="display: inline-block;")
-          video#videoPlayer.rounded-3xl.w-full(loop playsinline preload="metadata" poster="/assets/img/video.png" style="border: 4px solid #FF7A00; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: block; object-fit: cover;")
+        div(class="relative w-full max-w-[840px] rounded-3xl overflow-hidden" style="border: 4px solid #FF7A00; box-shadow: 0 4px 6px rgba(0,0,0,0.1);")
+          video#videoPlayer.rounded-3xl.w-full(loop playsinline preload="metadata" poster="/assets/img/video.png" style="display: block;")
             source(src="/assets/video/eslplus.mp4?v=20251014a" type="video/mp4")
             | Your browser does not support the video tag.
           
