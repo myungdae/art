@@ -41,15 +41,34 @@ router.get('/login', (req, res) => {
   res.render('admin/login');
 });
 
-router.post('/login', (req, res) => {
+router.post('/login', async (req, res) => {
   const { email, password } = req.body;
   const adminEmail = process.env.ADMIN_EMAIL;
   const adminPassword = process.env.ADMIN_PASSWORD;
 
+  // Check .env hardcoded admin first
   if (email === adminEmail && password === adminPassword) {
     req.session.isAdmin = true;
     return res.redirect('/admin/dashboard');
   }
+
+  // Check database for Admin role users
+  try {
+    const user = await User.findOne({ email, role: 'Admin' });
+    if (user && user.password === password) {
+      req.session.isAdmin = true;
+      req.session.user = {
+        _id: user._id,
+        username: user.username,
+        email: user.email,
+        role: 'Admin'
+      };
+      return res.redirect('/admin/dashboard');
+    }
+  } catch (err) {
+    console.error('Admin login error:', err);
+  }
+
   return res.render('admin/login', { error: 'Invalid email or password.' });
 });
 
