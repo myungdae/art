@@ -2,39 +2,52 @@ extends ../layout
 
 block content
   .container.mx-auto.px-4.py-10
-    h1.text-2xl.text-center.mb-8 Employer Dashboard
+    .max-w-2xl.mx-auto.p-6.border.rounded-lg(style="border-color: #FFD6B3 !important; border-width: 3px; background-color: #FFF9F5;")
+      h1.text-3xl.font-bold.text-center.mb-8(style="color: #FF7A00;") Employer Dashboard
 
-    // User info
-    .max-w-xl.mx-auto.bg-white.rounded-xl.shadow.p-6
-      p Username: #{user.username}
-      p Email: #{user.email}
-      p Role: #{user.role}
+      // User info
+      .bg-white.rounded-lg.shadow-sm.p-5.mb-6.border(style="border-color: #FFE4CC;")
+        p.mb-2.text-lg
+          strong.text-gray-700 Username: 
+          span.text-gray-900 #{user.username}
+        p.mb-2.text-lg
+          strong.text-gray-700 Email: 
+          span.text-gray-900 #{user.email}
+        p.text-lg
+          strong.text-gray-700 Role: 
+          span.text-gray-900 #{user.role}
 
-    // Slots card
-    .max-w-xl.mx-auto.mt-6.bg-gray-50.rounded-xl.shadow.p-6
-      p.mb-2
-        strong Current postings: 
-        span #{activeJobs}
-      p.mb-2
-        strong Ad Credits Available: 
-        span(class=credits > 0 ? 'text-green-600 font-bold' : 'text-red-600 font-bold') #{credits}
+      // Slots card
+      .bg-white.rounded-lg.shadow-sm.p-5.border(style="border-color: #FFE4CC;")
+        p.mb-3.text-lg
+          strong.text-gray-700 Current postings: 
+          span.font-bold.text-xl(style="color: #FF7A00;") #{activeJobs}
+        p.mb-4.text-lg
+          strong.text-gray-700 Ad Credits Available: 
+          span.font-bold.text-xl(class=credits > 0 ? '' : 'text-red-600' style=credits > 0 ? 'color: #28a745;' : '') #{credits}
 
-      // Actions
-      .flex.gap-3.mt-4
-        if canPost
-          a.btn.btn-success(href='/job-vacancies/new') Post New Job
-          a.btn.btn-outline-secondary(href='/job-vacancies/mine') My Job Vacancies
-        else
-          .w-full
-            p.text-red-600.mb-3.text-center
-              i.fas.fa-exclamation-circle.mr-2
-              | You need to purchase ad credits to post job vacancies
-            a.btn.btn-primary.w-full(href="/stripe/checkout") 
-              i.fas.fa-credit-card.mr-2
-              | Buy Ad Credits
-            a.btn.btn-outline-secondary.w-full.mt-2(href='/job-vacancies/mine') My Job Vacancies
+        // Actions
+        .flex.flex-col.gap-3.mt-5
+          if canPost
+            a.btn.btn-lg.w-full(href='/job-vacancies/new' style="background-color: #FF7A00; border-color: #FF7A00; color: white; font-size: 1.125rem; font-weight: 600;")
+              i.fas.fa-plus-circle.mr-2
+              | Post New Job
+            a.btn.btn-outline-secondary.btn-lg.w-full(href='/job-vacancies/mine' style="border-width: 2px; font-size: 1rem;")
+              i.fas.fa-list.mr-2
+              | My Job Vacancies
+          else
+            .w-full
+              .alert.alert-warning.text-center.mb-4(style="background-color: #FFF3CD; border-color: #FFE69C; font-size: 1rem;")
+                i.fas.fa-exclamation-triangle.mr-2
+                strong You need to purchase ad credits to post job vacancies
+              a.btn.btn-lg.w-full(href="/stripe/checkout" style="background-color: #FF7A00; border-color: #FF7A00; color: white; font-size: 1.125rem; font-weight: 600; margin-bottom: 0.75rem;")
+                i.fas.fa-credit-card.mr-2
+                | Buy Ad Credits
+              a.btn.btn-outline-secondary.btn-lg.w-full(href='/job-vacancies/mine' style="border-width: 2px; font-size: 1rem;")
+                i.fas.fa-list.mr-2
+                | My Job Vacancies
 
-    // Job list
-    if activeJobs > 0
-    else
-      p.mt-6.text-gray-500.text-center No job vacancies posted yet.
+      // Job list
+      if activeJobs > 0
+      else
+        p.mt-6.text-gray-500.text-center.text-lg No job vacancies posted yet.

@@ -3,10 +3,11 @@ extends ../layout
 
 block content
   .container.mt-5.mb-5
-    // ===== 헤더 =====
-    .d-flex.flex-column.align-items-center.text-center.mb-4
-      h2.mp-title-xl.mb-2 My Page (Online Tutor)
-      p.mp-subtext Keep your tutor profile active to reach the right students and schools.
+    .p-6.border.rounded-lg(style="max-width: 900px; margin: 0 auto; border-color: #FFD6B3 !important; border-width: 3px; background-color: #FFF9F5;")
+      // ===== 헤더 =====
+      .d-flex.flex-column.align-items-center.text-center.mb-5
+        h2.mb-3(style="color: #FF7A00; font-size: 2rem; font-weight: 700;") Online Tutor Dashboard
+        p.text-muted(style="font-size: 1.125rem;") Keep your tutor profile active to reach the right students and schools.
 
     // ===== 사전 계산 (optional chaining 미사용) =====
     - var u = (typeof user !== 'undefined' && user) ? user : {};
@@ -16,45 +17,59 @@ block content
     - var hasActive = (typeof hasActiveTutorAccess !== 'undefined') ? hasActiveTutorAccess : (flagActive || remainLocal > 0);
     - var purchaseLink = (typeof tutorPurchaseLink !== 'undefined') ? tutorPurchaseLink : '/user/online-tutors/visibility';
 
-    // ===== 요약 카드 =====
-    .card.shadow-sm.p-4(style="max-width: 720px; margin: 0 auto;")
-      .row.g-2
-        .col-12.col-md-6
-          p.mb-2
-            strong Username:
-            = (user && user.username) || ''
-          
-          p.mb-2
-            strong Email:
-            = (user && user.email) || ''
-          
-          p.mb-2
-            strong Role:
-            = (user && user.role) || ''
+      // ===== 요약 카드 =====
+      .bg-white.rounded-lg.shadow-sm.p-5.mb-4.border(style="border-color: #FFE4CC;")
+        .row.g-3
+          .col-12
+            p.mb-2(style="font-size: 1.125rem;")
+              strong.text-gray-700 Username: 
+              span.text-gray-900= (user && user.username) || ''
+            
+            p.mb-2(style="font-size: 1.125rem;")
+              strong.text-gray-700 Email: 
+              span.text-gray-900= (user && user.email) || ''
+            
+            p.mb-3(style="font-size: 1.125rem;")
+              strong.text-gray-700 Role: 
+              span.text-gray-900= (user && user.role) || ''
 
-      .mt-2
-        p.mb-0
-          span.me-1 🧑‍🏫
-          b Tutor Visibility:
-          if hasActive
-            span.ms-1.text-success Active
-            span.ms-1.text-muted (#{remainLocal} days left)
-          else
-            span.ms-1.text-danger Not Active
+        .mt-3.pt-3.border-top
+          p.mb-0(style="font-size: 1.125rem;")
+            span.me-2 🧑‍🏫
+            strong.text-gray-700 Tutor Visibility: 
+            if hasActive
+              span.ms-2.font-bold(style="color: #28a745; font-size: 1.25rem;")
+                i.fas.fa-check-circle.mr-1
+                | Active
+              span.ms-2.text-muted (#{remainLocal} days left)
+            else
+              span.ms-2.text-danger.font-bold(style="font-size: 1.25rem;")
+                i.fas.fa-times-circle.mr-1
+                | Not Active
 
       // ===== 버튼 블록 =====
-      .d-flex.justify-content-center.mt-3.btn-block-mobile
-        .btn-group(role="group", aria-label="Tutor actions")
-          if hasActive
-            a.btn.btn-success.btn-lg(href="/online-tutors/new") Create Tutor Profile
-            a.btn.btn-outline-secondary.btn-lg(href="/facet/Online_Tutors") Browse Tutors
-          else
-            a.btn.btn-primary.btn-lg(href=purchaseLink) Purchase Tutor Visibility
-            a.btn.btn-outline-secondary.btn-lg(href="/facet/Online_Tutors") Browse Tutors
+      .d-flex.flex-column.gap-3.mt-4
+        if hasActive
+          a.btn.btn-lg.w-100(href="/online-tutors/new" style="background-color: #FF7A00; border-color: #FF7A00; color: white; font-size: 1.125rem; font-weight: 600;")
+            i.fas.fa-plus-circle.mr-2
+            | Create Tutor Profile
+          a.btn.btn-outline-secondary.btn-lg.w-100(href="/facet/Online_Tutors" style="border-width: 2px; font-size: 1rem;")
+            i.fas.fa-search.mr-2
+            | Browse Tutors
+        else
+          .alert.alert-warning.text-center.mb-3(style="background-color: #FFF3CD; border-color: #FFE69C; font-size: 1rem;")
+            i.fas.fa-exclamation-triangle.mr-2
+            strong You need to purchase tutor visibility to create your profile
+          a.btn.btn-lg.w-100(href=purchaseLink style="background-color: #FF7A00; border-color: #FF7A00; color: white; font-size: 1.125rem; font-weight: 600; margin-bottom: 0.75rem;")
+            i.fas.fa-credit-card.mr-2
+            | Purchase Tutor Visibility
+          a.btn.btn-outline-secondary.btn-lg.w-100(href="/facet/Online_Tutors" style="border-width: 2px; font-size: 1rem;")
+            i.fas.fa-search.mr-2
+            | Browse Tutors
 
-    // ===== 안내 =====
-    .mt-4.mx-auto(style="max-width: 720px;")
-      .alert.alert-info.mb-0
-        small
-          | When visibility expires, creating/updating your tutor profile is blocked.
-          |  Renew anytime; new days will extend from the remaining period.
+      // ===== 안내 =====
+      .mt-4
+        .alert.alert-info.mb-0(style="background-color: #D1ECF1; border-color: #BEE5EB;")
+          small
+            i.fas.fa-info-circle.mr-2
+            | When visibility expires, creating/updating your tutor profile is blocked. Renew anytime; new days will extend from the remaining period.
