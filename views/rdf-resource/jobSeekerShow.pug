@@ -2,13 +2,17 @@ extends ../layout
 
 block content
   .container.mx-auto.max-w-5xl.py-8
-    // Title with Edit button
+    // Title with Edit and Back to List buttons
     .flex.justify-between.items-center.mb-6
       h1.text-3xl.font-bold= vm.title || 'Job Seeker'
-      if vm.canEdit
-        a.btn.btn-primary(href=`/job-seekers/${vm.id}/edit` style="background-color: #FF7A00; border-color: #FF7A00;")
-          i.fas.fa-edit.mr-2
-          | Edit
+      .flex.gap-2
+        a.btn.btn-outline-secondary(href="/facet/Job_Seekers" style="border-color: #6c757d; color: #6c757d;")
+          i.fas.fa-list.mr-2
+          | Back to List
+        if vm.canEdit
+          a.btn.btn-primary(href=`/job-seekers/${vm.id}/edit` style="background-color: #FF7A00; border-color: #FF7A00;")
+            i.fas.fa-edit.mr-2
+            | Edit
 
     h3 Description
     hr.my-3
