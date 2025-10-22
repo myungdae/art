@@ -3,13 +3,14 @@ extends ../layout
 
 block content
   .container(style="max-width: 840px")
-    h2.mb-3 Inquiry
+    .p-4.border.rounded(style="border-color: #FFD6B3 !important; border-width: 2px; background-color: #FFF9F5;")
+      h2.mb-3 Inquiry
 
-    //- Global error (e.g., server-side failure)
-    if errors && errors._global
-      .alert.alert-danger= errors._global
+      //- Global error (e.g., server-side failure)
+      if errors && errors._global
+        .alert.alert-danger= errors._global
 
-    form(method="POST", action="/inquiry")
+      form(method="POST", action="/inquiry")
       .mb-3
         label.form-label(for="name") Name
         input#name.form-control(
@@ -53,6 +54,6 @@ block content
         if errors && errors.message
           small.text-danger= errors.message
 
-      .d-flex.gap-2
-        button.btn.btn-primary(type="submit") Send
-        a.btn.btn-outline-secondary(href="/") Cancel
+        .d-flex.gap-2
+          button.btn.btn-primary(type="submit") Send
+          a.btn.btn-outline-secondary(href="/") Cancel
