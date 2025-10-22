@@ -325,6 +325,7 @@ async function seedData() {
       await db.collection('Job_Vacancies_RDF').insertOne({
         _id: newVacancy._id,
         '@id': `job_vacancy_${newVacancy._id}`,
+        _class: 'Job_Vacancies',
         ...vacancy,
         datePosted: vacancy.datePosted || new Date()
       });
@@ -341,6 +342,7 @@ async function seedData() {
       await db.collection('Job_Seekers_RDF').insertOne({
         _id: newSeeker._id,
         '@id': `job_seeker_${newSeeker._id}`,
+        _class: 'Job_Seekers',
         ...seeker,
         _label: seeker.title,
         _description: seeker.description
@@ -358,6 +360,7 @@ async function seedData() {
       await db.collection('Online_Tutors_RDF').insertOne({
         _id: newTutor._id,
         '@id': `online_tutor_${newTutor._id}`,
+        _class: 'Online_Tutors',
         ...tutor,
         _label: tutor.title,
         _description: tutor.description
