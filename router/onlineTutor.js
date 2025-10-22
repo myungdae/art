@@ -24,6 +24,11 @@ const defaultExpertise = [
   "IELTS",
   "Kids",
   "Pronunciation",
+  "IT",
+  "Coding",
+  "AI Literacy",
+  "Music Composing",
+  "Drawing",
 ];
 const defaultExperiences = [
   "Beginner",
