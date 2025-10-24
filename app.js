@@ -28,7 +28,7 @@ const userRoutes = require("./router/user");
 const adminRouter = require("./router/admin");
 const jobVacancyRouter = require("./router/jobVacancy");
 const jobSeekerRouter = require("./router/jobSeeker");
-const stripeRoutes = require("./router/stripe");
+const paddleRoutes = require("./router/paddle");
 const onlineTutorRouter = require("./router/onlineTutor");
 const tutorAccessRouter = require("./router/tutorAccess");
 const rdfResourceRouter = require("./router/rdf-resource");
@@ -120,7 +120,7 @@ app.use(jobVacancyRouter);
 app.use(onlineTutorRouter);
 
 app.use("/policy", policyRouter);
-app.use("/stripe", stripeRoutes);
+app.use("/paddle", paddleRoutes);
 app.use("/resume-access", resumeAccessRouter);
 app.use("/tutor-access", tutorAccessRouter);
 app.use("/admin", adminRouter);

@@ -1,0 +1,96 @@
+extends ../layout
+
+block content
+  .container.mt-5
+    .row.justify-content-center
+      .col-md-6
+        .card.shadow-lg(style="border: 2px solid #FF7A00;")
+          .card-header.text-center(style="background-color: #FF7A00; color: white;")
+            h2
+              i.fas.fa-chalkboard-teacher.me-2
+              | Purchase Tutor Listing Visibility
+          
+          .card-body.p-4
+            .text-center.mb-4
+              h3= label
+              h2.text-primary.my-3
+                | $#{price}
+              p.text-muted
+                | #{days} days of visibility
+            
+            hr.my-4
+            
+            .alert.alert-info
+              i.fas.fa-info-circle.me-2
+              | Your tutor profile will be visible to students for #{days} days.
+            
+            .list-group.mb-4
+              .list-group-item
+                i.fas.fa-check-circle.text-success.me-2
+                | Profile visible in search results
+              .list-group-item
+                i.fas.fa-check-circle.text-success.me-2
+                | Direct contact from students
+              .list-group-item
+                i.fas.fa-check-circle.text-success.me-2
+                | Featured in tutor listings
+              .list-group-item
+                i.fas.fa-check-circle.text-success.me-2
+                | #{days} days of active visibility
+            
+            .d-grid.gap-2
+              button.btn.btn-lg(
+                type="button"
+                onclick=`openPaddleCheckout(${days}, ${price})`
+                style="background-color: #FF7A00; border-color: #FF7A00; color: white; font-size: 1.25rem; padding: 15px;"
+              )
+                i.fas.fa-shopping-cart.me-2
+                | Purchase Now - $#{price}
+              
+              a.btn.btn-outline-secondary(href="/user/mypage-tutor")
+                i.fas.fa-arrow-left.me-2
+                | Back to My Page
+            
+            hr.my-4
+            
+            .text-center
+              p.text-muted.mb-0
+                i.fas.fa-lock.me-1
+                | Secure payment powered by Paddle
+
+  //- Paddle Script
+  script(src=paddleEnvironment === 'sandbox' ? 'https://sandbox-cdn.paddle.com/paddle/v2/paddle.js' : 'https://cdn.paddle.com/paddle/v2/paddle.js')
+  
+  script.
+    // Initialize Paddle
+    if (typeof Paddle !== 'undefined') {
+      Paddle.Environment.set('#{paddleEnvironment}');
+      Paddle.Initialize({
+        token: '#{process.env.PADDLE_CLIENT_TOKEN || "test_xxxxx"}'
+      });
+    }
+
+    function openPaddleCheckout(days, price) {
+      if (typeof Paddle === 'undefined') {
+        alert('Paddle is not loaded. Please refresh the page.');
+        return;
+      }
+
+      const customData = {
+        userId: '#{user._id}',
+        type: 'tutor',
+        tutorDays: days,
+        accessPeriod: days
+      };
+
+      Paddle.Checkout.open({
+        items: [{
+          priceId: 'pri_tutor_' + days, // 실제 Paddle Price ID로 교체 필요
+          quantity: 1
+        }],
+        customData: customData,
+        successCallback: function(data) {
+          window.location.href = '/paddle/success?type=tutor';
+        }
+      });
+    }
