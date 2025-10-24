@@ -18,7 +18,7 @@ block content
       font-size: 50px;
     }
     .stat-card {
-      background: #F2F2F2;
+      background: rgba(255, 255, 255, 0.95);
       border: 4px solid #FF7A00;
       border-radius: 20px;
       width: 400px;
@@ -26,17 +26,32 @@ block content
       display: flex;
       flex-direction: column;
       justify-content: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
     }
-    .stat-card:hover{background:#FFEAD5;box-shadow:0 6px 18px rgba(249,115,22,.12)}
-    .stat-label{color:#6b7280; font-size:20px; font-weight: 400; padding-top: 20px;}
+    .stat-card:hover{background:#FFEAD5;box-shadow:0 8px 24px rgba(249,115,22,.2); transform: translateY(-4px);}
+    .stat-label{color:#374151; font-size:20px; font-weight: 500; padding-top: 20px;}
     .stats-overlay {
       margin-top: -320px;
       position: relative;
       z-index: 10;
+      padding: 0 20px;
+    }
+    .main-headline {
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(10px);
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
   
   // 통계 카드를 배경 이미지 위로 올리기 (음수 마진 사용)
   .stats-overlay
+    // 메인 헤드라인
+    div(class="text-center mb-8 main-headline max-w-4xl mx-auto")
+      h2(class="text-4xl md:text-5xl font-extrabold mb-3" style="color: #1f2937;") Connect. Teach. Grow.
+      p(class="text-xl md:text-2xl font-semibold" style="color: #FF7A00;") AI-Powered ESL Teacher Matching Platform
+    
     div(class="flex flex-col md:flex-row items-center justify-center gap-6 mb-12")
       a(href="/facet/Job_Vacancies" aria-label="Browse Job Vacancies" 
         class="stat-card block p-5 text-center transition transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-orange-400"
@@ -65,8 +80,9 @@ block content
     div(class="flex flex-col md:flex-row items-center md:items-start gap-12")
       // 좌측 텍스트 영역
       div(class="w-full md:w-1/3 text-center md:text-left")
-        h1(class="text-5.3xl font-extrabold mb-3") ESL Plus:
-        p(class="text-4xl") Bridge to the World
+        h1(class="text-5xl font-extrabold mb-3") ESL Plus:
+        p(class="text-3xl mb-4") Bridge to the World
+        p(class="text-lg font-semibold" style="color: #FF7A00;") AI-Powered ESL Teacher Matching Platform
 
       // 우측 영상/이미지 컨테이너
       div(class="w-full md:w-2/3 flex justify-center")
@@ -84,10 +100,12 @@ block content
 
     // Latest Job Vacancies
     if RV.length
-      h2(class="text-xl font-semibold mb-3 mt-10") Latest Job Vacancies
-      div(class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12")
+      h2(class="text-2xl font-bold mb-4 mt-12" style="color: #1f2937;")
+        i.fas.fa-briefcase.me-2(style="color: #FF7A00;")
+        | Latest Job Vacancies
+      div(class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12")
         each v in RV
-          .border.rounded.p-4.flex.flex-col
+          .border.rounded-lg.p-5.flex.flex-col.shadow-sm.hover_shadow-md.transition-shadow(style="border-color: #e5e7eb;")
             a.font-semibold.mb-1(href='/rdf-resource/Job_Vacancies/' + (v.id || ''))= (v.title || 'Untitled')
             .text-sm.text-gray-500.mb-2
               if v.date
@@ -106,10 +124,12 @@ block content
 
     // Latest Job Seekers
     if RS.length
-      h2(class="text-xl font-semibold mb-3") Latest Job Seekers
+      h2(class="text-2xl font-bold mb-4 mt-12" style="color: #1f2937;")
+        i.fas.fa-users.me-2(style="color: #FF7A00;")
+        | Latest Job Seekers
       div(class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12")
         each s in RS
-          .border.rounded.p-4.flex.flex-col
+          .border.rounded-lg.p-5.flex.flex-col.shadow-sm.hover_shadow-md.transition-shadow(style="border-color: #e5e7eb;")
             a.font-semibold.mb-1(href='/rdf-resource/Job_Seekers/' + (s.id || ''))= (s.title || 'Untitled')
             .text-sm.text-gray-500.mb-2
               if s.date
@@ -125,10 +145,12 @@ block content
 
     // Latest Online Tutors
     if RT.length
-      h2(class="text-xl font-semibold mb-3") Latest Online Tutors
+      h2(class="text-2xl font-bold mb-4 mt-12" style="color: #1f2937;")
+        i.fas.fa-chalkboard-teacher.me-2(style="color: #FF7A00;")
+        | Latest Online Tutors
       div(class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12")
         each t in RT
-          .border.rounded.p-4.flex.flex-col
+          .border.rounded-lg.p-5.flex.flex-col.shadow-sm.hover_shadow-md.transition-shadow(style="border-color: #e5e7eb;")
             a.font-semibold.mb-1(href='/rdf-resource/Online_Tutors/' + (t.id || ''))= (t.title || 'Untitled')
             .text-sm.text-gray-500.mb-2
               if t.date
