@@ -123,6 +123,210 @@ router.get("/logout", (req, res) =>
   req.session.destroy(() => res.redirect("/"))
 );
 
+/* --------------------------- Forgot Password --------------------------- */
+router.get("/forgot-password", (req, res) => {
+  res.render("user/forgot-password");
+});
+
+router.post("/forgot-password", async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      // Don't reveal if email exists or not (security best practice)
+      return res.render("user/forgot-password", {
+        message: "If an account exists with this email, a password reset link has been sent.",
+      });
+    }
+
+    // Generate reset token
+    const crypto = require("crypto");
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const resetTokenHash = crypto.createHash("sha256").update(resetToken).digest("hex");
+
+    // Set token and expiry (1 hour)
+    user.resetPasswordToken = resetTokenHash;
+    user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+    await user.save();
+
+    // Send email
+    const nodemailer = require("nodemailer");
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: process.env.SMTP_PORT,
+      secure: process.env.SMTP_SECURE === "true",
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+
+    const resetUrl = `${process.env.BASE_URL || "https://eslplus.org"}/user/reset-password/${resetToken}`;
+    
+    const mailOptions = {
+      from: process.env.SMTP_FROM,
+      to: email,
+      subject: "Password Reset Request - ESL Plus",
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #FF7A00;">Password Reset Request</h2>
+          <p>Hello,</p>
+          <p>You recently requested to reset your password for your ESL Plus account. Click the button below to reset it:</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${resetUrl}" style="background-color: #28a745; color: white; padding: 12px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; display: inline-block;">Reset Password</a>
+          </div>
+          <p>Or copy and paste this link into your browser:</p>
+          <p style="color: #666; word-break: break-all;">${resetUrl}</p>
+          <p><strong>This link will expire in 1 hour.</strong></p>
+          <p>If you didn't request a password reset, please ignore this email or contact support if you have concerns.</p>
+          <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+          <p style="color: #999; font-size: 12px;">ESL Plus - Your English Language Learning Partner</p>
+        </div>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    return res.render("user/forgot-password", {
+      message: "If an account exists with this email, a password reset link has been sent. Please check your inbox.",
+    });
+  } catch (err) {
+    console.error("❌ Forgot password error:", err.message);
+    return res.render("user/forgot-password", {
+      error: "❌ An error occurred. Please try again later.",
+    });
+  }
+});
+
+/* --------------------------- Reset Password --------------------------- */
+router.get("/reset-password/:token", async (req, res) => {
+  try {
+    const crypto = require("crypto");
+    const resetTokenHash = crypto.createHash("sha256").update(req.params.token).digest("hex");
+
+    const user = await User.findOne({
+      resetPasswordToken: resetTokenHash,
+      resetPasswordExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.render("user/forgot-password", {
+        error: "❌ Password reset token is invalid or has expired. Please request a new one.",
+      });
+    }
+
+    return res.render("user/reset-password", { token: req.params.token });
+  } catch (err) {
+    console.error("❌ Reset password GET error:", err.message);
+    return res.status(500).send("❌ An error occurred.");
+  }
+});
+
+router.post("/reset-password/:token", async (req, res) => {
+  const { password } = req.body;
+  const confirmPassword = req.body["password-confirm"];
+
+  try {
+    // Validate passwords match
+    if (password !== confirmPassword) {
+      return res.render("user/reset-password", {
+        token: req.params.token,
+        error: "❌ Passwords do not match.",
+      });
+    }
+
+    // Check password strength
+    const hasLength = password.length >= 8;
+    const hasUppercase = /[A-Z]/.test(password);
+    const hasLowercase = /[a-z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+    const strengthScore = [hasLength, hasUppercase, hasLowercase, hasNumber, hasSpecial].filter(Boolean).length;
+
+    if (strengthScore < 3) {
+      return res.render("user/reset-password", {
+        token: req.params.token,
+        error: "❌ Password is too weak. Please use a stronger password.",
+      });
+    }
+
+    // Find user with valid token
+    const crypto = require("crypto");
+    const resetTokenHash = crypto.createHash("sha256").update(req.params.token).digest("hex");
+
+    const user = await User.findOne({
+      resetPasswordToken: resetTokenHash,
+      resetPasswordExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.render("user/forgot-password", {
+        error: "❌ Password reset token is invalid or has expired. Please request a new one.",
+      });
+    }
+
+    // Update password and clear reset token
+    user.password = password; // Note: In production, you should hash this!
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+
+    // Send confirmation email
+    const nodemailer = require("nodemailer");
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: process.env.SMTP_PORT,
+      secure: process.env.SMTP_SECURE === "true",
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+
+    const mailOptions = {
+      from: process.env.SMTP_FROM,
+      to: user.email,
+      subject: "Password Successfully Reset - ESL Plus",
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #28a745;">✓ Password Successfully Reset</h2>
+          <p>Hello ${user.username},</p>
+          <p>Your password has been successfully reset.</p>
+          <p>You can now log in with your new password:</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${process.env.BASE_URL || "https://eslplus.org"}/user/login" style="background-color: #FF7A00; color: white; padding: 12px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; display: inline-block;">Login Now</a>
+          </div>
+          <p>If you didn't make this change, please contact support immediately.</p>
+          <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+          <p style="color: #999; font-size: 12px;">ESL Plus - Your English Language Learning Partner</p>
+        </div>
+      `,
+    };
+
+    try {
+      await transporter.sendMail(mailOptions);
+    } catch (emailErr) {
+      console.error("⚠️ Failed to send confirmation email:", emailErr.message);
+      // Don't fail the password reset if email fails
+    }
+
+    // Redirect to login with success message
+    return res.render("user/login", {
+      error: `<div style="background-color: #d4edda; border-color: #c3e6cb; color: #155724; padding: 12px; border-radius: 8px;">
+                <i class="fas fa-check-circle"></i> 
+                Your password has been successfully reset! Please log in with your new password.
+              </div>`,
+    });
+  } catch (err) {
+    console.error("❌ Reset password POST error:", err.message);
+    return res.render("user/reset-password", {
+      token: req.params.token,
+      error: "❌ An error occurred. Please try again.",
+    });
+  }
+});
+
 /* --------------------------- Mypage switch --------------------------- */
 router.get("/mypage", requireLogin, async (req, res) => {
   try {

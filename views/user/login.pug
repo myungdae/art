@@ -20,7 +20,44 @@ block content
 
               .form-group.mb-4
                 label(for="password", style="font-size: 1.1rem; font-weight: bold;") Password
-                input.form-control.rounded-pill(type="password", name="password", placeholder="Enter your password", required)
+                .position-relative
+                  input.form-control.rounded-pill#password-input(type="password", name="password", placeholder="Enter your password", required, style="padding-right: 45px;")
+                  button.btn.btn-link.position-absolute#toggle-password(type="button", style="right: 10px; top: 50%; transform: translateY(-50%); text-decoration: none; color: #666;", title="Show/Hide Password")
+                    i.fas.fa-eye#eye-icon
+                
+                .text-end.mt-2
+                  a.text-muted(href="/user/forgot-password", style="font-size: 0.9rem; text-decoration: none;") 
+                    i.fas.fa-key.me-1
+                    | Forgot Password?
 
               .form-group.text-center.mt-4
                 button.btn.btn-success.btn-lg.px-4(type="submit") Log In
+              
+              .text-center.mt-3
+                span.text-muted(style="font-size: 0.95rem;") Don't have an account? 
+                a(href="/user/register", style="color: #FF7A00; font-weight: bold; text-decoration: none;") Register here
+
+  script.
+    document.addEventListener('DOMContentLoaded', function() {
+      const passwordInput = document.getElementById('password-input');
+      const toggleButton = document.getElementById('toggle-password');
+      const eyeIcon = document.getElementById('eye-icon');
+
+      if (toggleButton && passwordInput && eyeIcon) {
+        toggleButton.addEventListener('click', function(e) {
+          e.preventDefault();
+          
+          if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            eyeIcon.classList.remove('fa-eye');
+            eyeIcon.classList.add('fa-eye-slash');
+            toggleButton.title = 'Hide Password';
+          } else {
+            passwordInput.type = 'password';
+            eyeIcon.classList.remove('fa-eye-slash');
+            eyeIcon.classList.add('fa-eye');
+            toggleButton.title = 'Show Password';
+          }
+        });
+      }
+    });
