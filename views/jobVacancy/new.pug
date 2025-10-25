@@ -184,18 +184,81 @@ block content
       // ===== Apply validation to all text inputs =====
       const textFields = ['title', 'companyName', 'jobLocation', 'pay', 'housing', 'extraTeachingArea'];
       
+      // Track validation state for each field
+      const fieldValidationState = {};
+      textFields.forEach(f => { fieldValidationState[f] = true; });
+      
+      // Prevent focus on next fields if Title has errors
+      function preventNextFieldFocus() {
+        const titleValid = fieldValidationState['title'];
+        const allFields = document.querySelectorAll('input, textarea, select, button');
+        
+        if (!titleValid) {
+          // Find title field position
+          const titleField = document.getElementById('title');
+          if (!titleField) return;
+          
+          let foundTitle = false;
+          allFields.forEach(field => {
+            if (field === titleField) {
+              foundTitle = true;
+            } else if (foundTitle && field.id !== 'title') {
+              // Disable fields after title
+              field.addEventListener('mousedown', function(e) {
+                if (!fieldValidationState['title']) {
+                  e.preventDefault();
+                  alert('⚠️ Please fix the Title field first!\n\nTitle contains non-English characters or emojis.\nYou must use English only before proceeding.');
+                  document.getElementById('title').focus();
+                }
+              });
+              
+              field.addEventListener('focus', function(e) {
+                if (!fieldValidationState['title']) {
+                  e.preventDefault();
+                  this.blur();
+                  alert('⚠️ Please fix the Title field first!\n\nTitle contains non-English characters or emojis.\nYou must use English only before proceeding.');
+                  document.getElementById('title').focus();
+                }
+              });
+            }
+          });
+        }
+      }
+      
       textFields.forEach(fieldId => {
         const field = document.getElementById(fieldId);
         if (field) {
-          field.addEventListener('blur', () => validateField(fieldId));
+          field.addEventListener('blur', () => {
+            const isValid = validateField(fieldId);
+            fieldValidationState[fieldId] = isValid;
+            
+            // Special handling for Title field
+            if (fieldId === 'title') {
+              preventNextFieldFocus();
+            }
+          });
+          
           field.addEventListener('input', () => {
             // Real-time validation after first warning
             if (document.getElementById(fieldId + '-warning')) {
-              validateField(fieldId);
+              const isValid = validateField(fieldId);
+              fieldValidationState[fieldId] = isValid;
+              
+              if (fieldId === 'title') {
+                preventNextFieldFocus();
+              }
             }
           });
         }
       });
+      
+      // Initial setup - prevent focus if Title already has content
+      const titleField = document.getElementById('title');
+      if (titleField && titleField.value) {
+        const isValid = validateField('title');
+        fieldValidationState['title'] = isValid;
+        preventNextFieldFocus();
+      }
 
       // ===== Form submission validation =====
       const form = document.querySelector('form');

@@ -161,17 +161,71 @@ block content
       // Apply validation to text inputs
       const textFields = ['title', 'description', 'extraExpertise'];
       
+      // Track validation state
+      const fieldValidationState = {};
+      textFields.forEach(f => { fieldValidationState[f] = true; });
+      
+      // Prevent focus on next fields if Title has errors
+      function preventNextFieldFocus() {
+        const titleValid = fieldValidationState['title'];
+        const allFields = document.querySelectorAll('input, textarea, select, button');
+        
+        if (!titleValid) {
+          const titleField = document.getElementById('title');
+          if (!titleField) return;
+          
+          let foundTitle = false;
+          allFields.forEach(field => {
+            if (field === titleField) {
+              foundTitle = true;
+            } else if (foundTitle && field.id !== 'title') {
+              field.addEventListener('mousedown', function(e) {
+                if (!fieldValidationState['title']) {
+                  e.preventDefault();
+                  alert('⚠️ Please fix the Title field first!\n\nOnly English characters are allowed.');
+                  document.getElementById('title').focus();
+                }
+              });
+              
+              field.addEventListener('focus', function(e) {
+                if (!fieldValidationState['title']) {
+                  e.preventDefault();
+                  this.blur();
+                  alert('⚠️ Please fix the Title field first!\n\nOnly English characters are allowed.');
+                  document.getElementById('title').focus();
+                }
+              });
+            }
+          });
+        }
+      }
+      
       textFields.forEach(fieldId => {
         const field = document.getElementById(fieldId);
         if (field) {
-          field.addEventListener('blur', () => validateField(fieldId));
+          field.addEventListener('blur', () => {
+            const isValid = validateField(fieldId);
+            fieldValidationState[fieldId] = isValid;
+            if (fieldId === 'title') preventNextFieldFocus();
+          });
+          
           field.addEventListener('input', () => {
             if (document.getElementById(fieldId + '-warning')) {
-              validateField(fieldId);
+              const isValid = validateField(fieldId);
+              fieldValidationState[fieldId] = isValid;
+              if (fieldId === 'title') preventNextFieldFocus();
             }
           });
         }
       });
+      
+      // Initial setup
+      const titleField = document.getElementById('title');
+      if (titleField && titleField.value) {
+        const isValid = validateField('title');
+        fieldValidationState['title'] = isValid;
+        preventNextFieldFocus();
+      }
 
       // Form submission validation
       const form = document.getElementById('tutorForm');
