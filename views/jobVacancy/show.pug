@@ -35,6 +35,27 @@ block content
                     th Housing
                     td= jobVacancy.housing && jobVacancy.housing.trim() !== '' ? jobVacancy.housing : 'N/A'
                   tr
+                    th Teaching Area
+                    td
+                      if jobVacancy.teachingArea && jobVacancy.teachingArea.length > 0
+                        - const areas = Array.isArray(jobVacancy.teachingArea) ? jobVacancy.teachingArea : [jobVacancy.teachingArea]
+                        each area, index in areas
+                          span.badge.bg-primary.me-1.mb-1= area
+                      else
+                        | N/A
+                  tr
+                    th Extra Teaching Areas
+                    td
+                      if jobVacancy.extraTeachingArea && jobVacancy.extraTeachingArea.trim() !== ''
+                        - const extraAreas = jobVacancy.extraTeachingArea.split(',').map(a => a.trim()).filter(a => a)
+                        if extraAreas.length > 0
+                          each area in extraAreas
+                            span.badge.bg-secondary.me-1.mb-1= area
+                        else
+                          = jobVacancy.extraTeachingArea
+                      else
+                        | N/A
+                  tr
                     th Email
                     td= jobVacancy.email && jobVacancy.email.trim() !== '' ? jobVacancy.email : 'N/A'
                   tr
