@@ -538,6 +538,79 @@ router.put(
   }
 );
 
+// Delete (DELETE)
+router.delete(
+  '/job-vacancies/:id',
+  requireLogin,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Try to find in both collections
+      let jobVacancy = await JobVacancy.findById(id);
+      let isRdfOnly = false;
+      
+      // If not found in job_vacancies, try RDF collection
+      if (!jobVacancy) {
+        const db = mongoose.connection.db;
+        const rdfDoc = await db.collection('Job_Vacancies_RDF').findOne({ 
+          _id: new mongoose.Types.ObjectId(id) 
+        });
+        if (rdfDoc) {
+          jobVacancy = rdfDoc;
+          isRdfOnly = true;
+        }
+      }
+      
+      if (!jobVacancy) {
+        return res.status(404).send('Job vacancy not found');
+      }
+
+      // Check permission: Admin or Owner
+      const currentUser = req.user;
+      const isAdmin = req.session?.isAdmin || req.user?.isAdmin || false;
+      const isOwner = currentUser && 
+                      jobVacancy.email && 
+                      currentUser.email === jobVacancy.email &&
+                      currentUser.role === 'Employer';
+      
+      if (!isAdmin && !isOwner) {
+        req.flash?.('error', 'You do not have permission to delete this job vacancy');
+        return res.status(403).send('❌ Unauthorized: You do not have permission to delete this job vacancy');
+      }
+
+      // Delete from both collections
+      if (isRdfOnly) {
+        // Delete from RDF collection only
+        const db = mongoose.connection.db;
+        await db.collection('Job_Vacancies_RDF').deleteOne({ 
+          _id: new mongoose.Types.ObjectId(id) 
+        });
+      } else {
+        // Delete from Mongoose model
+        await JobVacancy.deleteOne({ _id: id });
+        
+        // Also delete from RDF collection if exists
+        try {
+          const db = mongoose.connection.db;
+          await db.collection('Job_Vacancies_RDF').deleteOne({ 
+            _id: new mongoose.Types.ObjectId(id) 
+          });
+        } catch (rdfErr) {
+          console.warn('[DELETE] Failed to delete from RDF collection:', rdfErr.message);
+        }
+      }
+
+      req.flash?.('success', 'Job vacancy deleted successfully.');
+      return res.redirect('/facet/Job_Vacancies');
+
+    } catch (err) {
+      console.error('[DELETE] job-vacancy error:', err);
+      return res.status(500).send('❌ Failed to delete job vacancy');
+    }
+  }
+);
+
 // List (public)
 router.get('/job-vacancies', async (req, res, next) => {
   try {
