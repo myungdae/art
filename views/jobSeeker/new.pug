@@ -78,11 +78,123 @@ block content
 block append_js
   // CKEditor
   script(src="https://cdn.ckeditor.com/ckeditor5/41.0.0/classic/ckeditor.js")
+  
+  style.
+    .validation-warning {
+      background-color: #fff3cd;
+      border: 1px solid #ffc107;
+      color: #856404;
+      padding: 8px 12px;
+      border-radius: 4px;
+      margin-top: 5px;
+      font-size: 0.875rem;
+      display: none;
+    }
+  
   script.
-    ClassicEditor.create(document.querySelector('#description')).catch(console.error);
+    let editorInstance = null;
+    ClassicEditor.create(document.querySelector('#description'))
+      .then(editor => { editorInstance = editor; })
+      .catch(console.error);
+
+    // ===== English-only validation =====
+    function containsNonEnglish(text) {
+      // Detect: Korean, Chinese, Japanese, Emojis
+      const nonEnglishRegex = /[\u3000-\u303f\u3040-\u309f\u30a0-\u30ff\uff00-\uff9f\u4e00-\u9faf\u3400-\u4dbf\uac00-\ud7a3]|[\u{1F300}-\u{1F9FF}]|[\u2600-\u27BF]/u;
+      
+      if (nonEnglishRegex.test(text)) {
+        return 'Non-English characters detected (Korean, Chinese, Japanese, or emojis)';
+      }
+      return null;
+    }
+
+    function showWarning(inputId, message) {
+      let warning = document.getElementById(inputId + '-warning');
+      if (!warning) {
+        warning = document.createElement('div');
+        warning.id = inputId + '-warning';
+        warning.className = 'validation-warning';
+        const input = document.getElementById(inputId);
+        if (input && input.parentNode) {
+          input.parentNode.insertBefore(warning, input.nextSibling);
+        }
+      }
+      warning.textContent = '⚠️ ' + message + ' - Please use English only with standard punctuation.';
+      warning.style.display = 'block';
+    }
+
+    function hideWarning(inputId) {
+      const warning = document.getElementById(inputId + '-warning');
+      if (warning) {
+        warning.style.display = 'none';
+      }
+    }
+
+    function validateField(inputId) {
+      const input = document.getElementById(inputId);
+      if (!input || !input.value) return true;
+      
+      const error = containsNonEnglish(input.value);
+      if (error) {
+        showWarning(inputId, error);
+        return false;
+      } else {
+        hideWarning(inputId);
+        return true;
+      }
+    }
+
+    // Apply validation to text inputs
+    const textFields = ['title', 'customNationality', 'customWorkLoc', 'customMajor', 'languageSpoken'];
+    
+    textFields.forEach(fieldId => {
+      const field = document.getElementById(fieldId);
+      if (field) {
+        field.addEventListener('blur', () => validateField(fieldId));
+        field.addEventListener('input', () => {
+          if (document.getElementById(fieldId + '-warning')) {
+            validateField(fieldId);
+          }
+        });
+      }
+    });
 
     function handleCustomFields() {
       const form = document.querySelector('form');
+      
+      // Validate description from CKEditor
+      if (editorInstance) {
+        const descData = editorInstance.getData();
+        const plainText = descData.replace(/<[^>]*>/g, '');
+        const descError = containsNonEnglish(plainText);
+        if (descError) {
+          alert('⚠️ ' + descError + ' in Description field.\n\nPlease use English only.');
+          return false;
+        }
+      }
+
+      // Validate all text fields
+      let hasErrors = false;
+      let firstErrorField = null;
+      
+      textFields.forEach(fieldId => {
+        if (!validateField(fieldId)) {
+          hasErrors = true;
+          if (!firstErrorField) {
+            firstErrorField = fieldId;
+          }
+        }
+      });
+
+      if (hasErrors) {
+        alert('⚠️ Non-English characters or emojis detected!\n\n' +
+              'Only English characters and standard punctuation are allowed.\n\n' +
+              'Please check all text fields.');
+        if (firstErrorField) {
+          document.getElementById(firstErrorField)?.focus();
+        }
+        return false;
+      }
 
       const natSel = document.getElementById('nationalitySelect');
       const natNew = document.getElementById('customNationality')?.value.trim();

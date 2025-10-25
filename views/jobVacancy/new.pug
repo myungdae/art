@@ -199,8 +199,12 @@ block content
 
       // ===== Form submission validation =====
       const form = document.querySelector('form');
+      const submitButton = form ? form.querySelector('button[type="submit"]') : null;
+      
       if (form) {
         form.addEventListener('submit', function(e) {
+          e.preventDefault();
+          
           // Update CKEditor content
           if (window.CKEDITOR) {
             for (var n in CKEDITOR.instances) {
@@ -213,26 +217,42 @@ block content
           if (description && description.value) {
             const descError = containsNonEnglish(description.value);
             if (descError) {
-              e.preventDefault();
               showWarning('description', descError);
-              alert('⚠️ Please remove non-English characters, emojis, or excessive special characters from your content before submitting.');
+              alert('⚠️ ' + descError + '\n\nPlease remove non-English characters, emojis, or excessive special characters from Description field before submitting.');
               return false;
             }
           }
 
           // Validate all text fields
           let hasErrors = false;
+          let firstErrorField = null;
+          
           textFields.forEach(fieldId => {
             if (!validateField(fieldId)) {
               hasErrors = true;
+              if (!firstErrorField) {
+                firstErrorField = fieldId;
+              }
             }
           });
 
           if (hasErrors) {
-            e.preventDefault();
-            alert('⚠️ Please fix the validation errors before submitting.\n\nOnly English characters and standard punctuation are allowed.');
+            alert('⚠️ Non-English characters or emojis detected!\n\n' +
+                  'Only English characters and standard punctuation are allowed.\n\n' +
+                  'Please check: Title and other text fields.');
+            // Focus on first error
+            if (firstErrorField) {
+              document.getElementById(firstErrorField)?.focus();
+            }
             return false;
           }
+          
+          // If all validations pass, submit the form
+          if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.textContent = 'Submitting...';
+          }
+          form.submit();
         });
       }
 
