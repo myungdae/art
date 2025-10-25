@@ -98,12 +98,23 @@ block append_js
       .catch(console.error);
 
     // ===== English-only validation =====
-    function containsNonEnglish(text) {
-      // Detect: Korean, Chinese, Japanese, Emojis only
+    
+    // For Title fields: Block emojis + non-English languages
+    function containsNonEnglishWithEmoji(text) {
       const nonEnglishRegex = /[\u3000-\u303f\u3040-\u309f\u30a0-\u30ff\uff00-\uff9f\u4e00-\u9faf\u3400-\u4dbf\uac00-\ud7a3]|[\u{1F300}-\u{1F9FF}]|[\u2600-\u27BF]/u;
       
       if (nonEnglishRegex.test(text)) {
-        return 'Non-English characters detected (Korean, Chinese, Japanese, or emojis)';
+        return 'Non-English characters or emojis detected';
+      }
+      return null;
+    }
+    
+    // For Description fields: Block non-English languages only (emojis allowed)
+    function containsNonEnglishLanguagesOnly(text) {
+      const languageRegex = /[\u3000-\u303f\u3040-\u309f\u30a0-\u30ff\uff00-\uff9f\u4e00-\u9faf\u3400-\u4dbf\uac00-\ud7a3]/u;
+      
+      if (languageRegex.test(text)) {
+        return 'Non-English characters detected (Korean, Chinese, or Japanese)';
       }
       return null;
     }
@@ -130,11 +141,15 @@ block append_js
       }
     }
 
-    function validateField(inputId) {
+    function validateField(inputId, allowEmoji = false) {
       const input = document.getElementById(inputId);
       if (!input || !input.value) return true;
       
-      const error = containsNonEnglish(input.value);
+      // Use appropriate validation function based on field type
+      const error = allowEmoji 
+        ? containsNonEnglishLanguagesOnly(input.value)
+        : containsNonEnglishWithEmoji(input.value);
+      
       if (error) {
         showWarning(inputId, error);
         return false;
@@ -145,11 +160,12 @@ block append_js
     }
 
     // Apply validation to text inputs
-    const textFields = ['title', 'customNationality', 'customWorkLoc', 'customMajor', 'languageSpoken'];
+    // Title and other fields: strict (no emojis)
+    const strictFields = ['title', 'customNationality', 'customWorkLoc', 'customMajor', 'languageSpoken'];
     
     // Track validation state
     const fieldValidationState = {};
-    textFields.forEach(f => { fieldValidationState[f] = true; });
+    strictFields.forEach(f => { fieldValidationState[f] = true; });
     
     // Prevent focus on next fields if Title has errors
     function preventNextFieldFocus() {
@@ -186,18 +202,19 @@ block append_js
       }
     }
     
-    textFields.forEach(fieldId => {
+    strictFields.forEach(fieldId => {
       const field = document.getElementById(fieldId);
       if (field) {
         field.addEventListener('blur', () => {
-          const isValid = validateField(fieldId);
+          // Strict validation (no emojis)
+          const isValid = validateField(fieldId, false);
           fieldValidationState[fieldId] = isValid;
           if (fieldId === 'title') preventNextFieldFocus();
         });
         
         field.addEventListener('input', () => {
           if (document.getElementById(fieldId + '-warning')) {
-            const isValid = validateField(fieldId);
+            const isValid = validateField(fieldId, false);
             fieldValidationState[fieldId] = isValid;
             if (fieldId === 'title') preventNextFieldFocus();
           }
@@ -216,23 +233,23 @@ block append_js
     function handleCustomFields() {
       const form = document.querySelector('form');
       
-      // Validate description from CKEditor
+      // Validate description from CKEditor (emojis allowed)
       if (editorInstance) {
         const descData = editorInstance.getData();
         const plainText = descData.replace(/<[^>]*>/g, '');
-        const descError = containsNonEnglish(plainText);
+        const descError = containsNonEnglishLanguagesOnly(plainText);
         if (descError) {
-          alert('⚠️ ' + descError + ' in Description field.\n\nPlease use English only.');
+          alert('⚠️ ' + descError + ' in Description field.\n\nEmojis are allowed 😊, but Korean, Chinese, and Japanese text is not permitted.');
           return false;
         }
       }
 
-      // Validate all text fields
+      // Validate all strict fields (no emojis)
       let hasErrors = false;
       let firstErrorField = null;
       
-      textFields.forEach(fieldId => {
-        if (!validateField(fieldId)) {
+      strictFields.forEach(fieldId => {
+        if (!validateField(fieldId, false)) {
           hasErrors = true;
           if (!firstErrorField) {
             firstErrorField = fieldId;
@@ -242,7 +259,8 @@ block append_js
 
       if (hasErrors) {
         alert('⚠️ Non-English characters or emojis detected!\n\n' +
-              'Only English characters and standard punctuation are allowed.\n\n' +
+              'Job Title and other fields: No emojis allowed.\n' +
+              'Description field: Emojis are OK! 😊\n\n' +
               'Please check all text fields.');
         if (firstErrorField) {
           document.getElementById(firstErrorField)?.focus();
