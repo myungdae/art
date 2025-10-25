@@ -27,6 +27,7 @@ router.get("/register", (req, res) => {
 
 router.post("/register", async (req, res) => {
   let { username, email, password, role } = req.body;
+  const confirmPassword = req.body["password-confirm"];
 
   // normalize role
   if (role === "JobSeeker" || role === "Job Seeker") role = "Job_Seeker";
@@ -35,6 +36,24 @@ router.post("/register", async (req, res) => {
   // Employer는 그대로 사용
 
   try {
+    // Server-side password validation
+    if (password !== confirmPassword) {
+      return res.status(400).send("❌ Passwords do not match.");
+    }
+
+    // Check password strength (minimum requirements)
+    const hasLength = password.length >= 8;
+    const hasUppercase = /[A-Z]/.test(password);
+    const hasLowercase = /[a-z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+    const strengthScore = [hasLength, hasUppercase, hasLowercase, hasNumber, hasSpecial].filter(Boolean).length;
+
+    if (strengthScore < 3) {
+      return res.status(400).send("❌ Password is too weak. Please use a stronger password with at least 3 of the following: uppercase letters, lowercase letters, numbers, and special characters.");
+    }
+
     const existingUser = await User.findOne({ email });
     if (existingUser)
       return res.status(409).send("This email is already registered.");
