@@ -118,20 +118,24 @@ block content
   script.
     (function () {
       // ===== Content Validation =====
-      function containsNonEnglish(text) {
-        // Detect: Korean, Chinese, Japanese, Emojis, and excessive special characters
+      
+      // For Title fields: Block emojis + non-English languages
+      function containsNonEnglishWithEmoji(text) {
         const nonEnglishRegex = /[\u3000-\u303f\u3040-\u309f\u30a0-\u30ff\uff00-\uff9f\u4e00-\u9faf\u3400-\u4dbf\uac00-\ud7a3]|[\u{1F300}-\u{1F9FF}]|[\u2600-\u27BF]/u;
-        const excessiveSpecialChars = /[^a-zA-Z0-9\s.,!?;:()\-'"\/&%$@#+=]/g;
         
         if (nonEnglishRegex.test(text)) {
-          return 'Non-English characters detected (Korean, Chinese, Japanese, or emojis)';
+          return 'Non-English characters or emojis detected';
         }
+        return null;
+      }
+      
+      // For Description fields: Block non-English languages only (emojis allowed)
+      function containsNonEnglishLanguagesOnly(text) {
+        const languageRegex = /[\u3000-\u303f\u3040-\u309f\u30a0-\u30ff\uff00-\uff9f\u4e00-\u9faf\u3400-\u4dbf\uac00-\ud7a3]/u;
         
-        const specialCharCount = (text.match(excessiveSpecialChars) || []).length;
-        if (specialCharCount > text.length * 0.15) {
-          return 'Excessive special characters detected';
+        if (languageRegex.test(text)) {
+          return 'Non-English characters detected (Korean, Chinese, or Japanese)';
         }
-        
         return null;
       }
 
@@ -155,11 +159,15 @@ block content
         }
       }
 
-      function validateField(inputId) {
+      function validateField(inputId, allowEmoji = false) {
         const input = document.getElementById(inputId);
         if (!input || !input.value) return true;
         
-        const error = containsNonEnglish(input.value);
+        // Use appropriate validation function based on field type
+        const error = allowEmoji 
+          ? containsNonEnglishLanguagesOnly(input.value)
+          : containsNonEnglishWithEmoji(input.value);
+        
         if (error) {
           showWarning(inputId, error);
           return false;
@@ -170,16 +178,17 @@ block content
       }
 
       // ===== Apply validation to all text inputs =====
-      const textFields = ['title', 'companyName', 'jobLocation', 'pay', 'housing', 'extraTeachingArea'];
+      // Title and other fields: strict (no emojis)
+      const strictFields = ['title', 'companyName', 'jobLocation', 'pay', 'housing', 'extraTeachingArea'];
       
-      textFields.forEach(fieldId => {
+      strictFields.forEach(fieldId => {
         const field = document.getElementById(fieldId);
         if (field) {
-          field.addEventListener('blur', () => validateField(fieldId));
+          field.addEventListener('blur', () => validateField(fieldId, false));
           field.addEventListener('input', () => {
             // Real-time validation after first warning
             if (document.getElementById(fieldId + '-warning')) {
-              validateField(fieldId);
+              validateField(fieldId, false);
             }
           });
         }
@@ -196,29 +205,34 @@ block content
             }
           }
 
-          // Validate description from CKEditor
+          // Validate description from CKEditor (emojis allowed)
           const description = document.getElementById('description');
           if (description && description.value) {
-            const descError = containsNonEnglish(description.value);
+            // Strip HTML tags before validation
+            const plainText = description.value.replace(/<[^>]*>/g, '');
+            const descError = containsNonEnglishLanguagesOnly(plainText);
             if (descError) {
               e.preventDefault();
               showWarning('description', descError);
-              alert('⚠️ Please remove non-English characters, emojis, or excessive special characters from your content before submitting.');
+              alert('⚠️ ' + descError + '\n\nEmojis are allowed, but Korean, Chinese, and Japanese text is not permitted.\nPlease remove non-English text from Description field before submitting.');
               return false;
             }
           }
 
-          // Validate all text fields
+          // Validate all strict fields (no emojis)
           let hasErrors = false;
-          textFields.forEach(fieldId => {
-            if (!validateField(fieldId)) {
+          strictFields.forEach(fieldId => {
+            if (!validateField(fieldId, false)) {
               hasErrors = true;
             }
           });
 
           if (hasErrors) {
             e.preventDefault();
-            alert('⚠️ Please fix the validation errors before submitting.\n\nOnly English characters and standard punctuation are allowed.');
+            alert('⚠️ Non-English characters or emojis detected in Title or other fields!\n\n' +
+                  'Title, Company Name, and other text fields: No emojis allowed.\n' +
+                  'Description field: Emojis are OK! 😊\n\n' +
+                  'Please check all text fields.');
             return false;
           }
         });
@@ -233,13 +247,13 @@ block content
             versionCheck: false
           });
           
-          // Add validation on CKEditor change
+          // Add validation on CKEditor change (emojis allowed)
           CKEDITOR.instances.description.on('blur', function() {
             const data = CKEDITOR.instances.description.getData();
             const plainText = data.replace(/<[^>]*>/g, ''); // Strip HTML tags
-            const error = containsNonEnglish(plainText);
+            const error = containsNonEnglishLanguagesOnly(plainText);
             if (error) {
-              showWarning('description', error);
+              showWarning('description', error + ' (Emojis are OK! 😊)');
             } else {
               hideWarning('description');
             }

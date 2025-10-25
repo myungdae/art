@@ -103,6 +103,16 @@ block content
     .card { border-radius: .75rem; }
     .card-header { border-bottom: 1px solid rgba(0,0,0,.05); }
     .form-control, .btn { border-radius: .6rem; }
+    .validation-warning {
+      background-color: #fff3cd;
+      border: 1px solid #ffc107;
+      color: #856404;
+      padding: 8px 12px;
+      border-radius: 4px;
+      margin-top: 5px;
+      font-size: 0.875rem;
+      display: none;
+    }
 
   // CKEditor (Classic)
   script(src="/vendor/ckeditor/ckeditor.js")
@@ -113,6 +123,137 @@ block content
           height: 260,
           removePlugins: 'elementspath',
           resize_enabled: false
+        });
+      }
+    })();
+
+  // ===== English-only validation =====
+  script.
+    (function() {
+      
+      // For Title fields: Block emojis + non-English languages
+      function containsNonEnglishWithEmoji(text) {
+        const nonEnglishRegex = /[\u3000-\u303f\u3040-\u309f\u30a0-\u30ff\uff00-\uff9f\u4e00-\u9faf\u3400-\u4dbf\uac00-\ud7a3]|[\u{1F300}-\u{1F9FF}]|[\u2600-\u27BF]/u;
+        
+        if (nonEnglishRegex.test(text)) {
+          return 'Non-English characters or emojis detected';
+        }
+        return null;
+      }
+      
+      // For Description fields: Block non-English languages only (emojis allowed)
+      function containsNonEnglishLanguagesOnly(text) {
+        const languageRegex = /[\u3000-\u303f\u3040-\u309f\u30a0-\u30ff\uff00-\uff9f\u4e00-\u9faf\u3400-\u4dbf\uac00-\ud7a3]/u;
+        
+        if (languageRegex.test(text)) {
+          return 'Non-English characters detected (Korean, Chinese, or Japanese)';
+        }
+        return null;
+      }
+
+      function showWarning(inputId, message) {
+        let warning = document.getElementById(inputId + '-warning');
+        if (!warning) {
+          warning = document.createElement('div');
+          warning.id = inputId + '-warning';
+          warning.className = 'validation-warning';
+          const input = document.getElementById(inputId);
+          if (input && input.parentNode) {
+            input.parentNode.insertBefore(warning, input.nextSibling);
+          }
+        }
+        warning.textContent = '⚠️ ' + message + ' - Please use English only with standard punctuation.';
+        warning.style.display = 'block';
+      }
+
+      function hideWarning(inputId) {
+        const warning = document.getElementById(inputId + '-warning');
+        if (warning) {
+          warning.style.display = 'none';
+        }
+      }
+
+      function validateField(inputId, allowEmoji = false) {
+        const input = document.getElementById(inputId);
+        if (!input || !input.value) return true;
+        
+        // Use appropriate validation function based on field type
+        const error = allowEmoji 
+          ? containsNonEnglishLanguagesOnly(input.value)
+          : containsNonEnglishWithEmoji(input.value);
+        
+        if (error) {
+          showWarning(inputId, error);
+          return false;
+        } else {
+          hideWarning(inputId);
+          return true;
+        }
+      }
+
+      // Apply validation to text inputs
+      // Title and extraExpertise: strict (no emojis)
+      const strictFields = ['title', 'extraExpertise'];
+      // Description: allow emojis
+      const descriptionField = 'description';
+      
+      // Strict fields (no emojis)
+      strictFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+          field.addEventListener('blur', () => validateField(fieldId, false));
+          field.addEventListener('input', () => {
+            if (document.getElementById(fieldId + '-warning')) {
+              validateField(fieldId, false);
+            }
+          });
+        }
+      });
+      
+      // Description field (emojis allowed)
+      const descField = document.getElementById(descriptionField);
+      if (descField) {
+        descField.addEventListener('blur', () => validateField(descriptionField, true));
+        descField.addEventListener('input', () => {
+          if (document.getElementById(descriptionField + '-warning')) {
+            validateField(descriptionField, true);
+          }
+        });
+      }
+
+      // Form submission validation
+      const form = document.getElementById('tutorForm');
+      if (form) {
+        form.addEventListener('submit', function(e) {
+          
+          // Validate description from CKEditor (emojis allowed)
+          if (window.CKEDITOR && CKEDITOR.instances.description) {
+            const data = CKEDITOR.instances.description.getData();
+            const plainText = data.replace(/<[^>]*>/g, '');
+            const descError = containsNonEnglishLanguagesOnly(plainText);
+            if (descError) {
+              e.preventDefault();
+              alert('⚠️ ' + descError + ' in Description field.\n\nEmojis are allowed 😊, but Korean, Chinese, and Japanese text is not permitted.');
+              return false;
+            }
+          }
+          
+          // Validate all strict fields (no emojis)
+          let hasErrors = false;
+          strictFields.forEach(fieldId => {
+            if (!validateField(fieldId, false)) {
+              hasErrors = true;
+            }
+          });
+
+          if (hasErrors) {
+            e.preventDefault();
+            alert('⚠️ Non-English characters or emojis detected!\n\n' +
+                  'Title and Extra Expertise: No emojis allowed.\n' +
+                  'Description: Emojis are OK! 😊\n\n' +
+                  'Please check all fields.');
+            return false;
+          }
         });
       }
     })();
