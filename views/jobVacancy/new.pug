@@ -131,17 +131,11 @@ block content
     (function () {
       // ===== Content Validation =====
       function containsNonEnglish(text) {
-        // Detect: Korean, Chinese, Japanese, Emojis, and excessive special characters
+        // Detect: Korean, Chinese, Japanese, Emojis only
         const nonEnglishRegex = /[\u3000-\u303f\u3040-\u309f\u30a0-\u30ff\uff00-\uff9f\u4e00-\u9faf\u3400-\u4dbf\uac00-\ud7a3]|[\u{1F300}-\u{1F9FF}]|[\u2600-\u27BF]/u;
-        const excessiveSpecialChars = /[^a-zA-Z0-9\s.,!?;:()\-'"\/&%$@#+=]/g;
         
         if (nonEnglishRegex.test(text)) {
           return 'Non-English characters detected (Korean, Chinese, Japanese, or emojis)';
-        }
-        
-        const specialCharCount = (text.match(excessiveSpecialChars) || []).length;
-        if (specialCharCount > text.length * 0.15) {
-          return 'Excessive special characters detected';
         }
         
         return null;
@@ -278,10 +272,12 @@ block content
           // Validate description from CKEditor
           const description = document.getElementById('description');
           if (description && description.value) {
-            const descError = containsNonEnglish(description.value);
+            // Strip HTML tags before validation
+            const plainText = description.value.replace(/<[^>]*>/g, '');
+            const descError = containsNonEnglish(plainText);
             if (descError) {
               showWarning('description', descError);
-              alert('⚠️ ' + descError + '\n\nPlease remove non-English characters, emojis, or excessive special characters from Description field before submitting.');
+              alert('⚠️ ' + descError + '\n\nPlease remove non-English characters or emojis from Description field before submitting.');
               return false;
             }
           }

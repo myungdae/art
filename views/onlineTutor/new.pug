@@ -113,7 +113,7 @@ block content
     // ===== English-only validation =====
     (function() {
       function containsNonEnglish(text) {
-        // Detect: Korean, Chinese, Japanese, Emojis
+        // Detect: Korean, Chinese, Japanese, Emojis only
         const nonEnglishRegex = /[\u3000-\u303f\u3040-\u309f\u30a0-\u30ff\uff00-\uff9f\u4e00-\u9faf\u3400-\u4dbf\uac00-\ud7a3]|[\u{1F300}-\u{1F9FF}]|[\u2600-\u27BF]/u;
         
         if (nonEnglishRegex.test(text)) {
