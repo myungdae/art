@@ -5,7 +5,19 @@ block content
     .row.justify-content-center
       .col-md-6
         .p-4.border.rounded(style="border-color: #FFD6B3 !important; border-width: 2px; background-color: #FFF9F5;")
-          h2.text-center.mb-5.fs-2 Register
+          h2.text-center.mb-4.fs-2 Register
+          
+          // 유효기간 안내
+          .alert.alert-info.mb-4(style="background-color: #E3F2FD; border-color: #90CAF9; border-left: 4px solid #2196F3;")
+            .d-flex.align-items-start
+              i.fas.fa-info-circle(style="color: #2196F3; font-size: 1.2rem; margin-top: 2px; margin-right: 10px;")
+              div(style="font-size: 0.9rem;")
+                strong Account Validity Period
+                p.mb-1.mt-1 Your account will remain active for 120 days from registration.
+                ul.mb-0.ps-3(style="font-size: 0.85rem;")
+                  li You will receive email reminders at 90 days and 110 days
+                  li Accounts with no credits will be automatically deleted after 120 days
+                  li Accounts with active credits will never expire
 
           form(method='POST', action='/user/register')
             .mb-4

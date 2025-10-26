@@ -29,6 +29,11 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  // 계정 만료 알림 관련 필드
+  expiryNotifications: {
+    day90Sent: { type: Boolean, default: false },
+    day110Sent: { type: Boolean, default: false },
+  },
   resumeAccess: {
     startDate: { type: Date },
     durationDays: { type: Number },

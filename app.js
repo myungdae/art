@@ -43,6 +43,11 @@ require("./router/config");
 connect();
 console.log("✅ DB 연결 시도");
 
+// Cron Scheduler 초기화 (DB 연결 후)
+const { initScheduler } = require('./jobs/scheduler');
+const scheduledJobs = initScheduler();
+console.log("✅ Cron Scheduler 초기화 완료");
+
 // ── App settings
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "pug");
