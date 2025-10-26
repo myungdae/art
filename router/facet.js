@@ -41,9 +41,9 @@ const FACET_MAP = {
   },
   Job_Seekers: {
     groups: [
-      { key: "Nationality", label: "Nationality" },
-      { key: "Preferred_Work_Location", label: "Preferred Work Location" },
-      { key: "Major", label: "Major" },
+      { key: "Nationality", aliases: ["nationality"], label: "Nationality" },
+      { key: "Preferred_Work_Location", aliases: ["preferredWorkLocation", "preferred_work_location"], label: "Preferred Work Location" },
+      { key: "Major", aliases: ["major"], label: "Major" },
     ],
     searchFields: ["_label", "title", "_description", "description"],
     coll: (klass) => `${klass}_RDF`,

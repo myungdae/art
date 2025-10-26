@@ -137,23 +137,42 @@ function validatePayload(p) {
 /* ------------ RDF 미러 (Job_Seekers_RDF) ------------ */
 async function mirrorToRDF_JobSeeker(js) {
   const db = mongoose.connection.db;
+  
+  // Extract nationality (camelCase from Mongoose model)
+  const nationality = js.Nationality ?? js.nationality ?? "";
+  
+  // Extract preferred work location (camelCase from Mongoose model)
+  const preferredWorkLocation = 
+    js.Preferred_Work_Location ??
+    js.preferredWorkLocation ??
+    js.preferred_work_location ??
+    "";
+  
+  // Extract major (camelCase from Mongoose model)
+  const major = js.Major ?? js.major ?? "";
+  
   const doc = {
     _id: js._id,
     "@id": js["@id"] || `jobseeker:${js._id}`,
     _class: "Job_Seekers",
     _label: js._label || js.title || js.name || js.fullName || js.email || "",
     _description: js._description || js.description || js.summary || "",
-    // 패싯 3종 (여러 키 변형 흡수)
-    Nationality: js.Nationality ?? js.nationality ?? "",
-    Preferred_Work_Location:
-      js.Preferred_Work_Location ??
-      js.preferredWorkLocation ??
-      js.preferred_work_location ??
-      "",
-    Major: js.Major ?? js.major ?? "",
+    
+    // ✅ Facet fields: Use BOTH formats for compatibility
+    // Capitalized format for facet display
+    Nationality: nationality,
+    Preferred_Work_Location: preferredWorkLocation,
+    Major: major,
+    
+    // CamelCase format for backward compatibility
+    nationality: nationality,
+    preferredWorkLocation: preferredWorkLocation,
+    major: major,
+    
     datePosted: js.datePosted || js.dateAvailable || js.createdAt || new Date(),
     updatedAt: new Date(),
   };
+  
   await db
     .collection("Job_Seekers_RDF")
     .updateOne({ _id: js._id }, { $set: doc }, { upsert: true });
