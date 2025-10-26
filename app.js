@@ -37,6 +37,7 @@ const resumeAccessRouter = require("./router/resume-access");
 const threadRouter = require("./router/thread");
 const inquiryRouter = require("./router/inquiry");
 const policyRouter = require("./router/policy");
+const matchingRouter = require("./router/matching");
 
 console.log("📌 app.js 시작됨");
 require("./router/config");
@@ -119,6 +120,7 @@ app.get("/login", (_req, res) => res.redirect("/user/login"));
 // ── Router mounts
 app.use("/resource", resourceRouter);
 app.use("/rdf-resource", rdfResourceRouter);
+app.use("/matching", matchingRouter);
 
 app.use(jobSeekerRouter);
 app.use(jobVacancyRouter);

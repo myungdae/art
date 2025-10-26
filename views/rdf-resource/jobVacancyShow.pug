@@ -3,13 +3,16 @@ extends ../layout
 block content
   - var enc = encodeURIComponent;
   .container.mx-auto.max-w-5xl.py-8
-    // Title with Edit, Delete and Back to List buttons
+    // Title with AI Matching, Edit, Delete and Back to List buttons
     .flex.justify-between.items-center.mb-6
       h1.text-3xl.font-bold= vm.title || 'Job Vacancy'
       .flex.gap-2
         a.btn.btn-outline-secondary(href="/facet/Job_Vacancies" style="border-color: #6c757d; color: #6c757d;")
           i.fas.fa-list.mr-2
           | Back to List
+        a.btn(href=`/matching/candidates/${vm.id}` style="background-color: #10b981; border-color: #10b981; color: white;")
+          i.fas.fa-magic.mr-2
+          | AI Find Candidates
         if vm.canEdit
           a.btn.btn-primary(href=`/job-vacancies/${vm.id}/edit` style="background-color: #FF7A00; border-color: #FF7A00;")
             i.fas.fa-edit.mr-2

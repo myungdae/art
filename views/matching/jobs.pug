@@ -1,0 +1,127 @@
+//- views/matching/jobs.pug
+extends ../layout
+
+block content
+  .container.mx-auto.max-w-6xl.py-8
+    // Header
+    .mb-6
+      .flex.items-center.gap-2.mb-2
+        a.text-blue-600.hover_underline(href=`/rdf-resource/Job_Seekers/${jobSeeker.id}`) ← Back to My Profile
+      h1.text-3xl.font-bold.mb-2(style="color: #1f2937;")
+        i.fas.fa-briefcase.mr-2(style="color: #FF7A00;")
+        | AI-Powered Job Matching
+      p.text-lg(style="color: #6b7280;")= `Finding best job opportunities for: ${jobSeeker.title}`
+
+    // Job Seeker Summary Card
+    .border.rounded-lg.p-6.mb-6(style="border-color: #FF7A00; background: #FFF5EB;")
+      h3.text-xl.font-bold.mb-3(style="color: #1f2937;") Your Profile
+      .grid.grid-cols-1.md_grid-cols-2.gap-4
+        if jobSeeker.nationality
+          div
+            .text-sm.text-gray-500.uppercase Nationality
+            .font-semibold= jobSeeker.nationality
+        if jobSeeker.preferredLocations
+          div
+            .text-sm.text-gray-500.uppercase Preferred Work Locations
+            .font-semibold= jobSeeker.preferredLocations
+        if jobSeeker.major
+          div
+            .text-sm.text-gray-500.uppercase Major
+            .font-semibold= jobSeeker.major
+        if jobSeeker.languages
+          div
+            .text-sm.text-gray-500.uppercase Languages
+            .font-semibold= jobSeeker.languages
+
+    // Matching Statistics
+    .grid.grid-cols-1.md_grid-cols-3.gap-4.mb-6
+      .border.rounded-lg.p-4.text-center(style="border-color: #e5e7eb;")
+        .text-3xl.font-bold(style="color: #FF7A00;")= totalJobs
+        .text-sm.text-gray-500 Total Job Vacancies
+      .border.rounded-lg.p-4.text-center(style="border-color: #e5e7eb;")
+        .text-3xl.font-bold(style="color: #10b981;")= relevantJobs
+        .text-sm.text-gray-500 Relevant Matches
+      .border.rounded-lg.p-4.text-center(style="border-color: #e5e7eb;")
+        .text-3xl.font-bold(style="color: #6366f1;")
+          if relevantJobs > 0
+            = `${Math.round((relevantJobs / totalJobs) * 100)}%`
+          else
+            | 0%
+        .text-sm.text-gray-500 Match Rate
+
+    // Results
+    if matches.length > 0
+      h2.text-2xl.font-bold.mb-4(style="color: #1f2937;")
+        i.fas.fa-star.mr-2(style="color: #FF7A00;")
+        | Top Matching Job Opportunities
+
+      .space-y-4
+        each match in matches
+          .border.rounded-lg.p-6.hover_shadow-lg.transition-shadow(style="border-color: #e5e7eb;")
+            .flex.justify-between.items-start.mb-4
+              div
+                h3.text-xl.font-bold.mb-1
+                  a.text-blue-600.hover_underline(href=`/rdf-resource/Job_Vacancies/${match.id}`)= match.title
+                if match.companyName
+                  p.text-gray-600.mb-2
+                    i.fas.fa-building.mr-2
+                    = match.companyName
+                .flex.gap-2.mt-2
+                  if match.location
+                    span.px-3.py-1.rounded-full.text-sm(style="background: #E5E7EB;")
+                      i.fas.fa-map-marker-alt.mr-1
+                      = match.location
+                  if match.studentType
+                    span.px-3.py-1.rounded-full.text-sm(style="background: #E5E7EB;")
+                      i.fas.fa-users.mr-1
+                      = match.studentType
+                  if match.datePosted
+                    - const postedDate = new Date(match.datePosted)
+                    span.px-3.py-1.rounded-full.text-sm(style="background: #E5E7EB;")
+                      i.fas.fa-calendar.mr-1
+                      = postedDate.toISOString().slice(0,10)
+              div.text-right
+                .text-3xl.font-bold.mb-1(style=`color: ${match.percentage >= 70 ? '#10b981' : match.percentage >= 50 ? '#f59e0b' : '#6b7280'};`)= `${match.percentage}%`
+                .text-sm.text-gray-500 Match Score
+
+            // Matches
+            if match.matches.length > 0
+              .mb-3
+                .text-sm.font-semibold.text-gray-500.mb-2 ✓ Perfect Fit:
+                .flex.flex-wrap.gap-2
+                  each item in match.matches
+                    span.px-3.py-1.rounded-full.text-sm(style="background: #D1FAE5; color: #065F46;")
+                      strong= item.field + ": "
+                      = item.value
+
+            // Mismatches
+            if match.mismatches.length > 0
+              .mb-3
+                .text-sm.font-semibold.text-gray-500.mb-2 ⚠ Consider:
+                .flex.flex-wrap.gap-2
+                  each item in match.mismatches
+                    span.px-3.py-1.rounded-full.text-sm(style="background: #FEF3C7; color: #92400E;")
+                      strong= item.field + ": "
+                      = `They want ${item.wanted}, you have ${item.have}`
+
+            // Teaching Areas
+            if match.teachingAreas
+              .mt-3
+                .text-sm.font-semibold.text-gray-500.mb-1 Teaching Areas Required:
+                .text-gray-700= match.teachingAreas
+
+            // Action Buttons
+            .mt-4.pt-4.border-t(style="border-color: #e5e7eb;")
+              .flex.gap-4
+                a.btn.btn-primary(href=`/rdf-resource/Job_Vacancies/${match.id}` style="background-color: #FF7A00; border-color: #FF7A00;")
+                  i.fas.fa-file-alt.mr-2
+                  | View Full Job Details
+                a.btn.btn-outline-primary(href=`/rdf-resource/Job_Vacancies/${match.id}` style="border-color: #FF7A00; color: #FF7A00;")
+                  i.fas.fa-paper-plane.mr-2
+                  | Apply Now
+
+    else
+      .border.rounded-lg.p-8.text-center(style="border-color: #e5e7eb; background: #f9fafb;")
+        i.fas.fa-search.text-6xl.mb-4(style="color: #d1d5db;")
+        h3.text-xl.font-bold.mb-2(style="color: #6b7280;") No Matching Jobs Found
+        p.text-gray-500 Try updating your profile with more skills or preferred locations.
