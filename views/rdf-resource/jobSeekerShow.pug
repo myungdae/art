@@ -104,32 +104,13 @@ block content
 
       // Semantic Browsing Panel
       .tab-pane.fade#panel-semantic(role="tabpanel" aria-labelledby="tab-semantic")
-        if vm.meta.nationality
-          .border.rounded.p-3.mb-3
-            div.text-xs.text-gray-500.uppercase Nationality
-            div.mt-2.flex.flex-wrap.gap-2
-              a(href=`/facet/${vm.facetBase}?Nationality=${enc(vm.meta.nationality)}` class="inline-flex items-center px-3 py-1 rounded-full border hover:bg-gray-50 transition")= vm.meta.nationality
-
-        if vm.meta.preferredWorkLocation
-          .border.rounded.p-3.mb-3
-            div.text-xs.text-gray-500.uppercase Preferred Work Location
-            div.mt-2.flex.flex-wrap.gap-2
-              a(href=`/facet/${vm.facetBase}?Preferred_Work_Location=${enc(vm.meta.preferredWorkLocation)}` class="inline-flex items-center px-3 py-1 rounded-full border hover:bg-gray-50 transition")= vm.meta.preferredWorkLocation
-
-        if vm.meta.major
-          .border.rounded.p-3.mb-3
-            div.text-xs.text-gray-500.uppercase Major
-            div.mt-2.flex.flex-wrap.gap-2
-              a(href=`/facet/${vm.facetBase}?Major=${enc(vm.meta.major)}` class="inline-flex items-center px-3 py-1 rounded-full border hover:bg-gray-50 transition")= vm.meta.major
-
         if vm.semanticChips && vm.semanticChips.length
-          .grid.grid-cols-1.md
-            each chip in vm.semanticChips
-              .border.rounded.p-3.mb-3
-                div.text-xs.text-gray-500.uppercase= chip.label
-                div.mt-2.flex.flex-wrap.gap-2
-                  each val in chip.values
-                    a(
-                      href=`/facet/${vm.facetBase}?${encodeURIComponent(chip.key)}=${encodeURIComponent(val)}`,
-                      class="inline-flex items-center px-3 py-1 rounded-full border hover:bg-gray-50 transition"
-                    )= val
+          each chip in vm.semanticChips
+            .border.rounded.p-3.mb-3
+              div.text-xs.text-gray-500.uppercase= chip.label
+              div.mt-2.flex.flex-wrap.gap-2
+                each val in chip.values
+                  a(
+                    href=`/facet/${vm.facetBase}?${encodeURIComponent(chip.key)}=${encodeURIComponent(val)}`,
+                    class="inline-flex items-center px-3 py-1 rounded-full border hover:bg-gray-50 transition"
+                  )= val

@@ -93,36 +93,13 @@ block content
 
       // Semantic Browsing Panel
       .tab-pane.fade#panel-semantic(role="tabpanel" aria-labelledby="tab-semantic")
-        if vm.meta.Tutoring_Experience
-          .border.rounded.p-3.mb-3
-            div.text-xs.text-gray-500.uppercase Tutoring Experience
-            div.mt-2.flex.flex-wrap.gap-2
-              a(href=`/facet/${vm.facetBase}?Tutoring_Experience=${enc(vm.meta.Tutoring_Experience)}` class="inline-flex items-center px-3 py-1 rounded-full border hover:bg-gray-50 transition")= vm.meta.Tutoring_Experience
-
-        if vm.meta.Gender
-          .border.rounded.p-3.mb-3
-            div.text-xs.text-gray-500.uppercase Gender
-            div.mt-2.flex.flex-wrap.gap-2
-              a(href=`/facet/${vm.facetBase}?Gender=${enc(vm.meta.Gender)}` class="inline-flex items-center px-3 py-1 rounded-full border hover:bg-gray-50 transition")= vm.meta.Gender
-
-        if vm.meta.Expertise
-          .border.rounded.p-3.mb-3
-            div.text-xs.text-gray-500.uppercase Expertise
-            div.mt-2.flex.flex-wrap.gap-2
-              if Array.isArray(vm.meta.Expertise)
-                each exp in vm.meta.Expertise
-                  a(href=`/facet/${vm.facetBase}?Expertise=${enc(exp)}` class="inline-flex items-center px-3 py-1 rounded-full border hover:bg-gray-50 transition")= exp
-              else
-                a(href=`/facet/${vm.facetBase}?Expertise=${enc(vm.meta.Expertise)}` class="inline-flex items-center px-3 py-1 rounded-full border hover:bg-gray-50 transition")= vm.meta.Expertise
-
         if vm.semanticChips && vm.semanticChips.length
-          .grid.grid-cols-1.md
-            each chip in vm.semanticChips
-              .border.rounded.p-3.mb-3
-                div.text-xs.text-gray-500.uppercase= chip.label
-                div.mt-2.flex.flex-wrap.gap-2
-                  each val in chip.values
-                    a(
-                      href=`/facet/${vm.facetBase}?${encodeURIComponent(chip.key)}=${encodeURIComponent(val)}`,
-                      class="inline-flex items-center px-3 py-1 rounded-full border hover:bg-gray-50 transition"
-                    )= val
+          each chip in vm.semanticChips
+            .border.rounded.p-3.mb-3
+              div.text-xs.text-gray-500.uppercase= chip.label
+              div.mt-2.flex.flex-wrap.gap-2
+                each val in chip.values
+                  a(
+                    href=`/facet/${vm.facetBase}?${encodeURIComponent(chip.key)}=${encodeURIComponent(val)}`,
+                    class="inline-flex items-center px-3 py-1 rounded-full border hover:bg-gray-50 transition"
+                  )= val
