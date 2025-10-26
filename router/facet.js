@@ -83,6 +83,7 @@ router.get("/:klass", async (req, res, next) => {
     const limit = Math.min(parseInt(req.query.limit || "50", 10), 5000);
     const page = Math.max(parseInt(req.query.page || "1", 10), 1);
     const skip = (page - 1) * limit;
+    const sortMode = req.query.sort || "recent"; // recent, oldest, alpha-asc, alpha-desc
 
     /* -------------------- match -------------------- */
     const match = { _class: klass };
@@ -106,15 +107,53 @@ router.get("/:klass", async (req, res, next) => {
     }
 
     /* -------------------- facet 스테이지 -------------------- */
-    const facetStages = {
-      items: [
-        // 최신 우선 정렬(여분 필드 보정)
+    // 정렬 방식 결정
+    let sortStage;
+    if (sortMode === "oldest") {
+      // 오래된 순
+      sortStage = [
+        {
+          $addFields: {
+            _s_date: { $ifNull: ["$datePosted", "$updatedAt"] },
+          },
+        },
+        { $sort: { _s_date: 1, _id: 1 } },
+      ];
+    } else if (sortMode === "alpha-asc") {
+      // 알파벳 오름차순 (A-Z)
+      sortStage = [
+        {
+          $addFields: {
+            _s_label: coalesce("$_label", "$title", "$name", "$jobTitle", "$email", ""),
+          },
+        },
+        { $sort: { _s_label: 1, _id: 1 } },
+      ];
+    } else if (sortMode === "alpha-desc") {
+      // 알파벳 내림차순 (Z-A)
+      sortStage = [
+        {
+          $addFields: {
+            _s_label: coalesce("$_label", "$title", "$name", "$jobTitle", "$email", ""),
+          },
+        },
+        { $sort: { _s_label: -1, _id: -1 } },
+      ];
+    } else {
+      // 기본: 최신 우선 (recent)
+      sortStage = [
         {
           $addFields: {
             _s_date: { $ifNull: ["$datePosted", "$updatedAt"] },
           },
         },
         { $sort: { _s_date: -1, _id: -1 } },
+      ];
+    }
+
+    const facetStages = {
+      items: [
+        ...sortStage,
         { $skip: skip },
         { $limit: limit },
 
@@ -240,6 +279,7 @@ router.get("/:klass", async (req, res, next) => {
       page,
       limit,
       q: qText,
+      sort: sortMode,
       selected,
       facets,
       facetCfg: { groups: spec.groups }, // Pug에서 보여줄 그룹 메타

@@ -3,24 +3,43 @@ extends ../layout
 
 block content
   .container.mx-auto.py-6
-    // 헤더 + 검색
-    .flex.items-center.justify-between.mb-4
+    // 헤더 + 검색 + 정렬
+    .mb-4
       - const titleMap = { Job_Vacancies: 'Job Vacancies', Job_Seekers: 'Job Seekers', Online_Tutors: 'Online Tutors' }
-      h1.text-2xl.font-bold
+      h1.text-2xl.font-bold.mb-3
         = titleMap && titleMap[klass] ? titleMap[klass] : (klass || 'List')
         if typeof total !== 'undefined'
           span.text-gray-500.text-base &nbsp;(#{total})
 
-      // 검색창 (현재 선택된 facet 보존)
-      form(method="GET", action=`/facet/${klass}`, class="flex gap-2")
-        input(type="text", name="q", value=q || "", placeholder="Search title/description...", class="border rounded px-3 py-2")
-        if facetCfg && facetCfg.groups
-          each g in facetCfg.groups
-            if selected && selected[g.key]
-              each v in selected[g.key]
-                input(type="hidden", name=g.key, value=v)
-        input(type="hidden", name="limit", value=limit)
-        button(type="submit", class="px-4 py-2 rounded bg-blue-600 text-white") Search
+      // 검색창(왼쪽) + 정렬(오른쪽)
+      .flex.items-center.gap-3
+        // 검색창 (현재 선택된 facet 보존)
+        form(method="GET", action=`/facet/${klass}`, class="flex gap-2 flex-1")
+          input(type="text", name="q", value=q || "", placeholder="Search title/description...", class="border rounded px-3 py-2 flex-1")
+          if facetCfg && facetCfg.groups
+            each g in facetCfg.groups
+              if selected && selected[g.key]
+                each v in selected[g.key]
+                  input(type="hidden", name=g.key, value=v)
+          input(type="hidden", name="limit", value=limit)
+          input(type="hidden", name="sort", value=sort || "recent")
+          button(type="submit", class="px-4 py-2 rounded bg-blue-600 text-white") Search
+        
+        // 정렬 드롭다운 (오른쪽)
+        form(method="GET", action=`/facet/${klass}`, class="flex gap-2 items-center")
+          input(type="hidden", name="q", value=q || "")
+          if facetCfg && facetCfg.groups
+            each g in facetCfg.groups
+              if selected && selected[g.key]
+                each v in selected[g.key]
+                  input(type="hidden", name=g.key, value=v)
+          input(type="hidden", name="limit", value=limit)
+          label(class="text-sm font-medium text-gray-700") Sort:
+          select(name="sort", class="border rounded px-3 py-2", onchange="this.form.submit()")
+            option(value="recent", selected=(sort === 'recent' || !sort)) Most Recent
+            option(value="oldest", selected=(sort === 'oldest')) Oldest First
+            option(value="alpha-asc", selected=(sort === 'alpha-asc')) Alphabetical (A-Z)
+            option(value="alpha-desc", selected=(sort === 'alpha-desc')) Alphabetical (Z-A)
 
     .grid.grid-cols-12.gap-6
       // 좌측: 패싯
@@ -28,6 +47,7 @@ block content
         form#facetForm(method="GET", action=`/facet/${klass}`, class="space-y-6 border rounded p-3")
           input(type="hidden", name="q", value=q || "")
           input(type="hidden", name="limit", value=limit)
+          input(type="hidden", name="sort", value=sort || "recent")
 
           if facetCfg && facetCfg.groups && facetCfg.groups.length
             each g in facetCfg.groups
@@ -83,6 +103,7 @@ block content
           - var totalPages = Math.ceil(total / limit)
           - var qs = ''
           - if (q) { qs += '&q=' + encodeURIComponent(q) }
+          - if (sort) { qs += '&sort=' + encodeURIComponent(sort) }
           - if (facetCfg && facetCfg.groups) {
           -   for (var gi = 0; gi < facetCfg.groups.length; gi++) {
           -     var gg = facetCfg.groups[gi];
