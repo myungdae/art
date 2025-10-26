@@ -3,6 +3,7 @@
 const express = require("express");
 const router = express.Router();
 const mongoose = require("mongoose");
+const mailer = require("../utils/mailer");
 
 /* ---------- Helper Functions ---------- */
 
@@ -13,6 +14,7 @@ function toArray(v) {
 
 /**
  * Calculate matching score between Job Vacancy and Job Seeker
+ * IMPROVED: Works with actual RDF data structure
  * @param {Object} jobVacancy - Job vacancy document
  * @param {Object} jobSeeker - Job seeker document
  * @returns {Object} - { score, matches, mismatches }
@@ -22,62 +24,99 @@ function calculateMatchScore(jobVacancy, jobSeeker) {
   const matches = [];
   const mismatches = [];
 
-  // 1. Location Match (30 points)
+  // 1. Location Match (40 points - INCREASED from 30)
   const jobLocation = (jobVacancy.jobLocation || jobVacancy.location || "").toLowerCase();
   const preferredLocations = toArray(jobSeeker.preferredWorkLocation || jobSeeker.Preferred_Work_Location)
     .map(loc => (loc || "").toLowerCase());
   
-  if (jobLocation && preferredLocations.some(loc => loc.includes(jobLocation) || jobLocation.includes(loc))) {
-    score += 30;
-    matches.push({ field: "Location", value: jobLocation });
-  } else if (jobLocation && preferredLocations.length > 0) {
-    mismatches.push({ field: "Location", wanted: jobLocation, have: preferredLocations.join(", ") });
+  if (jobLocation && preferredLocations.length > 0) {
+    // Check if any preferred location matches
+    const locationMatch = preferredLocations.some(loc => {
+      // Split comma-separated locations
+      const seekerLocs = loc.split(',').map(l => l.trim());
+      return seekerLocs.some(sl => 
+        sl.includes(jobLocation) || 
+        jobLocation.includes(sl) ||
+        // Country-level match
+        (sl.includes('korea') && jobLocation.includes('korea')) ||
+        (sl.includes('japan') && jobLocation.includes('japan')) ||
+        (sl.includes('china') && jobLocation.includes('china'))
+      );
+    });
+    
+    if (locationMatch) {
+      score += 40;
+      matches.push({ field: "Location", value: jobLocation });
+    } else {
+      mismatches.push({ field: "Location", wanted: jobLocation, have: preferredLocations.join(", ") });
+    }
   }
 
-  // 2. Teaching Area Match (30 points)
+  // 2. Teaching Area Match (25 points - OPTIONAL, reduced from 30)
   const jobAreas = toArray(jobVacancy.teachingArea).map(a => (a || "").toLowerCase());
   const seekerAreas = toArray(jobSeeker.teachingArea).map(a => (a || "").toLowerCase());
   
-  if (jobAreas.length > 0 && seekerAreas.length > 0) {
-    const areaMatches = jobAreas.filter(ja => seekerAreas.some(sa => sa === ja || sa.includes(ja) || ja.includes(sa)));
-    if (areaMatches.length > 0) {
-      const areaScore = Math.min((areaMatches.length / jobAreas.length) * 30, 30);
-      score += areaScore;
-      matches.push({ field: "Teaching Areas", value: areaMatches.join(", ") });
-    } else {
-      mismatches.push({ field: "Teaching Areas", wanted: jobAreas.join(", "), have: seekerAreas.join(", ") });
+  if (jobAreas.length > 0) {
+    if (seekerAreas.length > 0) {
+      const areaMatches = jobAreas.filter(ja => seekerAreas.some(sa => sa === ja || sa.includes(ja) || ja.includes(sa)));
+      if (areaMatches.length > 0) {
+        const areaScore = Math.min((areaMatches.length / jobAreas.length) * 25, 25);
+        score += areaScore;
+        matches.push({ field: "Teaching Areas", value: areaMatches.join(", ") });
+      } else {
+        mismatches.push({ field: "Teaching Areas", wanted: jobAreas.join(", "), have: seekerAreas.join(", ") });
+      }
+    }
+    // If seeker has no teaching area specified, give partial credit (10 points)
+    else {
+      score += 10;
+      matches.push({ field: "Teaching Areas", value: "Open to all areas" });
     }
   }
 
-  // 3. Student Type Match (20 points)
+  // 3. Student Type Match (15 points - OPTIONAL, reduced from 20)
   const jobStudentType = (jobVacancy.studentType || "").toLowerCase();
   const seekerStudentType = (jobSeeker.studentType || "").toLowerCase();
   
-  if (jobStudentType && seekerStudentType && jobStudentType === seekerStudentType) {
-    score += 20;
-    matches.push({ field: "Student Type", value: jobStudentType });
-  } else if (jobStudentType && seekerStudentType) {
-    mismatches.push({ field: "Student Type", wanted: jobStudentType, have: seekerStudentType });
-  }
-
-  // 4. Language Match (10 points)
-  const jobLangs = toArray(jobVacancy.languages || jobVacancy.language).map(l => (l || "").toLowerCase());
-  const seekerLangs = toArray(jobSeeker.languages || jobSeeker.language).map(l => (l || "").toLowerCase());
-  
-  if (jobLangs.length > 0 && seekerLangs.length > 0) {
-    const langMatches = jobLangs.filter(jl => seekerLangs.some(sl => sl === jl || sl.includes(jl) || jl.includes(sl)));
-    if (langMatches.length > 0) {
-      const langScore = Math.min((langMatches.length / jobLangs.length) * 10, 10);
-      score += langScore;
-      matches.push({ field: "Languages", value: langMatches.join(", ") });
+  if (jobStudentType) {
+    if (seekerStudentType && jobStudentType === seekerStudentType) {
+      score += 15;
+      matches.push({ field: "Student Type", value: jobStudentType });
+    } else if (seekerStudentType) {
+      mismatches.push({ field: "Student Type", wanted: jobStudentType, have: seekerStudentType });
+    }
+    // If seeker has no student type preference, give partial credit (8 points)
+    else {
+      score += 8;
+      matches.push({ field: "Student Type", value: "Open to all levels" });
     }
   }
 
-  // 5. Nationality/Country Preference (10 points bonus)
-  const jobCountry = (jobVacancy.country || "").toLowerCase();
+  // 4. Language Match (15 points - INCREASED from 10)
+  const jobLangs = toArray(jobVacancy.languages || jobVacancy.language).map(l => (l || "").toLowerCase());
+  const seekerLangs = toArray(jobSeeker.languageSpoken || jobSeeker.languages || jobSeeker.language).map(l => (l || "").toLowerCase());
+  
+  if (seekerLangs.length > 0) {
+    // Check for English proficiency
+    const hasEnglish = seekerLangs.some(l => l.includes('english'));
+    if (hasEnglish) {
+      score += 15;
+      matches.push({ field: "Languages", value: "English" });
+    }
+    // If job requires specific languages
+    else if (jobLangs.length > 0) {
+      const langMatches = jobLangs.filter(jl => seekerLangs.some(sl => sl === jl || sl.includes(jl) || jl.includes(sl)));
+      if (langMatches.length > 0) {
+        const langScore = Math.min((langMatches.length / jobLangs.length) * 15, 15);
+        score += langScore;
+        matches.push({ field: "Languages", value: langMatches.join(", ") });
+      }
+    }
+  }
+
+  // 5. Native English Speaker Bonus (5 points)
   const seekerNationality = (jobSeeker.nationality || jobSeeker.Nationality || "").toLowerCase();
   
-  // Some employers prefer native English speakers
   if (seekerNationality && ["united states", "united kingdom", "canada", "australia", "new zealand", "ireland"].includes(seekerNationality)) {
     score += 5;
     matches.push({ field: "Native English Speaker", value: seekerNationality });
@@ -89,6 +128,112 @@ function calculateMatchScore(jobVacancy, jobSeeker) {
     mismatches,
     percentage: Math.min(Math.round(score), 100)
   };
+}
+
+/**
+ * Send email notifications for high-quality matches
+ * @param {Object} source - Job Vacancy or Job Seeker
+ * @param {Array} matches - Array of match results
+ * @param {string} type - 'candidate' or 'job'
+ */
+async function sendMatchNotifications(source, matches, type) {
+  try {
+    const baseUrl = process.env.Server_Url || 'http://localhost:8608';
+    
+    if (type === 'candidate') {
+      // Notify job seekers about matching vacancy
+      for (const match of matches) {
+        if (!match.email) continue;
+        
+        const jobVacancyUrl = `${baseUrl}/rdf-resource/Job_Vacancy/${source._id}`;
+        const subject = `🎯 High-Quality Job Match Found: ${source._label || source.title}`;
+        const html = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #10b981;">🎯 Great News! We Found a Perfect Job Match for You!</h2>
+            <p>Dear ${match.title || 'Job Seeker'},</p>
+            <p>Our AI matching system has found a <strong>high-quality job opportunity</strong> that matches your profile with a <strong>${match.percentage}% compatibility score</strong>!</p>
+            
+            <div style="background: #f0fdf4; border-left: 4px solid #10b981; padding: 15px; margin: 20px 0;">
+              <h3 style="margin-top: 0; color: #065f46;">Job Opportunity</h3>
+              <p><strong>Position:</strong> ${source._label || source.title}</p>
+              <p><strong>Location:</strong> ${source.jobLocation || source.location || 'Not specified'}</p>
+              <p><strong>Company:</strong> ${source.companyName || source.schoolName || 'Not specified'}</p>
+              <p><strong>Student Type:</strong> ${source.studentType || 'Not specified'}</p>
+            </div>
+            
+            <div style="background: #fff; border: 1px solid #d1fae5; padding: 15px; margin: 20px 0;">
+              <h3 style="color: #10b981; margin-top: 0;">✅ Matching Qualifications</h3>
+              <ul style="padding-left: 20px;">
+                ${match.matches.map(m => `<li><strong>${m.field}:</strong> ${m.value}</li>`).join('')}
+              </ul>
+            </div>
+            
+            <p style="text-align: center; margin: 30px 0;">
+              <a href="${jobVacancyUrl}" style="background: #10b981; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">View Job Details</a>
+            </p>
+            
+            <p style="color: #6b7280; font-size: 14px; margin-top: 30px; border-top: 1px solid #e5e7eb; padding-top: 15px;">
+              This is an automated notification from ESL Plus AI Matching System. This job was matched based on your profile preferences and qualifications.
+            </p>
+          </div>
+        `;
+        
+        await mailer.send({ to: match.email, subject, html });
+        console.log(`✅ Match notification sent to ${match.email} (${match.percentage}% match)`);
+      }
+    } else if (type === 'job') {
+      // Notify employers about matching candidates
+      const employerEmail = source.contactEmail || source.email;
+      if (!employerEmail) return;
+      
+      const jobSeekerUrl = `${baseUrl}/rdf-resource/Job_Seeker/${source._id}`;
+      const subject = `🎯 ${matches.length} High-Quality Candidate${matches.length > 1 ? 's' : ''} Found for ${source._label || source.title}`;
+      const html = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #10b981;">🎯 Excellent News! We Found Perfect Candidates for Your Position!</h2>
+          <p>Dear Employer,</p>
+          <p>Our AI matching system has found <strong>${matches.length} highly qualified candidate${matches.length > 1 ? 's' : ''}</strong> for your job posting:</p>
+          
+          <div style="background: #f9fafb; border: 1px solid #e5e7eb; padding: 15px; margin: 20px 0;">
+            <p><strong>Position:</strong> ${source._label || source.title}</p>
+            <p><strong>Location:</strong> ${source.jobLocation || source.location}</p>
+          </div>
+          
+          <h3 style="color: #065f46;">Top Matched Candidates</h3>
+          ${matches.slice(0, 3).map(match => `
+            <div style="background: #fff; border: 1px solid #d1fae5; padding: 15px; margin: 15px 0;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h4 style="margin: 0; color: #065f46;">${match.title || 'Candidate'}</h4>
+                <span style="background: #10b981; color: white; padding: 5px 12px; border-radius: 20px; font-weight: bold;">${match.percentage}%</span>
+              </div>
+              <p><strong>Nationality:</strong> ${match.nationality || 'Not specified'}</p>
+              <p><strong>Languages:</strong> ${match.languages || 'Not specified'}</p>
+              <div style="margin-top: 10px;">
+                <strong style="color: #10b981;">✅ Matching Points:</strong>
+                <ul style="margin: 5px 0; padding-left: 20px;">
+                  ${match.matches.slice(0, 3).map(m => `<li>${m.field}: ${m.value}</li>`).join('')}
+                </ul>
+              </div>
+            </div>
+          `).join('')}
+          
+          <p style="text-align: center; margin: 30px 0;">
+            <a href="${baseUrl}/matching/candidates/${source._id}" style="background: #10b981; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">View All Matched Candidates</a>
+          </p>
+          
+          <p style="color: #6b7280; font-size: 14px; margin-top: 30px; border-top: 1px solid #e5e7eb; padding-top: 15px;">
+            This is an automated notification from ESL Plus AI Matching System. These candidates were matched based on your job requirements.
+          </p>
+        </div>
+      `;
+      
+      await mailer.send({ to: employerEmail, subject, html });
+      console.log(`✅ Match notification sent to employer ${employerEmail} (${matches.length} candidates)`);
+    }
+  } catch (err) {
+    console.error('Error sending match notifications:', err.message);
+    throw err;
+  }
 }
 
 /* ---------- Routes ---------- */
@@ -142,8 +287,17 @@ router.get("/candidates/:jobVacancyId", async (req, res, next) => {
     // Sort by score (descending)
     matchResults.sort((a, b) => b.score - a.score);
 
-    // Filter: only show matches with score >= 20
-    const relevantMatches = matchResults.filter(m => m.score >= 20);
+    // Filter: only show matches with score >= 30 (improved threshold)
+    const relevantMatches = matchResults.filter(m => m.score >= 30);
+    
+    // Send email notifications for high-quality matches (score >= 70)
+    const highQualityMatches = relevantMatches.filter(m => m.score >= 70);
+    if (highQualityMatches.length > 0) {
+      // Send emails asynchronously (don't wait)
+      sendMatchNotifications(jobVacancy, highQualityMatches, 'candidate').catch(err => {
+        console.error('Email notification error:', err.message);
+      });
+    }
 
     // Render results page
     res.render("matching/candidates", {
@@ -215,8 +369,17 @@ router.get("/jobs/:jobSeekerId", async (req, res, next) => {
     // Sort by score (descending)
     matchResults.sort((a, b) => b.score - a.score);
 
-    // Filter: only show matches with score >= 20
-    const relevantMatches = matchResults.filter(m => m.score >= 20);
+    // Filter: only show matches with score >= 30 (improved threshold)
+    const relevantMatches = matchResults.filter(m => m.score >= 30);
+    
+    // Send email notifications for high-quality matches (score >= 70)
+    const highQualityMatches = relevantMatches.filter(m => m.score >= 70);
+    if (highQualityMatches.length > 0) {
+      // Send emails asynchronously (don't wait)
+      sendMatchNotifications(jobSeeker, highQualityMatches, 'job').catch(err => {
+        console.error('Email notification error:', err.message);
+      });
+    }
 
     // Render results page
     res.render("matching/jobs", {
