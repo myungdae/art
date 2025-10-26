@@ -1,0 +1,228 @@
+extends layout
+
+block content
+  .pricing-page
+    .container.py-5
+      .text-center.mb-5
+        h1.display-4.fw-bold.mb-3 ESL PLUS Pricing
+        p.lead.text-muted Choose the plan that fits your needs. All plans include a 14-day money-back guarantee.
+
+      //- Three Pricing Categories
+      .row.g-4.mb-5
+        
+        //- EMPLOYERS
+        .col-lg-4
+          .pricing-category.h-100
+            .category-header.text-center.py-4(style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);")
+              i.fas.fa-briefcase.fa-3x.mb-3.text-white
+              h2.text-white.mb-2 For Employers
+              p.text-white-50 Post Job Vacancies
+
+            .card-body.p-4
+              .pricing-options
+                each pkg in [{id:'1',label:'1 Ad',price:30},{id:'4',label:'4 Ads',price:100,discount:20},{id:'12',label:'12 Ads',price:250,discount:110},{id:'24',label:'24 Ads',price:450,discount:270}]
+                  .pricing-item.mb-3.p-3(style="border: 2px solid #f0f0f0; border-radius: 8px;")
+                    .d-flex.justify-content-between.align-items-center
+                      div
+                        h5.mb-1= pkg.label
+                        if pkg.discount
+                          small.text-success
+                            i.fas.fa-tag.me-1
+                            | Save $#{pkg.discount}
+                      .text-end
+                        .h4.mb-0.text-primary $#{pkg.price}
+                        if pkg.id === '1'
+                          small.text-muted per ad
+              
+              .text-center.mt-4
+                a.btn.btn-lg.btn-primary.w-100(href="/paddle/checkout" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;")
+                  i.fas.fa-shopping-cart.me-2
+                  | Get Started
+              
+              .features.mt-4
+                p.fw-bold.mb-2 Features:
+                ul.list-unstyled
+                  li.mb-2
+                    i.fas.fa-check.text-success.me-2
+                    | Post job vacancies
+                  li.mb-2
+                    i.fas.fa-check.text-success.me-2
+                    | 30 days listing duration
+                  li.mb-2
+                    i.fas.fa-check.text-success.me-2
+                    | Access to candidate database
+                  li.mb-2
+                    i.fas.fa-check.text-success.me-2
+                    | Direct messaging
+
+        //- JOB SEEKERS
+        .col-lg-4
+          .pricing-category.h-100
+            .category-header.text-center.py-4(style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);")
+              i.fas.fa-user-tie.fa-3x.mb-3.text-white
+              h2.text-white.mb-2 For Job Seekers
+              p.text-white-50 Resume Access & Visibility
+
+            .card-body.p-4
+              .pricing-options
+                each pkg in [{id:'30',label:'30 Days',price:20},{id:'90',label:'90 Days',price:50},{id:'365',label:'1 Year',price:120}]
+                  .pricing-item.mb-3.p-3(style="border: 2px solid #f0f0f0; border-radius: 8px;")
+                    .d-flex.justify-content-between.align-items-center
+                      div
+                        h5.mb-1= pkg.label
+                        small.text-muted Resume Access
+                      .text-end
+                        .h4.mb-0.text-danger $#{pkg.price}
+              
+              .text-center.mt-4
+                a.btn.btn-lg.btn-danger.w-100(href="/paddle/checkout?type=resume" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border: none;")
+                  i.fas.fa-shopping-cart.me-2
+                  | Get Started
+              
+              .features.mt-4
+                p.fw-bold.mb-2 Features:
+                ul.list-unstyled
+                  li.mb-2
+                    i.fas.fa-check.text-success.me-2
+                    | Enhanced profile visibility
+                  li.mb-2
+                    i.fas.fa-check.text-success.me-2
+                    | Access to premium jobs
+                  li.mb-2
+                    i.fas.fa-check.text-success.me-2
+                    | Direct employer contact
+                  li.mb-2
+                    i.fas.fa-check.text-success.me-2
+                    | Resume highlight
+
+        //- ONLINE TUTORS
+        .col-lg-4
+          .pricing-category.h-100
+            .category-header.text-center.py-4(style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);")
+              i.fas.fa-chalkboard-teacher.fa-3x.mb-3.text-white
+              h2.text-white.mb-2 For Online Tutors
+              p.text-white-50 Tutor Profile Listing
+
+            .card-body.p-4
+              .pricing-options
+                each pkg in [{id:'30',label:'30 Days',price:25},{id:'90',label:'90 Days',price:60},{id:'365',label:'1 Year',price:150}]
+                  .pricing-item.mb-3.p-3(style="border: 2px solid #f0f0f0; border-radius: 8px;")
+                    .d-flex.justify-content-between.align-items-center
+                      div
+                        h5.mb-1= pkg.label
+                        small.text-muted Tutor Visibility
+                      .text-end
+                        .h4.mb-0.text-info $#{pkg.price}
+              
+              .text-center.mt-4
+                a.btn.btn-lg.btn-info.w-100(href="/paddle/checkout?type=tutor" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border: none;")
+                  i.fas.fa-shopping-cart.me-2
+                  | Get Started
+              
+              .features.mt-4
+                p.fw-bold.mb-2 Features:
+                ul.list-unstyled
+                  li.mb-2
+                    i.fas.fa-check.text-success.me-2
+                    | Featured tutor profile
+                  li.mb-2
+                    i.fas.fa-check.text-success.me-2
+                    | Student matching
+                  li.mb-2
+                    i.fas.fa-check.text-success.me-2
+                    | Direct messaging
+                  li.mb-2
+                    i.fas.fa-check.text-success.me-2
+                    | Profile analytics
+
+      //- FAQ Section
+      .row.mt-5
+        .col-lg-8.mx-auto
+          .card.shadow-sm
+            .card-body.p-5
+              h2.text-center.mb-4 Frequently Asked Questions
+
+              .accordion#pricingFAQ
+                .accordion-item
+                  h3.accordion-header
+                    button.accordion-button(type="button" data-bs-toggle="collapse" data-bs-target="#faq1")
+                      | What payment methods do you accept?
+                  .accordion-collapse.collapse.show#faq1(data-bs-parent="#pricingFAQ")
+                    .accordion-body
+                      | We accept all major credit cards, PayPal, and local payment methods through our secure payment partner Paddle.
+
+                .accordion-item
+                  h3.accordion-header
+                    button.accordion-button.collapsed(type="button" data-bs-toggle="collapse" data-bs-target="#faq2")
+                      | What is your refund policy?
+                  .accordion-collapse.collapse#faq2(data-bs-parent="#pricingFAQ")
+                    .accordion-body
+                      | We offer a 14-day money-back guarantee on all plans. If you're not satisfied for any reason, contact us for a full refund. See our 
+                      a(href="/policy/refund") Refund Policy 
+                      | for details.
+
+                .accordion-item
+                  h3.accordion-header
+                    button.accordion-button.collapsed(type="button" data-bs-toggle="collapse" data-bs-target="#faq3")
+                      | Can I change my plan later?
+                  .accordion-collapse.collapse#faq3(data-bs-parent="#pricingFAQ")
+                    .accordion-body
+                      | Yes! You can purchase additional credits or extend your access period at any time. Contact our support team for assistance.
+
+                .accordion-item
+                  h3.accordion-header
+                    button.accordion-button.collapsed(type="button" data-bs-toggle="collapse" data-bs-target="#faq4")
+                      | Do you offer discounts?
+                  .accordion-collapse.collapse#faq4(data-bs-parent="#pricingFAQ")
+                    .accordion-body
+                      | Yes, we offer bulk discounts for employers purchasing multiple job ad packages. The more ads you buy, the more you save!
+
+                .accordion-item
+                  h3.accordion-header
+                    button.accordion-button.collapsed(type="button" data-bs-toggle="collapse" data-bs-target="#faq5")
+                      | Is there a free trial?
+                  .accordion-collapse.collapse#faq5(data-bs-parent="#pricingFAQ")
+                    .accordion-body
+                      | You can browse all job listings and create a basic profile for free. Premium features require a paid subscription.
+
+              .text-center.mt-4
+                p.lead Still have questions?
+                p
+                  | Contact us at 
+                  a(href="mailto:support@eslplus.com") support@eslplus.com
+                  |  or call +82-31-8077-0587
+
+  style.
+    .pricing-page {
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      min-height: 100vh;
+    }
+    .pricing-category {
+      background: white;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .pricing-category:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    }
+    .category-header {
+      position: relative;
+    }
+    .pricing-item {
+      transition: all 0.3s ease;
+    }
+    .pricing-item:hover {
+      border-color: #007bff !important;
+      background: #f8f9fa;
+      transform: translateX(5px);
+    }
+    .features ul li {
+      padding: 4px 0;
+    }
+    .accordion-button:not(.collapsed) {
+      background-color: #f8f9fa;
+      color: #000;
+    }

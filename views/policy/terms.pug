@@ -3,7 +3,7 @@ extends ../layout
 block content
   .container.mx-auto.max-w-4xl.px-4.py-10
     h1.text-3xl.font-bold.mb-2 Terms and Conditions
-    p.text-sm.text-gray-500.mb-8 Last updated: #{lastUpdated || '2025-08-24'}
+    p.text-sm.text-gray-500.mb-8 Last updated: January 26, 2025
 
     // Intro
     p.mb-6 Please read these Terms and Conditions carefully before using our Service.
@@ -18,11 +18,11 @@ block content
       li
         | <strong>Account</strong>: a unique account created for You to access our Service.
       li
-        | <strong>Company</strong>: #{companyName || 'Linked Data Center Co., Ltd.'}, operator of ESL PLUS, headquartered at #{companyAddress || '123 Teheran-ro, Gangnam-gu, Seoul, Republic of Korea'} (also “We”, “Us”, or “Our”).
+        | <strong>Company</strong>: Linked Data Center, operator of ESL PLUS, located at 167, Sangri 1-gil, Bongdam-eup, Hwaseong-si, Gyeonggi-do, Republic of Korea (also "We", "Us", or "Our").
       li
         | <strong>Service</strong>: the ESL PLUS platform (the Website).
       li
-        | <strong>Website</strong>: #{siteDomain || 'https://eslplus.com'}.
+        | <strong>Website</strong>: https://eslplus.org
       li
         | <strong>User / You</strong>: the individual or entity accessing or using the Service.
       li
@@ -52,7 +52,10 @@ block content
     ul.list-disc.ml-6.space-y-2.mb-4
       li Some features may require payment of membership or matching fees.
       li Payments may be made by methods displayed on the Website (e.g., credit card, PayPal, local payment gateways).
-      li Refunds: full refund within 7 days if the service is unused; no refund after matching has commenced, except where required by law. See our Refund Policy for details.
+      li
+        | <strong>Refunds:</strong> You may request a full refund within 14 days of purchase. No questions asked. See our 
+        a.text-blue-600.underline(href="/policy/refund") Refund Policy 
+        | for details.
 
     // Content
     h2.text-2xl.font-semibold.mt-8.mb-3 Content
@@ -79,8 +82,8 @@ block content
     p.mb-4 To the maximum extent permitted by law, Our total liability shall be limited to the membership fees actually paid by You to use the Service. We shall not be liable for any indirect, incidental, special, or consequential damages.
 
     // Disclaimer
-    h2.text-2xl.font-semibold.mt-8.mb-3 “AS IS” and “AS AVAILABLE” Disclaimer
-    p.mb-4 The Service is provided on an “AS IS” and “AS AVAILABLE” basis without warranties of any kind. We do not warrant uninterrupted or error-free operation, or that defects will be corrected.
+    h2.text-2xl.font-semibold.mt-8.mb-3 "AS IS" and "AS AVAILABLE" Disclaimer
+    p.mb-4 The Service is provided on an "AS IS" and "AS AVAILABLE" basis without warranties of any kind. We do not warrant uninterrupted or error-free operation, or that defects will be corrected.
 
     // Governing Law
     h2.text-2xl.font-semibold.mt-8.mb-3 Governing Law
@@ -93,6 +96,6 @@ block content
     // Contact
     h2.text-2xl.font-semibold.mt-8.mb-3 Contact Us
     ul.list-disc.ml-6.space-y-2
-      li Email: #{supportEmail || 'support@eslplus.com'}
-      li Phone: #{supportPhone || '+82-2-000-0000'}
-      li Mail: #{companyName || 'Linked Data Center Co., Ltd.'}, #{companyAddress || '123 Teheran-ro, Gangnam-gu, Seoul, Republic of Korea'}
+      li Email: support@eslplus.com
+      li Phone: +82-31-8077-0587
+      li Mail: Linked Data Center, 167, Sangri 1-gil, Bongdam-eup, Hwaseong-si, Gyeonggi-do, Republic of Korea

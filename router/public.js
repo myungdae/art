@@ -3,6 +3,11 @@ const router = express.Router();
 // const JobSeeker = require('../model/jobSeeker');
 const OnlineTutor = require('../model/onlineTutor');
 
+// ✅ Pricing Page (Public)
+router.get('/pricing', (req, res) => {
+  res.render('pricing', { title: 'Pricing - ESL PLUS' });
+});
+
 // ✅ Job Seekers 공개 목록
 router.get('/Job_Seekers', async (req, res) => {
   // const seekers = await JobSeeker.find();
