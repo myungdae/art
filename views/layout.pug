@@ -80,7 +80,7 @@ html(lang='en')
       /* 상단 검색 인풋 */
       .search-input {
         max-width: 650px; height: 70px; font-size: 16pt;
-        border: 7px solid #FF7A00 !important; border-radius: 12px !important; padding: 0 20px;
+        border: 3px solid #FF7A00 !important; border-radius: 12px !important; padding: 0 20px;
         background-color: white;
       }
 
@@ -190,7 +190,7 @@ html(lang='en')
                   if session && session.isAdmin
                     a.nav-link.h5.my-0(href="/admin/dashboard") Admin
                     a.nav-link.h5.my-0(href="/admin/logout").logout Logout
-            .text-center(style="margin-top: 100px;")
+            .text-center(style="margin-top: 60px;")
               // 검색바를 먼저 배치
               - var _ph = (typeof searchKeyword!=='undefined' && searchKeyword) ? searchKeyword : "Enter keyword...";
               .input-group.justify-content-center(style="margin-bottom: 30px;")
