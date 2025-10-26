@@ -30,18 +30,44 @@ function calculateMatchScore(jobVacancy, jobSeeker) {
     .map(loc => (loc || "").toLowerCase());
   
   if (jobLocation && preferredLocations.length > 0) {
+    // Parse preferred locations (comma-separated)
+    const allSeekerLocs = [];
+    preferredLocations.forEach(loc => {
+      loc.split(',').forEach(l => allSeekerLocs.push(l.trim()));
+    });
+    
     // Check if any preferred location matches
-    const locationMatch = preferredLocations.some(loc => {
-      // Split comma-separated locations
-      const seekerLocs = loc.split(',').map(l => l.trim());
-      return seekerLocs.some(sl => 
-        sl.includes(jobLocation) || 
-        jobLocation.includes(sl) ||
-        // Country-level match
-        (sl.includes('korea') && jobLocation.includes('korea')) ||
-        (sl.includes('japan') && jobLocation.includes('japan')) ||
-        (sl.includes('china') && jobLocation.includes('china'))
-      );
+    const locationMatch = allSeekerLocs.some(sl => {
+      // Direct match
+      if (sl.includes(jobLocation) || jobLocation.includes(sl)) return true;
+      
+      // Country-level match (Seoul is in South Korea)
+      if (sl.includes('south korea') || sl.includes('korea')) {
+        if (jobLocation.includes('seoul') || jobLocation.includes('busan') || 
+            jobLocation.includes('incheon') || jobLocation.includes('korea')) {
+          return true;
+        }
+      }
+      if (sl.includes('japan')) {
+        if (jobLocation.includes('tokyo') || jobLocation.includes('osaka') || 
+            jobLocation.includes('kyoto') || jobLocation.includes('japan')) {
+          return true;
+        }
+      }
+      if (sl.includes('china')) {
+        if (jobLocation.includes('beijing') || jobLocation.includes('shanghai') || 
+            jobLocation.includes('guangzhou') || jobLocation.includes('china')) {
+          return true;
+        }
+      }
+      if (sl.includes('taiwan')) {
+        if (jobLocation.includes('taipei') || jobLocation.includes('kaohsiung') || 
+            jobLocation.includes('taiwan')) {
+          return true;
+        }
+      }
+      
+      return false;
     });
     
     if (locationMatch) {
