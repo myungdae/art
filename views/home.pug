@@ -8,21 +8,21 @@ block content
   - var RS = Array.isArray(recentSeekers) ? recentSeekers : [];
   - var RT = Array.isArray(recentTutors) ? recentTutors : [];
 
-  // Stats (clickable + spinner + count-up, light orange theme) - 배경 이미지 위로 겹치기
+  // Stats (clickable + spinner + count-up, light orange theme) - 배경 이미지 위로 겹치기 (축소된 크기)
   style.
-    .stat-spinner{width:18px;height:18px;border:2px solid #e5e7eb;border-top-color:#f97316;border-radius:50%;animation:spin .8s linear infinite;display:inline-block;vertical-align:middle}
+    .stat-spinner{width:14px;height:14px;border:2px solid #e5e7eb;border-top-color:#f97316;border-radius:50%;animation:spin .8s linear infinite;display:inline-block;vertical-align:middle}
     @keyframes spin{to{transform:rotate(360deg)}}
     .hide{display:none}
     .stat-number {
       color: #FF7A00;
-      font-size: 50px;
+      font-size: 36px;
     }
     .stat-card {
       background: rgba(255, 255, 255, 0.95);
-      border: 4px solid #FF7A00;
-      border-radius: 20px;
-      width: 400px;
-      height: 240px;
+      border: 3px solid #FF7A00;
+      border-radius: 16px;
+      width: 280px;
+      height: 160px;
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -30,9 +30,9 @@ block content
       transition: all 0.3s ease;
     }
     .stat-card:hover{background:#FFEAD5;box-shadow:0 8px 24px rgba(249,115,22,.2); transform: translateY(-4px);}
-    .stat-label{color:#374151; font-size:20px; font-weight: 500; padding-top: 20px;}
+    .stat-label{color:#374151; font-size:16px; font-weight: 500; padding-top: 12px;}
     .stats-overlay {
-      margin-top: -320px;
+      margin-top: -260px;
       position: relative;
       z-index: 10;
       padding: 0 20px;
@@ -43,35 +43,37 @@ block content
       padding: 30px;
       border-radius: 20px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      margin-top: 40px;
     }
   
-  // 통계 카드를 배경 이미지 위로 올리기 (음수 마진 사용)
+  // 통계 카드를 배경 이미지 위로 올리기 (음수 마진 사용, 크기 축소)
   .stats-overlay
-    // 메인 헤드라인
-    div(class="text-center mb-8 main-headline max-w-4xl mx-auto")
-      h2(class="text-4xl md:text-5xl font-extrabold mb-3" style="color: #1f2937;") Connect. Teach. Grow.
-      p(class="text-xl md:text-2xl font-semibold" style="color: #FF7A00;") AI-Powered ESL Teacher Matching Platform
-    
-    div(class="flex flex-col md:flex-row items-center justify-center gap-6 mb-12")
+    // 통계 카드를 먼저 배치 (크기 축소)
+    div(class="flex flex-col md:flex-row items-center justify-center gap-4 mb-8")
       a(href="/facet/Job_Vacancies" aria-label="Browse Job Vacancies" 
-        class="stat-card block p-5 text-center transition transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-orange-400"
+        class="stat-card block p-4 text-center transition transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-orange-400"
         )
-        .flex.items-center.justify-center.gap-3
+        .flex.items-center.justify-center.gap-2
           span#spin-v.stat-spinner
           div#stat-v.text-3xl.font-bold.stat-number= (S.vCount != null ? S.vCount : 0)
         div.stat-label.mt-1 Job Vacancies
 
-      a(href="/facet/Job_Seekers" aria-label="Browse Job Seekers" class="stat-card block p-5 text-center transition transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-orange-400")
-        .flex.items-center.justify-center.gap-3
+      a(href="/facet/Job_Seekers" aria-label="Browse Job Seekers" class="stat-card block p-4 text-center transition transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-orange-400")
+        .flex.items-center.justify-center.gap-2
           span#spin-s.stat-spinner
           div#stat-s.text-3xl.font-bold.stat-number= (S.sCount != null ? S.sCount : 0)
         div.stat-label.mt-1 Job Seekers
 
-      a(href="/facet/Online_Tutors" aria-label="Browse Online Tutors" class="stat-card block p-5 text-center transition transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-orange-400")
-        .flex.items-center.justify-center.gap-3
+      a(href="/facet/Online_Tutors" aria-label="Browse Online Tutors" class="stat-card block p-4 text-center transition transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-orange-400")
+        .flex.items-center.justify-center.gap-2
           span#spin-t.stat-spinner
           div#stat-t.text-3xl.font-bold.stat-number= (S.tCount != null ? S.tCount : 0)
         div.stat-label.mt-1 Online Tutors
+    
+    // 메인 헤드라인을 통계 카드 아래에 배치 (배경 이미지 아래)
+    div(class="text-center main-headline max-w-4xl mx-auto")
+      h2(class="text-4xl md:text-5xl font-extrabold mb-3" style="color: #1f2937;") Connect. Teach. Grow.
+      p(class="text-xl md:text-2xl font-semibold" style="color: #FF7A00;") AI-Powered ESL Teacher Matching Platform
   
   // 나머지 콘텐츠
   .container.mx-auto.max-w-6xl.py-10

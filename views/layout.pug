@@ -191,11 +191,9 @@ html(lang='en')
                     a.nav-link.h5.my-0(href="/admin/dashboard") Admin
                     a.nav-link.h5.my-0(href="/admin/logout").logout Logout
             .text-center(style="margin-top: 100px;")
-              h2(style="font-weight: bold; font-size: 50px; margin-bottom: 25px; color: #FFFFFF") ESL PLUS <br>The fast ESL hiring & tutoring hub
-              p(style="font-size: 20px; margin-bottom: 25px; color: #FFFFFF") Teaching opportunities available around the world
-               
+              // 검색바를 먼저 배치
               - var _ph = (typeof searchKeyword!=='undefined' && searchKeyword) ? searchKeyword : "Enter keyword...";
-              .input-group.justify-content-center
+              .input-group.justify-content-center(style="margin-bottom: 30px;")
                 input#searchText.form-control.search-input(
                   autocomplete='off',
                   type='text',
@@ -208,6 +206,10 @@ html(lang='en')
                     type="button"
                   )
                     img(src="/assets/img/search.png", alt="Search", width="30")
+              
+              // 텍스트는 검색바 아래에 배치
+              h2(style="font-weight: bold; font-size: 50px; margin-bottom: 25px; color: #FFFFFF") ESL PLUS <br>The fast ESL hiring & tutoring hub
+              p(style="font-size: 20px; margin-bottom: 25px; color: #FFFFFF") Teaching opportunities available around the world
         else 
           .head_div
               // 좌측 상단 브랜드 로고
