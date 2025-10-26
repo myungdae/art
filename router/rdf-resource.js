@@ -97,6 +97,16 @@ function buildVM(doc, facetBase, titleKeys = [], descKeys = []) {
       : doc.createdAt
       ? new Date(doc.createdAt)
       : null,
+    // Job Seekers specific fields
+    nationality: doc.nationality || doc.Nationality || "",
+    preferredWorkLocation: doc.preferredWorkLocation || doc.Preferred_Work_Location || "",
+    major: doc.major || doc.Major || "",
+    languageSpoken: doc.languageSpoken || "",
+    dateAvailable: doc.dateAvailable ? new Date(doc.dateAvailable) : null,
+    // Online Tutors specific fields
+    Tutoring_Experience: doc.Tutoring_Experience || doc.tutoringExperience || "",
+    Gender: doc.Gender || doc.gender || "",
+    Expertise: doc.Expertise || doc.expertise || "",
   };
 
   // 사용된 키 마킹
@@ -119,6 +129,22 @@ function buildVM(doc, facetBase, titleKeys = [], descKeys = []) {
     "homepage",
     "website",
     "datePosted",
+    // Job Seekers fields
+    "nationality",
+    "Nationality",
+    "preferredWorkLocation",
+    "Preferred_Work_Location",
+    "major",
+    "Major",
+    "languageSpoken",
+    "dateAvailable",
+    // Online Tutors fields
+    "Tutoring_Experience",
+    "tutoringExperience",
+    "Gender",
+    "gender",
+    "Expertise",
+    "expertise",
   ].forEach((k) => used.add(k));
 
   // Additional Details: 아직 사용 안 된 원시 키들을 자동 렌더
