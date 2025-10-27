@@ -17,6 +17,18 @@ block content
           strong.text-gray-700 Role: 
           span.text-gray-900 #{user.role}
 
+      // Account Validity Period
+      .alert.alert-info.mb-6(style="background-color: #E3F2FD; border: 2px solid #2196F3; border-left: 6px solid #2196F3; border-radius: 8px; padding: 1.25rem;")
+        .d-flex.align-items-start
+          i.fas.fa-info-circle(style="color: #1976D2; font-size: 1.5rem; margin-top: 3px; margin-right: 14px; flex-shrink: 0;")
+          div(style="font-size: 1.05rem; line-height: 1.7; color: #000;")
+            strong(style="font-size: 1.15rem; font-weight: 700; color: #000;") ACCOUNT VALIDITY PERIOD
+            p.mb-2.mt-2(style="font-weight: 500; color: #000;") Your account will remain active for 120 days from registration.
+            ul.mb-0.ps-3(style="font-size: 1rem; font-weight: 500; line-height: 1.8;")
+              li(style="color: #000;") You will receive email reminders at 90 days and 110 days
+              li(style="color: #000;") Accounts with no credits will be automatically deleted after 120 days
+              li(style="color: #000;") Accounts with active credits will never expire
+
       // Slots card
       .bg-white.rounded-lg.shadow-sm.p-5.border(style="border-color: #FFE4CC;")
         p.mb-3.text-lg
