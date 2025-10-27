@@ -90,17 +90,17 @@ block content
       // 우측 영상/이미지 컨테이너
       div(class="w-full md:w-2/3 flex justify-center")
         div(class="relative w-full max-w-[840px] rounded-3xl overflow-hidden" style="border: 4px solid #FF7A00; box-shadow: 0 4px 6px rgba(0,0,0,0.1);")
-          // 비디오가 없을 때 이미지로 대체
-          img#videoPlaceholder.rounded-3xl.w-full(src="/assets/img/video.png" alt="ESL PLUS: Bridge to the World" style="display: block; width: 100%; height: auto;")
-          
-          // 비디오 (있을 경우에만 표시)
-          video#videoPlayer.rounded-3xl.w-full(loop playsinline preload="metadata" poster="/assets/img/video.png" style="display: none;")
+          // 비디오 플레이어 (기본 표시)
+          video#videoPlayer.rounded-3xl.w-full(loop playsinline preload="metadata" poster="/assets/img/video.png" style="display: block;")
             source(src="/assets/video/eslplus.mp4?v=20251014a" type="video/mp4")
             | Your browser does not support the video tag.
           
-          // 커스텀 재생 버튼 (비디오가 있을 때만 표시)
+          // 비디오가 없을 때 대체 이미지 (초기 숨김)
+          img#videoPlaceholder.rounded-3xl.w-full(src="/assets/img/video.png" alt="ESL PLUS: Bridge to the World" style="display: none; width: 100%; height: auto;")
+          
+          // 커스텀 재생 버튼 (빨간 삼각형)
           button#playButton.absolute.top-1_2.left-1_2(
-            style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: none; border: none; cursor: pointer; z-index: 10; display: none;"
+            style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: none; border: none; cursor: pointer; z-index: 10;"
             onclick="document.getElementById('videoPlayer').play(); this.style.display='none';"
           )
             img(src="/assets/img/play_btn.png" alt="Play" style="width: 80px; height: 80px; filter: brightness(0) saturate(100%) invert(23%) sepia(89%) saturate(7471%) hue-rotate(359deg) brightness(95%) contrast(118%);")
@@ -224,7 +224,7 @@ block content
         } else { hydrate(); }
       })();
       
-      // 비디오 재생 버튼 제어 및 비디오 존재 확인
+      // 비디오 재생 버튼 제어
       (function() {
         function initVideoPlayer() {
           var video = document.getElementById('videoPlayer');
@@ -232,20 +232,22 @@ block content
           var placeholder = document.getElementById('videoPlaceholder');
           if (!video) return;
           
-          // 비디오 파일이 로드 가능한지 확인
-          video.addEventListener('loadedmetadata', function() {
-            // 비디오가 로드되면 placeholder 숨기고 비디오 표시
+          // 비디오 로드 실패 시 placeholder로 대체
+          video.addEventListener('error', function() {
+            console.log('Video not available, showing placeholder image');
+            if (placeholder) {
+              placeholder.style.display = 'block';
+              video.style.display = 'none';
+            }
+            if (playBtn) playBtn.style.display = 'none';
+          });
+          
+          // 비디오 로드 성공 시 재생 버튼 표시
+          video.addEventListener('loadeddata', function() {
+            console.log('Video loaded successfully');
             if (placeholder) placeholder.style.display = 'none';
             video.style.display = 'block';
             if (playBtn) playBtn.style.display = 'block';
-          });
-          
-          // 비디오 로드 실패 시 placeholder 유지
-          video.addEventListener('error', function() {
-            console.log('Video not available, showing placeholder image');
-            if (placeholder) placeholder.style.display = 'block';
-            video.style.display = 'none';
-            if (playBtn) playBtn.style.display = 'none';
           });
           
           if (playBtn) {
