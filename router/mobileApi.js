@@ -125,12 +125,38 @@ router.post("/register", async (req, res) => {
       email: newUser.email,
       role: newUser.role,
       createdAt: newUser.createdAt,
+      adsAvailable: 0,
+      resumeAccess: null,
+      tutorAccess: null,
     };
+
+    // Determine next step based on role
+    let nextStep = {
+      action: "view_dashboard",
+      message: "Registration successful! Please check your dashboard.",
+      needsPayment: true,
+      paymentType: null,
+    };
+
+    if (role === "Employer") {
+      nextStep.paymentType = "employer";
+      nextStep.message = "Registration successful! You need to purchase ad credits to post job vacancies.";
+      nextStep.buttonText = "Buy Ad Credits";
+    } else if (role === "Job_Seeker") {
+      nextStep.paymentType = "resume";
+      nextStep.message = "Registration successful! You need to purchase resume access to add your resume.";
+      nextStep.buttonText = "Purchase Resume Access";
+    } else if (role === "Online_Tutor") {
+      nextStep.paymentType = "tutor";
+      nextStep.message = "Registration successful! You need to purchase tutor visibility to be listed.";
+      nextStep.buttonText = "Purchase Tutor Visibility";
+    }
 
     return res.status(201).json({
       success: true,
       message: "Registration successful",
       user: userData,
+      nextStep,
     });
   } catch (err) {
     console.error("❌ Mobile registration error:", err.message);
@@ -173,10 +199,68 @@ router.post("/login", async (req, res) => {
       createdAt: user.createdAt,
     };
 
+    // Determine next step based on role and current status
+    let nextStep = {
+      action: "view_dashboard",
+      needsPayment: false,
+      paymentType: null,
+      canUseFeatures: false,
+    };
+
+    if (user.role === "Employer") {
+      const hasCredits = (user.adsAvailable || 0) > 0;
+      nextStep.needsPayment = !hasCredits;
+      nextStep.canUseFeatures = hasCredits;
+      nextStep.paymentType = "employer";
+      
+      if (hasCredits) {
+        nextStep.message = `You have ${user.adsAvailable} ad credits. You can post job vacancies.`;
+        nextStep.buttonText = "Post New Job";
+        nextStep.action = "post_job";
+      } else {
+        nextStep.message = "You need to purchase ad credits to post job vacancies.";
+        nextStep.buttonText = "Buy Ad Credits";
+        nextStep.action = "buy_credits";
+      }
+    } else if (user.role === "Job_Seeker") {
+      const remainingDays = calcRemainingDays(user.resumeAccess);
+      const hasAccess = remainingDays > 0;
+      nextStep.needsPayment = !hasAccess;
+      nextStep.canUseFeatures = hasAccess;
+      nextStep.paymentType = "resume";
+      
+      if (hasAccess) {
+        nextStep.message = `Your resume access is active for ${remainingDays} more days.`;
+        nextStep.buttonText = "Add/Edit Resume";
+        nextStep.action = "manage_resume";
+      } else {
+        nextStep.message = "You need to purchase resume access to add your resume.";
+        nextStep.buttonText = "Purchase Resume Access";
+        nextStep.action = "buy_access";
+      }
+    } else if (user.role === "Online_Tutor") {
+      const remainingDays = calcRemainingDays(user.tutorAccess);
+      const hasAccess = remainingDays > 0;
+      nextStep.needsPayment = !hasAccess;
+      nextStep.canUseFeatures = hasAccess;
+      nextStep.paymentType = "tutor";
+      
+      if (hasAccess) {
+        nextStep.message = `Your tutor listing is active for ${remainingDays} more days.`;
+        nextStep.buttonText = "Add/Edit Profile";
+        nextStep.action = "manage_profile";
+      } else {
+        nextStep.message = "You need to purchase tutor visibility to be listed.";
+        nextStep.buttonText = "Purchase Tutor Visibility";
+        nextStep.action = "buy_visibility";
+      }
+    }
+
     return res.json({
       success: true,
       message: "Login successful",
       user: userData,
+      nextStep,
     });
   } catch (err) {
     console.error("❌ Mobile login error:", err.message);
@@ -205,18 +289,40 @@ router.get("/mypage/:userId", async (req, res) => {
       user,
     };
 
-    // Role-specific data
+    // Role-specific data and next step
+    let nextStep = {
+      action: "view_dashboard",
+      needsPayment: false,
+      paymentType: null,
+      canUseFeatures: false,
+    };
+
     if (user.role === "Employer") {
       const activeJobs = await JobVacancy.countDocuments({ user: user._id });
       const credits = Number(user.adsAvailable || 0);
+      const hasCredits = credits > 0;
       
       response.employer = {
         activeJobs,
         credits,
-        canPost: credits > 0,
+        canPost: hasCredits,
         totalSlots: activeJobs + credits,
         remainingSlots: credits,
       };
+
+      nextStep.needsPayment = !hasCredits;
+      nextStep.canUseFeatures = hasCredits;
+      nextStep.paymentType = "employer";
+      
+      if (hasCredits) {
+        nextStep.message = `You have ${credits} ad credits. You can post job vacancies.`;
+        nextStep.buttonText = "Post New Job";
+        nextStep.action = "post_job";
+      } else {
+        nextStep.message = "You need to purchase ad credits to post job vacancies.";
+        nextStep.buttonText = "Buy Ad Credits";
+        nextStep.action = "buy_credits";
+      }
     } else if (user.role === "Job_Seeker") {
       const remainingDays = calcRemainingDays(user?.resumeAccess);
       const hasActiveResumeAccess = remainingDays > 0;
@@ -233,6 +339,20 @@ router.get("/mypage/:userId", async (req, res) => {
         hasResume: !!userResume,
         resume: userResume,
       };
+
+      nextStep.needsPayment = !hasActiveResumeAccess;
+      nextStep.canUseFeatures = hasActiveResumeAccess;
+      nextStep.paymentType = "resume";
+      
+      if (hasActiveResumeAccess) {
+        nextStep.message = `Your resume access is active for ${remainingDays} more days.`;
+        nextStep.buttonText = "Add/Edit Resume";
+        nextStep.action = "manage_resume";
+      } else {
+        nextStep.message = "You need to purchase resume access to add your resume.";
+        nextStep.buttonText = "Purchase Resume Access";
+        nextStep.action = "buy_access";
+      }
     } else if (user.role === "Online_Tutor") {
       const tutor = await OnlineTutor.findOne({ email: user.email })
         .sort({ updatedAt: -1 })
@@ -249,7 +369,23 @@ router.get("/mypage/:userId", async (req, res) => {
         hasTutorProfile: !!tutor,
         profile: tutor,
       };
+
+      nextStep.needsPayment = !hasActiveTutorAccess;
+      nextStep.canUseFeatures = hasActiveTutorAccess;
+      nextStep.paymentType = "tutor";
+      
+      if (hasActiveTutorAccess) {
+        nextStep.message = `Your tutor listing is active for ${remainingDays} more days.`;
+        nextStep.buttonText = "Add/Edit Profile";
+        nextStep.action = "manage_profile";
+      } else {
+        nextStep.message = "You need to purchase tutor visibility to be listed.";
+        nextStep.buttonText = "Purchase Tutor Visibility";
+        nextStep.action = "buy_visibility";
+      }
     }
+
+    response.nextStep = nextStep;
 
     return res.json(response);
   } catch (err) {

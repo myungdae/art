@@ -31,7 +31,17 @@ Base URL: `https://eslplus.org/api` (production) 또는 `http://localhost:8608/a
     "username": "John Doe",
     "email": "john@example.com",
     "role": "Employer",
-    "createdAt": "2024-01-01T00:00:00.000Z"
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "adsAvailable": 0,
+    "resumeAccess": null,
+    "tutorAccess": null
+  },
+  "nextStep": {
+    "action": "view_dashboard",
+    "message": "Registration successful! You need to purchase ad credits to post job vacancies.",
+    "needsPayment": true,
+    "paymentType": "employer",
+    "buttonText": "Buy Ad Credits"
   }
 }
 ```
@@ -67,6 +77,8 @@ Base URL: `https://eslplus.org/api` (production) 또는 `http://localhost:8608/a
 ```
 
 **Response (Success - 200):**
+
+#### With Credits/Access:
 ```json
 {
   "success": true,
@@ -80,6 +92,40 @@ Base URL: `https://eslplus.org/api` (production) 또는 `http://localhost:8608/a
     "resumeAccess": null,
     "tutorAccess": null,
     "createdAt": "2024-01-01T00:00:00.000Z"
+  },
+  "nextStep": {
+    "action": "post_job",
+    "needsPayment": false,
+    "paymentType": "employer",
+    "canUseFeatures": true,
+    "message": "You have 5 ad credits. You can post job vacancies.",
+    "buttonText": "Post New Job"
+  }
+}
+```
+
+#### Without Credits/Access:
+```json
+{
+  "success": true,
+  "message": "Login successful",
+  "user": {
+    "_id": "507f1f77bcf86cd799439011",
+    "username": "John Doe",
+    "email": "john@example.com",
+    "role": "Employer",
+    "adsAvailable": 0,
+    "resumeAccess": null,
+    "tutorAccess": null,
+    "createdAt": "2024-01-01T00:00:00.000Z"
+  },
+  "nextStep": {
+    "action": "buy_credits",
+    "needsPayment": true,
+    "paymentType": "employer",
+    "canUseFeatures": false,
+    "message": "You need to purchase ad credits to post job vacancies.",
+    "buttonText": "Buy Ad Credits"
   }
 }
 ```
