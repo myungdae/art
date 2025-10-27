@@ -30,8 +30,8 @@ html(lang='en')
       .menu-top {  gap: 30px; padding-top: 20px} /* 중앙 메뉴와 로그인 링크 분리 */
       .menu-top a { font-weight: 700; color:#000; text-decoration: none; }
 
-      /* 모바일: 햄버거 메뉴와 계정 버튼 */
-      .menu-top-mob { position: absolute; top: 12px; right: 12px; display:none; z-index: 5; }
+      /* 모바일: 햄버거 메뉴만 사용 (계정 버튼 제거) */
+      .menu-top-mob { display: none !important; } /* 계정 버튼 완전 숨김 */
       .menu-hamburger { position: absolute; top: 12px; right: 12px; display:none; z-index: 5; }
       .menu-drop {
         position: absolute; top: 44px; right: 0;
@@ -267,33 +267,32 @@ html(lang='en')
           button#hamburgerToggle.btn.btn-outline-dark.btn-sm(type="button", aria-label="Menu")
             i.fa.fa-bars
         
-        // 모바일: 메인 메뉴 드로어
+        // 모바일: 메인 메뉴 드로어 (메인 메뉴 + 계정 메뉴 통합)
         .menu-overlay#menuOverlay
         .main-menu-mobile#mainMenuMobile
           a(href="/", class=(currentPage==='/' ? 'active' : '')) HOME
           a(href="/facet/Job_Vacancies", class=(currentPage && (currentPage.indexOf('/facet/Job_Vacancies')===0 || currentPage.indexOf('/job-vacancies')===0)) ? 'active' : '') JOB VACANCIES
           a(href="/facet/Job_Seekers", class=(currentPage && currentPage.indexOf('/facet/Job_Seekers')===0) ? 'active' : '') JOB SEEKERS
           a(href="/facet/Online_Tutors", class=(currentPage && currentPage.indexOf('/facet/Online_Tutors')===0) ? 'active' : '') ONLINE TUTORS
-        
-        // 모바일: 우상단 계정 토글
-        .menu-top-mob.d-md-none
-          button#topMenuToggle.btn.btn-outline-dark.btn-sm(type="button", aria-label="Account")
-            i.fa.fa-user
-          .menu-drop#topMenuDrop
-            if session && session.user
-              a(href="/user/mypage") Mypage
-              if session.user.adsAvailable !== undefined
-                a(href="javascript:void(0)") (#{session.user.adsAvailable} left)
-              a(href="/inquiry") Inquiry
-              a(href="/user/logout").logout Logout
-            else
-              a(href="/user/register") Membership
-              a(href="/user/login") Login
-              a(href="/inquiry") Inquiry
+          
+          // 구분선
+          div(style="border-top: 2px solid #ddd; margin: 10px 0;")
+          
+          // 계정 메뉴
+          if session && session.user
+            a(href="/user/mypage") Mypage
+            if session.user.adsAvailable !== undefined
+              a(href="javascript:void(0)", style="pointer-events:none; color:#999;") (#{session.user.adsAvailable} left)
+            a(href="/inquiry") Inquiry
+            a(href="/user/logout").logout Logout
+          else
+            a(href="/user/register") Membership
+            a(href="/user/login") Login
+            a(href="/inquiry") Inquiry
 
-            if session && session.isAdmin
-              a(href="/admin/dashboard") Admin
-              a(href="/admin/logout").logout Logout
+          if session && session.isAdmin
+            a(href="/admin/dashboard") Admin
+            a(href="/admin/logout").logout Logout
 
     // ───────── GNB (부트스트랩 햄버거)
 
