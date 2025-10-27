@@ -9,57 +9,81 @@ block content
     }
     .register-title {
       font-size: 2.5rem;
-      font-weight: 700;
-      color: #333;
+      font-weight: 800;
+      color: #000 !important;
       margin-bottom: 2rem;
     }
     .register-form label {
-      font-size: 1.1rem;
-      font-weight: 600;
-      color: #333;
-      margin-bottom: 0.5rem;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #000 !important;
+      margin-bottom: 0.6rem;
+      display: block;
     }
     .register-form input,
     .register-form select {
       font-size: 1.1rem !important;
-      padding: 0.85rem 1rem !important;
-      border: 2px solid #ddd !important;
+      padding: 0.9rem 1.1rem !important;
+      border: 2px solid #333 !important;
       border-radius: 8px !important;
       transition: all 0.3s ease;
+      color: #000 !important;
+      font-weight: 500 !important;
+      background-color: #fff !important;
+    }
+    .register-form input::placeholder {
+      color: #666 !important;
+      opacity: 0.7;
     }
     .register-form input:focus,
     .register-form select:focus {
       border-color: #FF7A00 !important;
-      box-shadow: 0 0 0 0.2rem rgba(255, 122, 0, 0.15) !important;
+      box-shadow: 0 0 0 0.25rem rgba(255, 122, 0, 0.2) !important;
+      outline: none !important;
+    }
+    .register-form select {
+      cursor: pointer;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath fill='%23000' d='M8 11L3 6h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 1rem center;
+      background-size: 16px;
+      padding-right: 3rem !important;
     }
     .register-form .btn-register {
-      font-size: 1.2rem !important;
-      font-weight: 600 !important;
-      padding: 1rem !important;
+      font-size: 1.25rem !important;
+      font-weight: 700 !important;
+      padding: 1.1rem !important;
       background-color: #FF7A00 !important;
       border: none !important;
       border-radius: 8px !important;
       transition: all 0.3s ease;
+      color: #fff !important;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
     .register-form .btn-register:hover:not(:disabled) {
       background-color: #E66D00 !important;
       transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(255, 122, 0, 0.3);
+      box-shadow: 0 4px 12px rgba(255, 122, 0, 0.4);
     }
     .register-form .btn-register:disabled {
-      background-color: #ccc !important;
+      background-color: #999 !important;
       cursor: not-allowed;
+      opacity: 0.6;
     }
     @media (max-width: 576px) {
       .register-title {
         font-size: 2rem;
       }
       .register-form label {
-        font-size: 1rem;
+        font-size: 1.05rem;
       }
       .register-form input,
       .register-form select {
-        font-size: 1rem !important;
+        font-size: 1.05rem !important;
       }
     }
   
@@ -70,16 +94,16 @@ block content
           h2.register-title.text-center Register
           
           // 유효기간 안내
-          .alert.alert-info.mb-4(style="background-color: #E3F2FD; border-color: #90CAF9; border-left: 5px solid #2196F3; border-radius: 8px;")
+          .alert.alert-info.mb-4(style="background-color: #E3F2FD; border: 2px solid #2196F3; border-left: 6px solid #2196F3; border-radius: 8px;")
             .d-flex.align-items-start
-              i.fas.fa-info-circle(style="color: #2196F3; font-size: 1.4rem; margin-top: 2px; margin-right: 12px;")
-              div(style="font-size: 1rem; line-height: 1.6;")
-                strong(style="font-size: 1.1rem;") Account Validity Period
-                p.mb-1.mt-1 Your account will remain active for 120 days from registration.
-                ul.mb-0.ps-3(style="font-size: 0.95rem;")
-                  li You will receive email reminders at 90 days and 110 days
-                  li Accounts with no credits will be automatically deleted after 120 days
-                  li Accounts with active credits will never expire
+              i.fas.fa-info-circle(style="color: #1976D2; font-size: 1.5rem; margin-top: 3px; margin-right: 14px;")
+              div(style="font-size: 1.05rem; line-height: 1.7; color: #000;")
+                strong(style="font-size: 1.15rem; font-weight: 700; color: #000;") ACCOUNT VALIDITY PERIOD
+                p.mb-2.mt-2(style="font-weight: 500; color: #000;") Your account will remain active for 120 days from registration.
+                ul.mb-0.ps-3(style="font-size: 1rem; font-weight: 500;")
+                  li(style="color: #000;") You will receive email reminders at 90 days and 110 days
+                  li(style="color: #000;") Accounts with no credits will be automatically deleted after 120 days
+                  li(style="color: #000;") Accounts with active credits will never expire
 
           form.register-form(method='POST', action='/user/register')
             .mb-4
