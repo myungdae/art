@@ -1,21 +1,55 @@
 extends ../layout
 
 block content
-  .container.mx-auto.px-4.py-10
+  style.
+    .employer-dashboard {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    .employer-dashboard h1 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: #FF7A00 !important;
+    }
+    .employer-dashboard .info-label {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #000 !important;
+    }
+    .employer-dashboard .info-value {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #000 !important;
+    }
+    .employer-dashboard .stat-label {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #000 !important;
+    }
+    .employer-dashboard .stat-number {
+      font-size: 1.5rem;
+      font-weight: 800;
+    }
+    .employer-dashboard .warning-text {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #000 !important;
+    }
+    
+  .container.mx-auto.px-4.py-10.employer-dashboard
     .max-w-2xl.mx-auto.p-6.border.rounded-lg(style="border-color: #FFD6B3 !important; border-width: 3px; background-color: #FFF9F5;")
-      h1.text-3xl.font-bold.text-center.mb-8(style="color: #FF7A00;") Employer Dashboard
+      h1.text-center.mb-8 Employer Dashboard
 
       // User info
       .bg-white.rounded-lg.shadow-sm.p-5.mb-6.border(style="border-color: #FFE4CC;")
-        p.mb-2.text-lg
-          strong.text-gray-700 Username: 
-          span.text-gray-900 #{user.username}
-        p.mb-2.text-lg
-          strong.text-gray-700 Email: 
-          span.text-gray-900 #{user.email}
-        p.text-lg
-          strong.text-gray-700 Role: 
-          span.text-gray-900 #{user.role}
+        p.mb-3
+          span.info-label Username: 
+          span.info-value #{user.username}
+        p.mb-3
+          span.info-label Email: 
+          span.info-value #{user.email}
+        p
+          span.info-label Role: 
+          span.info-value #{user.role}
 
       // Account Validity Period
       .alert.alert-info.mb-6(style="background-color: #E3F2FD; border: 2px solid #2196F3; border-left: 6px solid #2196F3; border-radius: 8px; padding: 1.25rem;")
@@ -31,35 +65,35 @@ block content
 
       // Slots card
       .bg-white.rounded-lg.shadow-sm.p-5.border(style="border-color: #FFE4CC;")
-        p.mb-3.text-lg
-          strong.text-gray-700 Current postings: 
-          span.font-bold.text-xl(style="color: #FF7A00;") #{activeJobs}
-        p.mb-4.text-lg
-          strong.text-gray-700 Ad Credits Available: 
-          span.font-bold.text-xl(class=credits > 0 ? '' : 'text-red-600' style=credits > 0 ? 'color: #28a745;' : '') #{credits}
+        p.mb-4
+          span.stat-label Current postings: 
+          span.stat-number(style="color: #FF7A00;") #{activeJobs}
+        p.mb-5
+          span.stat-label Ad Credits Available: 
+          span.stat-number(style=credits > 0 ? 'color: #28a745;' : 'color: #dc3545;') #{credits}
 
         // Actions
         .flex.flex-col.gap-3.mt-5
           if canPost
-            a.btn.btn-lg.w-full(href='/job-vacancies/new' style="background-color: #FF7A00; border-color: #FF7A00; color: white; font-size: 1.125rem; font-weight: 600;")
+            a.btn.btn-lg.w-full(href='/job-vacancies/new' style="background-color: #FF7A00; border-color: #FF7A00; color: white; font-size: 1.2rem; font-weight: 700; padding: 1rem;")
               i.fas.fa-plus-circle.mr-2
               | Post New Job
-            a.btn.btn-outline-secondary.btn-lg.w-full(href='/job-vacancies/mine' style="border-width: 2px; font-size: 1rem;")
+            a.btn.btn-outline-secondary.btn-lg.w-full(href='/job-vacancies/mine' style="border-width: 2px; border-color: #333; font-size: 1.1rem; font-weight: 600; color: #000; padding: 0.9rem;")
               i.fas.fa-list.mr-2
               | My Job Vacancies
           else
             .w-full
-              .alert.alert-warning.text-center.mb-4(style="background-color: #FFF3CD; border-color: #FFE69C; font-size: 1rem;")
-                i.fas.fa-exclamation-triangle.mr-2
-                strong You need to purchase ad credits to post job vacancies
-              a.btn.btn-lg.w-full(href="/paddle/checkout" style="background-color: #FF7A00; border-color: #FF7A00; color: white; font-size: 1.125rem; font-weight: 600; margin-bottom: 0.75rem;")
+              .alert.alert-warning.text-center.mb-4(style="background-color: #FFF3CD; border: 2px solid #FFE69C; border-radius: 8px; padding: 1.25rem;")
+                i.fas.fa-exclamation-triangle.mr-2(style="font-size: 1.2rem; color: #856404;")
+                span.warning-text YOU NEED TO PURCHASE AD CREDITS TO POST JOB VACANCIES
+              a.btn.btn-lg.w-full(href="/paddle/checkout" style="background-color: #FF7A00; border-color: #FF7A00; color: white; font-size: 1.2rem; font-weight: 700; margin-bottom: 0.75rem; padding: 1rem;")
                 i.fas.fa-credit-card.mr-2
                 | Buy Ad Credits
-              a.btn.btn-outline-secondary.btn-lg.w-full(href='/job-vacancies/mine' style="border-width: 2px; font-size: 1rem;")
+              a.btn.btn-outline-secondary.btn-lg.w-full(href='/job-vacancies/mine' style="border-width: 2px; border-color: #333; font-size: 1.1rem; font-weight: 600; color: #000; padding: 0.9rem;")
                 i.fas.fa-list.mr-2
                 | My Job Vacancies
 
       // Job list
       if activeJobs > 0
       else
-        p.mt-6.text-gray-500.text-center.text-lg No job vacancies posted yet.
+        p.mt-6.text-center(style="font-size: 1.1rem; font-weight: 600; color: #666;") No job vacancies posted yet.
