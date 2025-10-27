@@ -32,19 +32,19 @@ html(lang='en')
 
       /* 모바일: 햄버거 메뉴와 계정 버튼 */
       .menu-top-mob { position: absolute; top: 12px; right: 12px; display:none; z-index: 5; }
-      .menu-hamburger { position: absolute; top: 12px; left: 12px; display:none; z-index: 5; }
+      .menu-hamburger { position: absolute; top: 12px; right: 12px; display:none; z-index: 5; }
       .menu-drop {
         position: absolute; top: 44px; right: 0;
         background:#fff; border:1px solid #e5e7eb; border-radius:12px;
         box-shadow:0 8px 20px rgba(0,0,0,.08); padding:10px; width: 210px; display:none;
       }
       .main-menu-mobile {
-        position: fixed; top: 0; left: -280px; width: 280px; height: 100vh;
-        background:#fff; box-shadow: 2px 0 10px rgba(0,0,0,.1); 
-        padding: 60px 0 20px; transition: left 0.3s ease; z-index: 1000;
+        position: fixed; top: 0; right: -280px; width: 280px; height: 100vh;
+        background:#fff; box-shadow: -2px 0 10px rgba(0,0,0,.1); 
+        padding: 60px 0 20px; transition: right 0.3s ease; z-index: 1000;
         overflow-y: auto;
       }
-      .main-menu-mobile.show { left: 0; }
+      .main-menu-mobile.show { right: 0; }
       .main-menu-mobile a {
         display: block; padding: 15px 24px; color: #111; font-weight: 600;
         text-decoration: none; border-bottom: 1px solid #f0f0f0;
