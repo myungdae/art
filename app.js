@@ -132,6 +132,7 @@ app.use("/resume-access", resumeAccessRouter);
 app.use("/tutor-access", tutorAccessRouter);
 app.use("/admin", adminRouter);
 app.use("/facet", require("./router/facet"));
+app.use("/api", require("./router/mobileApi")); // Mobile JSON API
 app.use("/search", require("./router/search"));
 app.use("/intro", require("./router/intro"));
 app.use("/sitemap", require("./router/sitemap"));
