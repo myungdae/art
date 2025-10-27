@@ -1,84 +1,146 @@
 extends ../layout
 
 block content
+  style.
+    .register-form-container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+    .register-title {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 2rem;
+    }
+    .register-form label {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 0.5rem;
+    }
+    .register-form input,
+    .register-form select {
+      font-size: 1.1rem !important;
+      padding: 0.85rem 1rem !important;
+      border: 2px solid #ddd !important;
+      border-radius: 8px !important;
+      transition: all 0.3s ease;
+    }
+    .register-form input:focus,
+    .register-form select:focus {
+      border-color: #FF7A00 !important;
+      box-shadow: 0 0 0 0.2rem rgba(255, 122, 0, 0.15) !important;
+    }
+    .register-form .btn-register {
+      font-size: 1.2rem !important;
+      font-weight: 600 !important;
+      padding: 1rem !important;
+      background-color: #FF7A00 !important;
+      border: none !important;
+      border-radius: 8px !important;
+      transition: all 0.3s ease;
+    }
+    .register-form .btn-register:hover:not(:disabled) {
+      background-color: #E66D00 !important;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(255, 122, 0, 0.3);
+    }
+    .register-form .btn-register:disabled {
+      background-color: #ccc !important;
+      cursor: not-allowed;
+    }
+    @media (max-width: 576px) {
+      .register-title {
+        font-size: 2rem;
+      }
+      .register-form label {
+        font-size: 1rem;
+      }
+      .register-form input,
+      .register-form select {
+        font-size: 1rem !important;
+      }
+    }
+  
   .container.mt-5
     .row.justify-content-center
-      .col-md-6
-        .p-4.border.rounded(style="border-color: #FFD6B3 !important; border-width: 2px; background-color: #FFF9F5;")
-          h2.text-center.mb-4.fs-2 Register
+      .col-md-8.col-lg-6
+        .register-form-container.border.rounded(style="border-color: #FFD6B3 !important; border-width: 3px; background-color: #FFF9F5;")
+          h2.register-title.text-center Register
           
           // 유효기간 안내
-          .alert.alert-info.mb-4(style="background-color: #E3F2FD; border-color: #90CAF9; border-left: 4px solid #2196F3;")
+          .alert.alert-info.mb-4(style="background-color: #E3F2FD; border-color: #90CAF9; border-left: 5px solid #2196F3; border-radius: 8px;")
             .d-flex.align-items-start
-              i.fas.fa-info-circle(style="color: #2196F3; font-size: 1.2rem; margin-top: 2px; margin-right: 10px;")
-              div(style="font-size: 0.9rem;")
-                strong Account Validity Period
+              i.fas.fa-info-circle(style="color: #2196F3; font-size: 1.4rem; margin-top: 2px; margin-right: 12px;")
+              div(style="font-size: 1rem; line-height: 1.6;")
+                strong(style="font-size: 1.1rem;") Account Validity Period
                 p.mb-1.mt-1 Your account will remain active for 120 days from registration.
-                ul.mb-0.ps-3(style="font-size: 0.85rem;")
+                ul.mb-0.ps-3(style="font-size: 0.95rem;")
                   li You will receive email reminders at 90 days and 110 days
                   li Accounts with no credits will be automatically deleted after 120 days
                   li Accounts with active credits will never expire
 
-          form(method='POST', action='/user/register')
+          form.register-form(method='POST', action='/user/register')
             .mb-4
               label.form-label(for='username') Username
-              input.form-control.fs-5(type='text', name='username', id='username', placeholder='Enter your name', required)
+              input.form-control(type='text', name='username', id='username', placeholder='Enter your name', required)
 
             .mb-4
               label.form-label(for='email') Email
-              input.form-control.fs-5(type='email', name='email', id='email', placeholder='Enter your email', required)
+              input.form-control(type='email', name='email', id='email', placeholder='Enter your email', required)
 
             .mb-4
               label.form-label(for='password') Password
-              input.form-control.fs-5(type='password', name='password', id='password', placeholder='Enter your password', required)
+              input.form-control(type='password', name='password', id='password', placeholder='Enter your password', required)
               
               // Password strength indicator
               .mt-2#password-strength-container(style='display: none;')
                 .d-flex.align-items-center
-                  span.me-2(style='font-size: 0.875rem; color: #666;') Strength:
+                  span.me-2(style='font-size: 1rem; color: #666; font-weight: 600;') Strength:
                   .flex-grow-1
-                    .progress(style='height: 8px;')
+                    .progress(style='height: 10px; border-radius: 5px;')
                       .progress-bar#password-strength-bar(role='progressbar', style='width: 0%; transition: all 0.3s ease;')
-                  span.ms-2#password-strength-text(style='font-size: 0.875rem; font-weight: 600;')
+                  span.ms-2#password-strength-text(style='font-size: 1rem; font-weight: 700;')
                 
                 // Password requirements checklist
-                .mt-2(style='font-size: 0.8rem; color: #666;')
+                .mt-3(style='font-size: 0.95rem; color: #666; line-height: 1.8;')
                   div#req-length
-                    i.fas.fa-circle(style='font-size: 0.5rem; color: #ddd;')
-                    span.ms-1 At least 8 characters
+                    i.fas.fa-circle(style='font-size: 0.6rem; color: #ddd;')
+                    span.ms-2 At least 8 characters
                   div#req-uppercase
-                    i.fas.fa-circle(style='font-size: 0.5rem; color: #ddd;')
-                    span.ms-1 One uppercase letter
+                    i.fas.fa-circle(style='font-size: 0.6rem; color: #ddd;')
+                    span.ms-2 One uppercase letter
                   div#req-lowercase
-                    i.fas.fa-circle(style='font-size: 0.5rem; color: #ddd;')
-                    span.ms-1 One lowercase letter
+                    i.fas.fa-circle(style='font-size: 0.6rem; color: #ddd;')
+                    span.ms-2 One lowercase letter
                   div#req-number
-                    i.fas.fa-circle(style='font-size: 0.5rem; color: #ddd;')
-                    span.ms-1 One number
+                    i.fas.fa-circle(style='font-size: 0.6rem; color: #ddd;')
+                    span.ms-2 One number
                   div#req-special
-                    i.fas.fa-circle(style='font-size: 0.5rem; color: #ddd;')
-                    span.ms-1 One special character
+                    i.fas.fa-circle(style='font-size: 0.6rem; color: #ddd;')
+                    span.ms-2 One special character
 
             .mb-4
               label.form-label(for='password-confirm') Confirm Password
-              input.form-control.fs-5(type='password', name='password-confirm', id='password-confirm', placeholder='Re-enter your password', required)
-              .invalid-feedback#password-match-error(style='display: none; font-size: 0.875rem;')
+              input.form-control(type='password', name='password-confirm', id='password-confirm', placeholder='Re-enter your password', required)
+              .invalid-feedback#password-match-error(style='display: none; font-size: 1rem;')
                 i.fas.fa-exclamation-circle
                 span.ms-1 Passwords do not match
-              .valid-feedback#password-match-success(style='display: none; font-size: 0.875rem;')
+              .valid-feedback#password-match-success(style='display: none; font-size: 1rem;')
                 i.fas.fa-check-circle
                 span.ms-1 Passwords match
 
             .mb-4
               label.form-label(for='role') Select your role
-              select.form-select.fs-5(name='role', id='role', required)
+              select.form-select(name='role', id='role', required)
                 option(value='') -- Please select --
                 option(value='Employer') Employer
                 option(value="Job_Seeker") Job Seeker
                 option(value='OnlineTutor') Online Tutor
 
             .d-grid.mt-4
-              button.btn.btn-lg.btn-primary#register-btn(type='submit', disabled) Register
+              button.btn.btn-lg.btn-register#register-btn(type='submit', disabled) Register
 
   script.
     document.addEventListener('DOMContentLoaded', function() {
