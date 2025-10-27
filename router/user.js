@@ -25,6 +25,69 @@ router.get("/register", (req, res) => {
   res.render("user/register");
 });
 
+router.get("/register-mobile", (req, res) => {
+  res.render("user/register-mobile");
+});
+
+// Mobile register - redirects to payment after registration
+router.post("/register-mobile", async (req, res) => {
+  let { username, email, password, role } = req.body;
+  const confirmPassword = req.body["password-confirm"];
+
+  // normalize role
+  if (role === "JobSeeker" || role === "Job Seeker") role = "Job_Seeker";
+  else if (role === "OnlineTutor" || role === "Online Tutor")
+    role = "Online_Tutor";
+
+  try {
+    // Server-side password validation
+    if (password !== confirmPassword) {
+      return res.status(400).send("❌ Passwords do not match.");
+    }
+
+    // Check password strength (minimum requirements)
+    const hasLength = password.length >= 8;
+    const hasUppercase = /[A-Z]/.test(password);
+    const hasLowercase = /[a-z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+    const strengthScore = [hasLength, hasUppercase, hasLowercase, hasNumber, hasSpecial].filter(Boolean).length;
+
+    if (strengthScore < 3) {
+      return res.status(400).send("❌ Password is too weak. Please use a stronger password with at least 3 of the following: uppercase letters, lowercase letters, numbers, and special characters.");
+    }
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser)
+      return res.status(409).send("This email is already registered.");
+
+    const newUser = new User({ username, email, password, role });
+    await newUser.save();
+
+    req.session.user = {
+      _id: newUser._id,
+      username: newUser.username,
+      email: newUser.email,
+      role: newUser.role,
+    };
+
+    // Redirect to payment based on role
+    if (role === "Employer") {
+      return res.redirect("/paddle/checkout?type=employer");
+    } else if (role === "Job_Seeker") {
+      return res.redirect("/paddle/checkout?type=resume&accessPeriod=30");
+    } else if (role === "Online_Tutor") {
+      return res.redirect("/paddle/checkout?type=tutor&accessPeriod=30");
+    }
+
+    return res.redirect("/user/mypage");
+  } catch (err) {
+    console.error("❌ Registration error:", err.message);
+    return res.status(500).send("❌ Registration failed.");
+  }
+});
+
 router.post("/register", async (req, res) => {
   let { username, email, password, role } = req.body;
   const confirmPassword = req.body["password-confirm"];

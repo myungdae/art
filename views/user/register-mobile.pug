@@ -1,0 +1,245 @@
+extends ../layout
+
+block content
+  .container.mt-5
+    .row.justify-content-center
+      .col-md-6
+        .p-4.border.rounded(style="border-color: #FFD6B3 !important; border-width: 2px; background-color: #FFF9F5;")
+          h2.text-center.mb-4.fs-2 Register
+          
+          // 유효기간 안내
+          .alert.alert-info.mb-4(style="background-color: #E3F2FD; border-color: #90CAF9; border-left: 4px solid #2196F3;")
+            .d-flex.align-items-start
+              i.fas.fa-info-circle(style="color: #2196F3; font-size: 1.2rem; margin-top: 2px; margin-right: 10px;")
+              div(style="font-size: 0.9rem;")
+                strong Account Validity Period
+                p.mb-1.mt-1 Your account will remain active for 120 days from registration.
+                ul.mb-0.ps-3(style="font-size: 0.85rem;")
+                  li You will receive email reminders at 90 days and 110 days
+                  li Accounts with no credits will be automatically deleted after 120 days
+                  li Accounts with active credits will never expire
+          
+          // Registration flow explanation
+          .alert.alert-warning.mb-4(style="background-color: #FFF3CD; border-color: #FFE69C;")
+            .d-flex.align-items-start
+              i.fas.fa-info-circle(style="color: #856404; font-size: 1.2rem; margin-top: 2px; margin-right: 10px;")
+              div(style="font-size: 0.9rem;")
+                strong Registration Flow
+                p.mb-1.mt-1 After completing registration, you will be redirected to the payment page to:
+                ul.mb-0.ps-3(style="font-size: 0.85rem;")
+                  li <strong>Employer:</strong> Purchase ad credits to post job vacancies
+                  li <strong>Job Seeker:</strong> Purchase resume access to add your resume
+                  li <strong>Online Tutor:</strong> Purchase tutor visibility to be listed
+
+          form(method='POST', action='/user/register-mobile')
+            .mb-4
+              label.form-label(for='username') Username
+              input.form-control.fs-5(type='text', name='username', id='username', placeholder='Enter your name', required)
+
+            .mb-4
+              label.form-label(for='email') Email
+              input.form-control.fs-5(type='email', name='email', id='email', placeholder='Enter your email', required)
+
+            .mb-4
+              label.form-label(for='password') Password
+              input.form-control.fs-5(type='password', name='password', id='password', placeholder='Enter your password', required)
+              
+              // Password strength indicator
+              .mt-2#password-strength-container(style='display: none;')
+                .d-flex.align-items-center
+                  span.me-2(style='font-size: 0.875rem; color: #666;') Strength:
+                  .flex-grow-1
+                    .progress(style='height: 8px;')
+                      .progress-bar#password-strength-bar(role='progressbar', style='width: 0%; transition: all 0.3s ease;')
+                  span.ms-2#password-strength-text(style='font-size: 0.875rem; font-weight: 600;')
+                
+                // Password requirements checklist
+                .mt-2(style='font-size: 0.8rem; color: #666;')
+                  div#req-length
+                    i.fas.fa-circle(style='font-size: 0.5rem; color: #ddd;')
+                    span.ms-1 At least 8 characters
+                  div#req-uppercase
+                    i.fas.fa-circle(style='font-size: 0.5rem; color: #ddd;')
+                    span.ms-1 One uppercase letter
+                  div#req-lowercase
+                    i.fas.fa-circle(style='font-size: 0.5rem; color: #ddd;')
+                    span.ms-1 One lowercase letter
+                  div#req-number
+                    i.fas.fa-circle(style='font-size: 0.5rem; color: #ddd;')
+                    span.ms-1 One number
+                  div#req-special
+                    i.fas.fa-circle(style='font-size: 0.5rem; color: #ddd;')
+                    span.ms-1 One special character
+
+            .mb-4
+              label.form-label(for='password-confirm') Confirm Password
+              input.form-control.fs-5(type='password', name='password-confirm', id='password-confirm', placeholder='Re-enter your password', required)
+              .invalid-feedback#password-match-error(style='display: none; font-size: 0.875rem;')
+                i.fas.fa-exclamation-circle
+                span.ms-1 Passwords do not match
+              .valid-feedback#password-match-success(style='display: none; font-size: 0.875rem;')
+                i.fas.fa-check-circle
+                span.ms-1 Passwords match
+
+            .mb-4
+              label.form-label(for='role') Select your role
+              select.form-select.fs-5(name='role', id='role', required)
+                option(value='') -- Please select --
+                option(value='Employer') Employer
+                option(value="Job_Seeker") Job Seeker
+                option(value='OnlineTutor') Online Tutor
+
+            .d-grid.mt-4
+              button.btn.btn-lg.btn-primary#register-btn(type='submit', disabled) Register & Continue to Payment
+
+  script.
+    document.addEventListener('DOMContentLoaded', function() {
+      const passwordInput = document.getElementById('password');
+      const confirmInput = document.getElementById('password-confirm');
+      const strengthContainer = document.getElementById('password-strength-container');
+      const strengthBar = document.getElementById('password-strength-bar');
+      const strengthText = document.getElementById('password-strength-text');
+      const registerBtn = document.getElementById('register-btn');
+      const matchError = document.getElementById('password-match-error');
+      const matchSuccess = document.getElementById('password-match-success');
+      
+      // Requirement indicators
+      const reqLength = document.getElementById('req-length');
+      const reqUppercase = document.getElementById('req-uppercase');
+      const reqLowercase = document.getElementById('req-lowercase');
+      const reqNumber = document.getElementById('req-number');
+      const reqSpecial = document.getElementById('req-special');
+
+      let passwordValid = false;
+      let passwordsMatch = false;
+
+      // Check password strength
+      function checkPasswordStrength(password) {
+        if (!password) {
+          strengthContainer.style.display = 'none';
+          return { score: 0, text: '', color: '' };
+        }
+
+        strengthContainer.style.display = 'block';
+
+        const checks = {
+          length: password.length >= 8,
+          uppercase: /[A-Z]/.test(password),
+          lowercase: /[a-z]/.test(password),
+          number: /[0-9]/.test(password),
+          special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+        };
+
+        // Update requirement indicators
+        updateRequirement(reqLength, checks.length);
+        updateRequirement(reqUppercase, checks.uppercase);
+        updateRequirement(reqLowercase, checks.lowercase);
+        updateRequirement(reqNumber, checks.number);
+        updateRequirement(reqSpecial, checks.special);
+
+        const score = Object.values(checks).filter(Boolean).length;
+
+        let strength = { score: 0, text: 'Very Weak', color: '#dc3545', width: '20%' };
+        
+        if (score === 5) {
+          strength = { score: 5, text: 'Very Strong', color: '#28a745', width: '100%' };
+          passwordValid = true;
+        } else if (score === 4) {
+          strength = { score: 4, text: 'Strong', color: '#20c997', width: '80%' };
+          passwordValid = true;
+        } else if (score === 3) {
+          strength = { score: 3, text: 'Medium', color: '#ffc107', width: '60%' };
+          passwordValid = true;
+        } else if (score === 2) {
+          strength = { score: 2, text: 'Weak', color: '#fd7e14', width: '40%' };
+          passwordValid = false;
+        } else {
+          passwordValid = false;
+        }
+
+        return strength;
+      }
+
+      function updateRequirement(element, isValid) {
+        const icon = element.querySelector('i');
+        const text = element.querySelector('span');
+        
+        if (isValid) {
+          icon.style.color = '#28a745';
+          text.style.color = '#28a745';
+          text.style.fontWeight = '600';
+        } else {
+          icon.style.color = '#ddd';
+          text.style.color = '#666';
+          text.style.fontWeight = '400';
+        }
+      }
+
+      function checkPasswordMatch() {
+        const password = passwordInput.value;
+        const confirm = confirmInput.value;
+
+        if (!confirm) {
+          matchError.style.display = 'none';
+          matchSuccess.style.display = 'none';
+          confirmInput.classList.remove('is-invalid', 'is-valid');
+          passwordsMatch = false;
+          return;
+        }
+
+        if (password === confirm) {
+          matchError.style.display = 'none';
+          matchSuccess.style.display = 'block';
+          confirmInput.classList.remove('is-invalid');
+          confirmInput.classList.add('is-valid');
+          passwordsMatch = true;
+        } else {
+          matchError.style.display = 'block';
+          matchSuccess.style.display = 'none';
+          confirmInput.classList.remove('is-valid');
+          confirmInput.classList.add('is-invalid');
+          passwordsMatch = false;
+        }
+      }
+
+      function updateSubmitButton() {
+        if (passwordValid && passwordsMatch) {
+          registerBtn.disabled = false;
+          registerBtn.style.opacity = '1';
+        } else {
+          registerBtn.disabled = true;
+          registerBtn.style.opacity = '0.6';
+        }
+      }
+
+      // Event listeners
+      passwordInput.addEventListener('input', function() {
+        const strength = checkPasswordStrength(this.value);
+        
+        if (this.value) {
+          strengthBar.style.width = strength.width;
+          strengthBar.style.backgroundColor = strength.color;
+          strengthText.textContent = strength.text;
+          strengthText.style.color = strength.color;
+        }
+
+        if (confirmInput.value) {
+          checkPasswordMatch();
+        }
+        
+        updateSubmitButton();
+      });
+
+      confirmInput.addEventListener('input', function() {
+        checkPasswordMatch();
+        updateSubmitButton();
+      });
+
+      // Prevent form submission if passwords don't match
+      document.querySelector('form').addEventListener('submit', function(e) {
+        if (!passwordsMatch || !passwordValid) {
+          e.preventDefault();
+          alert('Please ensure your password meets all requirements and both passwords match.');
+        }
+      });
+    });

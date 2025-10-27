@@ -65,6 +65,71 @@ const FACET_MAP = {
 
 /* ===================== AUTH APIs ===================== */
 
+/* POST /api/register-and-redirect - 모바일 회원가입 (리다이렉트 버전) */
+router.post("/register-and-redirect", async (req, res) => {
+  try {
+    let { username, email, password, passwordConfirm, role } = req.body;
+
+    // Validate required fields
+    if (!username || !email || !password || !passwordConfirm || !role) {
+      return res.status(400).send("All fields are required");
+    }
+
+    // Password match check
+    if (password !== passwordConfirm) {
+      return res.status(400).send("Passwords do not match");
+    }
+
+    // Password strength validation
+    const hasLength = password.length >= 8;
+    const hasUppercase = /[A-Z]/.test(password);
+    const hasLowercase = /[a-z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+    const strengthScore = [hasLength, hasUppercase, hasLowercase, hasNumber, hasSpecial].filter(Boolean).length;
+
+    if (strengthScore < 3) {
+      return res.status(400).send("Password is too weak");
+    }
+
+    // Normalize role
+    if (role === "JobSeeker" || role === "Job Seeker") role = "Job_Seeker";
+    else if (role === "OnlineTutor" || role === "Online Tutor") role = "Online_Tutor";
+
+    // Check if email exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(409).send("This email is already registered");
+    }
+
+    // Create new user
+    const newUser = new User({ username, email, password, role });
+    await newUser.save();
+
+    // Set session
+    req.session.user = {
+      _id: newUser._id,
+      username: newUser.username,
+      email: newUser.email,
+      role: newUser.role,
+    };
+
+    // Redirect to payment page based on role
+    if (role === "Employer") {
+      return res.redirect("/paddle/checkout?type=employer");
+    } else if (role === "Job_Seeker") {
+      return res.redirect("/paddle/checkout?type=resume&accessPeriod=30");
+    } else if (role === "Online_Tutor") {
+      return res.redirect("/paddle/checkout?type=tutor&accessPeriod=30");
+    }
+
+    return res.redirect("/user/mypage");
+  } catch (err) {
+    console.error("❌ Mobile registration error:", err.message);
+    return res.status(500).send("Registration failed");
+  }
+});
+
 /* POST /api/register - 모바일 회원가입 */
 router.post("/register", async (req, res) => {
   try {
