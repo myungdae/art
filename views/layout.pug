@@ -32,7 +32,20 @@ html(lang='en')
 
       /* 모바일: 햄버거 메뉴만 사용 (계정 버튼 제거) */
       .menu-top-mob { display: none !important; } /* 계정 버튼 완전 숨김 */
-      .menu-hamburger { position: absolute; top: 12px; right: 12px; display:none; z-index: 5; }
+      .menu-hamburger { 
+        position: absolute; top: 12px; right: 12px; display:none; z-index: 5; 
+      }
+      .menu-hamburger button {
+        background: #fff !important;
+        border: 2px solid #333 !important;
+        border-radius: 8px !important;
+        padding: 10px 14px !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+      }
+      .menu-hamburger button i {
+        font-size: 20px !important;
+        color: #333 !important;
+      }
       .menu-drop {
         position: absolute; top: 44px; right: 0;
         background:#fff; border:1px solid #e5e7eb; border-radius:12px;
