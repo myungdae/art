@@ -6,6 +6,17 @@ const mongoose = require("mongoose");
 
 const router = express.Router();
 
+// Models
+const User = require("../model/user");
+const JobVacancy = require("../model/jobVacancy");
+const OnlineTutor = require("../model/onlineTutor");
+const JobSeeker = require("../model/jobSeeker");
+
+// Config
+const priceConfig = require("../config/priceConfig");
+const resumePriceConfig = require("../config/resumePriceConfig");
+const tutorPriceConfig = require("../config/tutorPriceConfig");
+
 /* -------------------- helpers -------------------- */
 const toArray = (v) => (Array.isArray(v) ? v.filter(Boolean) : v ? [v] : []);
 const sanitizeRegex = (s) =>
@@ -51,6 +62,343 @@ const FACET_MAP = {
     coll: (klass) => `${klass}_RDF`,
   },
 };
+
+/* ===================== AUTH APIs ===================== */
+
+/* POST /api/register - 모바일 회원가입 */
+router.post("/register", async (req, res) => {
+  try {
+    let { username, email, password, passwordConfirm, role } = req.body;
+
+    // Validate required fields
+    if (!username || !email || !password || !passwordConfirm || !role) {
+      return res.status(400).json({
+        success: false,
+        error: "All fields are required",
+      });
+    }
+
+    // Password match check
+    if (password !== passwordConfirm) {
+      return res.status(400).json({
+        success: false,
+        error: "Passwords do not match",
+      });
+    }
+
+    // Password strength validation
+    const hasLength = password.length >= 8;
+    const hasUppercase = /[A-Z]/.test(password);
+    const hasLowercase = /[a-z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+    const strengthScore = [hasLength, hasUppercase, hasLowercase, hasNumber, hasSpecial].filter(Boolean).length;
+
+    if (strengthScore < 3) {
+      return res.status(400).json({
+        success: false,
+        error: "Password is too weak. Please use a stronger password with at least 3 of the following: uppercase letters, lowercase letters, numbers, and special characters.",
+      });
+    }
+
+    // Normalize role
+    if (role === "JobSeeker" || role === "Job Seeker") role = "Job_Seeker";
+    else if (role === "OnlineTutor" || role === "Online Tutor") role = "Online_Tutor";
+
+    // Check if email exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(409).json({
+        success: false,
+        error: "This email is already registered",
+      });
+    }
+
+    // Create new user
+    const newUser = new User({ username, email, password, role });
+    await newUser.save();
+
+    // Return user data (without password)
+    const userData = {
+      _id: newUser._id,
+      username: newUser.username,
+      email: newUser.email,
+      role: newUser.role,
+      createdAt: newUser.createdAt,
+    };
+
+    return res.status(201).json({
+      success: true,
+      message: "Registration successful",
+      user: userData,
+    });
+  } catch (err) {
+    console.error("❌ Mobile registration error:", err.message);
+    return res.status(500).json({
+      success: false,
+      error: "Registration failed",
+    });
+  }
+});
+
+/* POST /api/login - 모바일 로그인 */
+router.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        error: "Email and password are required",
+      });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user || user.password !== password) {
+      return res.status(401).json({
+        success: false,
+        error: "Email or password incorrect",
+      });
+    }
+
+    // Return user data (without password)
+    const userData = {
+      _id: user._id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      adsAvailable: user.adsAvailable || 0,
+      resumeAccess: user.resumeAccess || null,
+      tutorAccess: user.tutorAccess || null,
+      createdAt: user.createdAt,
+    };
+
+    return res.json({
+      success: true,
+      message: "Login successful",
+      user: userData,
+    });
+  } catch (err) {
+    console.error("❌ Mobile login error:", err.message);
+    return res.status(500).json({
+      success: false,
+      error: "Login failed",
+    });
+  }
+});
+
+/* GET /api/mypage/:userId - 마이페이지 정보 조회 */
+router.get("/mypage/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const user = await User.findById(userId).select("-password").lean();
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: "User not found",
+      });
+    }
+
+    const response = {
+      success: true,
+      user,
+    };
+
+    // Role-specific data
+    if (user.role === "Employer") {
+      const activeJobs = await JobVacancy.countDocuments({ user: user._id });
+      const credits = Number(user.adsAvailable || 0);
+      
+      response.employer = {
+        activeJobs,
+        credits,
+        canPost: credits > 0,
+        totalSlots: activeJobs + credits,
+        remainingSlots: credits,
+      };
+    } else if (user.role === "Job_Seeker") {
+      const remainingDays = calcRemainingDays(user?.resumeAccess);
+      const hasActiveResumeAccess = remainingDays > 0;
+      const expiryDate = calcExpiryDate(user?.resumeAccess);
+      
+      const userResume = await JobSeeker.findOne({ email: user.email })
+        .sort({ updatedAt: -1 })
+        .lean();
+
+      response.jobSeeker = {
+        remainingDays,
+        hasActiveResumeAccess,
+        expiryDate,
+        hasResume: !!userResume,
+        resume: userResume,
+      };
+    } else if (user.role === "Online_Tutor") {
+      const tutor = await OnlineTutor.findOne({ email: user.email })
+        .sort({ updatedAt: -1 })
+        .lean();
+
+      const remainingDays = calcRemainingDays(user?.tutorAccess);
+      const hasActiveTutorAccess = remainingDays > 0;
+      const expiryDate = calcExpiryDate(user?.tutorAccess);
+
+      response.tutor = {
+        remainingDays,
+        hasActiveTutorAccess,
+        expiryDate,
+        hasTutorProfile: !!tutor,
+        profile: tutor,
+      };
+    }
+
+    return res.json(response);
+  } catch (err) {
+    console.error("❌ Mobile mypage error:", err.message);
+    return res.status(500).json({
+      success: false,
+      error: "Failed to load user data",
+    });
+  }
+});
+
+/* ===================== PAYMENT APIs ===================== */
+
+/* GET /api/payment/plans - 모든 결제 플랜 조회 */
+router.get("/payment/plans", (req, res) => {
+  try {
+    return res.json({
+      success: true,
+      plans: {
+        employer: priceConfig.map(p => ({
+          id: p.id,
+          label: p.label,
+          price: p.price,
+          discount: p.discount || 0,
+          adCount: p.id,
+        })),
+        resume: resumePriceConfig.map(p => ({
+          id: p.id,
+          label: p.label,
+          price: p.price,
+          days: p.id,
+        })),
+        tutor: tutorPriceConfig.map(p => ({
+          id: p.id,
+          label: p.label,
+          price: p.price,
+          days: p.id,
+        })),
+      },
+    });
+  } catch (err) {
+    console.error("❌ Payment plans error:", err.message);
+    return res.status(500).json({
+      success: false,
+      error: "Failed to load payment plans",
+    });
+  }
+});
+
+/* POST /api/payment/checkout - 결제 시작 (Paddle Checkout URL 생성) */
+router.post("/payment/checkout", async (req, res) => {
+  try {
+    const { userId, type, packageId } = req.body;
+
+    if (!userId || !type || !packageId) {
+      return res.status(400).json({
+        success: false,
+        error: "Missing required fields: userId, type, packageId",
+      });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: "User not found",
+      });
+    }
+
+    let checkoutData = {
+      userId,
+      type,
+      packageId,
+    };
+
+    // Type-specific data
+    if (type === "employer") {
+      const selected = priceConfig.find(p => p.id === packageId);
+      if (!selected) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid package ID",
+        });
+      }
+      checkoutData.price = selected.price;
+      checkoutData.label = selected.label;
+      checkoutData.adCount = selected.id;
+    } else if (type === "resume") {
+      const selected = resumePriceConfig.find(p => p.id === packageId);
+      if (!selected) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid package ID",
+        });
+      }
+      checkoutData.price = selected.price;
+      checkoutData.label = selected.label;
+      checkoutData.days = selected.id;
+    } else if (type === "tutor") {
+      const selected = tutorPriceConfig.find(p => p.id === packageId);
+      if (!selected) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid package ID",
+        });
+      }
+      checkoutData.price = selected.price;
+      checkoutData.label = selected.label;
+      checkoutData.days = selected.id;
+    } else {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid payment type",
+      });
+    }
+
+    // Return checkout data for mobile to handle Paddle payment
+    return res.json({
+      success: true,
+      checkout: checkoutData,
+      paddleEnvironment: process.env.PADDLE_ENVIRONMENT || "sandbox",
+    });
+  } catch (err) {
+    console.error("❌ Payment checkout error:", err.message);
+    return res.status(500).json({
+      success: false,
+      error: "Failed to create checkout",
+    });
+  }
+});
+
+/* ===================== HELPER FUNCTIONS ===================== */
+
+function calcRemainingDays(access) {
+  if (!access || !access.startDate || !access.durationDays) return 0;
+  const start = new Date(access.startDate);
+  const durationMs = access.durationDays * 86400000;
+  const diff = start.getTime() + durationMs - Date.now();
+  return diff > 0 ? Math.ceil(diff / 86400000) : 0;
+}
+
+function calcExpiryDate(access) {
+  if (!access || !access.startDate || !access.durationDays) return null;
+  const start = new Date(access.startDate);
+  const durationMs = access.durationDays * 86400000;
+  return new Date(start.getTime() + durationMs);
+}
+
+/* ===================== LIST APIs ===================== */
 
 /* -------------------- JSON API 엔드포인트 -------------------- */
 router.get("/:klass", async (req, res, next) => {
