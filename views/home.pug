@@ -10,12 +10,14 @@ block content
 
   // Stats (clickable + spinner + count-up, light orange theme) - 배경 이미지 위로 겹치기 (축소된 크기)
   style.
-    .stat-spinner{width:14px;height:14px;border:2px solid #e5e7eb;border-top-color:#f97316;border-radius:50%;animation:spin .8s linear infinite;display:inline-block;vertical-align:middle}
+    .stat-spinner{width:14px;height:14px;border:2px solid #e5e7eb;border-top-color:#f97316;border-radius:50%;animation:spin .8s linear infinite;display:inline-block;vertical-align:middle;transition:opacity 0.3s ease;}
     @keyframes spin{to{transform:rotate(360deg)}}
-    .hide{display:none}
+    .hide{opacity:0;width:0;height:0;margin:0;padding:0;overflow:hidden;}
     .stat-number {
       color: #FF7A00;
       font-size: 36px;
+      min-width: 80px;
+      display: inline-block;
     }
     .stat-card {
       background: rgba(255, 255, 255, 0.95);
@@ -27,7 +29,24 @@ block content
       flex-direction: column;
       justify-content: center;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      transition: all 0.3s ease;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    @media (max-width: 767.98px) {
+      .stat-card {
+        width: 100%;
+        max-width: 320px;
+        height: 140px;
+      }
+      .stat-number {
+        font-size: 32px;
+      }
+      .stats-overlay {
+        margin-top: -200px;
+        min-height: 800px;
+      }
+      .main-headline {
+        margin-top: 60px;
+      }
     }
     .stat-card:hover{background:#FFEAD5;box-shadow:0 8px 24px rgba(249,115,22,.2); transform: translateY(-4px);}
     .stat-label{color:#374151; font-size:16px; font-weight: 500; padding-top: 12px;}
@@ -36,6 +55,7 @@ block content
       position: relative;
       z-index: 10;
       padding: 0 20px;
+      min-height: 600px;
     }
     .main-headline {
       background: rgba(255, 255, 255, 0.9);
@@ -89,14 +109,14 @@ block content
 
       // 우측 영상/이미지 컨테이너
       div(class="w-full md:w-2/3 flex justify-center")
-        div(class="relative w-full max-w-[840px] rounded-3xl overflow-hidden" style="border: 4px solid #FF7A00; box-shadow: 0 4px 6px rgba(0,0,0,0.1);")
+        div(class="relative w-full max-w-[840px] rounded-3xl overflow-hidden" style="border: 4px solid #FF7A00; box-shadow: 0 4px 6px rgba(0,0,0,0.1); aspect-ratio: 16/9;")
           // 비디오 플레이어 (기본 표시)
-          video#videoPlayer.rounded-3xl.w-full(loop playsinline preload="metadata" poster="/assets/img/video.png" style="display: block;")
+          video#videoPlayer.rounded-3xl.w-full(loop playsinline preload="metadata" poster="/assets/img/video.png" style="display: block; width: 100%; height: 100%; object-fit: cover;")
             source(src="/assets/video/eslplus.mp4?v=20251014a" type="video/mp4")
             | Your browser does not support the video tag.
           
           // 비디오가 없을 때 대체 이미지 (초기 숨김)
-          img#videoPlaceholder.rounded-3xl.w-full(src="/assets/img/video.png" alt="ESL PLUS: Bridge to the World" style="display: none; width: 100%; height: auto;")
+          img#videoPlaceholder.rounded-3xl.w-full(src="/assets/img/video.png" alt="ESL PLUS: Bridge to the World" style="display: none; width: 100%; height: 100%; object-fit: cover;")
           
           // 커스텀 재생 버튼 (빨간 삼각형)
           button#playButton.absolute.top-1_2.left-1_2(
