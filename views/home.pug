@@ -8,17 +8,38 @@ block content
   - var RS = Array.isArray(recentSeekers) ? recentSeekers : [];
   - var RT = Array.isArray(recentTutors) ? recentTutors : [];
 
-  // Stats (clickable + spinner + count-up, light orange theme) - 배경 이미지 위로 겹치기 (축소된 크기)
+  // Stats (clickable + spinner + count-up, light orange theme) - 안정적인 레이아웃
   style.
-    .stat-spinner{width:14px;height:14px;border:2px solid #e5e7eb;border-top-color:#f97316;border-radius:50%;animation:spin .8s linear infinite;display:inline-block;vertical-align:middle;transition:opacity 0.3s ease;}
+    /* 고정 높이로 레이아웃 안정화 */
+    body, html {
+      overflow-x: hidden;
+    }
+    
+    .stat-spinner{
+      width:0; 
+      height:0; 
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      position: absolute;
+    }
+    
     @keyframes spin{to{transform:rotate(360deg)}}
-    .hide{opacity:0;width:0;height:0;margin:0;padding:0;overflow:hidden;}
+    
+    .hide{
+      display: none !important;
+    }
+    
     .stat-number {
       color: #FF7A00;
       font-size: 36px;
-      min-width: 80px;
+      font-weight: 800;
+      min-width: 100px;
       display: inline-block;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.02em;
     }
+    
     .stat-card {
       background: rgba(255, 255, 255, 0.95);
       border: 3px solid #FF7A00;
@@ -28,68 +49,87 @@ block content
       display: flex;
       flex-direction: column;
       justify-content: center;
+      align-items: center;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
       transition: transform 0.3s ease, box-shadow 0.3s ease;
+      will-change: transform;
     }
-    @media (max-width: 767.98px) {
-      .stat-card {
-        width: 100%;
-        max-width: 320px;
-        height: 140px;
-      }
-      .stat-number {
-        font-size: 32px;
-      }
-      .stats-overlay {
-        margin-top: -200px;
-        min-height: 800px;
-      }
-      .main-headline {
-        margin-top: 60px;
-      }
+    
+    .stat-card:hover{
+      background:#FFEAD5;
+      box-shadow:0 8px 24px rgba(249,115,22,.2); 
+      transform: translateY(-4px);
     }
-    .stat-card:hover{background:#FFEAD5;box-shadow:0 8px 24px rgba(249,115,22,.2); transform: translateY(-4px);}
-    .stat-label{color:#374151; font-size:16px; font-weight: 500; padding-top: 12px;}
+    
+    .stat-label{
+      color:#374151; 
+      font-size:16px; 
+      font-weight: 600; 
+      padding-top: 12px;
+      text-align: center;
+    }
+    
     .stats-overlay {
-      margin-top: -300px;
       position: relative;
       z-index: 10;
-      padding: 0 20px;
-      min-height: 600px;
+      padding: 40px 20px;
+      margin-top: 0;
+      background: transparent;
     }
+    
     .main-headline {
-      background: rgba(255, 255, 255, 0.9);
+      background: rgba(255, 255, 255, 0.95);
       backdrop-filter: blur(10px);
       padding: 30px;
       border-radius: 20px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
       border: 3px solid rgba(255, 122, 0, 0.3);
-      margin-top: 120px;
+      margin-top: 40px;
+      margin-bottom: 40px;
+    }
+    
+    /* 모바일 최적화 */
+    @media (max-width: 767.98px) {
+      .stat-card {
+        width: 90%;
+        max-width: 320px;
+        height: 140px;
+      }
+      .stat-number {
+        font-size: 28px;
+        min-width: 90px;
+      }
+      .stats-overlay {
+        padding: 20px 15px;
+      }
+      .main-headline {
+        margin-top: 20px;
+        margin-bottom: 20px;
+        padding: 20px;
+      }
+      .main-headline h2 {
+        font-size: 1.8rem !important;
+      }
+      .main-headline p {
+        font-size: 1.1rem !important;
+      }
     }
   
-  // 통계 카드를 배경 이미지 위로 올리기 (음수 마진 사용, 크기 축소)
+  // 통계 카드 섹션 (안정적인 레이아웃)
   .stats-overlay
-    // 통계 카드를 먼저 배치 (크기 축소)
-    div(class="flex flex-col md:flex-row items-center justify-center gap-4 mb-8")
-      a(href="/facet/Job_Vacancies" aria-label="Browse Job Vacancies" 
-        class="stat-card block p-4 text-center transition transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-orange-400"
-        )
-        .flex.items-center.justify-center.gap-2
-          span#spin-v.stat-spinner
-          div#stat-v.text-3xl.font-bold.stat-number= (S.vCount != null ? S.vCount : 0)
-        div.stat-label.mt-1 Job Vacancies
+    // 통계 카드
+    div(class="flex flex-col md:flex-row items-center justify-center gap-6 mb-8")
+      a(href="/facet/Job_Vacancies" aria-label="Browse Job Vacancies" class="stat-card")
+        div#stat-v.stat-number= (S.vCount != null ? S.vCount : 0)
+        div.stat-label Job Vacancies
 
-      a(href="/facet/Job_Seekers" aria-label="Browse Job Seekers" class="stat-card block p-4 text-center transition transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-orange-400")
-        .flex.items-center.justify-center.gap-2
-          span#spin-s.stat-spinner
-          div#stat-s.text-3xl.font-bold.stat-number= (S.sCount != null ? S.sCount : 0)
-        div.stat-label.mt-1 Job Seekers
+      a(href="/facet/Job_Seekers" aria-label="Browse Job Seekers" class="stat-card")
+        div#stat-s.stat-number= (S.sCount != null ? S.sCount : 0)
+        div.stat-label Job Seekers
 
-      a(href="/facet/Online_Tutors" aria-label="Browse Online Tutors" class="stat-card block p-4 text-center transition transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-orange-400")
-        .flex.items-center.justify-center.gap-2
-          span#spin-t.stat-spinner
-          div#stat-t.text-3xl.font-bold.stat-number= (S.tCount != null ? S.tCount : 0)
-        div.stat-label.mt-1 Online Tutors
+      a(href="/facet/Online_Tutors" aria-label="Browse Online Tutors" class="stat-card")
+        div#stat-t.stat-number= (S.tCount != null ? S.tCount : 0)
+        div.stat-label Online Tutors
     
     // 메인 헤드라인을 통계 카드 아래에 배치 (배경 이미지 아래)
     div(class="text-center main-headline max-w-4xl mx-auto")
@@ -192,12 +232,16 @@ block content
                   a(href='/facet/Online_Tutors?language=' + enc(lang) class="inline-flex items-center px-2 py-1 text-xs rounded-full border")= lang
 
    
-    // 카운트업 스크립트
+    // 카운트업 스크립트 (단순화 및 최적화)
     script.
       (function () {
-        function animateCount(el, from, to, ms, onDone) {
-          from = Number(from)||0; to = Number(to)||0;
-          if (ms <= 0 || from === to) { el.textContent = String(to); onDone && onDone(); return; }
+        function animateCount(el, from, to, ms) {
+          from = Number(from)||0; 
+          to = Number(to)||0;
+          if (ms <= 0 || from === to) { 
+            el.textContent = String(to); 
+            return; 
+          }
           var start = null;
           function step(ts){
             if(!start) start = ts;
@@ -205,43 +249,43 @@ block content
             var eased = 1 - Math.pow(1 - p, 3);
             var val = Math.round(from + (to - from) * eased);
             el.textContent = String(val);
-            if(p < 1) requestAnimationFrame(step); else onDone && onDone();
+            if(p < 1) requestAnimationFrame(step);
           }
           requestAnimationFrame(step);
         }
-        function hideSpinner(id){
-          var sp = document.getElementById(id);
-          if(sp){ sp.classList.add('hide'); }
-        }
+        
         async function hydrate() {
           var ids = [
-            { num: 'stat-v', spin: 'spin-v', key: 'vCount' },
-            { num: 'stat-s', spin: 'spin-s', key: 'sCount' },
-            { num: 'stat-t', spin: 'spin-t', key: 'tCount' },
+            { num: 'stat-v', key: 'vCount' },
+            { num: 'stat-s', key: 'sCount' },
+            { num: 'stat-t', key: 'tCount' },
           ];
+          
           try {
-            ids.forEach(o => {
-              var sp = document.getElementById(o.spin);
-              if (sp) sp.classList.remove('hide');
-            });
             var res = await fetch('/api/home/stats', { headers: { 'Accept': 'application/json' }});
-            if(!res || !res.ok) throw new Error('stats http ' + (res && res.status));
+            if(!res || !res.ok) return;
             var data = await res.json();
+            
             ids.forEach(o => {
               var el = document.getElementById(o.num);
               if(!el) return;
               var from = parseInt(el.textContent, 10) || 0;
-              var to   = Number(data && data[o.key]) || 0;
-              var dur  = Math.max(500, Math.min(1200, Math.abs(to - from) * 20));
-              animateCount(el, from, to, dur, function(){ hideSpinner(o.spin); });
+              var to = Number(data && data[o.key]) || 0;
+              if (from !== to) {
+                var dur = 800; // 고정 애니메이션 시간
+                animateCount(el, from, to, dur);
+              }
             });
           } catch (e) {
-            setTimeout(function(){ ids.forEach(o => hideSpinner(o.spin)); }, 600);
+            // 에러 시 서버 렌더링된 값 유지
           }
         }
+        
         if (document.readyState === 'loading') {
           document.addEventListener('DOMContentLoaded', hydrate);
-        } else { hydrate(); }
+        } else { 
+          hydrate(); 
+        }
       })();
       
       // 비디오 재생 버튼 제어
