@@ -2,74 +2,108 @@
 extends ../layout
 
 block content
-  .container.mt-5.mb-5
-    .p-6.border.rounded-lg(style="max-width: 900px; margin: 0 auto; border-color: #FFD6B3 !important; border-width: 3px; background-color: #FFF9F5;")
-      // ===== 헤더 =====
-      .d-flex.flex-column.align-items-center.text-center.mb-5
-        h2.mb-3(style="color: #FF7A00; font-size: 2rem; font-weight: 700;") Online Tutor Dashboard
-        p.text-muted(style="font-size: 1.125rem;") Keep your tutor profile active to reach the right students and schools.
+  style.
+    /* High-visibility text styling */
+    .dashboard-label {
+      font-weight: 800 !important;
+      font-size: 1.15rem !important;
+      color: #000 !important;
+    }
+    .dashboard-value {
+      font-weight: 700 !important;
+      font-size: 1.15rem !important;
+      color: #000 !important;
+    }
+    .dashboard-status {
+      font-weight: 800 !important;
+      font-size: 1.3rem !important;
+    }
+    .dashboard-days {
+      font-weight: 800 !important;
+      font-size: 1.4rem !important;
+    }
+    .alert strong {
+      font-weight: 800 !important;
+      font-size: 1.1rem !important;
+      color: #000 !important;
+    }
+  
+  .container.mx-auto.px-4.py-10
+    .max-w-2xl.mx-auto.p-6.border.rounded-lg(style="border-color: #FFD6B3 !important; border-width: 3px; background-color: #FFF9F5;")
+      h1.text-3xl.font-bold.text-center.mb-8(style="color: #FF7A00; font-weight: 800; font-size: 2.5rem;") Online Tutor Dashboard
+      p.text-center.mb-6(style="font-size: 1.15rem; font-weight: 600; color: #666;") Keep your tutor profile active to reach the right students and schools.
 
-    // ===== 사전 계산 (optional chaining 미사용) =====
-    - var u = (typeof user !== 'undefined' && user) ? user : {};
-    - var ta = (u.tutorAccess && u.tutorAccess.startDate && u.tutorAccess.durationDays) ? u.tutorAccess : null;
-    - var remainLocal = (typeof tutorRemainingDays !== 'undefined') ? tutorRemainingDays : (ta ? Math.max(0, Math.ceil(((new Date(ta.startDate)).getTime() + Number(ta.durationDays)*86400000 - Date.now())/86400000)) : 0);
-    - var flagActive = (u.isPaidUser && u.tutorVisibilityExpiresAt && (new Date(u.tutorVisibilityExpiresAt).getTime() > Date.now())) ? true : false;
-    - var hasActive = (typeof hasActiveTutorAccess !== 'undefined') ? hasActiveTutorAccess : (flagActive || remainLocal > 0);
-    - var purchaseLink = (typeof tutorPurchaseLink !== 'undefined') ? tutorPurchaseLink : '/user/online-tutors/visibility';
+      // ===== 사전 계산 (optional chaining 미사용) =====
+      - var u = (typeof user !== 'undefined' && user) ? user : {};
+      - var ta = (u.tutorAccess && u.tutorAccess.startDate && u.tutorAccess.durationDays) ? u.tutorAccess : null;
+      - var remainLocal = (typeof tutorRemainingDays !== 'undefined') ? tutorRemainingDays : (ta ? Math.max(0, Math.ceil(((new Date(ta.startDate)).getTime() + Number(ta.durationDays)*86400000 - Date.now())/86400000)) : 0);
+      - var flagActive = (u.isPaidUser && u.tutorVisibilityExpiresAt && (new Date(u.tutorVisibilityExpiresAt).getTime() > Date.now())) ? true : false;
+      - var hasActive = (typeof hasActiveTutorAccess !== 'undefined') ? hasActiveTutorAccess : (flagActive || remainLocal > 0);
+      - var purchaseLink = (typeof tutorPurchaseLink !== 'undefined') ? tutorPurchaseLink : '/user/online-tutors/visibility';
 
-      // ===== 요약 카드 =====
-      .bg-white.rounded-lg.shadow-sm.p-5.mb-4.border(style="border-color: #FFE4CC;")
-        .row.g-3
-          .col-12
-            p.mb-2(style="font-size: 1.125rem;")
-              strong.text-gray-700 Username: 
-              span.text-gray-900= (user && user.username) || ''
-            
-            p.mb-2(style="font-size: 1.125rem;")
-              strong.text-gray-700 Email: 
-              span.text-gray-900= (user && user.email) || ''
-            
-            p.mb-3(style="font-size: 1.125rem;")
-              strong.text-gray-700 Role: 
-              span.text-gray-900= (user && user.role) || ''
+      // User info
+      .bg-white.rounded-lg.shadow-sm.p-5.mb-6.border(style="border-color: #FFE4CC;")
+        p.mb-2
+          strong.dashboard-label Username: 
+          span.dashboard-value= (user && user.username) || ''
+        p.mb-2
+          strong.dashboard-label Email: 
+          span.dashboard-value= (user && user.email) || ''
+        p
+          strong.dashboard-label Role: 
+          span.dashboard-value= (user && user.role) || ''
 
-        .mt-3.pt-3.border-top
-          p.mb-0(style="font-size: 1.125rem;")
-            span.me-2 🧑‍🏫
-            strong.text-gray-700 Tutor Visibility: 
-            if hasActive
-              span.ms-2.font-bold(style="color: #28a745; font-size: 1.25rem;")
-                i.fas.fa-check-circle.mr-1
-                | Active
-              span.ms-2.text-muted (#{remainLocal} days left)
-            else
-              span.ms-2.text-danger.font-bold(style="font-size: 1.25rem;")
-                i.fas.fa-times-circle.mr-1
-                | Not Active
-
-      // ===== 버튼 블록 =====
-      .d-flex.flex-column.gap-3.mt-4
+      // Tutor Visibility Status card
+      .bg-white.rounded-lg.shadow-sm.p-5.mb-6.border(style="border-color: #FFE4CC;")
+        p.mb-3
+          span.me-2(style="font-size: 1.5rem;") 🧑‍🏫
+          strong.dashboard-label Tutor Visibility: 
+          if hasActive
+            span.dashboard-status(style="color: #28a745;")
+              i.fas.fa-check-circle.mr-1
+              | Active
+          else
+            span.dashboard-status(style="color: #dc3545;")
+              i.fas.fa-times-circle.mr-1
+              | Inactive
+        
         if hasActive
-          a.btn.btn-lg.w-100(href="/online-tutors/new" style="background-color: #FF7A00; border-color: #FF7A00; color: white; font-size: 1.125rem; font-weight: 600;")
-            i.fas.fa-plus-circle.mr-2
-            | Create Tutor Profile
-          a.btn.btn-outline-secondary.btn-lg.w-100(href="/facet/Online_Tutors" style="border-width: 2px; font-size: 1rem;")
-            i.fas.fa-search.mr-2
-            | Browse Tutors
+          p.mb-0
+            strong.dashboard-label Remaining Days: 
+            span.dashboard-days(style="color: #28a745;") #{remainLocal} days
         else
-          .alert.alert-warning.text-center.mb-3(style="background-color: #FFF3CD; border-color: #FFE69C; font-size: 1rem; color: #664d03;")
-            i.fas.fa-exclamation-triangle.mr-2
-            strong You need to purchase tutor visibility to create your profile
-          a.btn.btn-lg.w-100(href=purchaseLink style="background-color: #FF7A00; border-color: #FF7A00; color: white; font-size: 1.125rem; font-weight: 600; margin-bottom: 0.75rem;")
-            i.fas.fa-credit-card.mr-2
-            | Purchase Tutor Visibility
-          a.btn.btn-outline-secondary.btn-lg.w-100(href="/facet/Online_Tutors" style="border-width: 2px; font-size: 1rem;")
-            i.fas.fa-search.mr-2
-            | Browse Tutors
+          p.mb-0
+            strong.dashboard-label Remaining Days: 
+            span.dashboard-days(style="color: #dc3545;") 0 days
 
-      // ===== 안내 =====
+      // Actions
+      .flex.flex-col.gap-3.mt-5
+        if hasActive
+          .w-full
+            .alert.alert-success.text-center.mb-4(style="background-color: #D4EDDA; border-color: #C3E6CB; font-size: 1rem;")
+              i.fas.fa-check-circle.mr-2
+              strong Your tutor visibility is active. You can create your profile!
+            a.btn.btn-lg.w-full(href="/online-tutors/new" style="background-color: #FF7A00; border-color: #FF7A00; color: white; font-size: 1.125rem; font-weight: 600; margin-bottom: 0.75rem;")
+              i.fas.fa-plus-circle.mr-2
+              | Create Tutor Profile
+            a.btn.btn-outline-secondary.btn-lg.w-full(href="/facet/Online_Tutors" style="border-width: 2px; font-size: 1rem;")
+              i.fas.fa-search.mr-2
+              | Browse Tutors
+        else
+          .w-full
+            .alert.alert-warning.text-center.mb-4(style="background-color: #FFF3CD; border-color: #FFE69C; font-size: 1rem;")
+              i.fas.fa-exclamation-triangle.mr-2
+              strong You need to purchase tutor visibility to create your profile
+            a.btn.btn-lg.w-full(href=purchaseLink style="background-color: #FF7A00; border-color: #FF7A00; color: white; font-size: 1.125rem; font-weight: 600; margin-bottom: 0.75rem;")
+              i.fas.fa-credit-card.mr-2
+              | Purchase Tutor Visibility
+            a.btn.btn-outline-secondary.btn-lg.w-full(href="/facet/Online_Tutors" style="border-width: 2px; font-size: 1rem;")
+              i.fas.fa-search.mr-2
+              | Browse Tutors
+
+      // Info
       .mt-4
         .alert.alert-info.mb-0(style="background-color: #D1ECF1; border-color: #BEE5EB;")
-          small
+          p.mb-0(style="font-size: 1rem; font-weight: 600;")
             i.fas.fa-info-circle.mr-2
             | When visibility expires, creating/updating your tutor profile is blocked. Renew anytime; new days will extend from the remaining period.

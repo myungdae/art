@@ -1,21 +1,47 @@
 extends ../layout
 
 block content
+  style.
+    /* High-visibility text styling */
+    .dashboard-label {
+      font-weight: 800 !important;
+      font-size: 1.15rem !important;
+      color: #000 !important;
+    }
+    .dashboard-value {
+      font-weight: 700 !important;
+      font-size: 1.15rem !important;
+      color: #000 !important;
+    }
+    .dashboard-status {
+      font-weight: 800 !important;
+      font-size: 1.3rem !important;
+    }
+    .dashboard-days {
+      font-weight: 800 !important;
+      font-size: 1.4rem !important;
+    }
+    .alert strong {
+      font-weight: 800 !important;
+      font-size: 1.1rem !important;
+      color: #000 !important;
+    }
+  
   .container.mx-auto.px-4.py-10
     .max-w-2xl.mx-auto.p-6.border.rounded-lg(style="border-color: #FFD6B3 !important; border-width: 3px; background-color: #FFF9F5;")
-      h1.text-3xl.font-bold.text-center.mb-8(style="color: #FF7A00;") Job Seeker Dashboard
+      h1.text-3xl.font-bold.text-center.mb-8(style="color: #FF7A00; font-weight: 800; font-size: 2.5rem;") Job Seeker Dashboard
 
       // User info
       .bg-white.rounded-lg.shadow-sm.p-5.mb-6.border(style="border-color: #FFE4CC;")
-        p.mb-2.text-lg
-          strong.text-gray-700 Username: 
-          span.text-gray-900 #{user.username}
-        p.mb-2.text-lg
-          strong.text-gray-700 Email: 
-          span.text-gray-900 #{user.email}
-        p.text-lg
-          strong.text-gray-700 Role: 
-          span.text-gray-900 #{user.role}
+        p.mb-2
+          strong.dashboard-label Username: 
+          span.dashboard-value #{user.username}
+        p.mb-2
+          strong.dashboard-label Email: 
+          span.dashboard-value #{user.email}
+        p
+          strong.dashboard-label Role: 
+          span.dashboard-value #{user.role}
 
       // My Resume card
       if hasResume
@@ -24,16 +50,16 @@ block content
             i.fas.fa-file-alt.mr-2
             | My Resume
           if userResume
-            p.mb-2.text-lg
-              strong.text-gray-700 Title: 
-              span.text-gray-900 #{userResume.title || 'No title'}
-            p.mb-2.text-lg
-              strong.text-gray-700 Nationality: 
-              span.text-gray-900 #{userResume.nationality || 'N/A'}
-            p.mb-2.text-lg
-              strong.text-gray-700 Preferred Location: 
-              span.text-gray-900 #{userResume.preferredWorkLocation || 'N/A'}
-            p.mb-3.text-sm.text-gray-600
+            p.mb-2
+              strong.dashboard-label Title: 
+              span.dashboard-value #{userResume.title || 'No title'}
+            p.mb-2
+              strong.dashboard-label Nationality: 
+              span.dashboard-value #{userResume.nationality || 'N/A'}
+            p.mb-2
+              strong.dashboard-label Preferred Location: 
+              span.dashboard-value #{userResume.preferredWorkLocation || 'N/A'}
+            p.mb-3(style="font-size: 1rem; font-weight: 600; color: #666;")
               | Last updated: #{formattedUpdatedAt}
           .flex.flex-col.gap-3.mt-4
             a.btn.btn-lg.w-full(href=`/job-seekers/${userResume._id}/edit` style="background-color: #FF7A00; border-color: #FF7A00; color: white; font-size: 1.125rem; font-weight: 600;")
@@ -45,29 +71,29 @@ block content
 
       // Resume Access Status card
       .bg-white.rounded-lg.shadow-sm.p-5.border(style="border-color: #FFE4CC;")
-        p.mb-3.text-lg
-          strong.text-gray-700 Resume Access Status: 
+        p.mb-3
+          strong.dashboard-label Resume Access Status: 
           if hasActiveResumeAccess
-            span.font-bold.text-xl(style="color: #28a745;")
+            span.dashboard-status(style="color: #28a745;")
               i.fas.fa-check-circle.mr-1
               | Active
           else
-            span.text-red-600.font-bold.text-xl
+            span.dashboard-status(style="color: #dc3545;")
               i.fas.fa-times-circle.mr-1
               | Inactive
 
         if hasActiveResumeAccess
-          p.mb-2.text-lg
-            strong.text-gray-700 Remaining Days: 
-            span.font-bold.text-xl(style="color: #28a745;") #{remainingDays} days
+          p.mb-2
+            strong.dashboard-label Remaining Days: 
+            span.dashboard-days(style="color: #28a745;") #{remainingDays} days
           if expiryDate
-            p.mb-4.text-lg
-              strong.text-gray-700 Expires on: 
-              span.text-gray-900 #{expiryDate}
+            p.mb-4
+              strong.dashboard-label Expires on: 
+              span.dashboard-value #{expiryDate}
         else
-          p.mb-4.text-lg
-            strong.text-gray-700 Remaining Days: 
-            span.text-red-600.font-bold.text-xl 0 days
+          p.mb-4
+            strong.dashboard-label Remaining Days: 
+            span.dashboard-days(style="color: #dc3545;") 0 days
 
         // Actions (Same logic as Employer: Check Access FIRST, then Resume)
         .flex.flex-col.gap-3.mt-5
