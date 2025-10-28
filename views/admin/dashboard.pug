@@ -410,19 +410,13 @@ block content
       }
       
       function applyFilter(tableId, inputId, countId, statusFilter, deleteContainerId){
-        console.log('applyFilter called:', tableId, statusFilter);
         const q = (document.getElementById(inputId)?.value || '').toLowerCase();
         const table = document.getElementById(tableId);
-        if (!table) {
-          console.error('Table not found:', tableId);
-          return;
-        }
+        if (!table) return;
         const tbody = table.querySelector('tbody');
         const rows = Array.from(tbody.children);
         let shown = 0;
         let inactiveCount = 0;
-        
-        console.log('Total rows:', rows.length);
         
         rows.forEach(row => {
           const cells = Array.from(row.children).map(td => td.textContent.toLowerCase());
@@ -445,8 +439,6 @@ block content
           row.style.display = show ? '' : 'none';
           if (show) shown++;
         });
-        
-        console.log('Shown rows:', shown, 'Inactive count:', inactiveCount);
         
         if (countId){
           const el = document.getElementById(countId);
@@ -501,7 +493,6 @@ block content
             const btn = document.getElementById(id);
             if (btn) {
               btn.addEventListener('click', () => {
-                console.log('Filter button clicked:', id, filter);
                 currentFilter = filter;
                 
                 // Update button styles
@@ -515,12 +506,9 @@ block content
                 btn.classList.remove('btn-outline-primary');
                 btn.classList.add('btn-primary');
                 
-                console.log('Applying filter:', currentFilter);
                 // Apply filter
                 applyFilter(tableId, inputId, countId, currentFilter, deleteContainerId);
               });
-            } else {
-              console.error('Button not found:', id);
             }
           });
         }
