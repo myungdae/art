@@ -18,6 +18,16 @@ block content
       color: white !important;
     }
     
+    .btn-group .btn-outline-primary {
+      background-color: white !important;
+      color: #007bff !important;
+      border-color: #007bff !important;
+    }
+    
+    .btn-group .btn-outline-primary:hover {
+      background-color: #e7f1ff !important;
+    }
+    
     .btn-group .btn-primary:hover {
       background-color: #0056b3 !important;
       transform: translateY(-2px);
@@ -50,6 +60,18 @@ block content
     
     .btn-danger i {
       font-size: 1.2rem !important;
+    }
+    
+    /* Delete button containers */
+    .delete-container {
+      display: none;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 2px solid #dc3545;
+    }
+    
+    .delete-container.show {
+      display: block;
     }
   
   .max-w-7xl.mx-auto.px-4.py-8
@@ -135,8 +157,14 @@ block content
           | Employers
         .btn-group(role="group")
           button#empFilterAll.btn.btn-sm.btn-primary(type="button") All
-          button#empFilterWithCredits.btn.btn-sm.btn-primary(type="button") With Credits
-          button#empFilterNoCredits.btn.btn-sm.btn-primary(type="button") No Credits
+          button#empFilterWithCredits.btn.btn-sm.btn-outline-primary(type="button") With Credits
+          button#empFilterNoCredits.btn.btn-sm.btn-outline-primary(type="button") No Credits
+      
+      #empDeleteContainer.delete-container
+        button.btn.btn-danger.w-full(onclick="deleteInactive('employers')")
+          i.fas.fa-trash-alt.mr-2
+          span Delete All Without Credits
+          span#empDeleteCount
 
       .flex.items-center.gap-3.mb-4
         input#empSearch.flex-1(
@@ -195,8 +223,14 @@ block content
           | Job Seekers
         .btn-group(role="group")
           button#jsFilterAll.btn.btn-sm.btn-primary(type="button") All
-          button#jsFilterActive.btn.btn-sm.btn-primary(type="button") Active
-          button#jsFilterInactive.btn.btn-sm.btn-primary(type="button") Inactive
+          button#jsFilterActive.btn.btn-sm.btn-outline-primary(type="button") Active
+          button#jsFilterInactive.btn.btn-sm.btn-outline-primary(type="button") Inactive
+      
+      #jsDeleteContainer.delete-container
+        button.btn.btn-danger.w-full(onclick="deleteInactive('jobseekers')")
+          i.fas.fa-trash-alt.mr-2
+          span Delete All Inactive
+          span#jsDeleteCount
 
       .flex.items-center.gap-3.mb-4
         input#jsSearch.flex-1(
@@ -259,8 +293,14 @@ block content
           | Online Tutors
         .btn-group(role="group")
           button#otFilterAll.btn.btn-sm.btn-primary(type="button") All
-          button#otFilterActive.btn.btn-sm.btn-primary(type="button") Active
-          button#otFilterInactive.btn.btn-sm.btn-primary(type="button") Inactive
+          button#otFilterActive.btn.btn-sm.btn-outline-primary(type="button") Active
+          button#otFilterInactive.btn.btn-sm.btn-outline-primary(type="button") Inactive
+      
+      #otDeleteContainer.delete-container
+        button.btn.btn-danger.w-full(onclick="deleteInactive('tutors')")
+          i.fas.fa-trash-alt.mr-2
+          span Delete All Inactive
+          span#otDeleteCount
 
       .flex.items-center.gap-3.mb-4
         input#otSearch.flex-1(
@@ -369,13 +409,14 @@ block content
         th.classList.add('bg-gray-200');
       }
       
-      function applyFilter(tableId, inputId, countId, statusFilter){
+      function applyFilter(tableId, inputId, countId, statusFilter, deleteContainerId){
         const q = (document.getElementById(inputId)?.value || '').toLowerCase();
         const table = document.getElementById(tableId);
         if (!table) return;
         const tbody = table.querySelector('tbody');
         const rows = Array.from(tbody.children);
         let shown = 0;
+        let inactiveCount = 0;
         
         rows.forEach(row => {
           const cells = Array.from(row.children).map(td => td.textContent.toLowerCase());
@@ -386,10 +427,12 @@ block content
             statusMatch = row.dataset.isActive === 'true' || row.dataset.hasCredits === 'true';
           } else if (statusFilter === 'inactive') {
             statusMatch = row.dataset.isActive === 'false' || row.dataset.hasCredits === 'false';
+            if (statusMatch && textMatch) inactiveCount++;
           } else if (statusFilter === 'with-credits') {
             statusMatch = row.dataset.hasCredits === 'true';
           } else if (statusFilter === 'no-credits') {
             statusMatch = row.dataset.hasCredits === 'false';
+            if (statusMatch && textMatch) inactiveCount++;
           }
           
           const show = textMatch && statusMatch;
@@ -401,9 +444,23 @@ block content
           const el = document.getElementById(countId);
           if (el) el.textContent = shown + ' / ' + rows.length + ' rows';
         }
+        
+        // Show/hide delete button
+        if (deleteContainerId) {
+          const deleteContainer = document.getElementById(deleteContainerId);
+          if (deleteContainer) {
+            if ((statusFilter === 'inactive' || statusFilter === 'no-credits') && inactiveCount > 0) {
+              deleteContainer.classList.add('show');
+              const countSpan = deleteContainer.querySelector('span[id$="DeleteCount"]');
+              if (countSpan) countSpan.textContent = ' (' + inactiveCount + ')';
+            } else {
+              deleteContainer.classList.remove('show');
+            }
+          }
+        }
       }
       
-      function wire(tableId, inputId, countId, filterButtons){
+      function wire(tableId, inputId, countId, filterButtons, deleteContainerId){
         let currentFilter = 'all';
         
         // Sort functionality
@@ -426,7 +483,7 @@ block content
           let t;
           input.addEventListener('input', () => {
             clearTimeout(t);
-            t = setTimeout(() => applyFilter(tableId, inputId, countId, currentFilter), 200);
+            t = setTimeout(() => applyFilter(tableId, inputId, countId, currentFilter, deleteContainerId), 200);
           });
         }
         
@@ -450,14 +507,14 @@ block content
                 btn.classList.add('btn-primary');
                 
                 // Apply filter
-                applyFilter(tableId, inputId, countId, currentFilter);
+                applyFilter(tableId, inputId, countId, currentFilter, deleteContainerId);
               });
             }
           });
         }
         
         // Initial count
-        applyFilter(tableId, inputId, countId, currentFilter);
+        applyFilter(tableId, inputId, countId, currentFilter, deleteContainerId);
       }
       
       // Wire all three tables
@@ -465,19 +522,19 @@ block content
         {id: 'empFilterAll', filter: 'all'},
         {id: 'empFilterWithCredits', filter: 'with-credits'},
         {id: 'empFilterNoCredits', filter: 'no-credits'}
-      ]);
+      ], 'empDeleteContainer');
       
       wire('jsTable', 'jsSearch', 'jsCount', [
         {id: 'jsFilterAll', filter: 'all'},
         {id: 'jsFilterActive', filter: 'active'},
         {id: 'jsFilterInactive', filter: 'inactive'}
-      ]);
+      ], 'jsDeleteContainer');
       
       wire('otTable', 'otSearch', 'otCount', [
         {id: 'otFilterAll', filter: 'all'},
         {id: 'otFilterActive', filter: 'active'},
         {id: 'otFilterInactive', filter: 'inactive'}
-      ]);
+      ], 'otDeleteContainer');
     })();
     
     // =============== Delete Inactive Users Function ===============
