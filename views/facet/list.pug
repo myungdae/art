@@ -11,6 +11,26 @@ block content
     * {
       max-width: 100%;
     }
+    
+    /* Selected filter highlighting */
+    label:has(input[type="checkbox"]:checked) {
+      background-color: #fff7ed !important;
+      border: 2px solid #f97316 !important;
+      box-shadow: 0 2px 4px rgba(249, 115, 22, 0.2);
+    }
+    
+    label:has(input[type="checkbox"]:checked):hover {
+      background-color: #ffedd5 !important;
+    }
+    
+    input[type="checkbox"]:checked {
+      accent-color: #f97316;
+    }
+    
+    /* Smooth transitions */
+    label {
+      transition: all 0.2s ease;
+    }
     @media (max-width: 768px) {
       .container { 
         overflow-x: hidden !important; 
@@ -118,10 +138,13 @@ block content
                     if facetList.length
                       each f in facetList
                         - var checked = selList.indexOf(f._id) !== -1
-                        label.flex.items-center.gap-2.text-sm.cursor-pointer
-                          input(type="checkbox", name=g.key, value=f._id, checked=checked, onchange="document.getElementById('mobileFacetForm').submit()")
-                          span.flex-1= f._id
-                          span.text-xs.text-gray-500 (#{f.c})
+                        label.flex.items-center.gap-2.text-sm.cursor-pointer.p-2.rounded.transition-colors(
+                          class=checked ? "bg-orange-50 border-2 border-orange-500" : "hover:bg-gray-50",
+                          style=checked ? "background-color: #fff7ed; border-color: #f97316;" : ""
+                        )
+                          input(type="checkbox", name=g.key, value=f._id, checked=checked, onchange="document.getElementById('mobileFacetForm').submit()", class="w-4 h-4 accent-orange-500")
+                          span.flex-1(class=checked ? "font-bold text-orange-900" : "", style=checked ? "color: #7c2d12; font-weight: 700;" : "")= f._id
+                          span.text-xs(class=checked ? "text-orange-600 font-semibold" : "text-gray-500", style=checked ? "color: #ea580c; font-weight: 600;" : "") (#{f.c})
                     else
                       p.text-xs.text-gray-400 No values
 
@@ -143,11 +166,14 @@ block content
                   if facetList.length
                     each f in facetList
                       - var checked = selList.indexOf(f._id) !== -1
-                      label.flex.items-center.gap-2
+                      label.flex.items-center.gap-2.p-2.rounded.cursor-pointer.transition-colors(
+                        class=checked ? "bg-orange-50 border-2 border-orange-500" : "hover:bg-gray-50",
+                        style=checked ? "background-color: #fff7ed; border-color: #f97316;" : ""
+                      )
                         //- 동일 name으로 여러 값 전송
-                        input(type="checkbox", name=g.key, value=f._id, checked=checked)
-                        span.flex-1.truncate= f._id
-                        span.text-xs.text-gray-500 (#{f.c})
+                        input(type="checkbox", name=g.key, value=f._id, checked=checked, class="w-4 h-4 accent-orange-500")
+                        span.flex-1.truncate(class=checked ? "font-bold text-orange-900" : "", style=checked ? "color: #7c2d12; font-weight: 700;" : "")= f._id
+                        span.text-xs(class=checked ? "text-orange-600 font-semibold" : "text-gray-500", style=checked ? "color: #ea580c; font-weight: 600;" : "") (#{f.c})
                   else
                     p.text-sm.text-gray-400 No values
 
