@@ -194,7 +194,7 @@ block content
                 th.border.px-4.py-3.text-center Status
             tbody
               each emp in employers
-                tr(data-has-credits=emp.hasCredits)
+                tr(data-has-credits=emp.hasCredits ? 'true' : 'false')
                   td.border.px-4.py-2= emp.username
                   td.border.px-4.py-2= emp.email
                   td.border.px-4.py-2.text-center
@@ -263,7 +263,7 @@ block content
                 th.border.px-4.py-3.text-center Status
             tbody
               each js in jobSeekers
-                tr(data-is-active=js.isActive)
+                tr(data-is-active=js.isActive ? 'true' : 'false')
                   td.border.px-4.py-2= js.username
                   td.border.px-4.py-2= js.email
                   td.border.px-4.py-2.text-center
@@ -333,7 +333,7 @@ block content
                 th.border.px-4.py-3.text-center Status
             tbody
               each ot in onlineTutors
-                tr(data-is-active=ot.isActive)
+                tr(data-is-active=ot.isActive ? 'true' : 'false')
                   td.border.px-4.py-2= ot.username
                   td.border.px-4.py-2= ot.email
                   td.border.px-4.py-2.text-center
