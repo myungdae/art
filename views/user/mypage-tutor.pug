@@ -5,33 +5,42 @@ block content
   style.
     /* High-visibility text styling */
     .dashboard-label {
-      font-weight: 800 !important;
-      font-size: 1.15rem !important;
+      font-weight: 900 !important;
+      font-size: 1.35rem !important;
       color: #000 !important;
+      letter-spacing: -0.02em !important;
     }
     .dashboard-value {
-      font-weight: 700 !important;
-      font-size: 1.15rem !important;
+      font-weight: 800 !important;
+      font-size: 1.35rem !important;
       color: #000 !important;
+      letter-spacing: -0.02em !important;
     }
     .dashboard-status {
-      font-weight: 800 !important;
-      font-size: 1.3rem !important;
+      font-weight: 900 !important;
+      font-size: 1.6rem !important;
     }
     .dashboard-days {
-      font-weight: 800 !important;
-      font-size: 1.4rem !important;
+      font-weight: 900 !important;
+      font-size: 1.8rem !important;
+    }
+    .alert {
+      font-size: 1.15rem !important;
     }
     .alert strong {
-      font-weight: 800 !important;
-      font-size: 1.1rem !important;
+      font-weight: 900 !important;
+      font-size: 1.25rem !important;
       color: #000 !important;
+    }
+    .btn {
+      font-weight: 800 !important;
+      font-size: 1.2rem !important;
     }
   
   .container.mx-auto.px-4.py-10
     .max-w-2xl.mx-auto.p-6.border.rounded-lg(style="border-color: #FFD6B3 !important; border-width: 3px; background-color: #FFF9F5;")
-      h1.text-3xl.font-bold.text-center.mb-8(style="color: #FF7A00; font-weight: 800; font-size: 2.5rem;") Online Tutor Dashboard
-      p.text-center.mb-6(style="font-size: 1.15rem; font-weight: 600; color: #666;") Keep your tutor profile active to reach the right students and schools.
+      h1.text-3xl.font-bold.text-center.mb-8(style="color: #FF7A00; font-weight: 900; font-size: 3rem; letter-spacing: -0.02em;") Online Tutor Dashboard
+      p.text-center.mb-6(style="font-size: 1.2rem; font-weight: 700; color: #333;") Keep your tutor profile active to reach the right students and schools.
 
       // ===== 사전 계산 (optional chaining 미사용) =====
       - var u = (typeof user !== 'undefined' && user) ? user : {};
