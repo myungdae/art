@@ -142,9 +142,12 @@ html(lang='en')
         .menu-top { display:none; }
         .menu-top-mob { display:block; }
         .menu-hamburger { display:block; }
-        .search-header { padding: 56px 0 56px 0; }
+        .search-header { padding: 20px 0 20px 0; }
         .brand-logo{top:12px;left:60px}
         .brand-logo img{height:30px}
+        /* 모바일에서 헤더 텍스트 폰트 크기 조정 */
+        .text-center h2 { font-size: 28px !important; }
+        .text-center p { font-size: 16px !important; }
       }
 
     // My Page 스코프 (원본 유지)
@@ -226,9 +229,9 @@ html(lang='en')
                     a.nav-link.h5.my-0(href="/admin/dashboard") Admin
                     a.nav-link.h5.my-0(href="/admin/logout").logout Logout
             .text-center(style="margin-top: 60px;")
-              // 검색바를 먼저 배치
+              // 검색바를 먼저 배치 (데스크탑에서만 표시)
               - var _ph = (typeof searchKeyword!=='undefined' && searchKeyword) ? searchKeyword : "Enter keyword...";
-              .input-group.justify-content-center(style="margin-bottom: 30px;")
+              .input-group.justify-content-center.d-none.d-md-flex(style="margin-bottom: 30px;")
                 input#searchText.form-control.search-input(
                   autocomplete='off',
                   type='text',
