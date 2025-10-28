@@ -85,7 +85,7 @@ block content
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
       border: 3px solid rgba(255, 122, 0, 0.3);
       margin-top: 40px;
-      margin-bottom: 40px;
+      margin-bottom: 30px;
     }
     
     /* 모바일 최적화 */
@@ -100,12 +100,13 @@ block content
         min-width: 90px;
       }
       .stats-overlay {
-        padding: 20px 15px;
+        padding: 15px 15px 20px 15px;
+        margin-top: 0;
       }
       .main-headline {
-        margin-top: 20px;
+        margin-top: 0;
         margin-bottom: 20px;
-        padding: 20px;
+        padding: 20px 15px;
       }
       .main-headline h2 {
         font-size: 1.8rem !important;
@@ -117,7 +118,12 @@ block content
   
   // 통계 카드 섹션 (안정적인 레이아웃)
   .stats-overlay
-    // 통계 카드
+    // 메인 헤드라인을 먼저 배치
+    div(class="text-center main-headline max-w-4xl mx-auto")
+      h2(class="text-4xl md:text-5xl font-extrabold mb-3" style="color: #1f2937;") Connect. Teach. Grow.
+      p(class="text-xl md:text-2xl font-semibold" style="color: #FF7A00;") AI-Powered ESL Teacher Matching Platform
+    
+    // 통계 카드를 헤드라인 바로 아래에 배치
     div(class="flex flex-col md:flex-row items-center justify-center gap-6 mb-8")
       a(href="/facet/Job_Vacancies" aria-label="Browse Job Vacancies" class="stat-card")
         div#stat-v.stat-number= (S.vCount != null ? S.vCount : 0)
@@ -130,11 +136,6 @@ block content
       a(href="/facet/Online_Tutors" aria-label="Browse Online Tutors" class="stat-card")
         div#stat-t.stat-number= (S.tCount != null ? S.tCount : 0)
         div.stat-label Online Tutors
-    
-    // 메인 헤드라인을 통계 카드 아래에 배치 (배경 이미지 아래)
-    div(class="text-center main-headline max-w-4xl mx-auto")
-      h2(class="text-4xl md:text-5xl font-extrabold mb-3" style="color: #1f2937;") Connect. Teach. Grow.
-      p(class="text-xl md:text-2xl font-semibold" style="color: #FF7A00;") AI-Powered ESL Teacher Matching Platform
   
   // 나머지 콘텐츠
   .container.mx-auto.max-w-6xl.py-10
