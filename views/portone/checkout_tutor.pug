@@ -1,0 +1,140 @@
+extends ../layout
+
+block content
+  .container.mt-5
+    .row.justify-content-center
+      .col-md-6
+        .card.shadow-lg(style="border: 2px solid #4CAF50;")
+          .card-header.text-center(style="background-color: #4CAF50; color: white;")
+            h2
+              i.fas.fa-chalkboard-teacher.me-2
+              | Purchase Tutor Listing Visibility
+          
+          .card-body.p-4
+            .text-center.mb-4
+              h3= label
+              h2.text-primary.my-3
+                | $#{price}
+              p.text-muted
+                | #{days} days of visibility
+            
+            hr.my-4
+            
+            .alert.alert-info
+              i.fas.fa-info-circle.me-2
+              | Your tutor profile will be visible to students for #{days} days.
+            
+            .list-group.mb-4
+              .list-group-item
+                i.fas.fa-check-circle.text-success.me-2
+                | Profile visible in search results
+              .list-group-item
+                i.fas.fa-check-circle.text-success.me-2
+                | Direct contact from students
+              .list-group-item
+                i.fas.fa-check-circle.text-success.me-2
+                | Featured in tutor listings
+              .list-group-item
+                i.fas.fa-check-circle.text-success.me-2
+                | #{days} days of active visibility
+            
+            .d-grid.gap-2
+              button.btn.btn-lg(
+                type="button"
+                onclick=`openPortoneCheckout(${days}, ${price})`
+                style="background-color: #4CAF50; border-color: #4CAF50; color: white; font-size: 1.25rem; padding: 15px;"
+              )
+                i.fas.fa-shopping-cart.me-2
+                | Purchase Now - $#{price}
+              
+              a.btn.btn-outline-secondary(href="/user/mypage-tutor")
+                i.fas.fa-arrow-left.me-2
+                | Back to My Page
+            
+            hr.my-4
+            
+            .text-center
+              p.text-muted.mb-0
+                i.fas.fa-lock.me-1
+                | Secure payment powered by PortOne (Eximbay)
+
+  //- PortOne SDK Script
+  script(src="https://cdn.portone.io/v2/browser-sdk.js")
+  
+  script.
+    // PortOne SDK 초기화 대기
+    function waitForPortOne(callback) {
+      if (typeof PortOne !== 'undefined') {
+        callback();
+      } else {
+        setTimeout(() => waitForPortOne(callback), 100);
+      }
+    }
+
+    function openPortoneCheckout(days, price) {
+      waitForPortOne(async () => {
+        try {
+          // 고유 주문번호 생성
+          const merchantUid = 'tutor_' + new Date().getTime();
+          
+          // 결제 요청
+          const response = await PortOne.requestPayment({
+            storeId: '#{storeId}',
+            channelKey: '#{channelKey}',
+            paymentId: merchantUid,
+            orderName: 'Tutor Listing Visibility - ' + days + ' days',
+            totalAmount: price,
+            currency: 'USD',
+            payMethod: 'CARD',
+            customer: {
+              fullName: '#{user.name || user.email}',
+              email: '#{user.email}',
+              phoneNumber: '#{user.phone || ""}',
+            },
+            customData: {
+              userId: '#{user._id}',
+              type: 'tutor',
+              tutorDays: days,
+              accessPeriod: days
+            },
+            bypass: {
+              eximbay: {
+                ref: merchantUid
+              }
+            }
+          });
+
+          console.log('Payment response:', response);
+
+          // 결제 결과 처리
+          if (response.code != null) {
+            // 결제 실패
+            alert('Payment failed: ' + response.message);
+          } else {
+            // 결제 성공 - 서버 검증
+            const verification = await fetch('/portone/verify', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                imp_uid: response.paymentId,
+                merchant_uid: merchantUid
+              })
+            });
+
+            const verifyResult = await verification.json();
+            
+            if (verifyResult.success) {
+              // 검증 성공
+              window.location.href = '/portone/success?type=tutor';
+            } else {
+              alert('Payment verification failed: ' + verifyResult.message);
+            }
+          }
+        } catch (error) {
+          console.error('Payment error:', error);
+          alert('Payment error occurred: ' + error.message);
+        }
+      });
+    }

@@ -1,0 +1,151 @@
+extends ../layout
+
+block content
+  .container.mt-5
+    .row.justify-content-center
+      .col-md-8
+        .card.shadow-lg(style="border: 2px solid #4CAF50;")
+          .card-header.text-center(style="background-color: #4CAF50; color: white;")
+            h2
+              i.fas.fa-file-alt.me-2
+              | Purchase Resume Access
+          
+          .card-body.p-4
+            p.lead.text-center.mb-4
+              | Get access to view job seekers' resumes
+            
+            .row.g-3
+              each pkg in packages
+                .col-md-4
+                  .card.h-100.package-card(
+                    data-package=pkg.value
+                    data-price=pkg.price
+                    style="cursor: pointer; border: 2px solid #ddd; transition: all 0.3s;"
+                    class=preselectDays == pkg.days ? 'border-primary' : ''
+                  )
+                    .card-body.text-center
+                      h5.card-title= pkg.label
+                      h3.text-primary.my-3
+                        | $#{pkg.price}
+                      p.text-muted
+                        small #{pkg.days} days access
+                      
+                      button.btn.btn-lg.mt-3(
+                        type="button"
+                        onclick=`openPortoneCheckout('${pkg.value}', ${pkg.price}, ${pkg.days})`
+                        style="background-color: #4CAF50; border-color: #4CAF50; color: white; width: 100%;"
+                      )
+                        i.fas.fa-shopping-cart.me-2
+                        | Select
+            
+            hr.my-4
+            
+            .alert.alert-info
+              i.fas.fa-info-circle.me-2
+              | Resume access allows you to view and contact job seekers directly.
+            
+            .text-center
+              p.text-muted
+                i.fas.fa-lock.me-1
+                | Secure payment powered by PortOne (Eximbay)
+              p.mb-0
+                a.btn.btn-outline-secondary(href="/user/mypage-employer")
+                  i.fas.fa-arrow-left.me-2
+                  | Back to My Page
+
+  //- PortOne SDK Script
+  script(src="https://cdn.portone.io/v2/browser-sdk.js")
+  
+  script.
+    // PortOne SDK 초기화 대기
+    function waitForPortOne(callback) {
+      if (typeof PortOne !== 'undefined') {
+        callback();
+      } else {
+        setTimeout(() => waitForPortOne(callback), 100);
+      }
+    }
+
+    function openPortoneCheckout(planId, price, days) {
+      waitForPortOne(async () => {
+        try {
+          // 고유 주문번호 생성
+          const merchantUid = 'resume_' + new Date().getTime();
+          
+          // 결제 요청
+          const response = await PortOne.requestPayment({
+            storeId: '#{storeId}',
+            channelKey: '#{channelKey}',
+            paymentId: merchantUid,
+            orderName: 'Resume Access - ' + days + ' days',
+            totalAmount: price,
+            currency: 'USD',
+            payMethod: 'CARD',
+            customer: {
+              fullName: '#{user.name || user.email}',
+              email: '#{user.email}',
+              phoneNumber: '#{user.phone || ""}',
+            },
+            customData: {
+              userId: '#{user._id}',
+              type: 'resume',
+              resumeDays: days,
+              accessPeriod: days
+            },
+            bypass: {
+              eximbay: {
+                ref: merchantUid
+              }
+            }
+          });
+
+          console.log('Payment response:', response);
+
+          // 결제 결과 처리
+          if (response.code != null) {
+            // 결제 실패
+            alert('Payment failed: ' + response.message);
+          } else {
+            // 결제 성공 - 서버 검증
+            const verification = await fetch('/portone/verify', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                imp_uid: response.paymentId,
+                merchant_uid: merchantUid
+              })
+            });
+
+            const verifyResult = await verification.json();
+            
+            if (verifyResult.success) {
+              // 검증 성공
+              window.location.href = '/portone/success?type=resume';
+            } else {
+              alert('Payment verification failed: ' + verifyResult.message);
+            }
+          }
+        } catch (error) {
+          console.error('Payment error:', error);
+          alert('Payment error occurred: ' + error.message);
+        }
+      });
+    }
+
+    // 카드 hover 효과
+    document.querySelectorAll('.package-card').forEach(card => {
+      card.addEventListener('mouseenter', function() {
+        this.style.borderColor = '#4CAF50';
+        this.style.transform = 'translateY(-5px)';
+        this.style.boxShadow = '0 10px 20px rgba(76, 175, 80, 0.2)';
+      });
+      card.addEventListener('mouseleave', function() {
+        if (!this.classList.contains('border-primary')) {
+          this.style.borderColor = '#ddd';
+        }
+        this.style.transform = 'translateY(0)';
+        this.style.boxShadow = 'none';
+      });
+    });
