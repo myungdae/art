@@ -90,7 +90,7 @@ block content
             customerData.phoneNumber = userPhone;
           }
           
-          // 결제 요청 (Eximbay 지원 파라미터만 사용)
+          // 결제 요청 (Eximbay 필수 파라미터)
           const response = await PortOne.requestPayment({
             storeId: '#{storeId}',
             channelKey: '#{channelKey}',
@@ -98,6 +98,7 @@ block content
             orderName: 'Tutor Listing Visibility - ' + days + ' days',
             totalAmount: price,
             currency: 'USD',
+            payMethod: 'CARD',
             customer: customerData
           });
 
