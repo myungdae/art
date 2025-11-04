@@ -2,41 +2,13 @@ extends ../layout
 
 block content
   .container.mx-auto.max-w-4xl.py-10
-    h1.text-3xl.font-bold.mb-2 Privacy Policy / 개인정보처리방침
+    h1.text-3xl.font-bold.mb-2 Privacy Policy
     p.text-sm.text-gray-500.mb-6 Last updated: #{lastUpdated || '2025-08-24'}
 
-    .flex.items-center.gap-3.mb-6
-      span.font-medium Language:
-      button.lang-btn.px-3.py-1.rounded.border(data-target="ko") 한국어
-      button.lang-btn.px-3.py-1.rounded.border(data-target="en") English
-
-    .lang.lang-ko
-      p.mb-4 #{companyName || '회사명'}(‘#{siteName || 'ESL PLUS'}’)은 관련 법령을 준수하며 다음과 같이 개인정보를 처리합니다.
-      ol.list-decimal.ml-6.space-y-3
-        li 수집항목: 성명, 연락처, 이메일, 결제정보 등 서비스 제공에 필요한 최소 정보
-        li 이용목적: 회원관리, 매칭 서비스 운영, 결제 및 환불 처리
-        li 보관기간: 법령상 보존기간 준수, 그 외에는 목적 달성 시 즉시 파기
-        li 개인정보 보호책임자(DPO): #{dpoName || '지정자'} / 연락처: #{supportEmail || 'support@example.com'}
-        li 이용자는 개인정보 열람·정정·삭제·처리정지를 요청할 수 있습니다.
-
-    .lang.lang-en.hidden
-      p.mb-4 #{companyName || 'Company'} (“#{siteName || 'ESL PLUS'}”) processes personal data in compliance with applicable laws as follows:
-      ol.list-decimal.ml-6.space-y-3
-        li Data collected: Name, contact details, email, payment information, and other data necessary for service provision.
-        li Purpose: Membership management, matching service operation, payment and refund processing.
-        li Retention: Preserved per statutory periods; otherwise deleted upon achieving the purpose.
-        li Data Protection Officer (DPO): #{dpoName || 'Designated Person'} / Contact: #{supportEmail || 'support@example.com'}
-        li Users may request access, correction, deletion, or restriction of processing.
-
-  script.
-    (function(){
-      const $btns = document.querySelectorAll('.lang-btn');
-      const show = t => {
-        document.querySelectorAll('.lang').forEach(el => el.classList.add('hidden'));
-        const target = document.querySelector('.lang-' + t);
-        if (target) target.classList.remove('hidden');
-      };
-      $btns.forEach(b=>b.addEventListener('click',()=>show(b.dataset.target)));
-      show('en');
-    })();
-
+    p.mb-4 #{companyName || 'Company'} ("#{siteName || 'ESL PLUS'}") processes personal data in compliance with applicable laws as follows:
+    ol.list-decimal.ml-6.space-y-3
+      li Data collected: Name, contact details, email, payment information, and other data necessary for service provision.
+      li Purpose: Membership management, matching service operation, payment and refund processing.
+      li Retention: Preserved per statutory periods; otherwise deleted upon achieving the purpose.
+      li Data Protection Officer (DPO): #{dpoName || 'Designated Person'} / Contact: #{supportEmail || 'support@example.com'}
+      li Users may request access, correction, deletion, or restriction of processing.
