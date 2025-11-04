@@ -116,11 +116,11 @@ router.post("/register-and-redirect", async (req, res) => {
 
     // Redirect to payment page based on role
     if (role === "Employer") {
-      return res.redirect("/paddle/checkout?type=employer");
+      return res.redirect("/portone/checkout?type=employer");
     } else if (role === "Job_Seeker") {
-      return res.redirect("/paddle/checkout?type=resume&accessPeriod=30");
+      return res.redirect("/portone/checkout?type=resume&accessPeriod=30");
     } else if (role === "Online_Tutor") {
-      return res.redirect("/paddle/checkout?type=tutor&accessPeriod=30");
+      return res.redirect("/portone/checkout?type=tutor&accessPeriod=30");
     }
 
     return res.redirect("/user/mypage");

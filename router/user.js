@@ -74,11 +74,11 @@ router.post("/register-mobile", async (req, res) => {
 
     // Redirect to payment based on role
     if (role === "Employer") {
-      return res.redirect("/paddle/checkout?type=employer");
+      return res.redirect("/portone/checkout?type=employer");
     } else if (role === "Job_Seeker") {
-      return res.redirect("/paddle/checkout?type=resume&accessPeriod=30");
+      return res.redirect("/portone/checkout?type=resume&accessPeriod=30");
     } else if (role === "Online_Tutor") {
-      return res.redirect("/paddle/checkout?type=tutor&accessPeriod=30");
+      return res.redirect("/portone/checkout?type=tutor&accessPeriod=30");
     }
 
     return res.redirect("/user/mypage");
@@ -485,7 +485,7 @@ router.post(
         return res.status(400).send("❌ Invalid employer plan period");
       }
       return res.redirect(
-        `/paddle/checkout?type=employer&employerPeriod=${periodDays}`
+        `/portone/checkout?type=employer&employerPeriod=${periodDays}`
       );
     } catch (err) {
       console.error("❌ Employer plan error:", err.message);
@@ -571,8 +571,8 @@ router.post("/job-seekers/resume-access", requireLogin, async (req, res) => {
       return res.status(400).send("❌ Invalid access period");
     }
 
-    // 결제 페이지로 이동 (레거시 경로 유지)
-    return res.redirect(`/paddle/checkout?accessPeriod=${periodDays}`);
+    // 결제 페이지로 이동
+    return res.redirect(`/portone/checkout?type=resume&accessPeriod=${periodDays}`);
   } catch (err) {
     console.error("❌ Failed to process resume access:", err.message);
     return res.status(500).send("❌ Failed to process resume access");
@@ -616,7 +616,7 @@ router.get("/online-tutors/visibility/start", requireLogin, (req, res) => {
   if (![30, 90, 365].includes(days)) {
     return res.status(400).send("❌ Invalid tutor visibility period");
   }
-  return res.redirect(`/paddle/checkout?type=tutor&accessPeriod=${days}`);
+  return res.redirect(`/portone/checkout?type=tutor&accessPeriod=${days}`);
 });
 
 // 설명/선택 페이지 (필요 시)
@@ -634,7 +634,7 @@ router.post("/online-tutors/visibility", requireLogin, async (req, res) => {
     if (![30, 90, 365].includes(days)) {
       return res.status(400).send("❌ Invalid tutor visibility period");
     }
-    return res.redirect(`/paddle/checkout?type=tutor&accessPeriod=${days}`);
+    return res.redirect(`/portone/checkout?type=tutor&accessPeriod=${days}`);
   } catch (e) {
     console.error("[tutor visibility] error:", e.message || e);
     return res.status(500).send("❌ Failed to process tutor visibility");
