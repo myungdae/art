@@ -51,92 +51,73 @@ block content
                   i.fas.fa-arrow-left.me-2
                   | Back to My Page
 
-  //- PortOne SDK Script
-  script(src="https://cdn.portone.io/v2/browser-sdk.js")
+  //- PortOne SDK Script (V1 for legacy channel)
+  script(src="https://cdn.iamport.kr/v1/iamport.js")
   
   script.
-    // PortOne SDK 초기화 대기
-    function waitForPortOne(callback) {
-      if (typeof PortOne !== 'undefined') {
-        callback();
-      } else {
-        setTimeout(() => waitForPortOne(callback), 100);
-      }
-    }
+    // IMP (PortOne V1) 초기화
+    const IMP = window.IMP;
+    IMP.init('#{storeId}');
 
     function openPortoneCheckout(packageId, price) {
-      waitForPortOne(async () => {
-        try {
-          // 고유 주문번호 생성 (사용자 정보 포함)
-          const userId = '#{user._id}';
-          const merchantUid = 'employer_' + packageId + '_' + userId.substring(0, 8) + '_' + new Date().getTime();
-          
-          // Customer 정보 준비
-          const customerData = {
-            fullName: '#{user.name || user.email}',
-            email: '#{user.email}'
-          };
-          
-          // phoneNumber가 있을 때만 추가
-          const userPhone = '#{user.phone || ""}';
-          if (userPhone) {
-            customerData.phoneNumber = userPhone;
-          }
-          
-          // 결제 요청 (Eximbay 최소 파라미터)
-          console.log('🔍 Payment request:', {
-            storeId: '#{storeId}',
-            channelKey: '#{channelKey}',
-            paymentId: merchantUid,
-            orderName: 'Job Ad Package - ' + packageId + ' ads',
-            totalAmount: price,
-            currency: 'USD',
-            payMethod: 'CARD'
-          });
-          
-          const response = await PortOne.requestPayment({
-            storeId: '#{storeId}',
-            channelKey: '#{channelKey}',
-            paymentId: merchantUid,
-            orderName: 'Job Ad Package',
-            totalAmount: price,
-            currency: 'USD',
-            payMethod: 'CARD'
-          });
+      try {
+        // 고유 주문번호 생성 (사용자 정보 포함)
+        const userId = '#{user._id}';
+        const merchantUid = 'employer_' + packageId + '_' + userId.substring(0, 8) + '_' + new Date().getTime();
+        
+        console.log('🔍 V1 Payment request:', {
+          pg: 'eximbay.#{channelKey}',
+          pay_method: 'card',
+          merchant_uid: merchantUid,
+          name: 'Job Ad Package - ' + packageId + ' ads',
+          amount: price,
+          buyer_email: '#{user.email}',
+          buyer_name: '#{user.name || user.email}'
+        });
+        
+        // PortOne V1 결제 요청
+        IMP.request_pay({
+          pg: 'eximbay',
+          pay_method: 'card',
+          merchant_uid: merchantUid,
+          name: 'Job Ad Package - ' + packageId + ' ads',
+          amount: price,
+          buyer_email: '#{user.email}',
+          buyer_name: '#{user.name || user.email}',
+          buyer_tel: '#{user.phone || "010-0000-0000"}'
+        }, function(response) {
+          console.log('🔍 V1 Payment response:', response);
 
-          console.log('Payment response:', response);
-
-          // 결제 결과 처리
-          if (response.code != null) {
-            // 결제 실패
-            alert('Payment failed: ' + response.message);
-          } else {
+          
+          if (response.success) {
             // 결제 성공 - 서버 검증
-            const verification = await fetch('/portone/verify', {
+            fetch('/portone/verify', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
               },
               body: JSON.stringify({
-                imp_uid: response.paymentId,
-                merchant_uid: merchantUid
+                imp_uid: response.imp_uid,
+                merchant_uid: response.merchant_uid
               })
+            })
+            .then(res => res.json())
+            .then(verifyResult => {
+              if (verifyResult.success) {
+                window.location.href = '/portone/success?type=employer';
+              } else {
+                alert('Payment verification failed: ' + verifyResult.message);
+              }
             });
-
-            const verifyResult = await verification.json();
-            
-            if (verifyResult.success) {
-              // 검증 성공
-              window.location.href = '/portone/success?type=employer';
-            } else {
-              alert('Payment verification failed: ' + verifyResult.message);
-            }
+          } else {
+            // 결제 실패
+            alert('Payment failed: ' + response.error_msg);
           }
-        } catch (error) {
-          console.error('Payment error:', error);
-          alert('Payment error occurred: ' + error.message);
-        }
-      });
+        });
+      } catch (error) {
+        console.error('Payment error:', error);
+        alert('Payment error occurred: ' + error.message);
+      }
     }
 
     // 카드 hover 효과
