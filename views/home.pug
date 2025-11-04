@@ -116,14 +116,9 @@ block content
       }
     }
   
-  // 헤드라인과 통계 카드 섹션
+  // 통계 카드와 헤드라인 섹션
   .stats-overlay
-    // 메인 헤드라인을 먼저 배치 (상단)
-    div(class="text-center main-headline max-w-4xl mx-auto")
-      h2(class="text-4xl md:text-5xl font-extrabold mb-3" style="color: #1f2937;") Connect. Teach. Grow.
-      p(class="text-xl md:text-2xl font-semibold" style="color: #FF7A00;") AI-Powered ESL Teacher Matching Platform
-    
-    // 통계 카드를 헤드라인 아래에 배치
+    // 통계 카드를 먼저 배치 (상단 - "The fast ESL" 바로 아래)
     div(class="flex flex-col md:flex-row items-center justify-center gap-6 mb-8")
       a(href="/facet/Job_Vacancies" aria-label="Browse Job Vacancies" class="stat-card")
         div#stat-v.stat-number= (S.vCount != null ? S.vCount : 0)
@@ -136,6 +131,11 @@ block content
       a(href="/facet/Online_Tutors" aria-label="Browse Online Tutors" class="stat-card")
         div#stat-t.stat-number= (S.tCount != null ? S.tCount : 0)
         div.stat-label Online Tutors
+    
+    // 메인 헤드라인을 통계 카드 아래에 배치
+    div(class="text-center main-headline max-w-4xl mx-auto")
+      h2(class="text-4xl md:text-5xl font-extrabold mb-3" style="color: #1f2937;") Connect. Teach. Grow.
+      p(class="text-xl md:text-2xl font-semibold" style="color: #FF7A00;") AI-Powered ESL Teacher Matching Platform
   
   // 나머지 콘텐츠
   .container.mx-auto.max-w-6xl.py-10
