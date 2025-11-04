@@ -4,12 +4,12 @@ extends ../layout
 block content
   .mypage-scope
     .container.mt-5.mb-5
-      // ===== 헤더 =====
+      // ===== Header =====
       .d-flex.flex-column.align-items-center.text-center.mb-4
         h2.mp-title-xl.mb-2 My Page (Job Seeker)
         p.mp-subtext Keep your profile updated to reach the right employers.
 
-      // ===== 상단 요약 카드 =====
+      // ===== Summary Card =====
       .card.mp-card.shadow-sm.p-4(style="max-width: 720px; margin: 0 auto;")
         .row.g-2
           .col-12.col-md-6
@@ -30,20 +30,20 @@ block content
               | Remaining Days of Resume Access:
               strong.ms-1 #{remainingDays}
 
-        // ✅ 버튼 (결제/가시성 상태에 따른 노출 제어)
+        // ✅ Buttons (controlled by payment/visibility status)
         .d-flex.justify-content-center.mt-3.btn-block-mobile
           .btn-group.mp-btn-group.mp-btn-tight(role="group", aria-label="Resume actions")
             if hasActiveResumeAccess
               a.btn.btn-success.btn-lg(href="/job-seekers/new") Register Resume
-              // 미리 결제되어 있으면 구매 버튼은 비활성
+              // If already paid, purchase button is disabled
               a.btn.btn-outline-dark.btn-lg(aria-disabled="true") Purchase Resume Visibility
             else
-              // 미결제/만기: Register는 감추고 구매만 노출
+              // Unpaid/expired: Hide Register, show only Purchase
               a.btn.btn-primary.btn-lg(href=purchaseLink || '/user/job-seekers/resume-access') Purchase Resume Visibility
 
-      // ===== 메인 그리드 =====
+      // ===== Main Grid =====
       .row.mt-4
-        // --- 좌측: 프로필 편집 ---
+        // --- Left: Profile Edit ---
         .col-12.col-lg-7.mb-3
           .card.mp-card.shadow-sm
             .card-header
@@ -145,7 +145,7 @@ block content
                 .d-flex.justify-content-end.mt-3
                   button.btn.btn-primary(type="submit") Save Changes
 
-        // --- 우측: 활동/저장/알림 ---
+        // --- Right: Activity/Saved/Notifications ---
         .col-12.col-lg-5
           .card.mp-card.shadow-sm.mb-3
             .card-header

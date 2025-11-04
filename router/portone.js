@@ -1,4 +1,4 @@
-// router/portone.js - PortOne (Eximbay) 결제 시스템
+// router/portone.js - PortOne (Eximbay) Payment System
 const express = require("express");
 const router = express.Router();
 const axios = require("axios");
@@ -12,7 +12,7 @@ const tutorPriceConfig = require("../config/tutorPriceConfig");
 
 /* -------------------------------------------------------------
    GET /portone/checkout
-   - Employer Ads (기본) 또는 쿼리로 타입 지정
+   - Employer Ads (default) or specify type via query
    - ?type=resume&accessPeriod=30
    - ?type=tutor&accessPeriod=30
 ------------------------------------------------------------- */
@@ -83,7 +83,7 @@ router.post("/webhook", express.json(), async (req, res) => {
   try {
     const webhookSecret = process.env.PORTONE_WEBHOOK_SECRET;
     
-    // PortOne webhook 서명 검증
+    // PortOne webhook signature verification
     const signature = req.headers["portone-signature"];
     
     if (!signature) {
@@ -91,12 +91,12 @@ router.post("/webhook", express.json(), async (req, res) => {
       return res.status(400).send("Missing signature");
     }
 
-    // Webhook 데이터 파싱
+    // Parse webhook data
     const event = req.body;
     
     console.log("🔔 PortOne Webhook Event:", event.type || event.status);
 
-    // 결제 완료 이벤트 처리
+    // Handle payment completed event
     if (event.status === "paid" || event.type === "Transaction.Paid") {
       const paymentId = event.payment_id || event.paymentId || event.merchant_uid || event.merchantUid;
       
@@ -108,7 +108,7 @@ router.post("/webhook", express.json(), async (req, res) => {
         return res.status(400).send("Missing paymentId");
       }
 
-      // paymentId에서 정보 추출
+      // Extract info from paymentId
       const parts = paymentId.split('_');
       const type = parts[0]; // employer, resume, tutor
       
@@ -117,10 +117,10 @@ router.post("/webhook", express.json(), async (req, res) => {
         return res.status(400).send("Invalid paymentId format");
       }
 
-      // userId 추출 (뒤에서 두 번째 부분)
+      // Extract userId (second to last part)
       const userIdPart = parts[parts.length - 2];
       
-      // MongoDB ObjectId는 24자리이므로, 앞 8자리로 사용자 찾기
+      // MongoDB ObjectId is 24 chars, search by first 8 chars
       const user = await User.findOne({ 
         _id: { $regex: `^${userIdPart}` } 
       });
@@ -130,7 +130,7 @@ router.post("/webhook", express.json(), async (req, res) => {
         return res.status(404).send("User not found");
       }
 
-      // 결제 타입별 처리
+      // Handle by payment type
       if (type === "employer") {
         const packageId = parts[1]; // 1, 4, 12, 24
         const count = parseInt(packageId, 10);

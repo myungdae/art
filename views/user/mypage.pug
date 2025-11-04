@@ -19,9 +19,9 @@ block content
           strong Role:
           | #{displayRole}
 
-      // ✅ Remaining Tokens 표시 (아직 결제 전이면 0)
+      // ✅ Display Remaining Tokens (0 if not yet paid)
       p.mt-3(style="font-weight: bold; font-size: 1.3rem; color: red;")
-      | 🔑 Remaining Tokens: #{user.adsAvailable}
+      | 🔑 Remaining Ad Credits: #{user.adsAvailable}
 
 
       // ✅ 버튼: Post Paid Job Ad + Make Payment
