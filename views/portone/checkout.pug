@@ -83,16 +83,25 @@ block content
             customerData.phoneNumber = userPhone;
           }
           
-          // 결제 요청 (Eximbay 필수 파라미터)
-          const response = await PortOne.requestPayment({
+          // 결제 요청 (Eximbay 최소 파라미터)
+          console.log('🔍 Payment request:', {
             storeId: '#{storeId}',
             channelKey: '#{channelKey}',
             paymentId: merchantUid,
             orderName: 'Job Ad Package - ' + packageId + ' ads',
             totalAmount: price,
             currency: 'USD',
-            payMethod: 'CARD',
-            customer: customerData
+            payMethod: 'CARD'
+          });
+          
+          const response = await PortOne.requestPayment({
+            storeId: '#{storeId}',
+            channelKey: '#{channelKey}',
+            paymentId: merchantUid,
+            orderName: 'Job Ad Package',
+            totalAmount: price,
+            currency: 'USD',
+            payMethod: 'CARD'
           });
 
           console.log('Payment response:', response);
