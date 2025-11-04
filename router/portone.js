@@ -98,34 +98,58 @@ router.post("/webhook", express.json(), async (req, res) => {
 
     // 결제 완료 이벤트 처리
     if (event.status === "paid" || event.type === "Transaction.Paid") {
-      const merchantUid = event.merchant_uid || event.merchantUid;
-      const customData = event.custom_data || {};
+      const paymentId = event.payment_id || event.paymentId || event.merchant_uid || event.merchantUid;
       
-      const userId = customData.userId;
-      const type = customData.type;
+      // paymentId 형식: employer_{packageId}_{userId}_timestamp 또는 resume_{days}d_{userId}_timestamp
+      console.log("🔍 PaymentId:", paymentId);
+      
+      if (!paymentId) {
+        console.error("❌ No paymentId in webhook data");
+        return res.status(400).send("Missing paymentId");
+      }
 
-      if (!userId) {
-        console.error("❌ No userId in webhook data");
-        return res.status(400).send("Missing userId");
+      // paymentId에서 정보 추출
+      const parts = paymentId.split('_');
+      const type = parts[0]; // employer, resume, tutor
+      
+      if (!type || parts.length < 3) {
+        console.error("❌ Invalid paymentId format:", paymentId);
+        return res.status(400).send("Invalid paymentId format");
+      }
+
+      // userId 추출 (뒤에서 두 번째 부분)
+      const userIdPart = parts[parts.length - 2];
+      
+      // MongoDB ObjectId는 24자리이므로, 앞 8자리로 사용자 찾기
+      const user = await User.findOne({ 
+        _id: { $regex: `^${userIdPart}` } 
+      });
+
+      if (!user) {
+        console.error("❌ User not found for paymentId:", paymentId);
+        return res.status(404).send("User not found");
       }
 
       // 결제 타입별 처리
       if (type === "employer") {
-        const count = parseInt(customData.adPackage, 10);
-        await User.findByIdAndUpdate(userId, { $inc: { adsAvailable: count } });
-        console.log(`✅ Added ${count} ad credits to user ${userId}`);
+        const packageId = parts[1]; // 1, 4, 12, 24
+        const count = parseInt(packageId, 10);
+        await User.findByIdAndUpdate(user._id, { $inc: { adsAvailable: count } });
+        console.log(`✅ Added ${count} ad credits to user ${user._id}`);
       } else if (type === "resume") {
-        const days = parseInt(customData.resumeDays || customData.accessPeriod, 10);
-        await User.findByIdAndUpdate(userId, {
+        const daysStr = parts[1]; // "30d", "90d", "365d"
+        const days = parseInt(daysStr.replace('d', ''), 10);
+        await User.findByIdAndUpdate(user._id, {
           resumeAccess: { startDate: new Date(), durationDays: days },
         });
-        console.log(`✅ Activated resume access for ${days} days for user ${userId}`);
+        console.log(`✅ Activated resume access for ${days} days for user ${user._id}`);
       } else if (type === "tutor") {
-        const days = parseInt(customData.tutorDays || customData.accessPeriod, 10);
-        await User.findByIdAndUpdate(userId, {
+        const daysStr = parts[1]; // "30d", "90d", "365d"
+        const days = parseInt(daysStr.replace('d', ''), 10);
+        await User.findByIdAndUpdate(user._id, {
           tutorAccess: { startDate: new Date(), durationDays: days },
         });
-        console.log(`✅ Activated tutor listing for ${days} days for user ${userId}`);
+        console.log(`✅ Activated tutor listing for ${days} days for user ${user._id}`);
       }
     }
 

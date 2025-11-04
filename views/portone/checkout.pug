@@ -67,8 +67,9 @@ block content
     function openPortoneCheckout(packageId, price) {
       waitForPortOne(async () => {
         try {
-          // 고유 주문번호 생성
-          const merchantUid = 'order_' + new Date().getTime();
+          // 고유 주문번호 생성 (사용자 정보 포함)
+          const userId = '#{user._id}';
+          const merchantUid = 'employer_' + packageId + '_' + userId.substring(0, 8) + '_' + new Date().getTime();
           
           // Customer 정보 준비
           const customerData = {
@@ -82,7 +83,7 @@ block content
             customerData.phoneNumber = userPhone;
           }
           
-          // 결제 요청
+          // 결제 요청 (Eximbay 지원 파라미터만 사용)
           const response = await PortOne.requestPayment({
             storeId: '#{storeId}',
             channelKey: '#{channelKey}',
@@ -90,13 +91,7 @@ block content
             orderName: 'Job Ad Package - ' + packageId + ' ads',
             totalAmount: price,
             currency: 'USD',
-            payMethod: 'CARD',
-            customer: customerData,
-            customData: {
-              userId: '#{user._id}',
-              type: 'employer',
-              adPackage: packageId
-            }
+            customer: customerData
           });
 
           console.log('Payment response:', response);
