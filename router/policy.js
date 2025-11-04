@@ -4,9 +4,9 @@ const router = express.Router();
 const commonLocals = {
   siteName: "ESL PLUS",
   companyName: "Linked Data Center Co., Ltd.",
-  supportEmail: "support@eslplus.com",
+  supportEmail: "myungdae.cho@gmail.com",
   supportPhone: "02-000-0000",
-  dpoName: "Alex Kim",
+  dpoName: "Myungdae Cho",
   lastUpdated: "2025-08-24",
 };
 
