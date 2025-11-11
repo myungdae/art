@@ -38,7 +38,18 @@ block content
                 i.fas.fa-check-circle.text-success.me-2
                 | #{days} days of active visibility
             
-            .d-grid.gap-2
+            //- PayPal 버튼 렌더링 영역
+            #payment-section(style="display: none;")
+              .card.border-primary.mb-3
+                .card-body
+                  h5.card-title.text-center.mb-3 Complete Your Payment
+                  .portone-ui-container#paypal-button-container
+                  .text-center.mt-3
+                    button.btn.btn-outline-secondary(onclick="cancelPayment()")
+                      i.fas.fa-times.me-2
+                      | Cancel
+            
+            .d-grid.gap-2#action-buttons
               button.btn.btn-lg(
                 type="button"
                 onclick=`openPortoneCheckout(${days}, ${price})`
@@ -56,12 +67,16 @@ block content
             .text-center
               p.text-muted.mb-0
                 i.fas.fa-lock.me-1
-                | Secure payment powered by PortOne (Eximbay)
+                | Secure payment powered by PortOne & PayPal
 
   //- PortOne SDK Script
   script(src="https://cdn.portone.io/v2/browser-sdk.js")
   
   script.
+    let currentPaymentUI = null;
+    let selectedDays = null;
+    let selectedPrice = null;
+
     // PortOne SDK 초기화 대기
     function waitForPortOne(callback) {
       if (typeof PortOne !== 'undefined') {
@@ -72,9 +87,15 @@ block content
     }
 
     function openPortoneCheckout(days, price) {
+      selectedDays = days;
+      selectedPrice = price;
+      
+      // 버튼 영역 숨기고 결제 영역 표시
+      document.getElementById('action-buttons').style.display = 'none';
+      document.getElementById('payment-section').style.display = 'block';
+      
       waitForPortOne(async () => {
         try {
-          // 고유 주문번호 생성 (사용자 정보 포함)
           const userId = '#{user._id}';
           const merchantUid = 'tutor_' + days + 'd_' + userId.substring(0, 8) + '_' + new Date().getTime();
           
@@ -84,55 +105,82 @@ block content
             email: '#{user.email}'
           };
           
-          // phoneNumber가 있을 때만 추가
           const userPhone = '#{user.phone || ""}';
           if (userPhone) {
             customerData.phoneNumber = userPhone;
           }
           
-          // 결제 요청 (Eximbay 필수 파라미터)
-          const response = await PortOne.requestPayment({
+          console.log('🔍 PayPal Payment UI request:', {
+            uiType: 'PAYPAL_SPB',
+            storeId: '#{storeId}',
+            channelKey: '#{channelKey}',
+            paymentId: merchantUid,
+            orderName: 'Tutor Listing Visibility - ' + days + ' days',
+            totalAmount: price,
+            currency: 'USD'
+          });
+          
+          // PayPal 버튼 렌더링
+          const requestData = {
+            uiType: 'PAYPAL_SPB',
             storeId: '#{storeId}',
             channelKey: '#{channelKey}',
             paymentId: merchantUid,
             orderName: 'Tutor Listing Visibility - ' + days + ' days',
             totalAmount: price,
             currency: 'USD',
-            payMethod: 'CARD',
             customer: customerData
-          });
+          };
+          
+          currentPaymentUI = await PortOne.loadPaymentUI(
+            requestData,
+            {
+              onPaymentSuccess: async (response) => {
+                console.log('Payment success:', response);
+                
+                try {
+                  const verification = await fetch('/portone/verify', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                      imp_uid: response.paymentId,
+                      merchant_uid: merchantUid
+                    })
+                  });
 
-          console.log('Payment response:', response);
-
-          // 결제 결과 처리
-          if (response.code != null) {
-            // 결제 실패
-            alert('Payment failed: ' + response.message);
-          } else {
-            // 결제 성공 - 서버 검증
-            const verification = await fetch('/portone/verify', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
+                  const verifyResult = await verification.json();
+                  
+                  if (verifyResult.success) {
+                    window.location.href = '/portone/success?type=tutor';
+                  } else {
+                    alert('Payment verification failed: ' + verifyResult.message);
+                  }
+                } catch (error) {
+                  console.error('Verification error:', error);
+                  alert('Payment verification error: ' + error.message);
+                }
               },
-              body: JSON.stringify({
-                imp_uid: response.paymentId,
-                merchant_uid: merchantUid
-              })
-            });
-
-            const verifyResult = await verification.json();
-            
-            if (verifyResult.success) {
-              // 검증 성공
-              window.location.href = '/portone/success?type=tutor';
-            } else {
-              alert('Payment verification failed: ' + verifyResult.message);
+              onPaymentFail: (error) => {
+                console.error('Payment failed:', error);
+                alert('Payment failed: ' + (error.message || 'Unknown error'));
+                cancelPayment();
+              }
             }
-          }
+          );
+          
         } catch (error) {
-          console.error('Payment error:', error);
-          alert('Payment error occurred: ' + error.message);
+          console.error('Payment UI error:', error);
+          alert('Payment initialization error: ' + error.message);
+          cancelPayment();
         }
       });
+    }
+    
+    function cancelPayment() {
+      document.getElementById('action-buttons').style.display = 'grid';
+      document.getElementById('payment-section').style.display = 'none';
+      selectedDays = null;
+      selectedPrice = null;
     }

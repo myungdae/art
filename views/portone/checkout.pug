@@ -42,10 +42,22 @@ block content
             
             hr.my-4
             
+            //- PayPal 버튼 렌더링 영역
+            #payment-section.mt-4(style="display: none;")
+              .card.border-primary
+                .card-body
+                  h5.card-title.text-center.mb-3 Complete Your Payment
+                  p.text-center.text-muted#selected-package-info
+                  .portone-ui-container#paypal-button-container
+                  .text-center.mt-3
+                    button.btn.btn-outline-secondary(onclick="cancelPayment()")
+                      i.fas.fa-times.me-2
+                      | Cancel
+            
             .text-center
               p.text-muted
                 i.fas.fa-lock.me-1
-                | Secure payment powered by PortOne (Eximbay)
+                | Secure payment powered by PortOne & PayPal
               p.mb-0
                 a.btn.btn-outline-secondary(href="/user/mypage")
                   i.fas.fa-arrow-left.me-2
@@ -55,6 +67,10 @@ block content
   script(src="https://cdn.portone.io/v2/browser-sdk.js")
   
   script.
+    let currentPaymentUI = null;
+    let selectedPackage = null;
+    let selectedPrice = null;
+
     // PortOne SDK 초기화 대기
     function waitForPortOne(callback) {
       if (typeof PortOne !== 'undefined') {
@@ -65,9 +81,19 @@ block content
     }
 
     function openPortoneCheckout(packageId, price) {
+      selectedPackage = packageId;
+      selectedPrice = price;
+      
+      // 패키지 정보 표시
+      document.getElementById('selected-package-info').textContent = 
+        `Package: ${packageId} job ads - $${price} USD`;
+      
+      // 패키지 선택 영역 숨기고 결제 영역 표시
+      document.querySelector('.row.g-3').style.display = 'none';
+      document.getElementById('payment-section').style.display = 'block';
+      
       waitForPortOne(async () => {
         try {
-          // 고유 주문번호 생성 (사용자 정보 포함)
           const userId = '#{user._id}';
           const merchantUid = 'employer_' + packageId + '_' + userId.substring(0, 8) + '_' + new Date().getTime();
           
@@ -77,68 +103,85 @@ block content
             email: '#{user.email}'
           };
           
-          // phoneNumber가 있을 때만 추가
           const userPhone = '#{user.phone || ""}';
           if (userPhone) {
             customerData.phoneNumber = userPhone;
           }
           
-          console.log('🔍 V2 Payment request:', {
+          console.log('🔍 PayPal Payment UI request:', {
+            uiType: 'PAYPAL_SPB',
             storeId: '#{storeId}',
             channelKey: '#{channelKey}',
             paymentId: merchantUid,
             orderName: 'Job Ad Package - ' + packageId + ' ads',
             totalAmount: price,
-            currency: 'USD',
-            payMethod: 'CARD'
+            currency: 'USD'
           });
           
-          // 결제 요청 (V2 SDK)
-          const response = await PortOne.requestPayment({
+          // PayPal 버튼 렌더링 (V2 SDK - loadPaymentUI)
+          const requestData = {
+            uiType: 'PAYPAL_SPB',
             storeId: '#{storeId}',
             channelKey: '#{channelKey}',
             paymentId: merchantUid,
             orderName: 'Job Ad Package - ' + packageId + ' ads',
             totalAmount: price,
             currency: 'USD',
-            payMethod: 'CARD',
             customer: customerData
-          });
+          };
+          
+          currentPaymentUI = await PortOne.loadPaymentUI(
+            requestData,
+            {
+              onPaymentSuccess: async (response) => {
+                console.log('Payment success:', response);
+                
+                // 서버 검증
+                try {
+                  const verification = await fetch('/portone/verify', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                      imp_uid: response.paymentId,
+                      merchant_uid: merchantUid
+                    })
+                  });
 
-
-          console.log('Payment response:', response);
-
-          // 결제 결과 처리
-          if (response.code != null) {
-            // 결제 실패
-            alert('Payment failed: ' + response.message);
-          } else {
-            // 결제 성공 - 서버 검증
-            const verification = await fetch('/portone/verify', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
+                  const verifyResult = await verification.json();
+                  
+                  if (verifyResult.success) {
+                    window.location.href = '/portone/success?type=employer';
+                  } else {
+                    alert('Payment verification failed: ' + verifyResult.message);
+                  }
+                } catch (error) {
+                  console.error('Verification error:', error);
+                  alert('Payment verification error: ' + error.message);
+                }
               },
-              body: JSON.stringify({
-                imp_uid: response.paymentId,
-                merchant_uid: merchantUid
-              })
-            });
-
-            const verifyResult = await verification.json();
-            
-            if (verifyResult.success) {
-              // 검증 성공
-              window.location.href = '/portone/success?type=employer';
-            } else {
-              alert('Payment verification failed: ' + verifyResult.message);
+              onPaymentFail: (error) => {
+                console.error('Payment failed:', error);
+                alert('Payment failed: ' + (error.message || 'Unknown error'));
+                cancelPayment();
+              }
             }
-          }
+          );
+          
         } catch (error) {
-          console.error('Payment error:', error);
-          alert('Payment error occurred: ' + error.message);
+          console.error('Payment UI error:', error);
+          alert('Payment initialization error: ' + error.message);
+          cancelPayment();
         }
       });
+    }
+    
+    function cancelPayment() {
+      document.querySelector('.row.g-3').style.display = 'flex';
+      document.getElementById('payment-section').style.display = 'none';
+      selectedPackage = null;
+      selectedPrice = null;
     }
 
     // 카드 hover 효과
