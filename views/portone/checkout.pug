@@ -42,22 +42,59 @@ block content
             
             hr.my-4
             
-            //- PayPal 버튼 렌더링 영역
+            //- 결제 수단 선택
+            #payment-method-selection.mt-4(style="display: none;")
+              .card.border-primary
+                .card-body
+                  h5.card-title.text-center.mb-4 Select Payment Method
+                  p.text-center.text-muted#selected-package-info.mb-4
+                  
+                  .row.g-3
+                    .col-md-6
+                      .card.payment-method-card(
+                        onclick="selectPaymentMethod('toss')"
+                        style="cursor: pointer; border: 2px solid #0064FF; transition: all 0.3s;"
+                      )
+                        .card-body.text-center.py-4
+                          i.fas.fa-credit-card.fa-3x.mb-3(style="color: #0064FF;")
+                          h5 국내 결제
+                          p.text-muted.mb-0.small 카드 / 계좌이체 / 가상계좌
+                          p.text-muted.mb-0.small Toss Payments
+                    
+                    .col-md-6
+                      .card.payment-method-card(
+                        onclick="selectPaymentMethod('paypal')"
+                        style="cursor: pointer; border: 2px solid #0070BA; transition: all 0.3s;"
+                      )
+                        .card-body.text-center.py-4
+                          i.fab.fa-paypal.fa-3x.mb-3(style="color: #0070BA;")
+                          h5 International Payment
+                          p.text-muted.mb-0.small Credit/Debit Card
+                          p.text-muted.mb-0.small PayPal
+                  
+                  .text-center.mt-4
+                    button.btn.btn-outline-secondary(onclick="cancelPaymentMethodSelection()")
+                      i.fas.fa-times.me-2
+                      | Cancel
+            
+            //- 결제 UI 영역
             #payment-section.mt-4(style="display: none;")
               .card.border-primary
                 .card-body
                   h5.card-title.text-center.mb-3 Complete Your Payment
-                  p.text-center.text-muted#selected-package-info
-                  .portone-ui-container#paypal-button-container
+                  p.text-center.text-muted#payment-info
+                  .portone-ui-container#payment-button-container
                   .text-center.mt-3
                     button.btn.btn-outline-secondary(onclick="cancelPayment()")
                       i.fas.fa-times.me-2
-                      | Cancel
+                      | Back
             
             .text-center
               p.text-muted
                 i.fas.fa-lock.me-1
-                | Secure payment powered by PortOne & PayPal
+                | Secure payment powered by PortOne
+              p.text-muted.small
+                | 🌍 International: PayPal | 🇰🇷 Korea: Toss Payments
               p.mb-0
                 a.btn.btn-outline-secondary(href="/user/mypage")
                   i.fas.fa-arrow-left.me-2
@@ -70,6 +107,7 @@ block content
     let currentPaymentUI = null;
     let selectedPackage = null;
     let selectedPrice = null;
+    let selectedPaymentMethod = null;
 
     // PortOne SDK 초기화 대기
     function waitForPortOne(callback) {
@@ -88,14 +126,42 @@ block content
       document.getElementById('selected-package-info').textContent = 
         `Package: ${packageId} job ads - $${price} USD`;
       
-      // 패키지 선택 영역 숨기고 결제 영역 표시
+      // 패키지 선택 영역 숨기고 결제 수단 선택 표시
       document.querySelector('.row.g-3').style.display = 'none';
+      document.getElementById('payment-method-selection').style.display = 'block';
+    }
+    
+    function cancelPaymentMethodSelection() {
+      document.querySelector('.row.g-3').style.display = 'flex';
+      document.getElementById('payment-method-selection').style.display = 'none';
+      selectedPackage = null;
+      selectedPrice = null;
+    }
+    
+    function selectPaymentMethod(method) {
+      selectedPaymentMethod = method;
+      
+      // 결제 수단 선택 영역 숨기고 실제 결제 UI 표시
+      document.getElementById('payment-method-selection').style.display = 'none';
       document.getElementById('payment-section').style.display = 'block';
+      
+      const paymentInfo = document.getElementById('payment-info');
+      paymentInfo.textContent = `Package: ${selectedPackage} job ads - $${selectedPrice} USD`;
+      
+      // 선택된 결제 수단에 따라 UI 로드
+      if (method === 'paypal') {
+        loadPayPalUI();
+      } else if (method === 'toss') {
+        loadTossPaymentsUI();
+      }
+    }
+    
+    function loadPayPalUI() {
       
       waitForPortOne(async () => {
         try {
           const userId = '#{user._id}';
-          const merchantUid = 'employer_' + packageId + '_' + userId.substring(0, 8) + '_' + new Date().getTime();
+          const merchantUid = 'employer_' + selectedPackage + '_' + userId.substring(0, 8) + '_' + new Date().getTime();
           
           // Customer 정보 준비
           const customerData = {
@@ -111,10 +177,10 @@ block content
           console.log('🔍 PayPal Payment UI request:', {
             uiType: 'PAYPAL_SPB',
             storeId: '#{storeId}',
-            channelKey: '#{channelKey}',
+            channelKey: '#{paypalChannelKey}',
             paymentId: merchantUid,
-            orderName: 'Job Ad Package - ' + packageId + ' ads',
-            totalAmount: price,
+            orderName: 'Job Ad Package - ' + selectedPackage + ' ads',
+            totalAmount: selectedPrice,
             currency: 'USD'
           });
           
@@ -122,10 +188,10 @@ block content
           const requestData = {
             uiType: 'PAYPAL_SPB',
             storeId: '#{storeId}',
-            channelKey: '#{channelKey}',
+            channelKey: '#{paypalChannelKey}',
             paymentId: merchantUid,
-            orderName: 'Job Ad Package - ' + packageId + ' ads',
-            totalAmount: price,
+            orderName: 'Job Ad Package - ' + selectedPackage + ' ads',
+            totalAmount: selectedPrice,
             currency: 'USD',
             customer: customerData
           };
@@ -177,23 +243,122 @@ block content
       });
     }
     
+    function loadTossPaymentsUI() {
+      waitForPortOne(async () => {
+        try {
+          const userId = '#{user._id}';
+          const merchantUid = 'employer_' + selectedPackage + '_' + userId.substring(0, 8) + '_' + new Date().getTime();
+          
+          // Customer 정보 준비
+          const customerData = {
+            fullName: '#{user.name || user.email}',
+            email: '#{user.email}'
+          };
+          
+          const userPhone = '#{user.phone || ""}';
+          if (userPhone) {
+            customerData.phoneNumber = userPhone;
+          }
+          
+          console.log('🔍 Toss Payments request:', {
+            storeId: '#{storeId}',
+            channelKey: '#{tossChannelKey}',
+            paymentId: merchantUid,
+            orderName: 'Job Ad Package - ' + selectedPackage + ' ads',
+            totalAmount: selectedPrice,
+            currency: 'KRW'
+          });
+          
+          // Toss Payments 결제창 (V2 SDK - requestPayment)
+          const response = await PortOne.requestPayment({
+            storeId: '#{storeId}',
+            channelKey: '#{tossChannelKey}',
+            paymentId: merchantUid,
+            orderName: 'Job Ad Package - ' + selectedPackage + ' ads',
+            totalAmount: selectedPrice * 1300, // USD to KRW 대략 환율
+            currency: 'KRW',
+            payMethod: 'CARD',
+            customer: customerData
+          });
+          
+          if (response.code != null) {
+            // 오류 발생
+            console.error('Payment failed:', response);
+            alert('Payment failed: ' + response.message);
+            cancelPayment();
+            return;
+          }
+          
+          // 결제 성공 - 서버 검증
+          try {
+            const verification = await fetch('/portone/verify', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                imp_uid: response.paymentId,
+                merchant_uid: merchantUid
+              })
+            });
+
+            const verifyResult = await verification.json();
+            
+            if (verifyResult.success) {
+              window.location.href = '/portone/success?type=employer';
+            } else {
+              alert('Payment verification failed: ' + verifyResult.message);
+            }
+          } catch (error) {
+            console.error('Verification error:', error);
+            alert('Payment verification error: ' + error.message);
+          }
+          
+        } catch (error) {
+          console.error('Payment error:', error);
+          alert('Payment initialization error: ' + error.message);
+          cancelPayment();
+        }
+      });
+    }
+    
     function cancelPayment() {
-      document.querySelector('.row.g-3').style.display = 'flex';
+      // 결제 UI 숨기고 결제 수단 선택으로 돌아가기
       document.getElementById('payment-section').style.display = 'none';
-      selectedPackage = null;
-      selectedPrice = null;
+      document.getElementById('payment-method-selection').style.display = 'block';
+      selectedPaymentMethod = null;
+      
+      // 컨테이너 비우기
+      const container = document.getElementById('payment-button-container');
+      if (container) {
+        container.innerHTML = '';
+      }
     }
 
     // 카드 hover 효과
-    document.querySelectorAll('.package-card').forEach(card => {
-      card.addEventListener('mouseenter', function() {
-        this.style.borderColor = '#4CAF50';
-        this.style.transform = 'translateY(-5px)';
-        this.style.boxShadow = '0 10px 20px rgba(76, 175, 80, 0.2)';
+    document.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('.package-card').forEach(card => {
+        card.addEventListener('mouseenter', function() {
+          this.style.borderColor = '#4CAF50';
+          this.style.transform = 'translateY(-5px)';
+          this.style.boxShadow = '0 10px 20px rgba(76, 175, 80, 0.2)';
+        });
+        card.addEventListener('mouseleave', function() {
+          this.style.borderColor = '#ddd';
+          this.style.transform = 'translateY(0)';
+          this.style.boxShadow = 'none';
+        });
       });
-      card.addEventListener('mouseleave', function() {
-        this.style.borderColor = '#ddd';
-        this.style.transform = 'translateY(0)';
-        this.style.boxShadow = 'none';
+      
+      // 결제 수단 카드 hover 효과
+      document.querySelectorAll('.payment-method-card').forEach(card => {
+        card.addEventListener('mouseenter', function() {
+          this.style.transform = 'translateY(-5px)';
+          this.style.boxShadow = '0 10px 20px rgba(0, 0, 0, 0.1)';
+        });
+        card.addEventListener('mouseleave', function() {
+          this.style.transform = 'translateY(0)';
+          this.style.boxShadow = 'none';
+        });
       });
     });

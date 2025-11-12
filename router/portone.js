@@ -32,7 +32,8 @@ router.get("/checkout", requireLogin, (req, res) => {
       days,
       price: selected ? selected.price : 0,
       label: selected ? selected.label : `Tutor Listing - ${days} Days`,
-      channelKey: process.env.PORTONE_CHANNEL_KEY,
+      paypalChannelKey: process.env.PORTONE_PAYPAL_CHANNEL_KEY,
+      tossChannelKey: process.env.PORTONE_TOSSPAYMENTS_CHANNEL_KEY,
       storeId: process.env.PORTONE_STORE_ID,
       testMode: process.env.PORTONE_TEST_MODE === "true",
     });
@@ -52,7 +53,8 @@ router.get("/checkout", requireLogin, (req, res) => {
       user: req.user,
       packages,
       preselectDays,
-      channelKey: process.env.PORTONE_CHANNEL_KEY,
+      paypalChannelKey: process.env.PORTONE_PAYPAL_CHANNEL_KEY,
+      tossChannelKey: process.env.PORTONE_TOSSPAYMENTS_CHANNEL_KEY,
       storeId: process.env.PORTONE_STORE_ID,
       testMode: process.env.PORTONE_TEST_MODE === "true",
     });
@@ -69,7 +71,8 @@ router.get("/checkout", requireLogin, (req, res) => {
   return res.render("portone/checkout", {
     user: req.user,
     packages,
-    channelKey: process.env.PORTONE_CHANNEL_KEY,
+    paypalChannelKey: process.env.PORTONE_PAYPAL_CHANNEL_KEY,
+    tossChannelKey: process.env.PORTONE_TOSSPAYMENTS_CHANNEL_KEY,
     storeId: process.env.PORTONE_STORE_ID,
     testMode: process.env.PORTONE_TEST_MODE === "true",
   });

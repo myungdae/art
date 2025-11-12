@@ -17,9 +17,13 @@ module.exports = {
         Server_Url_With_Port: 'http://localhost:8608',
         // PortOne Payment Configuration
         PORTONE_STORE_ID: 'store-3ba0c64e-b600-4174-b3b0-652fa76be2ff',
-        PORTONE_CHANNEL_KEY: 'channel-key-fbce0f54-b483-4364-9993-f0971b3e307d',
         PORTONE_TEST_MODE: 'true',
-        PAYPAL_MID: 'UFYSG9T7RFW2A'
+        // PayPal (International)
+        PORTONE_PAYPAL_CHANNEL_KEY: 'channel-key-fbce0f54-b483-4364-9993-f0971b3e307d',
+        PAYPAL_MID: 'UFYSG9T7RFW2A',
+        // Toss Payments (Korea)
+        PORTONE_TOSSPAYMENTS_CHANNEL_KEY: 'channel-key-84d35b65-d8e8-4a22-8ad9-2d186749b80e',
+        TOSSPAYMENTS_MID: 'tosstest'
       }
     }
   ],
