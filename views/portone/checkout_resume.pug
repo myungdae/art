@@ -40,7 +40,7 @@ block content
             
             hr.my-4
             
-            //- 결제 수단 선택
+            //- Payment Method Selection
             #payment-method-selection.mt-4(style="display: none;")
               .card.border-primary
                 .card-body
@@ -55,8 +55,8 @@ block content
                       )
                         .card-body.text-center.py-4
                           i.fas.fa-credit-card.fa-3x.mb-3(style="color: #0064FF;")
-                          h5 국내 결제
-                          p.text-muted.mb-0.small 카드 / 계좌이체 / 가상계좌
+                          h5 Domestic Payment
+                          p.text-muted.mb-0.small Card / Bank Transfer / Virtual Account
                           p.text-muted.mb-0.small Toss Payments
                     
                     .col-md-6
@@ -75,7 +75,7 @@ block content
                       i.fas.fa-times.me-2
                       | Cancel
             
-            //- 결제 UI 영역
+            //- Payment UI Section
             #payment-section.mt-4(style="display: none;")
               .card.border-primary
                 .card-body
@@ -112,7 +112,7 @@ block content
     let selectedDays = null;
     let selectedPaymentMethod = null;
 
-    // PortOne SDK 초기화 대기
+    // Wait for PortOne SDK initialization
     function waitForPortOne(callback) {
       if (typeof PortOne !== 'undefined') {
         callback();
@@ -126,11 +126,11 @@ block content
       selectedPrice = price;
       selectedDays = days;
       
-      // 패키지 정보 표시
+      // Display package info
       document.getElementById('selected-package-info').textContent = 
         `Package: ${days} days resume access - $${price} USD`;
       
-      // 패키지 선택 영역 숨기고 결제 수단 선택 표시
+      // Hide package selection and show payment method selection
       document.querySelector('.row.g-3').style.display = 'none';
       document.getElementById('payment-method-selection').style.display = 'block';
     }
@@ -146,14 +146,14 @@ block content
     function selectPaymentMethod(method) {
       selectedPaymentMethod = method;
       
-      // 결제 수단 선택 영역 숨기고 실제 결제 UI 표시
+      // Hide payment method selection and show payment UI
       document.getElementById('payment-method-selection').style.display = 'none';
       document.getElementById('payment-section').style.display = 'block';
       
       const paymentInfo = document.getElementById('payment-info');
       paymentInfo.textContent = `Package: ${selectedDays} days resume access - $${selectedPrice} USD`;
       
-      // 선택된 결제 수단에 따라 UI 로드
+      // Load UI based on selected payment method
       if (method === 'paypal') {
         loadPayPalUI();
       } else if (method === 'toss') {
@@ -168,7 +168,7 @@ block content
           const userId = '#{user._id}';
           const merchantUid = 'resume_' + selectedDays + 'd_' + userId.substring(0, 8) + '_' + new Date().getTime();
           
-          // Customer 정보 준비
+          // Prepare customer data
           const customerData = {
             fullName: '#{user.name || user.email}',
             email: '#{user.email}'
@@ -189,7 +189,7 @@ block content
             currency: 'USD'
           });
           
-          // PayPal 버튼 렌더링
+          // Render PayPal button
           const requestData = {
             uiType: 'PAYPAL_SPB',
             storeId: '#{storeId}',
@@ -253,7 +253,7 @@ block content
           const userId = '#{user._id}';
           const merchantUid = 'resume_' + selectedDays + 'd_' + userId.substring(0, 8) + '_' + new Date().getTime();
           
-          // Customer 정보 준비
+          // Prepare customer data
           const customerData = {
             fullName: '#{user.name || user.email}',
             email: '#{user.email}'
@@ -273,7 +273,7 @@ block content
             currency: 'KRW'
           });
           
-          // Toss Payments 결제창
+          // Toss Payments checkout
           const response = await PortOne.requestPayment({
             storeId: '#{storeId}',
             channelKey: '#{tossChannelKey}',
@@ -292,7 +292,7 @@ block content
             return;
           }
           
-          // 결제 성공 - 서버 검증
+          // Payment success - server verification
           try {
             const verification = await fetch('/portone/verify', {
               method: 'POST',
@@ -326,19 +326,19 @@ block content
     }
     
     function cancelPayment() {
-      // 결제 UI 숨기고 결제 수단 선택으로 돌아가기
+      // Hide payment UI and return to payment method selection
       document.getElementById('payment-section').style.display = 'none';
       document.getElementById('payment-method-selection').style.display = 'block';
       selectedPaymentMethod = null;
       
-      // 컨테이너 비우기
+      // Clear container
       const container = document.getElementById('payment-button-container');
       if (container) {
         container.innerHTML = '';
       }
     }
 
-    // 카드 hover 효과
+    // Card hover effects
     document.addEventListener('DOMContentLoaded', function() {
       document.querySelectorAll('.package-card').forEach(card => {
         card.addEventListener('mouseenter', function() {
@@ -355,7 +355,7 @@ block content
         });
       });
       
-      // 결제 수단 카드 hover 효과
+      // Payment method card hover effects
       document.querySelectorAll('.payment-method-card').forEach(card => {
         card.addEventListener('mouseenter', function() {
           this.style.transform = 'translateY(-5px)';
