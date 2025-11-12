@@ -14,7 +14,12 @@ module.exports = {
         Server_Host: 'localhost',
         Server_Protocol: 'http',
         Server_Url: 'http://localhost:8608',
-        Server_Url_With_Port: 'http://localhost:8608'
+        Server_Url_With_Port: 'http://localhost:8608',
+        // PortOne Payment Configuration
+        PORTONE_STORE_ID: 'store-4ff4af41-85e3-4559-8eb8-0d08a2c6ceec',
+        PORTONE_CHANNEL_KEY: 'channel-key-fbce0f54-b483-4364-9993-f0971b3e307d',
+        PORTONE_TEST_MODE: 'true',
+        PAYPAL_MID: 'UFYSG9T7RFW2A'
       }
     }
   ],
