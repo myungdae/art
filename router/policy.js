@@ -5,7 +5,7 @@ const commonLocals = {
   siteName: "ESL PLUS",
   companyName: "Linked Data Center Co., Ltd.",
   supportEmail: "myungdae.cho@gmail.com",
-  supportPhone: "02-000-0000",
+  supportPhone: "+82-10-9744-5425",
   dpoName: "Myungdae Cho",
   lastUpdated: "2025-08-24",
 };
