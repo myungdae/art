@@ -126,6 +126,33 @@ html(lang="en")
         background: var(--admin-danger);
       }
       
+      .admin-sidebar-footer {
+        padding: 1.5rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        margin-top: auto;
+      }
+      
+      .view-site-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.875rem 1.5rem;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+      }
+      
+      .view-site-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+        color: white;
+      }
+      
       .admin-main {
         margin-left: var(--sidebar-width);
         flex: 1;
@@ -187,6 +214,27 @@ html(lang="en")
       .admin-logout-btn:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        color: white;
+      }
+      
+      .admin-view-site-btn {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        border: none;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+      }
+      
+      .admin-view-site-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
         color: white;
       }
       
@@ -264,6 +312,12 @@ html(lang="en")
             a.admin-nav-item(href="/admin/settings", class=currentPage === 'settings' ? 'active' : '')
               i.admin-nav-icon.fas.fa-cog
               span Settings
+        
+        //- Sidebar Footer
+        .admin-sidebar-footer
+          a.view-site-btn(href="/", target="_blank")
+            i.fas.fa-external-link-alt
+            span View Site
       
       //- Main Content
       main.admin-main
@@ -273,6 +327,9 @@ html(lang="en")
             .admin-user-info
               .admin-username Admin User
               .admin-role Administrator
+            a.admin-view-site-btn(href="/", target="_blank")
+              i.fas.fa-home
+              span View Site
             a.admin-logout-btn(href="/admin/logout")
               i.fas.fa-sign-out-alt
               span Logout
