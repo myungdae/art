@@ -1,0 +1,307 @@
+extends layout
+
+block content
+  //- Chart.js CDN
+  script(src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js")
+  
+  style.
+    .analytics-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    
+    .analytics-stat-card {
+      background: white;
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      border-left: 4px solid #3b82f6;
+    }
+    
+    .analytics-stat-value {
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: #1e293b;
+      margin-bottom: 0.5rem;
+    }
+    
+    .analytics-stat-label {
+      font-size: 1rem;
+      color: #64748b;
+      font-weight: 600;
+    }
+    
+    .chart-container {
+      background: white;
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      margin-bottom: 2rem;
+    }
+    
+    .chart-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+    }
+    
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    
+    .chart-canvas {
+      height: 350px;
+    }
+
+  //- Stats Overview
+  .analytics-stats
+    .analytics-stat-card(style="border-left-color: #8b5cf6;")
+      .analytics-stat-value ₩#{stats.totalRevenue.toLocaleString()}
+      .analytics-stat-label
+        i.fas.fa-dollar-sign.me-2
+        | Total Revenue
+    .analytics-stat-card(style="border-left-color: #10b981;")
+      .analytics-stat-value= stats.totalTransactions
+      .analytics-stat-label
+        i.fas.fa-receipt.me-2
+        | Total Transactions
+    .analytics-stat-card(style="border-left-color: #3b82f6;")
+      .analytics-stat-value ₩#{stats.avgTransaction.toLocaleString()}
+      .analytics-stat-label
+        i.fas.fa-chart-line.me-2
+        | Avg Transaction
+
+  //- Monthly Revenue Chart
+  .chart-container
+    h3.chart-title
+      i.fas.fa-chart-area.me-2
+      | Monthly Revenue Trend
+    .chart-canvas
+      canvas#monthlyRevenueChart
+
+  //- Charts Grid
+  .charts-grid
+    //- Revenue by Package Type
+    .chart-container
+      h3.chart-title
+        i.fas.fa-box.me-2
+        | Revenue by Package Type
+      .chart-canvas(style="height: 300px;")
+        canvas#packageRevenueChart
+    
+    //- Revenue by User Role
+    .chart-container
+      h3.chart-title
+        i.fas.fa-users.me-2
+        | Revenue by User Role
+      .chart-canvas(style="height: 300px;")
+        canvas#roleRevenueChart
+
+  //- Payment Methods Chart
+  .chart-container
+    h3.chart-title
+      i.fas.fa-credit-card.me-2
+      | Payment Methods Distribution
+    .chart-canvas(style="height: 300px;")
+      canvas#paymentMethodsChart
+
+  script.
+    document.addEventListener('DOMContentLoaded', function() {
+      // Monthly Revenue Chart
+      const monthlyRevenueCtx = document.getElementById('monthlyRevenueChart');
+      if (monthlyRevenueCtx) {
+        const monthlyData = !{JSON.stringify(monthlyRevenue)};
+        const labels = Object.keys(monthlyData);
+        const values = Object.values(monthlyData);
+        
+        new Chart(monthlyRevenueCtx, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Revenue (₩)',
+              data: values,
+              borderColor: '#8b5cf6',
+              backgroundColor: 'rgba(139, 92, 246, 0.1)',
+              borderWidth: 3,
+              fill: true,
+              tension: 0.4,
+              pointRadius: 5,
+              pointBackgroundColor: '#8b5cf6',
+              pointBorderColor: '#fff',
+              pointBorderWidth: 2
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: false
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    return '₩' + context.parsed.y.toLocaleString();
+                  }
+                }
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  callback: function(value) {
+                    return '₩' + value.toLocaleString();
+                  }
+                }
+              }
+            }
+          }
+        });
+      }
+      
+      // Revenue by Package Type Chart
+      const packageRevenueCtx = document.getElementById('packageRevenueChart');
+      if (packageRevenueCtx) {
+        const packageData = !{JSON.stringify(revenueByPackage)};
+        
+        new Chart(packageRevenueCtx, {
+          type: 'doughnut',
+          data: {
+            labels: ['Job Ads', 'Resume Access', 'Tutor Access'],
+            datasets: [{
+              data: [
+                packageData.job_ads || 0,
+                packageData.resume_access || 0,
+                packageData.tutor_access || 0
+              ],
+              backgroundColor: ['#ef4444', '#3b82f6', '#8b5cf6'],
+              borderWidth: 2,
+              borderColor: '#fff'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: {
+                  padding: 15,
+                  font: {
+                    size: 12,
+                    weight: 600
+                  }
+                }
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    return context.label + ': ₩' + context.parsed.toLocaleString();
+                  }
+                }
+              }
+            }
+          }
+        });
+      }
+      
+      // Revenue by User Role Chart
+      const roleRevenueCtx = document.getElementById('roleRevenueChart');
+      if (roleRevenueCtx) {
+        const roleData = !{JSON.stringify(revenueByRole)};
+        
+        new Chart(roleRevenueCtx, {
+          type: 'bar',
+          data: {
+            labels: ['Employers', 'Job Seekers', 'Tutors'],
+            datasets: [{
+              label: 'Revenue (₩)',
+              data: [
+                roleData.Employer || 0,
+                roleData.Job_Seeker || 0,
+                roleData.Online_Tutor || 0
+              ],
+              backgroundColor: ['#ef4444', '#3b82f6', '#8b5cf6'],
+              borderRadius: 8,
+              borderWidth: 0
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: false
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    return '₩' + context.parsed.y.toLocaleString();
+                  }
+                }
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  callback: function(value) {
+                    return '₩' + value.toLocaleString();
+                  }
+                }
+              }
+            }
+          }
+        });
+      }
+      
+      // Payment Methods Chart
+      const paymentMethodsCtx = document.getElementById('paymentMethodsChart');
+      if (paymentMethodsCtx) {
+        const methodsData = !{JSON.stringify(paymentMethods)};
+        const labels = Object.keys(methodsData);
+        const values = Object.values(methodsData);
+        
+        new Chart(paymentMethodsCtx, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Transactions',
+              data: values,
+              backgroundColor: '#10b981',
+              borderRadius: 8,
+              borderWidth: 0
+            }]
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: false
+              }
+            },
+            scales: {
+              x: {
+                beginAtZero: true,
+                ticks: {
+                  stepSize: 1
+                }
+              }
+            }
+          }
+        });
+      }
+    });

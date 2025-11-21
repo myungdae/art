@@ -464,4 +464,268 @@ router.get('/users', requireAdmin, async (req, res) => {
   }
 });
 
+/* ---------------------- Revenue Sub-pages ---------------------- */
+router.get('/revenue/transactions', requireAdmin, async (req, res) => {
+  try {
+    const Payment = require('../model/payment');
+    
+    // Get all transactions with user details
+    const transactions = await Payment.find()
+      .populate('userId', 'username email role')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const formattedTransactions = transactions.map(t => ({
+      id: t._id,
+      paymentId: t.paymentId,
+      merchantUid: t.merchantUid,
+      userName: t.userId?.username || t.userEmail,
+      userEmail: t.userEmail,
+      userRole: t.userRole,
+      amount: t.amount,
+      currency: t.currency || 'KRW',
+      paymentMethod: t.paymentMethod,
+      packageType: t.packageType,
+      packageDescription: t.packageDetails?.description || '-',
+      status: t.status,
+      paidAt: toKST(t.paidAt),
+      createdAt: toKST(t.createdAt)
+    }));
+
+    // Statistics
+    const totalTransactions = transactions.length;
+    const paidTransactions = transactions.filter(t => t.status === 'paid');
+    const totalRevenue = paidTransactions.reduce((sum, t) => sum + (t.amount || 0), 0);
+    const avgTransaction = paidTransactions.length > 0 
+      ? Math.round(totalRevenue / paidTransactions.length) 
+      : 0;
+
+    res.render('admin/transactions', {
+      currentPage: 'transactions',
+      pageTitle: 'Transactions',
+      transactions: formattedTransactions,
+      stats: {
+        total: totalTransactions,
+        paid: paidTransactions.length,
+        pending: transactions.filter(t => t.status === 'pending').length,
+        failed: transactions.filter(t => t.status === 'failed').length,
+        totalRevenue,
+        avgTransaction
+      }
+    });
+  } catch (err) {
+    console.error('❌ Transactions page error:', err);
+    res.status(500).render('error', {
+      message: 'Transactions Error',
+      error: err
+    });
+  }
+});
+
+router.get('/revenue/analytics', requireAdmin, async (req, res) => {
+  try {
+    const Payment = require('../model/payment');
+    
+    // Get paid payments only
+    const payments = await Payment.find({ status: 'paid' })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    // Calculate analytics
+    const totalRevenue = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
+    
+    // Revenue by month (last 6 months)
+    const monthlyRevenue = {};
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      monthlyRevenue[key] = 0;
+    }
+    
+    payments.forEach(p => {
+      const date = new Date(p.createdAt);
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      if (monthlyRevenue.hasOwnProperty(key)) {
+        monthlyRevenue[key] += p.amount || 0;
+      }
+    });
+
+    // Revenue by package type
+    const revenueByPackage = {
+      job_ads: 0,
+      resume_access: 0,
+      tutor_access: 0
+    };
+    
+    payments.forEach(p => {
+      if (revenueByPackage.hasOwnProperty(p.packageType)) {
+        revenueByPackage[p.packageType] += p.amount || 0;
+      }
+    });
+
+    // Revenue by user role
+    const revenueByRole = {
+      Employer: 0,
+      Job_Seeker: 0,
+      Online_Tutor: 0
+    };
+    
+    payments.forEach(p => {
+      if (revenueByRole.hasOwnProperty(p.userRole)) {
+        revenueByRole[p.userRole] += p.amount || 0;
+      }
+    });
+
+    // Top payment methods
+    const paymentMethods = {};
+    payments.forEach(p => {
+      const method = p.paymentMethod || 'UNKNOWN';
+      paymentMethods[method] = (paymentMethods[method] || 0) + 1;
+    });
+
+    res.render('admin/analytics', {
+      currentPage: 'analytics',
+      pageTitle: 'Revenue Analytics',
+      stats: {
+        totalRevenue,
+        totalTransactions: payments.length,
+        avgTransaction: payments.length > 0 ? Math.round(totalRevenue / payments.length) : 0
+      },
+      monthlyRevenue,
+      revenueByPackage,
+      revenueByRole,
+      paymentMethods
+    });
+  } catch (err) {
+    console.error('❌ Analytics page error:', err);
+    res.status(500).render('error', {
+      message: 'Analytics Error',
+      error: err
+    });
+  }
+});
+
+/* ---------------------- User Management Sub-pages ---------------------- */
+router.get('/users/employers', requireAdmin, async (req, res) => {
+  try {
+    const allEmployers = await User.find({ role: 'Employer' })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const employers = allEmployers.map(e => ({
+      id: e._id,
+      username: e.username || '—',
+      email: e.email || '—',
+      remainingTokens: Number(e.adsAvailable || 0),
+      hasCredits: Number(e.adsAvailable || 0) > 0,
+      createdAtDisplay: toKST(e.createdAt)
+    }));
+
+    const stats = {
+      total: employers.length,
+      withCredits: employers.filter(e => e.hasCredits).length,
+      withoutCredits: employers.filter(e => !e.hasCredits).length,
+      totalCredits: employers.reduce((sum, e) => sum + e.remainingTokens, 0)
+    };
+
+    res.render('admin/users_employers', {
+      currentPage: 'employers',
+      pageTitle: 'Employers',
+      employers,
+      stats
+    });
+  } catch (err) {
+    console.error('❌ Employers page error:', err);
+    res.status(500).render('error', {
+      message: 'Employers Management Error',
+      error: err
+    });
+  }
+});
+
+router.get('/users/job-seekers', requireAdmin, async (req, res) => {
+  try {
+    const allJobSeekers = await User.find({ role: 'Job_Seeker' })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const jobSeekers = allJobSeekers.map(js => {
+      const remainingDays = daysRemainingFromDoc({ resumeAccess: js.resumeAccess });
+      return {
+        id: js._id,
+        username: js.username || '—',
+        email: js.email || '—',
+        remainingDays,
+        isActive: remainingDays > 0,
+        expiresAtDisplay: js.resumeAccess?.startDate 
+          ? toKST(new Date(new Date(js.resumeAccess.startDate).getTime() + (js.resumeAccess.durationDays || 0) * 86400000))
+          : '—',
+        createdAtDisplay: toKST(js.createdAt)
+      };
+    });
+
+    const stats = {
+      total: jobSeekers.length,
+      active: jobSeekers.filter(js => js.isActive).length,
+      inactive: jobSeekers.filter(js => !js.isActive).length
+    };
+
+    res.render('admin/users_jobseekers', {
+      currentPage: 'job-seekers',
+      pageTitle: 'Job Seekers',
+      jobSeekers,
+      stats
+    });
+  } catch (err) {
+    console.error('❌ Job Seekers page error:', err);
+    res.status(500).render('error', {
+      message: 'Job Seekers Management Error',
+      error: err
+    });
+  }
+});
+
+router.get('/users/tutors', requireAdmin, async (req, res) => {
+  try {
+    const allTutors = await User.find({ role: 'Online_Tutor' })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const onlineTutors = allTutors.map(ot => {
+      const remainingDays = daysRemainingFromDoc({ resumeAccess: ot.tutorAccess });
+      return {
+        id: ot._id,
+        username: ot.username || '—',
+        email: ot.email || '—',
+        remainingDays,
+        isActive: remainingDays > 0,
+        expiresAtDisplay: ot.tutorAccess?.startDate 
+          ? toKST(new Date(new Date(ot.tutorAccess.startDate).getTime() + (ot.tutorAccess.durationDays || 0) * 86400000))
+          : '—',
+        createdAtDisplay: toKST(ot.createdAt)
+      };
+    });
+
+    const stats = {
+      total: onlineTutors.length,
+      active: onlineTutors.filter(ot => ot.isActive).length,
+      inactive: onlineTutors.filter(ot => !ot.isActive).length
+    };
+
+    res.render('admin/users_tutors', {
+      currentPage: 'tutors',
+      pageTitle: 'Online Tutors',
+      onlineTutors,
+      stats
+    });
+  } catch (err) {
+    console.error('❌ Tutors page error:', err);
+    res.status(500).render('error', {
+      message: 'Tutors Management Error',
+      error: err
+    });
+  }
+});
+
 module.exports = router;

@@ -1,0 +1,249 @@
+extends layout
+
+block content
+  style.
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      border-left: 3px solid #3b82f6;
+    }
+    
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #1e293b;
+      margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+      font-size: 0.875rem;
+      color: #64748b;
+      font-weight: 600;
+    }
+    
+    .transactions-table-card {
+      background: white;
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+    
+    .table-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+    
+    .table-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin: 0;
+    }
+    
+    .search-box {
+      position: relative;
+      width: 300px;
+    }
+    
+    .search-box input {
+      width: 100%;
+      padding: 0.75rem 1rem 0.75rem 2.5rem;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 0.875rem;
+    }
+    
+    .search-box i {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #64748b;
+    }
+    
+    .transactions-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    .transactions-table thead th {
+      background: #f8fafc;
+      padding: 1rem;
+      text-align: left;
+      font-weight: 700;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      color: #64748b;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    
+    .transactions-table tbody tr {
+      border-bottom: 1px solid #f1f5f9;
+      transition: background 0.2s ease;
+    }
+    
+    .transactions-table tbody tr:hover {
+      background: #f8fafc;
+    }
+    
+    .transactions-table tbody td {
+      padding: 1rem;
+      color: #475569;
+      font-size: 0.875rem;
+    }
+    
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.375rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      gap: 0.375rem;
+    }
+    
+    .status-badge.paid {
+      background: #d1fae5;
+      color: #059669;
+    }
+    
+    .status-badge.pending {
+      background: #fef3c7;
+      color: #d97706;
+    }
+    
+    .status-badge.failed {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+    
+    .package-badge {
+      display: inline-block;
+      padding: 0.25rem 0.5rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    
+    .package-badge.job_ads {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+    
+    .package-badge.resume_access {
+      background: #dbeafe;
+      color: #2563eb;
+    }
+    
+    .package-badge.tutor_access {
+      background: #ede9fe;
+      color: #7c3aed;
+    }
+
+  //- Statistics Cards
+  .stats-grid
+    .stat-card
+      .stat-value= stats.total
+      .stat-label 
+        i.fas.fa-receipt.me-2
+        | Total Transactions
+    .stat-card(style="border-left-color: #10b981;")
+      .stat-value= stats.paid
+      .stat-label 
+        i.fas.fa-check-circle.me-2
+        | Paid
+    .stat-card(style="border-left-color: #f59e0b;")
+      .stat-value= stats.pending
+      .stat-label 
+        i.fas.fa-clock.me-2
+        | Pending
+    .stat-card(style="border-left-color: #ef4444;")
+      .stat-value= stats.failed
+      .stat-label 
+        i.fas.fa-times-circle.me-2
+        | Failed
+    .stat-card(style="border-left-color: #8b5cf6;")
+      .stat-value ₩#{stats.totalRevenue.toLocaleString()}
+      .stat-label 
+        i.fas.fa-dollar-sign.me-2
+        | Total Revenue
+    .stat-card(style="border-left-color: #06b6d4;")
+      .stat-value ₩#{stats.avgTransaction.toLocaleString()}
+      .stat-label 
+        i.fas.fa-chart-line.me-2
+        | Avg Transaction
+
+  //- Transactions Table
+  .transactions-table-card
+    .table-header
+      h2.table-title
+        i.fas.fa-list.me-2
+        | All Transactions
+      .search-box
+        i.fas.fa-search
+        input#searchInput(type="text", placeholder="Search transactions...")
+    
+    .table-responsive
+      table.transactions-table
+        thead
+          tr
+            th Payment ID
+            th User
+            th Package
+            th Amount
+            th Method
+            th Status
+            th Date
+        tbody
+          if transactions && transactions.length > 0
+            each txn in transactions
+              tr
+                td
+                  code(style="font-size: 0.75rem;")= txn.paymentId.substring(0, 20) + '...'
+                td
+                  div(style="font-weight: 600;")= txn.userName
+                  div(style="font-size: 0.75rem; color: #64748b;")= txn.userEmail
+                td
+                  span(class=`package-badge ${txn.packageType}`)= txn.packageType.replace('_', ' ')
+                  div(style="font-size: 0.75rem; color: #64748b; margin-top: 0.25rem;")= txn.packageDescription
+                td
+                  strong ₩#{txn.amount.toLocaleString()}
+                  div(style="font-size: 0.75rem; color: #64748b;")= txn.currency
+                td= txn.paymentMethod
+                td
+                  span(class=`status-badge ${txn.status}`)
+                    i.fas(class=txn.status === 'paid' ? 'fa-check-circle' : txn.status === 'pending' ? 'fa-clock' : 'fa-times-circle')
+                    = txn.status.toUpperCase()
+                td= txn.paidAt
+          else
+            tr
+              td(colspan="7", style="text-align: center; padding: 3rem; color: #94a3b8;")
+                i.fas.fa-inbox(style="font-size: 3rem; margin-bottom: 1rem; display: block;")
+                div No transactions found
+
+  script.
+    // Search functionality
+    const searchInput = document.getElementById('searchInput');
+    const tableRows = document.querySelectorAll('.transactions-table tbody tr');
+    
+    if (searchInput) {
+      searchInput.addEventListener('input', function() {
+        const query = this.value.toLowerCase();
+        
+        tableRows.forEach(row => {
+          const text = row.textContent.toLowerCase();
+          row.style.display = text.includes(query) ? '' : 'none';
+        });
+      });
+    }

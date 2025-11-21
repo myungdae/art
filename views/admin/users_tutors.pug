@@ -1,0 +1,266 @@
+extends layout
+
+block content
+  style.
+    .user-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      border-left: 3px solid #8b5cf6;
+    }
+    
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #1e293b;
+      margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+      font-size: 0.875rem;
+      color: #64748b;
+      font-weight: 600;
+    }
+    
+    .user-table-card {
+      background: white;
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+    
+    .table-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+    
+    .table-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .filter-buttons {
+      display: flex;
+      gap: 0.5rem;
+    }
+    
+    .filter-btn {
+      padding: 0.5rem 1rem;
+      border: 2px solid #e2e8f0;
+      background: white;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .filter-btn.active {
+      background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+      color: white;
+      border-color: transparent;
+    }
+    
+    .search-box {
+      position: relative;
+      margin-bottom: 1.5rem;
+    }
+    
+    .search-box input {
+      width: 100%;
+      padding: 0.875rem 1rem 0.875rem 3rem;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+    }
+    
+    .search-box i {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #64748b;
+    }
+    
+    .user-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    .user-table thead th {
+      background: #f8fafc;
+      padding: 1rem;
+      text-align: left;
+      font-weight: 700;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      color: #64748b;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    
+    .user-table tbody tr {
+      border-bottom: 1px solid #f1f5f9;
+      transition: background 0.2s ease;
+    }
+    
+    .user-table tbody tr:hover {
+      background: #f8fafc;
+    }
+    
+    .user-table tbody td {
+      padding: 1rem;
+      color: #475569;
+    }
+    
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.375rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      gap: 0.375rem;
+    }
+    
+    .badge.active {
+      background: #d1fae5;
+      color: #059669;
+    }
+    
+    .badge.inactive {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+
+  //- Statistics
+  .user-stats-grid
+    .stat-card
+      .stat-value= stats.total
+      .stat-label 
+        i.fas.fa-chalkboard-teacher.me-2
+        | Total Tutors
+    .stat-card(style="border-left-color: #10b981;")
+      .stat-value= stats.active
+      .stat-label 
+        i.fas.fa-check-circle.me-2
+        | Active
+    .stat-card(style="border-left-color: #ef4444;")
+      .stat-value= stats.inactive
+      .stat-label 
+        i.fas.fa-times-circle.me-2
+        | Inactive
+
+  //- Tutors Table
+  .user-table-card
+    .table-header
+      h2.table-title
+        i.fas.fa-chalkboard-teacher(style="color: #8b5cf6;")
+        | All Tutors
+      .filter-buttons
+        button.filter-btn.active(data-filter="all") All
+        button.filter-btn(data-filter="active") Active
+        button.filter-btn(data-filter="inactive") Inactive
+    
+    .search-box
+      i.fas.fa-search
+      input#searchInput(type="text", placeholder="Search by username or email...")
+    
+    .table-responsive
+      table.user-table
+        thead
+          tr
+            th Username
+            th Email
+            th Days Remaining
+            th Expires At
+            th Registered
+            th Status
+        tbody
+          if onlineTutors && onlineTutors.length > 0
+            each tutor in onlineTutors
+              tr(data-is-active=tutor.isActive ? 'true' : 'false')
+                td= tutor.username
+                td= tutor.email
+                td
+                  if tutor.remainingDays > 0
+                    span.badge.active= tutor.remainingDays + ' days'
+                  else
+                    span.badge.inactive Expired
+                td= tutor.expiresAtDisplay
+                td= tutor.createdAtDisplay
+                td
+                  if tutor.isActive
+                    span.badge.active
+                      i.fas.fa-check-circle
+                      | Active
+                  else
+                    span.badge.inactive
+                      i.fas.fa-times-circle
+                      | Inactive
+          else
+            tr
+              td(colspan="6", style="text-align: center; padding: 3rem; color: #94a3b8;")
+                i.fas.fa-inbox(style="font-size: 3rem; display: block; margin-bottom: 1rem;")
+                div No tutors found
+
+  script.
+    // Filter functionality
+    document.addEventListener('DOMContentLoaded', function() {
+      const filterBtns = document.querySelectorAll('.filter-btn');
+      const tableRows = document.querySelectorAll('.user-table tbody tr');
+      
+      filterBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+          filterBtns.forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+          
+          const filter = this.getAttribute('data-filter');
+          
+          tableRows.forEach(row => {
+            if (filter === 'all') {
+              row.style.display = '';
+            } else if (filter === 'active') {
+              row.style.display = row.getAttribute('data-is-active') === 'true' ? '' : 'none';
+            } else if (filter === 'inactive') {
+              row.style.display = row.getAttribute('data-is-active') === 'false' ? '' : 'none';
+            }
+          });
+        });
+      });
+      
+      // Search functionality
+      const searchInput = document.getElementById('searchInput');
+      if (searchInput) {
+        searchInput.addEventListener('input', function() {
+          const query = this.value.toLowerCase();
+          
+          tableRows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            const matches = text.includes(query);
+            
+            const filterBtn = document.querySelector('.filter-btn.active');
+            const filter = filterBtn.getAttribute('data-filter');
+            const isActive = row.getAttribute('data-is-active') === 'true';
+            
+            let showByFilter = true;
+            if (filter === 'active') showByFilter = isActive;
+            if (filter === 'inactive') showByFilter = !isActive;
+            
+            row.style.display = (matches && showByFilter) ? '' : 'none';
+          });
+        });
+      }
+    });
