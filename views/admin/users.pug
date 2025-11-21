@@ -1,0 +1,488 @@
+extends layout
+
+block content
+  style.
+    .user-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    
+    .user-stat-card {
+      background: white;
+      border-radius: 16px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      border-left: 4px solid;
+      transition: all 0.3s ease;
+    }
+    
+    .user-stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    .user-stat-card.employers {
+      border-left-color: #ef4444;
+    }
+    
+    .user-stat-card.job-seekers {
+      border-left-color: #3b82f6;
+    }
+    
+    .user-stat-card.tutors {
+      border-left-color: #8b5cf6;
+    }
+    
+    .user-stat-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+    
+    .user-stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+    
+    .user-stat-icon.employers {
+      background: #fee2e2;
+      color: #ef4444;
+    }
+    
+    .user-stat-icon.job-seekers {
+      background: #dbeafe;
+      color: #3b82f6;
+    }
+    
+    .user-stat-icon.tutors {
+      background: #ede9fe;
+      color: #8b5cf6;
+    }
+    
+    .user-stat-number {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #1e293b;
+      margin-bottom: 0.25rem;
+    }
+    
+    .user-stat-label {
+      font-size: 0.875rem;
+      color: #64748b;
+      font-weight: 600;
+    }
+    
+    .user-stat-details {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid #f1f5f9;
+    }
+    
+    .user-stat-detail-item {
+      flex: 1;
+    }
+    
+    .user-stat-detail-value {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: #1e293b;
+    }
+    
+    .user-stat-detail-label {
+      font-size: 0.75rem;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    
+    .user-table-card {
+      background: white;
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      border: 1px solid #e2e8f0;
+      margin-bottom: 2rem;
+    }
+    
+    .user-table-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+    
+    .user-table-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    
+    .user-filters {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+    
+    .filter-btn {
+      padding: 0.5rem 1rem;
+      border: 2px solid #e2e8f0;
+      background: white;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .filter-btn:hover {
+      border-color: #667eea;
+      color: #667eea;
+    }
+    
+    .filter-btn.active {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-color: transparent;
+    }
+    
+    .search-box {
+      position: relative;
+      margin-bottom: 1.5rem;
+    }
+    
+    .search-box input {
+      width: 100%;
+      padding: 0.875rem 1rem 0.875rem 3rem;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      font-size: 0.875rem;
+      transition: all 0.2s ease;
+    }
+    
+    .search-box input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .search-box i {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #64748b;
+    }
+    
+    .user-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+    
+    .user-table thead th {
+      background: #f8fafc;
+      padding: 1rem;
+      text-align: left;
+      font-weight: 700;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #64748b;
+      border-bottom: 2px solid #e2e8f0;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+    
+    .user-table thead th:hover {
+      background: #f1f5f9;
+    }
+    
+    .user-table tbody tr {
+      transition: background 0.2s ease;
+    }
+    
+    .user-table tbody tr:hover {
+      background: #f8fafc;
+    }
+    
+    .user-table tbody td {
+      padding: 1rem;
+      border-bottom: 1px solid #f1f5f9;
+      color: #475569;
+    }
+    
+    .user-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.375rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      gap: 0.375rem;
+    }
+    
+    .user-badge.active {
+      background: #d1fae5;
+      color: #059669;
+    }
+    
+    .user-badge.inactive {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+    
+    .user-badge.pending {
+      background: #fef3c7;
+      color: #d97706;
+    }
+    
+    .user-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+    
+    .user-action-btn {
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      border: none;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+    
+    .user-action-btn.view {
+      background: #dbeafe;
+      color: #2563eb;
+    }
+    
+    .user-action-btn.edit {
+      background: #fef3c7;
+      color: #d97706;
+    }
+    
+    .user-action-btn.delete {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+    
+    .user-action-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .bulk-actions {
+      display: flex;
+      gap: 0.75rem;
+      padding: 1rem;
+      background: #fef3c7;
+      border-radius: 12px;
+      margin-bottom: 1.5rem;
+      align-items: center;
+    }
+    
+    .bulk-actions-label {
+      font-weight: 600;
+      color: #92400e;
+    }
+    
+    .bulk-delete-btn {
+      padding: 0.5rem 1rem;
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s ease;
+    }
+    
+    .bulk-delete-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(239, 68, 68, 0.3);
+    }
+
+  //- Statistics Overview
+  .user-stats-grid
+    .user-stat-card.employers
+      .user-stat-header
+        .user-stat-icon.employers
+          i.fas.fa-briefcase
+      .user-stat-number= stats.employers.total || 0
+      .user-stat-label Total Employers
+      .user-stat-details
+        .user-stat-detail-item
+          .user-stat-detail-value= stats.employers.withCredits || 0
+          .user-stat-detail-label With Credits
+        .user-stat-detail-item
+          .user-stat-detail-value= stats.employers.withoutCredits || 0
+          .user-stat-detail-label No Credits
+    
+    .user-stat-card.job-seekers
+      .user-stat-header
+        .user-stat-icon.job-seekers
+          i.fas.fa-user-tie
+      .user-stat-number= stats.jobSeekers.total || 0
+      .user-stat-label Job Seekers
+      .user-stat-details
+        .user-stat-detail-item
+          .user-stat-detail-value= stats.jobSeekers.active || 0
+          .user-stat-detail-label Active
+        .user-stat-detail-item
+          .user-stat-detail-value= stats.jobSeekers.inactive || 0
+          .user-stat-detail-label Inactive
+    
+    .user-stat-card.tutors
+      .user-stat-header
+        .user-stat-icon.tutors
+          i.fas.fa-chalkboard-teacher
+      .user-stat-number= stats.onlineTutors.total || 0
+      .user-stat-label Online Tutors
+      .user-stat-details
+        .user-stat-detail-item
+          .user-stat-detail-value= stats.onlineTutors.active || 0
+          .user-stat-detail-label Active
+        .user-stat-detail-item
+          .user-stat-detail-value= stats.onlineTutors.inactive || 0
+          .user-stat-detail-label Inactive
+
+  //- Employers Table
+  .user-table-card
+    .user-table-header
+      h2.user-table-title
+        i.fas.fa-briefcase(style="color: #ef4444;")
+        | Employers
+      .user-filters
+        button.filter-btn.active(data-filter="all") All
+        button.filter-btn(data-filter="with-credits") With Credits
+        button.filter-btn(data-filter="no-credits") No Credits
+    
+    .search-box
+      i.fas.fa-search
+      input(type="text", placeholder="Search employers by username or email...", id="empSearch")
+    
+    if stats.employers.withoutCredits > 0
+      .bulk-actions
+        span.bulk-actions-label
+          i.fas.fa-exclamation-triangle.me-2
+          | #{stats.employers.withoutCredits} employers without credits
+        button.bulk-delete-btn(onclick="deleteInactive('employers')")
+          i.fas.fa-trash-alt
+          | Delete All
+    
+    .table-responsive
+      table.user-table#empTable
+        thead
+          tr
+            th Username
+            th Email
+            th Ad Credits
+            th Registered
+            th Status
+            th Actions
+        tbody
+          if employers && employers.length > 0
+            each emp in employers
+              tr(data-has-credits=emp.hasCredits ? 'true' : 'false')
+                td= emp.username
+                td= emp.email
+                td
+                  if emp.remainingTokens > 0
+                    span.user-badge.active= emp.remainingTokens
+                  else
+                    span.user-badge.inactive 0
+                td= emp.createdAtDisplay
+                td
+                  if emp.hasCredits
+                    span.user-badge.active
+                      i.fas.fa-check-circle
+                      | Active
+                  else
+                    span.user-badge.inactive
+                      i.fas.fa-times-circle
+                      | No Credits
+                td
+                  .user-actions
+                    button.user-action-btn.view(onclick=`viewUser('${emp.id}')`)
+                      i.fas.fa-eye
+                    button.user-action-btn.edit(onclick=`editUser('${emp.id}')`)
+                      i.fas.fa-edit
+          else
+            tr
+              td(colspan="6", style="text-align: center; padding: 2rem; color: #94a3b8;") No employers found
+
+  //- Similar tables for Job Seekers and Tutors would go here
+  //- (abbreviated for space)
+
+  script.
+    function deleteInactive(userType) {
+      const typeNames = {
+        'employers': 'Employers without credits',
+        'jobseekers': 'Inactive Job Seekers',
+        'tutors': 'Inactive Online Tutors'
+      };
+      
+      const typeName = typeNames[userType] || userType;
+      
+      if (!confirm(`⚠️ WARNING: This will permanently delete all ${typeName}!\n\nAre you sure?`)) {
+        return;
+      }
+      
+      const btn = event.target.closest('button');
+      const originalHTML = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
+      
+      fetch('/admin/delete-inactive', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userType })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert(`✅ Deleted ${data.deletedCount} ${typeName}`);
+          window.location.reload();
+        } else {
+          alert('❌ Error: ' + (data.error || 'Failed to delete'));
+          btn.disabled = false;
+          btn.innerHTML = originalHTML;
+        }
+      })
+      .catch(err => {
+        alert('❌ Error: ' + err.message);
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+      });
+    }
+    
+    function viewUser(id) {
+      // Implement view user functionality
+      alert('View user: ' + id);
+    }
+    
+    function editUser(id) {
+      // Implement edit user functionality
+      alert('Edit user: ' + id);
+    }

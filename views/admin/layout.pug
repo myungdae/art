@@ -1,0 +1,284 @@
+doctype html
+html(lang="en")
+  head
+    meta(charset="UTF-8")
+    meta(name="viewport", content="width=device-width, initial-scale=1.0")
+    title #{title || 'Admin Dashboard'} | ESL Plus
+    link(rel="stylesheet", href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css")
+    link(rel="stylesheet", href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css")
+    style.
+      :root {
+        --admin-primary: #667eea;
+        --admin-secondary: #764ba2;
+        --admin-success: #10b981;
+        --admin-danger: #ef4444;
+        --admin-warning: #f59e0b;
+        --admin-info: #3b82f6;
+        --sidebar-width: 280px;
+      }
+      
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+        background: #f8fafc;
+        margin: 0;
+        padding: 0;
+      }
+      
+      .admin-wrapper {
+        display: flex;
+        min-height: 100vh;
+      }
+      
+      .admin-sidebar {
+        width: var(--sidebar-width);
+        background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+        color: white;
+        position: fixed;
+        height: 100vh;
+        overflow-y: auto;
+        box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+      }
+      
+      .admin-sidebar-header {
+        padding: 2rem 1.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      
+      .admin-logo {
+        font-size: 1.5rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, var(--admin-primary), var(--admin-secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 0.5rem;
+      }
+      
+      .admin-logo-subtitle {
+        font-size: 0.875rem;
+        color: #94a3b8;
+        font-weight: 500;
+      }
+      
+      .admin-nav {
+        padding: 1rem 0;
+      }
+      
+      .admin-nav-section {
+        margin-bottom: 1.5rem;
+      }
+      
+      .admin-nav-section-title {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: #64748b;
+        padding: 0.5rem 1.5rem;
+        margin-bottom: 0.5rem;
+      }
+      
+      .admin-nav-item {
+        display: flex;
+        align-items: center;
+        padding: 0.875rem 1.5rem;
+        color: #cbd5e1;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        position: relative;
+        font-weight: 500;
+      }
+      
+      .admin-nav-item:hover {
+        background: rgba(255, 255, 255, 0.05);
+        color: white;
+      }
+      
+      .admin-nav-item.active {
+        background: linear-gradient(90deg, rgba(102, 126, 234, 0.2), transparent);
+        color: white;
+        border-left: 3px solid var(--admin-primary);
+      }
+      
+      .admin-nav-item.active::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: linear-gradient(180deg, var(--admin-primary), var(--admin-secondary));
+      }
+      
+      .admin-nav-icon {
+        width: 20px;
+        margin-right: 0.75rem;
+        font-size: 1.1rem;
+      }
+      
+      .admin-nav-badge {
+        margin-left: auto;
+        padding: 0.25rem 0.5rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        background: var(--admin-danger);
+      }
+      
+      .admin-main {
+        margin-left: var(--sidebar-width);
+        flex: 1;
+        min-height: 100vh;
+      }
+      
+      .admin-topbar {
+        background: white;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 1rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      }
+      
+      .admin-topbar-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin: 0;
+      }
+      
+      .admin-user-menu {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+      
+      .admin-user-info {
+        text-align: right;
+      }
+      
+      .admin-username {
+        font-weight: 600;
+        color: #1e293b;
+        font-size: 0.875rem;
+      }
+      
+      .admin-role {
+        font-size: 0.75rem;
+        color: #64748b;
+      }
+      
+      .admin-logout-btn {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        background: linear-gradient(135deg, var(--admin-danger) 0%, #dc2626 100%);
+        color: white;
+        border: none;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s ease;
+      }
+      
+      .admin-logout-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        color: white;
+      }
+      
+      .admin-content {
+        padding: 2rem;
+      }
+      
+      @media (max-width: 768px) {
+        .admin-sidebar {
+          transform: translateX(-100%);
+          transition: transform 0.3s ease;
+        }
+        
+        .admin-sidebar.show {
+          transform: translateX(0);
+        }
+        
+        .admin-main {
+          margin-left: 0;
+        }
+      }
+  
+  body
+    .admin-wrapper
+      //- Sidebar
+      nav.admin-sidebar
+        .admin-sidebar-header
+          .admin-logo
+            i.fas.fa-graduation-cap.me-2
+            | ESL Plus
+          .admin-logo-subtitle Admin Dashboard
+        
+        .admin-nav
+          .admin-nav-section
+            .admin-nav-section-title Dashboard
+            a.admin-nav-item(href="/admin/dashboard", class=currentPage === 'overview' ? 'active' : '')
+              i.admin-nav-icon.fas.fa-tachometer-alt
+              span Overview
+          
+          .admin-nav-section
+            .admin-nav-section-title Revenue
+            a.admin-nav-item(href="/admin/revenue", class=currentPage === 'revenue' ? 'active' : '')
+              i.admin-nav-icon.fas.fa-dollar-sign
+              span Revenue Overview
+            a.admin-nav-item(href="/admin/revenue/transactions", class=currentPage === 'transactions' ? 'active' : '')
+              i.admin-nav-icon.fas.fa-receipt
+              span Transactions
+            a.admin-nav-item(href="/admin/revenue/analytics", class=currentPage === 'analytics' ? 'active' : '')
+              i.admin-nav-icon.fas.fa-chart-line
+              span Analytics
+          
+          .admin-nav-section
+            .admin-nav-section-title User Management
+            a.admin-nav-item(href="/admin/users", class=currentPage === 'users' ? 'active' : '')
+              i.admin-nav-icon.fas.fa-users
+              span All Users
+            a.admin-nav-item(href="/admin/users/employers", class=currentPage === 'employers' ? 'active' : '')
+              i.admin-nav-icon.fas.fa-briefcase
+              span Employers
+              if employerCount
+                span.admin-nav-badge= employerCount
+            a.admin-nav-item(href="/admin/users/job-seekers", class=currentPage === 'job-seekers' ? 'active' : '')
+              i.admin-nav-icon.fas.fa-user-tie
+              span Job Seekers
+              if jobSeekerCount
+                span.admin-nav-badge= jobSeekerCount
+            a.admin-nav-item(href="/admin/users/tutors", class=currentPage === 'tutors' ? 'active' : '')
+              i.admin-nav-icon.fas.fa-chalkboard-teacher
+              span Online Tutors
+              if tutorCount
+                span.admin-nav-badge= tutorCount
+          
+          .admin-nav-section
+            .admin-nav-section-title System
+            a.admin-nav-item(href="/admin/settings", class=currentPage === 'settings' ? 'active' : '')
+              i.admin-nav-icon.fas.fa-cog
+              span Settings
+      
+      //- Main Content
+      main.admin-main
+        .admin-topbar
+          h1.admin-topbar-title= pageTitle || 'Dashboard'
+          .admin-user-menu
+            .admin-user-info
+              .admin-username Admin User
+              .admin-role Administrator
+            a.admin-logout-btn(href="/admin/logout")
+              i.fas.fa-sign-out-alt
+              span Logout
+        
+        .admin-content
+          block content
+    
+    script(src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js")
+    block scripts

@@ -242,4 +242,216 @@ router.post('/delete-inactive', requireAdmin, async (req, res) => {
   }
 });
 
+/* ---------------------- Revenue Management ---------------------- */
+router.get('/revenue', requireAdmin, async (req, res) => {
+  try {
+    const Payment = require('../model/payment');
+    
+    // Calculate total revenue
+    const totalRevenueResult = await Payment.aggregate([
+      { $match: { status: 'paid' } },
+      { $group: { _id: null, total: { $sum: '$amount' } } }
+    ]);
+    const totalRevenue = totalRevenueResult[0]?.total || 0;
+    
+    // Calculate monthly revenue
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+    
+    const monthlyRevenueResult = await Payment.aggregate([
+      { $match: { status: 'paid', createdAt: { $gte: startOfMonth } } },
+      { $group: { _id: null, total: { $sum: '$amount' } } }
+    ]);
+    const monthlyRevenue = monthlyRevenueResult[0]?.total || 0;
+    
+    // Total transactions
+    const totalTransactions = await Payment.countDocuments({ status: 'paid' });
+    
+    // Average transaction
+    const averageTransaction = totalTransactions > 0 ? Math.round(totalRevenue / totalTransactions) : 0;
+    
+    // Recent transactions
+    const recentTransactions = await Payment.find({ status: 'paid' })
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .lean();
+    
+    // Revenue chart data (last 7 days)
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
+    const revenueByDay = await Payment.aggregate([
+      { $match: { status: 'paid', createdAt: { $gte: sevenDaysAgo } } },
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+          total: { $sum: '$amount' }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]);
+    
+    const revenueChartLabels = revenueByDay.map(d => d._id);
+    const revenueChartData = revenueByDay.map(d => d.total);
+    
+    // Package type breakdown
+    const packageBreakdown = await Payment.aggregate([
+      { $match: { status: 'paid' } },
+      {
+        $group: {
+          _id: '$packageType',
+          total: { $sum: '$amount' }
+        }
+      }
+    ]);
+    
+    const packageChartLabels = packageBreakdown.map(p => {
+      const labels = {
+        'job_ads': 'Job Ads',
+        'resume_access': 'Resume Access',
+        'tutor_access': 'Tutor Access'
+      };
+      return labels[p._id] || p._id;
+    });
+    const packageChartData = packageBreakdown.map(p => p.total);
+    
+    // User type breakdown
+    const userTypeBreakdown = await Payment.aggregate([
+      { $match: { status: 'paid' } },
+      {
+        $group: {
+          _id: '$userRole',
+          total: { $sum: '$amount' }
+        }
+      }
+    ]);
+    
+    const userTypeChartLabels = userTypeBreakdown.map(u => {
+      const labels = {
+        'Employer': 'Employers',
+        'Job_Seeker': 'Job Seekers',
+        'Online_Tutor': 'Tutors'
+      };
+      return labels[u._id] || u._id;
+    });
+    const userTypeChartData = userTypeBreakdown.map(u => u.total);
+    
+    res.render('admin/revenue', {
+      currentPage: 'revenue',
+      pageTitle: 'Revenue Management',
+      totalRevenue,
+      monthlyRevenue,
+      totalTransactions,
+      averageTransaction,
+      recentTransactions,
+      revenueChartLabels,
+      revenueChartData,
+      packageChartLabels,
+      packageChartData,
+      userTypeChartLabels,
+      userTypeChartData
+    });
+  } catch (err) {
+    console.error('❌ Revenue page error:', err);
+    res.status(500).render('error', {
+      message: 'Revenue Management Error',
+      error: err
+    });
+  }
+});
+
+/* ---------------------- User Management ---------------------- */
+router.get('/users', requireAdmin, async (req, res) => {
+  try {
+    /* ===== EMPLOYERS ===== */
+    const allEmployers = await User.find({ role: 'Employer' })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const employers = allEmployers.map(e => ({
+      id: e._id,
+      username: e.username || '—',
+      email: e.email || '—',
+      remainingTokens: Number(e.adsAvailable || 0),
+      hasCredits: Number(e.adsAvailable || 0) > 0,
+      createdAtDisplay: toKST(e.createdAt)
+    }));
+
+    /* ===== JOB SEEKERS ===== */
+    const allJobSeekers = await User.find({ role: 'Job_Seeker' })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const jobSeekers = allJobSeekers.map(js => {
+      const remainingDays = daysRemainingFromDoc({ resumeAccess: js.resumeAccess });
+      return {
+        id: js._id,
+        username: js.username || '—',
+        email: js.email || '—',
+        remainingDays,
+        isActive: remainingDays > 0,
+        expiresAtDisplay: js.resumeAccess?.startDate 
+          ? toKST(new Date(new Date(js.resumeAccess.startDate).getTime() + (js.resumeAccess.durationDays || 0) * 86400000))
+          : '—',
+        createdAtDisplay: toKST(js.createdAt)
+      };
+    });
+
+    /* ===== ONLINE TUTORS ===== */
+    const allTutors = await User.find({ role: 'Online_Tutor' })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const onlineTutors = allTutors.map(ot => {
+      const remainingDays = daysRemainingFromDoc({ resumeAccess: ot.tutorAccess });
+      return {
+        id: ot._id,
+        username: ot.username || '—',
+        email: ot.email || '—',
+        remainingDays,
+        isActive: remainingDays > 0,
+        expiresAtDisplay: ot.tutorAccess?.startDate 
+          ? toKST(new Date(new Date(ot.tutorAccess.startDate).getTime() + (ot.tutorAccess.durationDays || 0) * 86400000))
+          : '—',
+        createdAtDisplay: toKST(ot.createdAt)
+      };
+    });
+
+    /* ===== STATISTICS ===== */
+    const stats = {
+      employers: {
+        total: employers.length,
+        withCredits: employers.filter(e => e.hasCredits).length,
+        withoutCredits: employers.filter(e => !e.hasCredits).length
+      },
+      jobSeekers: {
+        total: jobSeekers.length,
+        active: jobSeekers.filter(js => js.isActive).length,
+        inactive: jobSeekers.filter(js => !js.isActive).length
+      },
+      onlineTutors: {
+        total: onlineTutors.length,
+        active: onlineTutors.filter(ot => ot.isActive).length,
+        inactive: onlineTutors.filter(ot => !ot.isActive).length
+      }
+    };
+
+    res.render('admin/users', {
+      currentPage: 'users',
+      pageTitle: 'User Management',
+      employers,
+      jobSeekers,
+      onlineTutors,
+      stats
+    });
+  } catch (err) {
+    console.error('❌ Users page error:', err);
+    res.status(500).render('error', {
+      message: 'User Management Error',
+      error: err
+    });
+  }
+});
+
 module.exports = router;

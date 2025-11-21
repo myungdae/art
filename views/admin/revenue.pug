@@ -1,0 +1,341 @@
+extends layout
+
+block content
+  style.
+    .revenue-card {
+      background: white;
+      border-radius: 16px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      border: 1px solid #e2e8f0;
+      transition: all 0.3s ease;
+    }
+    
+    .revenue-card:hover {
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+      transform: translateY(-2px);
+    }
+    
+    .revenue-stat-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 16px;
+      padding: 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .revenue-stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 150px;
+      height: 150px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      transform: translate(30%, -30%);
+    }
+    
+    .revenue-stat-card.green {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    }
+    
+    .revenue-stat-card.orange {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    }
+    
+    .revenue-stat-card.blue {
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    }
+    
+    .revenue-amount {
+      font-size: 2.5rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+    }
+    
+    .revenue-label {
+      font-size: 0.875rem;
+      opacity: 0.9;
+      font-weight: 500;
+    }
+    
+    .revenue-icon {
+      position: absolute;
+      top: 1.5rem;
+      right: 1.5rem;
+      font-size: 3rem;
+      opacity: 0.2;
+    }
+    
+    .chart-container {
+      background: white;
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      border: 1px solid #e2e8f0;
+    }
+    
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    
+    .period-selector {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .period-btn {
+      padding: 0.5rem 1rem;
+      border: 2px solid #e2e8f0;
+      background: white;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .period-btn:hover {
+      border-color: #667eea;
+      color: #667eea;
+    }
+    
+    .period-btn.active {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-color: transparent;
+    }
+    
+    .recent-transactions {
+      background: white;
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      border: 1px solid #e2e8f0;
+    }
+    
+    .transaction-item {
+      display: flex;
+      align-items: center;
+      padding: 1rem;
+      border-bottom: 1px solid #f1f5f9;
+      transition: background 0.2s ease;
+    }
+    
+    .transaction-item:hover {
+      background: #f8fafc;
+    }
+    
+    .transaction-item:last-child {
+      border-bottom: none;
+    }
+    
+    .transaction-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      margin-right: 1rem;
+    }
+    
+    .transaction-icon.success {
+      background: #d1fae5;
+      color: #059669;
+    }
+    
+    .transaction-icon.pending {
+      background: #fed7aa;
+      color: #d97706;
+    }
+    
+    .transaction-info {
+      flex: 1;
+    }
+    
+    .transaction-user {
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 0.25rem;
+    }
+    
+    .transaction-meta {
+      font-size: 0.875rem;
+      color: #64748b;
+    }
+    
+    .transaction-amount {
+      font-weight: 700;
+      font-size: 1.125rem;
+      color: #1e293b;
+    }
+
+  //- Overview Statistics
+  .row.g-4.mb-4
+    .col-md-3
+      .revenue-stat-card
+        i.revenue-icon.fas.fa-dollar-sign
+        .revenue-amount= totalRevenue ? '₩' + totalRevenue.toLocaleString() : '₩0'
+        .revenue-label Total Revenue
+    
+    .col-md-3
+      .revenue-stat-card.green
+        i.revenue-icon.fas.fa-calendar-check
+        .revenue-amount= monthlyRevenue ? '₩' + monthlyRevenue.toLocaleString() : '₩0'
+        .revenue-label This Month
+    
+    .col-md-3
+      .revenue-stat-card.orange
+        i.revenue-icon.fas.fa-receipt
+        .revenue-amount= totalTransactions || 0
+        .revenue-label Total Transactions
+    
+    .col-md-3
+      .revenue-stat-card.blue
+        i.revenue-icon.fas.fa-chart-line
+        .revenue-amount= averageTransaction ? '₩' + averageTransaction.toLocaleString() : '₩0'
+        .revenue-label Avg. Transaction
+
+  //- Revenue Chart
+  .row.mb-4
+    .col-12
+      .chart-container
+        h2.section-title
+          i.fas.fa-chart-bar
+          | Revenue Trends
+        
+        .period-selector
+          button.period-btn.active(data-period="7d") Last 7 Days
+          button.period-btn(data-period="30d") Last 30 Days
+          button.period-btn(data-period="90d") Last 90 Days
+          button.period-btn(data-period="1y") This Year
+        
+        canvas#revenueChart(style="max-height: 300px;")
+
+  //- Revenue Breakdown
+  .row.g-4.mb-4
+    .col-md-6
+      .chart-container
+        h2.section-title
+          i.fas.fa-pie-chart
+          | Revenue by Package Type
+        canvas#packageChart(style="max-height: 250px;")
+    
+    .col-md-6
+      .chart-container
+        h2.section-title
+          i.fas.fa-users
+          | Revenue by User Type
+        canvas#userTypeChart(style="max-height: 250px;")
+
+  //- Recent Transactions
+  .row.mb-4
+    .col-12
+      .recent-transactions
+        .d-flex.justify-content-between.align-items-center.mb-3
+          h2.section-title.mb-0
+            i.fas.fa-clock
+            | Recent Transactions
+          a.btn.btn-sm.btn-outline-primary(href="/admin/revenue/transactions") View All
+        
+        if recentTransactions && recentTransactions.length > 0
+          each tx in recentTransactions
+            .transaction-item
+              .transaction-icon(class=tx.status === 'paid' ? 'success' : 'pending')
+                i.fas(class=tx.status === 'paid' ? 'fa-check' : 'fa-clock')
+              .transaction-info
+                .transaction-user= tx.userEmail
+                .transaction-meta
+                  = tx.packageDetails.description
+                  |  • 
+                  = new Date(tx.createdAt).toLocaleString('ko-KR')
+              .transaction-amount= '₩' + tx.amount.toLocaleString()
+        else
+          .text-center.py-5.text-muted No transactions yet
+
+block scripts
+  script(src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js")
+  script.
+    // Revenue Chart
+    const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+    const revenueChart = new Chart(revenueCtx, {
+      type: 'line',
+      data: {
+        labels: !{JSON.stringify(revenueChartLabels || [])},
+        datasets: [{
+          label: 'Revenue',
+          data: !{JSON.stringify(revenueChartData || [])},
+          borderColor: '#667eea',
+          backgroundColor: 'rgba(102, 126, 234, 0.1)',
+          tension: 0.4,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: function(value) {
+                return '₩' + value.toLocaleString();
+              }
+            }
+          }
+        }
+      }
+    });
+    
+    // Package Chart
+    const packageCtx = document.getElementById('packageChart').getContext('2d');
+    const packageChart = new Chart(packageCtx, {
+      type: 'doughnut',
+      data: {
+        labels: !{JSON.stringify(packageChartLabels || ['Job Ads', 'Resume Access', 'Tutor Access'])},
+        datasets: [{
+          data: !{JSON.stringify(packageChartData || [0, 0, 0])},
+          backgroundColor: ['#667eea', '#10b981', '#f59e0b']
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom' }
+        }
+      }
+    });
+    
+    // User Type Chart
+    const userTypeCtx = document.getElementById('userTypeChart').getContext('2d');
+    const userTypeChart = new Chart(userTypeCtx, {
+      type: 'doughnut',
+      data: {
+        labels: !{JSON.stringify(userTypeChartLabels || ['Employers', 'Job Seekers', 'Tutors'])},
+        datasets: [{
+          data: !{JSON.stringify(userTypeChartData || [0, 0, 0])},
+          backgroundColor: ['#ef4444', '#3b82f6', '#8b5cf6']
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom' }
+        }
+      }
+    });
