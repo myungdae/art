@@ -1,530 +1,161 @@
-//- views/admin/dashboard.pug
 extends layout
 
 block content
   style.
-    /* High-visibility filter buttons */
-    .btn-group .btn {
-      font-size: 1.1rem !important;
-      font-weight: 700 !important;
-      padding: 0.75rem 1.5rem !important;
-      border: 2px solid #333 !important;
-      margin: 0 0.25rem !important;
-      transition: all 0.3s ease !important;
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
     }
     
-    .btn-group .btn-primary {
-      background-color: #007bff !important;
-      color: white !important;
+    .stat-card {
+      background: white;
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      border-left: 4px solid;
+      transition: all 0.3s ease;
     }
     
-    .btn-group .btn-outline-primary {
-      background-color: white !important;
-      color: #007bff !important;
-      border-color: #007bff !important;
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
     }
     
-    .btn-group .btn-outline-primary:hover {
-      background-color: #e7f1ff !important;
+    .stat-card.employers {
+      border-left-color: #ef4444;
     }
     
-    .btn-group .btn-primary:hover {
-      background-color: #0056b3 !important;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    .stat-card.job-seekers {
+      border-left-color: #3b82f6;
     }
     
-    .btn-group .btn-primary.active,
-    .btn-group .btn-primary:active {
-      background-color: #28a745 !important;
-      border-color: #28a745 !important;
-      font-weight: 800 !important;
+    .stat-card.tutors {
+      border-left-color: #8b5cf6;
     }
     
-    /* High-visibility delete buttons */
-    .btn-danger {
-      font-size: 1.15rem !important;
-      font-weight: 700 !important;
-      padding: 1rem 2rem !important;
-      background-color: #dc3545 !important;
-      color: white !important;
-      border: 2px solid #c82333 !important;
-      transition: all 0.3s ease !important;
+    .stat-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
     }
     
-    .btn-danger:hover {
-      background-color: #c82333 !important;
-      transform: translateY(-2px);
-      box-shadow: 0 6px 12px rgba(220, 53, 69, 0.4);
+    .stat-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: #64748b;
     }
     
-    .btn-danger i {
-      font-size: 1.2rem !important;
+    .stat-number {
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: #1e293b;
+      margin-bottom: 1rem;
     }
     
-    /* Delete button containers */
-    .delete-container {
-      display: none;
-      margin-top: 1rem;
+    .stat-details {
+      display: flex;
+      justify-content: space-between;
       padding-top: 1rem;
-      border-top: 2px solid #dc3545;
+      border-top: 1px solid #f1f5f9;
     }
     
-    .delete-container.show {
-      display: block;
+    .stat-detail-item {
+      text-align: center;
     }
-  
-  //- Summary Statistics
-  .grid.grid-cols-1.md_grid-cols-3.gap-6.mb-10
-      // Employers Card
-      .bg-gradient-to-br.from-red-50.to-red-100.rounded-xl.shadow-lg.p-6
-        .flex.items-center.justify-between.mb-4
-          h3.text-lg.font-semibold.text-red-700
-            i.fas.fa-briefcase.mr-2
-            | Employers
-          span.text-3xl.font-bold.text-red-600= stats.employers.total
-        .space-y-2.text-sm
-          .flex.justify-between
-            span.text-gray-600 With Credits:
-            span.font-semibold.text-green-600= stats.employers.withCredits
-          .flex.justify-between
-            span.text-gray-600 Without Credits:
-            span.font-semibold.text-red-600= stats.employers.withoutCredits
-        if stats.employers.withoutCredits > 0
-          .mt-4.pt-4.border-t.border-red-200
-            button.btn.btn-sm.btn-danger.w-full(onclick="deleteInactive('employers')")
-              i.fas.fa-trash-alt.mr-1
-              | Delete All Without Credits (#{stats.employers.withoutCredits})
+    
+    .stat-detail-value {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #1e293b;
+    }
+    
+    .stat-detail-label {
+      font-size: 0.75rem;
+      color: #64748b;
+      text-transform: uppercase;
+      margin-top: 0.25rem;
+    }
+    
+    .delete-btn {
+      margin-top: 1rem;
+      width: 100%;
+      padding: 0.75rem;
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .delete-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(239, 68, 68, 0.3);
+    }
 
-      // Job Seekers Card
-      .bg-gradient-to-br.from-green-50.to-green-100.rounded-xl.shadow-lg.p-6
-        .flex.items-center.justify-between.mb-4
-          h3.text-lg.font-semibold.text-green-700
-            i.fas.fa-users.mr-2
-            | Job Seekers
-          span.text-3xl.font-bold.text-green-600= stats.jobSeekers.total
-        .space-y-2.text-sm
-          .flex.justify-between
-            span.text-gray-600 Active Access:
-            span.font-semibold.text-green-600= stats.jobSeekers.active
-          .flex.justify-between
-            span.text-gray-600 Inactive:
-            span.font-semibold.text-red-600= stats.jobSeekers.inactive
-        if stats.jobSeekers.inactive > 0
-          .mt-4.pt-4.border-t.border-green-200
-            button.btn.btn-sm.btn-danger.w-full(onclick="deleteInactive('jobseekers')")
-              i.fas.fa-trash-alt.mr-1
-              | Delete All Inactive (#{stats.jobSeekers.inactive})
-
-      // Online Tutors Card
-      .bg-gradient-to-br.from-blue-50.to-blue-100.rounded-xl.shadow-lg.p-6
-        .flex.items-center.justify-between.mb-4
-          h3.text-lg.font-semibold.text-blue-700
-            i.fas.fa-chalkboard-teacher.mr-2
-            | Online Tutors
-          span.text-3xl.font-bold.text-blue-600= stats.onlineTutors.total
-        .space-y-2.text-sm
-          .flex.justify-between
-            span.text-gray-600 Active Access:
-            span.font-semibold.text-green-600= stats.onlineTutors.active
-          .flex.justify-between
-            span.text-gray-600 Inactive:
-            span.font-semibold.text-red-600= stats.onlineTutors.inactive
-        if stats.onlineTutors.inactive > 0
-          .mt-4.pt-4.border-t.border-blue-200
-            button.btn.btn-sm.btn-danger.w-full(onclick="deleteInactive('tutors')")
-              i.fas.fa-trash-alt.mr-1
-              | Delete All Inactive (#{stats.onlineTutors.inactive})
-
-    // ==================== Employers ====================
-    .bg-white.rounded-xl.shadow-lg.p-6.mb-8
-      .flex.items-center.justify-between.mb-4
-        h2.text-2xl.font-bold.text-red-600
-          i.fas.fa-briefcase.mr-2
+  .stats-grid
+    //- Employers Card
+    .stat-card.employers
+      .stat-header
+        .stat-title
+          i.fas.fa-briefcase.me-2
           | Employers
-        .btn-group(role="group")
-          button#empFilterAll.btn.btn-sm.btn-primary(type="button") All
-          button#empFilterWithCredits.btn.btn-sm.btn-outline-primary(type="button") With Credits
-          button#empFilterNoCredits.btn.btn-sm.btn-outline-primary(type="button") No Credits
-      
-      #empDeleteContainer.delete-container
-        button.btn.btn-danger.w-full(onclick="deleteInactive('employers')")
-          i.fas.fa-trash-alt.mr-2
-          span Delete All Without Credits
-          span#empDeleteCount
-
-      .flex.items-center.gap-3.mb-4
-        input#empSearch.flex-1(
-          type="text"
-          placeholder="Search by username or email..."
-          class="border rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-        )
-        span#empCount.text-sm.text-gray-500.font-semibold 0 / 0 rows
-
-      .overflow-x-auto
-        if employers && employers.length
-          table#empTable.table-auto.w-full.border-collapse
-            thead.bg-gray-100
-              tr
-                th.sortable.border.px-4.py-3.text-left.cursor-pointer.hover_bg-gray-200(data-key="username")
-                  | Username 
-                  i.fas.fa-sort.ml-1.text-gray-400
-                th.sortable.border.px-4.py-3.text-left.cursor-pointer.hover_bg-gray-200(data-key="email")
-                  | Email 
-                  i.fas.fa-sort.ml-1.text-gray-400
-                th.sortable.border.px-4.py-3.text-center.cursor-pointer.hover_bg-gray-200(data-key="remainingTokens")
-                  | Ad Credits 
-                  i.fas.fa-sort.ml-1.text-gray-400
-                th.sortable.border.px-4.py-3.text-left.cursor-pointer.hover_bg-gray-200(data-key="createdAtDisplay")
-                  | Registered 
-                  i.fas.fa-sort.ml-1.text-gray-400
-                th.border.px-4.py-3.text-center Status
-            tbody
-              each emp in employers
-                tr(data-has-credits=emp.hasCredits ? 'true' : 'false')
-                  td.border.px-4.py-2= emp.username
-                  td.border.px-4.py-2= emp.email
-                  td.border.px-4.py-2.text-center
-                    if emp.remainingTokens > 0
-                      span.bg-green-100.text-green-700.px-3.py-1.rounded-full.font-semibold= emp.remainingTokens
-                    else
-                      span.bg-red-100.text-red-700.px-3.py-1.rounded-full.font-semibold 0
-                  td.border.px-4.py-2= emp.createdAtDisplay
-                  td.border.px-4.py-2.text-center
-                    if emp.remainingTokens > 0
-                      span.bg-green-100.text-green-600.px-3.py-1.rounded-full.text-xs.font-semibold
-                        i.fas.fa-check-circle.mr-1
-                        | Active
-                    else
-                      span.bg-red-100.text-red-600.px-3.py-1.rounded-full.text-xs.font-semibold
-                        i.fas.fa-times-circle.mr-1
-                        | No Credits
-        else
-          p.text-center.text-gray-500.py-8 No employers found
-
-    // ==================== Job Seekers ====================
-    .bg-white.rounded-xl.shadow-lg.p-6.mb-8
-      .flex.items-center.justify-between.mb-4
-        h2.text-2xl.font-bold.text-green-600
-          i.fas.fa-users.mr-2
-          | Job Seekers
-        .btn-group(role="group")
-          button#jsFilterAll.btn.btn-sm.btn-primary(type="button") All
-          button#jsFilterActive.btn.btn-sm.btn-outline-primary(type="button") Active
-          button#jsFilterInactive.btn.btn-sm.btn-outline-primary(type="button") Inactive
-      
-      #jsDeleteContainer.delete-container
-        button.btn.btn-danger.w-full(onclick="deleteInactive('jobseekers')")
-          i.fas.fa-trash-alt.mr-2
-          span Delete All Inactive
-          span#jsDeleteCount
-
-      .flex.items-center.gap-3.mb-4
-        input#jsSearch.flex-1(
-          type="text"
-          placeholder="Search by username, email, or remaining days..."
-          class="border rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-        )
-        span#jsCount.text-sm.text-gray-500.font-semibold 0 / 0 rows
-
-      .overflow-x-auto
-        if jobSeekers && jobSeekers.length
-          table#jsTable.table-auto.w-full.border-collapse
-            thead.bg-gray-100
-              tr
-                th.sortable.border.px-4.py-3.text-left.cursor-pointer.hover_bg-gray-200(data-key="username")
-                  | Username 
-                  i.fas.fa-sort.ml-1.text-gray-400
-                th.sortable.border.px-4.py-3.text-left.cursor-pointer.hover_bg-gray-200(data-key="email")
-                  | Email 
-                  i.fas.fa-sort.ml-1.text-gray-400
-                th.sortable.border.px-4.py-3.text-center.cursor-pointer.hover_bg-gray-200(data-key="remainingDays")
-                  | Days Left 
-                  i.fas.fa-sort.ml-1.text-gray-400
-                th.sortable.border.px-4.py-3.text-left.cursor-pointer.hover_bg-gray-200(data-key="expiresAtDisplay")
-                  | Expires 
-                  i.fas.fa-sort.ml-1.text-gray-400
-                th.sortable.border.px-4.py-3.text-left.cursor-pointer.hover_bg-gray-200(data-key="createdAtDisplay")
-                  | Registered 
-                  i.fas.fa-sort.ml-1.text-gray-400
-                th.border.px-4.py-3.text-center Status
-            tbody
-              each js in jobSeekers
-                tr(data-is-active=js.isActive ? 'true' : 'false')
-                  td.border.px-4.py-2= js.username
-                  td.border.px-4.py-2= js.email
-                  td.border.px-4.py-2.text-center
-                    if js.remainingDays > 0
-                      span.bg-green-100.text-green-700.px-3.py-1.rounded-full.font-semibold= js.remainingDays
-                    else
-                      span.bg-red-100.text-red-700.px-3.py-1.rounded-full.font-semibold 0
-                  td.border.px-4.py-2= js.expiresAtDisplay
-                  td.border.px-4.py-2= js.createdAtDisplay
-                  td.border.px-4.py-2.text-center
-                    if js.isActive
-                      span.bg-green-100.text-green-600.px-3.py-1.rounded-full.text-xs.font-semibold
-                        i.fas.fa-check-circle.mr-1
-                        | Active
-                    else
-                      span.bg-red-100.text-red-600.px-3.py-1.rounded-full.text-xs.font-semibold
-                        i.fas.fa-times-circle.mr-1
-                        | Inactive
-        else
-          p.text-center.text-gray-500.py-8 No job seekers found
-
-    // ==================== Online Tutors ====================
-    .bg-white.rounded-xl.shadow-lg.p-6.mb-8
-      .flex.items-center.justify-between.mb-4
-        h2.text-2xl.font-bold.text-blue-600
-          i.fas.fa-chalkboard-teacher.mr-2
-          | Online Tutors
-        .btn-group(role="group")
-          button#otFilterAll.btn.btn-sm.btn-primary(type="button") All
-          button#otFilterActive.btn.btn-sm.btn-outline-primary(type="button") Active
-          button#otFilterInactive.btn.btn-sm.btn-outline-primary(type="button") Inactive
-      
-      #otDeleteContainer.delete-container
-        button.btn.btn-danger.w-full(onclick="deleteInactive('tutors')")
-          i.fas.fa-trash-alt.mr-2
-          span Delete All Inactive
-          span#otDeleteCount
-
-      .flex.items-center.gap-3.mb-4
-        input#otSearch.flex-1(
-          type="text"
-          placeholder="Search by username, email, or remaining days..."
-          class="border rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        )
-        span#otCount.text-sm.text-gray-500.font-semibold 0 / 0 rows
-
-      .overflow-x-auto
-        if onlineTutors && onlineTutors.length
-          table#otTable.table-auto.w-full.border-collapse
-            thead.bg-gray-100
-              tr
-                th.sortable.border.px-4.py-3.text-left.cursor-pointer.hover_bg-gray-200(data-key="username")
-                  | Username 
-                  i.fas.fa-sort.ml-1.text-gray-400
-                th.sortable.border.px-4.py-3.text-left.cursor-pointer.hover_bg-gray-200(data-key="email")
-                  | Email 
-                  i.fas.fa-sort.ml-1.text-gray-400
-                th.sortable.border.px-4.py-3.text-center.cursor-pointer.hover_bg-gray-200(data-key="remainingDays")
-                  | Days Left 
-                  i.fas.fa-sort.ml-1.text-gray-400
-                th.sortable.border.px-4.py-3.text-left.cursor-pointer.hover_bg-gray-200(data-key="expiresAtDisplay")
-                  | Expires 
-                  i.fas.fa-sort.ml-1.text-gray-400
-                th.sortable.border.px-4.py-3.text-left.cursor-pointer.hover_bg-gray-200(data-key="createdAtDisplay")
-                  | Registered 
-                  i.fas.fa-sort.ml-1.text-gray-400
-                th.border.px-4.py-3.text-center Status
-            tbody
-              each ot in onlineTutors
-                tr(data-is-active=ot.isActive ? 'true' : 'false')
-                  td.border.px-4.py-2= ot.username
-                  td.border.px-4.py-2= ot.email
-                  td.border.px-4.py-2.text-center
-                    if ot.remainingDays > 0
-                      span.bg-green-100.text-green-700.px-3.py-1.rounded-full.font-semibold= ot.remainingDays
-                    else
-                      span.bg-red-100.text-red-700.px-3.py-1.rounded-full.font-semibold 0
-                  td.border.px-4.py-2= ot.expiresAtDisplay
-                  td.border.px-4.py-2= ot.createdAtDisplay
-                  td.border.px-4.py-2.text-center
-                    if ot.isActive
-                      span.bg-green-100.text-green-600.px-3.py-1.rounded-full.text-xs.font-semibold
-                        i.fas.fa-check-circle.mr-1
-                        | Active
-                    else
-                      span.bg-red-100.text-red-600.px-3.py-1.rounded-full.text-xs.font-semibold
-                        i.fas.fa-times-circle.mr-1
-                        | Inactive
-        else
-          p.text-center.text-gray-500.py-8 No online tutors found
-
-    // Footer
-    .text-center.text-xs.text-gray-400.mt-8.pb-4
-      p
-        i.fas.fa-info-circle.mr-1
-        | Click column headers to sort. Use search boxes and filter buttons to refine results.
-      p.mt-1 All times are in KST (UTC+9). Last updated: #{new Date(Date.now() + 9*60*60*1000).toISOString().replace('T',' ').slice(0,16)}
-
-  // =============== Client-side Search, Sort & Filter Script ===============
-  script.
-    (function(){
-      // Utility functions
-      function text(row, idx){
-        const cell = row.children[idx];
-        return (cell ? cell.textContent : '').trim();
-      }
-      
-      function parseNumber(v){
-        const n = Number(String(v).replace(/[^0-9.-]/g,''));
-        return isNaN(n) ? null : n;
-      }
-      
-      function compare(a, b, keyIdx, numeric){
-        const av = text(a, keyIdx);
-        const bv = text(b, keyIdx);
-        if (numeric){
-          const an = parseNumber(av), bn = parseNumber(bv);
-          if (an === null && bn === null) return 0;
-          if (an === null) return -1;
-          if (bn === null) return 1;
-          return an - bn;
-        }
-        return av.localeCompare(bv);
-      }
-      
-      function applySort(tableId, th, dir){
-        const table = document.getElementById(tableId);
-        if (!table) return;
-        const thead = table.querySelector('thead tr');
-        const headers = Array.from(thead.children);
-        const keyIdx = headers.indexOf(th);
-        const numeric = /(Days|Credits|Tokens)/i.test(th.textContent);
-        const tbody = table.querySelector('tbody');
-        const rows = Array.from(tbody.children);
-        rows.sort((r1, r2) => {
-          const c = compare(r1, r2, keyIdx, numeric);
-          return dir === 'asc' ? c : -c;
-        });
-        rows.forEach(r => tbody.appendChild(r));
-        
-        // Visual feedback
-        headers.forEach(h => h.classList.remove('bg-gray-200'));
-        th.classList.add('bg-gray-200');
-      }
-      
-      function applyFilter(tableId, inputId, countId, statusFilter, deleteContainerId){
-        const q = (document.getElementById(inputId)?.value || '').toLowerCase();
-        const table = document.getElementById(tableId);
-        if (!table) return;
-        const tbody = table.querySelector('tbody');
-        const rows = Array.from(tbody.children);
-        let shown = 0;
-        let inactiveCount = 0;
-        
-        rows.forEach(row => {
-          const cells = Array.from(row.children).map(td => td.textContent.toLowerCase());
-          const textMatch = !q || cells.some(v => v.includes(q));
-          
-          let statusMatch = true;
-          if (statusFilter === 'active') {
-            statusMatch = row.dataset.isActive === 'true' || row.dataset.hasCredits === 'true';
-          } else if (statusFilter === 'inactive') {
-            statusMatch = row.dataset.isActive === 'false' || row.dataset.hasCredits === 'false';
-            if (statusMatch && textMatch) inactiveCount++;
-          } else if (statusFilter === 'with-credits') {
-            statusMatch = row.dataset.hasCredits === 'true';
-          } else if (statusFilter === 'no-credits') {
-            statusMatch = row.dataset.hasCredits === 'false';
-            if (statusMatch && textMatch) inactiveCount++;
-          }
-          
-          const show = textMatch && statusMatch;
-          row.style.display = show ? '' : 'none';
-          if (show) shown++;
-        });
-        
-        if (countId){
-          const el = document.getElementById(countId);
-          if (el) el.textContent = shown + ' / ' + rows.length + ' rows';
-        }
-        
-        // Show/hide delete button
-        if (deleteContainerId) {
-          const deleteContainer = document.getElementById(deleteContainerId);
-          if (deleteContainer) {
-            if ((statusFilter === 'inactive' || statusFilter === 'no-credits') && inactiveCount > 0) {
-              deleteContainer.classList.add('show');
-              const countSpan = deleteContainer.querySelector('span[id$="DeleteCount"]');
-              if (countSpan) countSpan.textContent = ' (' + inactiveCount + ')';
-            } else {
-              deleteContainer.classList.remove('show');
-            }
-          }
-        }
-      }
-      
-      function wire(tableId, inputId, countId, filterButtons, deleteContainerId){
-        let currentFilter = 'all';
-        
-        // Sort functionality
-        const table = document.getElementById(tableId);
-        if (!table) return;
-        const thead = table.querySelector('thead');
-        if (thead){
-          Array.from(thead.querySelectorAll('th.sortable')).forEach(th => {
-            let dir = 'asc';
-            th.addEventListener('click', () => {
-              applySort(tableId, th, dir);
-              dir = (dir === 'asc') ? 'desc' : 'asc';
-            });
-          });
-        }
-        
-        // Search functionality
-        const input = document.getElementById(inputId);
-        if (input){
-          let t;
-          input.addEventListener('input', () => {
-            clearTimeout(t);
-            t = setTimeout(() => applyFilter(tableId, inputId, countId, currentFilter, deleteContainerId), 200);
-          });
-        }
-        
-        // Filter buttons
-        if (filterButtons) {
-          filterButtons.forEach(({id, filter}) => {
-            const btn = document.getElementById(id);
-            if (btn) {
-              btn.addEventListener('click', () => {
-                currentFilter = filter;
-                
-                // Update button styles
-                filterButtons.forEach(fb => {
-                  const b = document.getElementById(fb.id);
-                  if (b) {
-                    b.classList.remove('btn-primary');
-                    b.classList.add('btn-outline-primary');
-                  }
-                });
-                btn.classList.remove('btn-outline-primary');
-                btn.classList.add('btn-primary');
-                
-                // Apply filter
-                applyFilter(tableId, inputId, countId, currentFilter, deleteContainerId);
-              });
-            }
-          });
-        }
-        
-        // Initial count
-        applyFilter(tableId, inputId, countId, currentFilter, deleteContainerId);
-      }
-      
-      // Wire all three tables
-      wire('empTable', 'empSearch', 'empCount', [
-        {id: 'empFilterAll', filter: 'all'},
-        {id: 'empFilterWithCredits', filter: 'with-credits'},
-        {id: 'empFilterNoCredits', filter: 'no-credits'}
-      ], 'empDeleteContainer');
-      
-      wire('jsTable', 'jsSearch', 'jsCount', [
-        {id: 'jsFilterAll', filter: 'all'},
-        {id: 'jsFilterActive', filter: 'active'},
-        {id: 'jsFilterInactive', filter: 'inactive'}
-      ], 'jsDeleteContainer');
-      
-      wire('otTable', 'otSearch', 'otCount', [
-        {id: 'otFilterAll', filter: 'all'},
-        {id: 'otFilterActive', filter: 'active'},
-        {id: 'otFilterInactive', filter: 'inactive'}
-      ], 'otDeleteContainer');
-    })();
+      .stat-number= stats.employers.total || 0
+      .stat-details
+        .stat-detail-item
+          .stat-detail-value= stats.employers.withCredits || 0
+          .stat-detail-label With Credits
+        .stat-detail-item
+          .stat-detail-value= stats.employers.withoutCredits || 0
+          .stat-detail-label No Credits
+      if stats.employers.withoutCredits > 0
+        button.delete-btn(onclick="deleteInactive('employers')")
+          i.fas.fa-trash-alt.me-2
+          | Delete All Without Credits (#{stats.employers.withoutCredits})
     
-    // =============== Delete Inactive Users Function ===============
+    //- Job Seekers Card
+    .stat-card.job-seekers
+      .stat-header
+        .stat-title
+          i.fas.fa-user-tie.me-2
+          | Job Seekers
+      .stat-number= stats.jobSeekers.total || 0
+      .stat-details
+        .stat-detail-item
+          .stat-detail-value= stats.jobSeekers.active || 0
+          .stat-detail-label Active
+        .stat-detail-item
+          .stat-detail-value= stats.jobSeekers.inactive || 0
+          .stat-detail-label Inactive
+      if stats.jobSeekers.inactive > 0
+        button.delete-btn(onclick="deleteInactive('jobseekers')")
+          i.fas.fa-trash-alt.me-2
+          | Delete All Inactive (#{stats.jobSeekers.inactive})
+    
+    //- Online Tutors Card
+    .stat-card.tutors
+      .stat-header
+        .stat-title
+          i.fas.fa-chalkboard-teacher.me-2
+          | Online Tutors
+      .stat-number= stats.onlineTutors.total || 0
+      .stat-details
+        .stat-detail-item
+          .stat-detail-value= stats.onlineTutors.active || 0
+          .stat-detail-label Active
+        .stat-detail-item
+          .stat-detail-value= stats.onlineTutors.inactive || 0
+          .stat-detail-label Inactive
+      if stats.onlineTutors.inactive > 0
+        button.delete-btn(onclick="deleteInactive('tutors')")
+          i.fas.fa-trash-alt.me-2
+          | Delete All Inactive (#{stats.onlineTutors.inactive})
+
+  script.
     function deleteInactive(userType) {
       const typeNames = {
         'employers': 'Employers without credits',
@@ -534,39 +165,33 @@ block content
       
       const typeName = typeNames[userType] || userType;
       
-      if (!confirm(`⚠️ WARNING: This will permanently delete all ${typeName}!\n\nAre you sure you want to continue?`)) {
+      if (!confirm(`⚠️ WARNING: This will permanently delete all ${typeName}!\n\nAre you sure?`)) {
         return;
       }
       
-      // Show loading state
       const btn = event.target.closest('button');
       const originalHTML = btn.innerHTML;
       btn.disabled = true;
-      btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Deleting...';
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
       
-      // Send delete request
       fetch('/admin/delete-inactive', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userType })
       })
-      .then(response => response.json())
+      .then(res => res.json())
       .then(data => {
         if (data.success) {
-          alert(`✅ Success!\n\nDeleted ${data.deletedCount} ${typeName}\n\n${data.deletedUsers.length > 0 ? 'Deleted users:\n' + data.deletedUsers.join('\n') : ''}`);
-          // Reload page to reflect changes
+          alert(`✅ Deleted ${data.deletedCount} ${typeName}`);
           window.location.reload();
         } else {
-          alert('❌ Error: ' + (data.error || 'Failed to delete users'));
+          alert('❌ Error: ' + (data.error || 'Failed to delete'));
           btn.disabled = false;
           btn.innerHTML = originalHTML;
         }
       })
-      .catch(error => {
-        console.error('Delete error:', error);
-        alert('❌ Error: ' + error.message);
+      .catch(err => {
+        alert('❌ Error: ' + err.message);
         btn.disabled = false;
         btn.innerHTML = originalHTML;
       });
