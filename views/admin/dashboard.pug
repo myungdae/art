@@ -1,5 +1,5 @@
 //- views/admin/dashboard.pug
-extends ../layout
+extends layout
 
 block content
   style.
@@ -73,19 +73,6 @@ block content
     .delete-container.show {
       display: block;
     }
-  
-  .max-w-7xl.mx-auto.px-4.py-8
-    // Header
-    .flex.items-center.justify-between.mb-8
-      div
-        h1.text-3xl.font-bold.mb-2
-          i.fas.fa-tachometer-alt.mr-2
-          | Admin Dashboard
-        p.text-sm.text-gray-500 Manage users, monitor access, and track statistics
-      div.text-right
-        a.btn.btn-sm.btn-outline-secondary(href='/admin/logout')
-          i.fas.fa-sign-out-alt.mr-1
-          | Logout
 
     // Summary Statistics
     .grid.grid-cols-1.md_grid-cols-3.gap-6.mb-10
