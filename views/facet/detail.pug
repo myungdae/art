@@ -2,19 +2,299 @@
 extends ../layout
 
 block content
-  .container.mt-4
+  style.
+    .detail-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+    }
+    
+    .detail-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 20px;
+      padding: 3rem 2rem;
+      color: white;
+      margin-bottom: 2rem;
+      box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);
+    }
+    
+    .detail-title {
+      font-size: 2rem;
+      font-weight: 800;
+      margin-bottom: 1rem;
+      line-height: 1.3;
+    }
+    
+    .detail-card {
+      background: white;
+      border-radius: 16px;
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      border: 1px solid #e2e8f0;
+    }
+    
+    .detail-section-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+    }
+    
+    .info-item {
+      padding: 1rem;
+      background: #f8fafc;
+      border-radius: 12px;
+      border-left: 4px solid #667eea;
+    }
+    
+    .info-label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+    
+    .info-value {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #1e293b;
+    }
+    
+    .badge-detail {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 16px;
+      border-radius: 9999px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      margin-right: 8px;
+      margin-bottom: 8px;
+    }
+    
+    .badge-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    
+    .badge-secondary {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: white;
+    }
+    
+    .badge-info {
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      color: white;
+    }
+    
+    .description-content {
+      line-height: 1.8;
+      color: #475569;
+      font-size: 1rem;
+    }
+    
+    .back-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      background: white;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      font-weight: 600;
+      color: #475569;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    
+    .back-button:hover {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+      transform: translateX(-4px);
+      color: #1e293b;
+    }
+    
+    .action-buttons {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    
+    .btn-primary-gradient {
+      padding: 0.875rem 2rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 10px;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.3s;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+    
+    .btn-primary-gradient:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+      color: white;
+    }
+    
+    @media (max-width: 768px) {
+      .detail-header {
+        padding: 2rem 1.5rem;
+      }
+      
+      .detail-title {
+        font-size: 1.5rem;
+      }
+      
+      .info-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+  .detail-container
     if doc
       - const titleText = doc.displayLabel || doc._label || doc.title || doc.name || doc.jobTitle || doc.email || '(no title)'
-      h1.h3.mt-2.mb-3= titleText
-
+      - const klass = doc._class || 'Job_Vacancies'
+      - const iconMap = { Job_Vacancies: '💼', Job_Seekers: '👤', Online_Tutors: '👨‍🏫' }
+      - const icon = iconMap[klass] || '📋'
+      
+      //- Header Section
+      .detail-header
+        .mb-3
+          a.back-button(href=`/facet/${klass}`, style="background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); color: white;")
+            | ← Back to List
+        .d-flex.align-items-start.gap-3
+          .display-4= icon
+          div
+            h1.detail-title= titleText
+            if doc.datePosted || doc.updatedAt
+              - const posted = (doc.datePosted && new Date(doc.datePosted).toISOString().slice(0,10)) || (doc.updatedAt && new Date(doc.updatedAt).toISOString().slice(0,10)) || '-'
+              p.mb-0(style="opacity: 0.9;")
+                | 📅 Posted: #{posted}
+      
+      //- Key Information Card
+      .detail-card
+        h2.detail-section-title
+          span 🔍
+          | Key Information
+        
+        .info-grid
+          //- Country
+          - const country = doc.country || doc.Country
+          if country
+            .info-item
+              .info-label Country
+              .info-value
+                - const countryFlags = { 'China': '🇨🇳', 'Japan': '🇯🇵', 'South Korea': '🇰🇷', 'Taiwan': '🇹🇼', 'Singapore': '🇸🇬', 'Thailand': '🇹🇭', 'Vietnam': '🇻🇳', 'USA': '🇺🇸', 'UK': '🇬🇧', 'Remote': '🌍' }
+                - const countryFlag = countryFlags[country] || '🌏'
+                = countryFlag + ' ' + country
+          
+          //- Student Type
+          - const studentType = doc.studentType || doc.StudentType
+          if studentType
+            .info-item
+              .info-label Student Type
+              .info-value 🎓 #{studentType}
+          
+          //- Nationality
+          - const nationality = doc.Nationality
+          if nationality
+            .info-item
+              .info-label Nationality
+              .info-value 🌏 #{nationality}
+          
+          //- Work Location
+          - const workLocation = doc.Preferred_Work_Location
+          if workLocation
+            .info-item
+              .info-label Preferred Location
+              .info-value 📍 #{workLocation}
+          
+          //- Major
+          - const major = doc.Major
+          if major
+            .info-item
+              .info-label Major
+              .info-value 📖 #{major}
+          
+          //- Experience
+          - const experience = doc.Tutoring_Experience
+          if experience
+            .info-item
+              .info-label Experience
+              .info-value ⭐ #{experience}
+          
+          //- Gender
+          - const gender = doc.Gender
+          if gender
+            .info-item
+              .info-label Gender
+              .info-value #{gender === 'Male' ? '👨' : gender === 'Female' ? '👩' : '👤'} #{gender}
+      
+      //- Teaching Areas / Expertise
+      - const teachingArea = doc.teachingArea || doc.Teaching_Area
+      - const expertise = doc.Expertise
+      if teachingArea || expertise
+        .detail-card
+          h2.detail-section-title
+            span 📚
+            | Specializations
+          .mt-3
+            if teachingArea
+              if Array.isArray(teachingArea)
+                each area in teachingArea
+                  span.badge-detail.badge-info= area
+              else
+                span.badge-detail.badge-info= teachingArea
+            if expertise
+              if Array.isArray(expertise)
+                each exp in expertise
+                  span.badge-detail.badge-secondary= exp
+      
+      //- Description
       if doc.displayDescription || doc._description || doc.description
-        p.text-muted= doc.displayDescription || doc._description || doc.description
-
-      // 상세 원본 필드(디버깅 겸 확인용)
-      .card.mt-3
-        .card-header.bg-white
-          h5.mb-0 Details
-        .card-body
-          pre.mb-0(style="white-space:pre-wrap")= JSON.stringify(doc, null, 2)
+        .detail-card
+          h2.detail-section-title
+            span 📝
+            | Description
+          .description-content.mt-3
+            != doc.displayDescription || doc._description || doc.description
+      
+      //- Contact Actions
+      .detail-card
+        h2.detail-section-title
+          span 📞
+          | Get in Touch
+        .action-buttons.mt-3
+          a.btn-primary-gradient(href=`mailto:contact@eslplus.org?subject=Inquiry about ${encodeURIComponent(titleText)}`)
+            | 📧 Send Inquiry
+          a.btn-primary-gradient(href=`/facet/${klass}`)
+            | 🔍 View Similar
+      
+      //- Raw Data (collapsed by default)
+      details.detail-card
+        summary.detail-section-title(style="cursor: pointer;")
+          span 🔧
+          | Technical Details
+          small.text-muted.ms-2 (click to expand)
+        pre.mt-3.p-3.bg-light.rounded(style="white-space:pre-wrap; overflow-x: auto; font-size: 0.875rem;")= JSON.stringify(doc, null, 2)
+    
     else
-      .alert.alert-warning Not found.
+      .alert.alert-warning.text-center(style="border-radius: 16px; padding: 2rem;")
+        h3 ⚠️ Not Found
+        p.mb-0 The item you're looking for doesn't exist or has been removed.
+        a.btn-primary-gradient.mt-3(href="/") Go to Home

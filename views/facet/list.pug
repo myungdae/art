@@ -232,7 +232,7 @@ block content
           // 검색창 (현재 선택된 facet 보존)
           form(method="GET", action=`/facet/${klass}`, class="flex gap-2 flex-1")
             .relative.flex-1
-              span.absolute.left-3.top-1/2(style="transform: translateY(-50%); font-size: 1.25rem;") 🔍
+              span.absolute.left-3(style="top: 50%; transform: translateY(-50%); font-size: 1.25rem;") 🔍
               input(type="text", name="q", value=q || "", placeholder="Search for opportunities...", class="border-2 border-gray-200 rounded-lg px-3 py-3 pl-10 w-full text-sm focus:border-blue-500 focus:outline-none transition-colors", style="border-radius: 10px;")
             if facetCfg && facetCfg.groups
               each g in facetCfg.groups
