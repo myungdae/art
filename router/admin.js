@@ -6,6 +6,9 @@ const User = require('../model/user');
 const JobSeeker = require('../model/jobSeeker');
 const OnlineTutor = require('../model/onlineTutor');
 const requireAdmin = require('../middleware/requireAdmin');
+const priceConfig = require('../config/priceConfig');
+const resumePriceConfig = require('../config/resumePriceConfig');
+const tutorPriceConfig = require('../config/tutorPriceConfig');
 
 /* ---------------------- Helpers ---------------------- */
 const toKST = (d) => {
