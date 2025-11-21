@@ -728,4 +728,77 @@ router.get('/users/tutors', requireAdmin, async (req, res) => {
   }
 });
 
+/* ---------------------- Settings Page ---------------------- */
+router.get('/settings', requireAdmin, async (req, res) => {
+  try {
+    // Get system statistics
+    const totalUsers = await User.countDocuments();
+    const employers = await User.countDocuments({ role: 'Employer' });
+    const jobSeekers = await User.countDocuments({ role: 'Job_Seeker' });
+    const tutors = await User.countDocuments({ role: 'Online_Tutor' });
+
+    // Get payment statistics (if Payment model exists)
+    let totalRevenue = 0;
+    let totalTransactions = 0;
+    try {
+      const Payment = require('../model/payment');
+      const revenueResult = await Payment.aggregate([
+        { $match: { status: 'paid' } },
+        { $group: { _id: null, total: { $sum: '$amount' } } }
+      ]);
+      totalRevenue = revenueResult.length > 0 ? revenueResult[0].total : 0;
+      totalTransactions = await Payment.countDocuments({ status: 'paid' });
+    } catch (err) {
+      console.log('ℹ️ Payment statistics not available:', err.message);
+    }
+
+    // Get environment variables (safe ones only)
+    const config = {
+      nodeEnv: process.env.NODE_ENV || 'development',
+      portOneStoreId: process.env.PORTONE_STORE_ID || 'Not configured',
+      portOneTestMode: process.env.PORTONE_TEST_MODE === 'true',
+      adminEmail: process.env.ADMIN_EMAIL || 'Not configured',
+      mongoUri: process.env.MONGO_URI ? '✓ Configured' : '✗ Not configured',
+      sessionSecret: process.env.SESSION_SECRET ? '✓ Configured' : '✗ Not configured'
+    };
+
+    // Get database info
+    const mongoose = require('mongoose');
+    const dbState = mongoose.connection.readyState;
+    const dbStateText = {
+      0: 'Disconnected',
+      1: 'Connected',
+      2: 'Connecting',
+      3: 'Disconnecting'
+    };
+
+    res.render('admin/settings', {
+      currentPage: 'settings',
+      pageTitle: 'System Settings',
+      stats: {
+        totalUsers,
+        employers,
+        jobSeekers,
+        tutors,
+        totalRevenue,
+        totalTransactions
+      },
+      config,
+      database: {
+        state: dbStateText[dbState] || 'Unknown',
+        connected: dbState === 1
+      },
+      priceConfig,
+      resumePriceConfig,
+      tutorPriceConfig
+    });
+  } catch (err) {
+    console.error('❌ Settings page error:', err);
+    res.status(500).render('error', {
+      message: 'Settings Error',
+      error: err
+    });
+  }
+});
+
 module.exports = router;

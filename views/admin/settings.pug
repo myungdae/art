@@ -1,0 +1,408 @@
+extends layout
+
+block content
+  style.
+    .settings-section {
+      background: white;
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      margin-bottom: 2rem;
+    }
+    
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid #f1f5f9;
+    }
+    
+    .section-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin: 0;
+    }
+    
+    .section-description {
+      font-size: 0.875rem;
+      color: #64748b;
+      margin-top: 0.25rem;
+    }
+    
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+    }
+    
+    .info-item {
+      padding: 1rem;
+      background: #f8fafc;
+      border-radius: 12px;
+      border-left: 3px solid #3b82f6;
+    }
+    
+    .info-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #64748b;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    
+    .info-value {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: #1e293b;
+    }
+    
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.375rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      gap: 0.375rem;
+    }
+    
+    .status-badge.connected {
+      background: #d1fae5;
+      color: #059669;
+    }
+    
+    .status-badge.disconnected {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+    
+    .status-badge.test {
+      background: #fef3c7;
+      color: #d97706;
+    }
+    
+    .status-badge.production {
+      background: #dbeafe;
+      color: #2563eb;
+    }
+    
+    .price-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    
+    .price-table th {
+      background: #f8fafc;
+      padding: 0.875rem 1rem;
+      text-align: left;
+      font-weight: 700;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      color: #64748b;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    
+    .price-table td {
+      padding: 0.875rem 1rem;
+      border-bottom: 1px solid #f1f5f9;
+      color: #475569;
+    }
+    
+    .price-table tr:hover {
+      background: #f8fafc;
+    }
+    
+    .alert-box {
+      padding: 1rem 1.5rem;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    
+    .alert-box.info {
+      background: #dbeafe;
+      color: #1e40af;
+      border-left: 4px solid #3b82f6;
+    }
+    
+    .alert-box.warning {
+      background: #fef3c7;
+      color: #92400e;
+      border-left: 4px solid #f59e0b;
+    }
+    
+    .alert-icon {
+      font-size: 1.5rem;
+    }
+    
+    .settings-actions {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    
+    .settings-btn {
+      padding: 0.75rem 1.5rem;
+      border-radius: 10px;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .settings-btn.primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    
+    .settings-btn.secondary {
+      background: #f1f5f9;
+      color: #475569;
+    }
+    
+    .settings-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+  //- System Overview Section
+  .settings-section
+    .section-header
+      .section-icon
+        i.fas.fa-chart-line
+      div
+        h2.section-title System Overview
+        p.section-description Current system statistics and health
+    
+    .info-grid
+      .info-item
+        .info-label Total Users
+        .info-value= stats.totalUsers
+      .info-item(style="border-left-color: #ef4444;")
+        .info-label Employers
+        .info-value= stats.employers
+      .info-item(style="border-left-color: #3b82f6;")
+        .info-label Job Seekers
+        .info-value= stats.jobSeekers
+      .info-item(style="border-left-color: #8b5cf6;")
+        .info-label Tutors
+        .info-value= stats.tutors
+      .info-item(style="border-left-color: #10b981;")
+        .info-label Total Revenue
+        .info-value ₩#{stats.totalRevenue.toLocaleString()}
+      .info-item(style="border-left-color: #f59e0b;")
+        .info-label Transactions
+        .info-value= stats.totalTransactions
+
+  //- Database Status Section
+  .settings-section
+    .section-header
+      .section-icon(style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);")
+        i.fas.fa-database
+      div
+        h2.section-title Database Status
+        p.section-description MongoDB connection and configuration
+    
+    .info-grid
+      .info-item
+        .info-label Connection Status
+        .info-value
+          if database.connected
+            span.status-badge.connected
+              i.fas.fa-check-circle
+              | Connected
+          else
+            span.status-badge.disconnected
+              i.fas.fa-times-circle
+              | Disconnected
+      .info-item
+        .info-label Connection State
+        .info-value= database.state
+      .info-item
+        .info-label MongoDB URI
+        .info-value= config.mongoUri
+
+  //- Environment Configuration Section
+  .settings-section
+    .section-header
+      .section-icon(style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);")
+        i.fas.fa-cog
+      div
+        h2.section-title Environment Configuration
+        p.section-description Current environment and API settings
+    
+    .info-grid
+      .info-item
+        .info-label Environment
+        .info-value
+          if config.nodeEnv === 'production'
+            span.status-badge.production
+              i.fas.fa-server
+              | Production
+          else
+            span.status-badge.test
+              i.fas.fa-flask
+              | Development
+      .info-item
+        .info-label Admin Email
+        .info-value= config.adminEmail
+      .info-item
+        .info-label Session Secret
+        .info-value= config.sessionSecret
+      .info-item
+        .info-label PortOne Store ID
+        .info-value= config.portOneStoreId
+      .info-item
+        .info-label PortOne Test Mode
+        .info-value
+          if config.portOneTestMode
+            span.status-badge.test
+              i.fas.fa-flask
+              | Test Mode
+          else
+            span.status-badge.production
+              i.fas.fa-check-circle
+              | Live Mode
+
+    .alert-box.warning
+      i.fas.fa-exclamation-triangle.alert-icon
+      div
+        strong Warning: 
+        | Environment variables are configured in .env file. Contact system administrator to modify these settings.
+
+  //- Pricing Configuration Section
+  .settings-section
+    .section-header
+      .section-icon(style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);")
+        i.fas.fa-dollar-sign
+      div
+        h2.section-title Pricing Configuration
+        p.section-description Current package prices and options
+    
+    //- Job Ads Pricing
+    h3(style="font-size: 1.125rem; font-weight: 700; color: #1e293b; margin-top: 1.5rem; margin-bottom: 1rem;")
+      i.fas.fa-briefcase.me-2(style="color: #ef4444;")
+      | Job Ads Pricing
+    table.price-table
+      thead
+        tr
+          th Package
+          th Credits
+          th Price (KRW)
+          th Discount
+      tbody
+        each pkg in priceConfig
+          tr
+            td= pkg.label
+            td= pkg.id + ' ads'
+            td ₩#{pkg.price.toLocaleString()}
+            td= pkg.discount ? pkg.discount + '%' : '-'
+    
+    //- Resume Access Pricing
+    h3(style="font-size: 1.125rem; font-weight: 700; color: #1e293b; margin-top: 2rem; margin-bottom: 1rem;")
+      i.fas.fa-file-alt.me-2(style="color: #3b82f6;")
+      | Resume Access Pricing
+    table.price-table
+      thead
+        tr
+          th Package
+          th Duration
+          th Price (KRW)
+      tbody
+        each pkg in resumePriceConfig
+          tr
+            td= pkg.label
+            td= pkg.id + ' days'
+            td ₩#{pkg.price.toLocaleString()}
+    
+    //- Tutor Access Pricing
+    h3(style="font-size: 1.125rem; font-weight: 700; color: #1e293b; margin-top: 2rem; margin-bottom: 1rem;")
+      i.fas.fa-chalkboard-teacher.me-2(style="color: #8b5cf6;")
+      | Tutor Listing Pricing
+    table.price-table
+      thead
+        tr
+          th Package
+          th Duration
+          th Price (KRW)
+      tbody
+        each pkg in tutorPriceConfig
+          tr
+            td= pkg.label
+            td= pkg.id + ' days'
+            td ₩#{pkg.price.toLocaleString()}
+    
+    .alert-box.info
+      i.fas.fa-info-circle.alert-icon
+      div
+        strong Note: 
+        | Pricing is configured in config/priceConfig.js files. Changes require code deployment.
+
+  //- Actions Section
+  .settings-section
+    .section-header
+      .section-icon(style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);")
+        i.fas.fa-tools
+      div
+        h2.section-title System Actions
+        p.section-description Administrative actions and maintenance
+    
+    .settings-actions
+      button.settings-btn.secondary(onclick="window.location.href='/admin/dashboard'")
+        i.fas.fa-arrow-left
+        | Back to Dashboard
+      button.settings-btn.secondary(onclick="window.location.reload()")
+        i.fas.fa-sync-alt
+        | Refresh Page
+      button.settings-btn.secondary(onclick="exportStats()")
+        i.fas.fa-download
+        | Export Statistics
+
+  script.
+    function exportStats() {
+      const stats = {
+        timestamp: new Date().toISOString(),
+        totalUsers: #{stats.totalUsers},
+        employers: #{stats.employers},
+        jobSeekers: #{stats.jobSeekers},
+        tutors: #{stats.tutors},
+        totalRevenue: #{stats.totalRevenue},
+        totalTransactions: #{stats.totalTransactions},
+        database: {
+          connected: #{database.connected},
+          state: '#{database.state}'
+        }
+      };
+      
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(stats, null, 2));
+      const downloadAnchorNode = document.createElement('a');
+      downloadAnchorNode.setAttribute("href", dataStr);
+      downloadAnchorNode.setAttribute("download", "system-stats-" + new Date().toISOString().slice(0,10) + ".json");
+      document.body.appendChild(downloadAnchorNode);
+      downloadAnchorNode.click();
+      downloadAnchorNode.remove();
+      
+      alert('✅ System statistics exported successfully!');
+    }
