@@ -432,8 +432,139 @@ block content
             tr
               td(colspan="6", style="text-align: center; padding: 2rem; color: #94a3b8;") No employers found
 
-  //- Similar tables for Job Seekers and Tutors would go here
-  //- (abbreviated for space)
+  //- Job Seekers Table
+  .user-table-card
+    .user-table-header
+      h2.user-table-title
+        i.fas.fa-user-tie(style="color: #3b82f6;")
+        | Job Seekers
+      .user-filters
+        button.filter-btn.active(data-filter="all") All
+        button.filter-btn(data-filter="active") Active
+        button.filter-btn(data-filter="inactive") Inactive
+    
+    .search-box
+      i.fas.fa-search
+      input(type="text", placeholder="Search job seekers by username or email...", id="jsSearch")
+    
+    if stats.jobSeekers.inactive > 0
+      .bulk-actions
+        span.bulk-actions-label
+          i.fas.fa-exclamation-triangle.me-2
+          | #{stats.jobSeekers.inactive} inactive job seekers
+        button.bulk-delete-btn(onclick="deleteInactive('jobseekers')")
+          i.fas.fa-trash-alt
+          | Delete All
+    
+    .table-responsive
+      table.user-table#jsTable
+        thead
+          tr
+            th Username
+            th Email
+            th Days Remaining
+            th Expires At
+            th Registered
+            th Status
+            th Actions
+        tbody
+          if jobSeekers && jobSeekers.length > 0
+            each js in jobSeekers
+              tr(data-is-active=js.isActive ? 'true' : 'false')
+                td= js.username
+                td= js.email
+                td
+                  if js.remainingDays > 0
+                    span.user-badge.active= js.remainingDays + ' days'
+                  else
+                    span.user-badge.inactive Expired
+                td= js.expiresAtDisplay
+                td= js.createdAtDisplay
+                td
+                  if js.isActive
+                    span.user-badge.active
+                      i.fas.fa-check-circle
+                      | Active
+                  else
+                    span.user-badge.inactive
+                      i.fas.fa-times-circle
+                      | Inactive
+                td
+                  .user-actions
+                    button.user-action-btn.view(onclick=`viewUser('${js.id}')`)
+                      i.fas.fa-eye
+                    button.user-action-btn.edit(onclick=`editUser('${js.id}')`)
+                      i.fas.fa-edit
+          else
+            tr
+              td(colspan="7", style="text-align: center; padding: 2rem; color: #94a3b8;") No job seekers found
+
+  //- Online Tutors Table
+  .user-table-card
+    .user-table-header
+      h2.user-table-title
+        i.fas.fa-chalkboard-teacher(style="color: #8b5cf6;")
+        | Online Tutors
+      .user-filters
+        button.filter-btn.active(data-filter="all") All
+        button.filter-btn(data-filter="active") Active
+        button.filter-btn(data-filter="inactive") Inactive
+    
+    .search-box
+      i.fas.fa-search
+      input(type="text", placeholder="Search tutors by username or email...", id="tutorSearch")
+    
+    if stats.onlineTutors.inactive > 0
+      .bulk-actions
+        span.bulk-actions-label
+          i.fas.fa-exclamation-triangle.me-2
+          | #{stats.onlineTutors.inactive} inactive tutors
+        button.bulk-delete-btn(onclick="deleteInactive('tutors')")
+          i.fas.fa-trash-alt
+          | Delete All
+    
+    .table-responsive
+      table.user-table#tutorTable
+        thead
+          tr
+            th Username
+            th Email
+            th Days Remaining
+            th Expires At
+            th Registered
+            th Status
+            th Actions
+        tbody
+          if onlineTutors && onlineTutors.length > 0
+            each tutor in onlineTutors
+              tr(data-is-active=tutor.isActive ? 'true' : 'false')
+                td= tutor.username
+                td= tutor.email
+                td
+                  if tutor.remainingDays > 0
+                    span.user-badge.active= tutor.remainingDays + ' days'
+                  else
+                    span.user-badge.inactive Expired
+                td= tutor.expiresAtDisplay
+                td= tutor.createdAtDisplay
+                td
+                  if tutor.isActive
+                    span.user-badge.active
+                      i.fas.fa-check-circle
+                      | Active
+                  else
+                    span.user-badge.inactive
+                      i.fas.fa-times-circle
+                      | Inactive
+                td
+                  .user-actions
+                    button.user-action-btn.view(onclick=`viewUser('${tutor.id}')`)
+                      i.fas.fa-eye
+                    button.user-action-btn.edit(onclick=`editUser('${tutor.id}')`)
+                      i.fas.fa-edit
+          else
+            tr
+              td(colspan="7", style="text-align: center; padding: 2rem; color: #94a3b8;") No tutors found
 
   script.
     function deleteInactive(userType) {
@@ -486,3 +617,168 @@ block content
       // Implement edit user functionality
       alert('Edit user: ' + id);
     }
+    
+    // Filter functionality
+    document.addEventListener('DOMContentLoaded', function() {
+      // Employer filters
+      const empFilters = document.querySelectorAll('#empTable').length > 0 
+        ? document.querySelectorAll('.user-table-card:nth-of-type(1) .filter-btn')
+        : [];
+      empFilters.forEach(btn => {
+        btn.addEventListener('click', function() {
+          // Update active state
+          empFilters.forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+          
+          // Filter table rows
+          const filter = this.getAttribute('data-filter');
+          const rows = document.querySelectorAll('#empTable tbody tr');
+          
+          rows.forEach(row => {
+            if (filter === 'all') {
+              row.style.display = '';
+            } else if (filter === 'with-credits') {
+              row.style.display = row.getAttribute('data-has-credits') === 'true' ? '' : 'none';
+            } else if (filter === 'no-credits') {
+              row.style.display = row.getAttribute('data-has-credits') === 'false' ? '' : 'none';
+            }
+          });
+        });
+      });
+      
+      // Job Seeker filters
+      const jsFilters = document.querySelectorAll('#jsTable').length > 0
+        ? document.querySelectorAll('.user-table-card:nth-of-type(2) .filter-btn')
+        : [];
+      jsFilters.forEach(btn => {
+        btn.addEventListener('click', function() {
+          jsFilters.forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+          
+          const filter = this.getAttribute('data-filter');
+          const rows = document.querySelectorAll('#jsTable tbody tr');
+          
+          rows.forEach(row => {
+            if (filter === 'all') {
+              row.style.display = '';
+            } else if (filter === 'active') {
+              row.style.display = row.getAttribute('data-is-active') === 'true' ? '' : 'none';
+            } else if (filter === 'inactive') {
+              row.style.display = row.getAttribute('data-is-active') === 'false' ? '' : 'none';
+            }
+          });
+        });
+      });
+      
+      // Tutor filters
+      const tutorFilters = document.querySelectorAll('#tutorTable').length > 0
+        ? document.querySelectorAll('.user-table-card:nth-of-type(3) .filter-btn')
+        : [];
+      tutorFilters.forEach(btn => {
+        btn.addEventListener('click', function() {
+          tutorFilters.forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+          
+          const filter = this.getAttribute('data-filter');
+          const rows = document.querySelectorAll('#tutorTable tbody tr');
+          
+          rows.forEach(row => {
+            if (filter === 'all') {
+              row.style.display = '';
+            } else if (filter === 'active') {
+              row.style.display = row.getAttribute('data-is-active') === 'true' ? '' : 'none';
+            } else if (filter === 'inactive') {
+              row.style.display = row.getAttribute('data-is-active') === 'false' ? '' : 'none';
+            }
+          });
+        });
+      });
+      
+      // Search functionality
+      const empSearch = document.getElementById('empSearch');
+      if (empSearch) {
+        empSearch.addEventListener('input', function() {
+          const query = this.value.toLowerCase();
+          const rows = document.querySelectorAll('#empTable tbody tr');
+          
+          rows.forEach(row => {
+            const username = row.cells[0].textContent.toLowerCase();
+            const email = row.cells[1].textContent.toLowerCase();
+            const matches = username.includes(query) || email.includes(query);
+            row.style.display = matches ? '' : 'none';
+          });
+        });
+      }
+      
+      const jsSearch = document.getElementById('jsSearch');
+      if (jsSearch) {
+        jsSearch.addEventListener('input', function() {
+          const query = this.value.toLowerCase();
+          const rows = document.querySelectorAll('#jsTable tbody tr');
+          
+          rows.forEach(row => {
+            const username = row.cells[0].textContent.toLowerCase();
+            const email = row.cells[1].textContent.toLowerCase();
+            const matches = username.includes(query) || email.includes(query);
+            row.style.display = matches ? '' : 'none';
+          });
+        });
+      }
+      
+      const tutorSearch = document.getElementById('tutorSearch');
+      if (tutorSearch) {
+        tutorSearch.addEventListener('input', function() {
+          const query = this.value.toLowerCase();
+          const rows = document.querySelectorAll('#tutorTable tbody tr');
+          
+          rows.forEach(row => {
+            const username = row.cells[0].textContent.toLowerCase();
+            const email = row.cells[1].textContent.toLowerCase();
+            const matches = username.includes(query) || email.includes(query);
+            row.style.display = matches ? '' : 'none';
+          });
+        });
+      }
+      
+      // Table sorting functionality
+      document.querySelectorAll('.user-table thead th').forEach((header, index) => {
+        header.addEventListener('click', function() {
+          const table = this.closest('table');
+          const tbody = table.querySelector('tbody');
+          const rows = Array.from(tbody.querySelectorAll('tr'));
+          
+          // Toggle sort direction
+          const isAsc = header.classList.contains('sort-asc');
+          
+          // Remove all sort classes
+          table.querySelectorAll('thead th').forEach(th => {
+            th.classList.remove('sort-asc', 'sort-desc');
+          });
+          
+          // Add appropriate class
+          header.classList.add(isAsc ? 'sort-desc' : 'sort-asc');
+          
+          // Sort rows
+          rows.sort((a, b) => {
+            const aVal = a.cells[index].textContent.trim();
+            const bVal = b.cells[index].textContent.trim();
+            
+            // Try to parse as numbers
+            const aNum = parseFloat(aVal);
+            const bNum = parseFloat(bVal);
+            
+            if (!isNaN(aNum) && !isNaN(bNum)) {
+              return isAsc ? bNum - aNum : aNum - bNum;
+            }
+            
+            // String comparison
+            return isAsc 
+              ? bVal.localeCompare(aVal)
+              : aVal.localeCompare(bVal);
+          });
+          
+          // Reappend rows
+          rows.forEach(row => tbody.appendChild(row));
+        });
+      });
+    });
