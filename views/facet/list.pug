@@ -7,20 +7,103 @@ block content
       overflow-x: hidden !important; 
       width: 100%; 
       max-width: 100vw;
+      background: #f8fafc;
     }
     * {
       max-width: 100%;
     }
     
+    /* Modern Card Design */
+    .job-card {
+      background: white;
+      border-radius: 16px;
+      border: 1px solid #e2e8f0;
+      padding: 24px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .job-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: linear-gradient(to bottom, #3b82f6, #8b5cf6);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    
+    .job-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1), 0 4px 8px rgba(0, 0, 0, 0.06);
+      border-color: #cbd5e1;
+    }
+    
+    .job-card:hover::before {
+      opacity: 1;
+    }
+    
+    .job-card-title {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 12px;
+      line-height: 1.4;
+      transition: color 0.2s;
+    }
+    
+    .job-card-title:hover {
+      color: #3b82f6;
+    }
+    
+    /* Badge System */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-right: 6px;
+      margin-bottom: 6px;
+      transition: all 0.2s;
+    }
+    
+    .badge-country {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    
+    .badge-type {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: white;
+    }
+    
+    .badge-area {
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      color: white;
+    }
+    
+    .badge-date {
+      background: #f1f5f9;
+      color: #64748b;
+      border: 1px solid #e2e8f0;
+    }
+    
     /* Selected filter highlighting */
     label:has(input[type="checkbox"]:checked) {
-      background-color: #fff7ed !important;
+      background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%) !important;
       border: 2px solid #f97316 !important;
-      box-shadow: 0 2px 4px rgba(249, 115, 22, 0.2);
+      box-shadow: 0 4px 12px rgba(249, 115, 22, 0.15);
+      transform: scale(1.02);
     }
     
     label:has(input[type="checkbox"]:checked):hover {
-      background-color: #ffedd5 !important;
+      background: linear-gradient(135deg, #fed7aa 0%, #fde68a 100%) !important;
     }
     
     input[type="checkbox"]:checked {
@@ -29,8 +112,63 @@ block content
     
     /* Smooth transitions */
     label {
-      transition: all 0.2s ease;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+      border-radius: 10px;
     }
+    
+    label:hover {
+      transform: translateX(4px);
+      background: #f8fafc;
+    }
+    
+    /* Filter Section */
+    .filter-section {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      border: 1px solid #e2e8f0;
+    }
+    
+    .filter-title {
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 12px;
+    }
+    
+    /* Search & Sort Bar */
+    .search-bar {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      border: 1px solid #e2e8f0;
+    }
+    
+    /* Animation */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .job-card {
+      animation: fadeInUp 0.5s ease-out;
+    }
+    
+    .job-card:nth-child(1) { animation-delay: 0.05s; }
+    .job-card:nth-child(2) { animation-delay: 0.1s; }
+    .job-card:nth-child(3) { animation-delay: 0.15s; }
+    .job-card:nth-child(4) { animation-delay: 0.2s; }
+    .job-card:nth-child(5) { animation-delay: 0.25s; }
     @media (max-width: 768px) {
       .container { 
         overflow-x: hidden !important; 
@@ -75,42 +213,51 @@ block content
   
   .container.mx-auto.py-4.px-3(class="md:py-6", style="overflow-x: hidden; max-width: 100vw;")
     // 헤더 + 검색 + 정렬
-    .mb-4
+    .mb-6
       - const titleMap = { Job_Vacancies: 'Job Vacancies', Job_Seekers: 'Job Seekers', Online_Tutors: 'Online Tutors' }
-      h1.text-xl.font-bold.mb-3(class="md:text-2xl", style="word-break: break-word;")
-        = titleMap && titleMap[klass] ? titleMap[klass] : (klass || 'List')
-        if typeof total !== 'undefined'
-          span.text-gray-500.text-sm(class="md:text-base") &nbsp;(#{total})
+      - const iconMap = { Job_Vacancies: '💼', Job_Seekers: '👥', Online_Tutors: '👨‍🏫' }
+      
+      .flex.items-center.gap-3.mb-4
+        span(style="font-size: 2.5rem;")= iconMap[klass] || '📋'
+        div
+          h1.text-2xl.font-bold(class="md:text-3xl", style="word-break: break-word; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;")
+            = titleMap && titleMap[klass] ? titleMap[klass] : (klass || 'List')
+          if typeof total !== 'undefined'
+            p.text-sm.text-gray-600.mt-1(class="md:text-base")
+              | #{total} results found
 
       // 모바일: 세로 스택 레이아웃 / 데스크톱: 가로 배치
-      .flex.flex-col.gap-2(class="md:flex-row md:gap-3")
-        // 검색창 (현재 선택된 facet 보존)
-        form(method="GET", action=`/facet/${klass}`, class="flex gap-2 flex-1")
-          input(type="text", name="q", value=q || "", placeholder="Search...", class="border rounded px-3 py-2 flex-1 text-sm")
-          if facetCfg && facetCfg.groups
-            each g in facetCfg.groups
-              if selected && selected[g.key]
-                each v in selected[g.key]
-                  input(type="hidden", name=g.key, value=v)
-          input(type="hidden", name="limit", value=limit)
-          input(type="hidden", name="sort", value=sort || "recent")
-          button(type="submit", class="px-3 py-2 rounded bg-blue-600 text-white text-sm") Search
-        
-        // 정렬 드롭다운
-        form(method="GET", action=`/facet/${klass}`, class="flex gap-2 items-center")
-          input(type="hidden", name="q", value=q || "")
-          if facetCfg && facetCfg.groups
-            each g in facetCfg.groups
-              if selected && selected[g.key]
-                each v in selected[g.key]
-                  input(type="hidden", name=g.key, value=v)
-          input(type="hidden", name="limit", value=limit)
-          label(class="text-xs md:text-sm font-medium text-gray-700 whitespace-nowrap") Sort:
-          select(name="sort", class="border rounded px-2 py-2 text-xs md:text-sm", onchange="this.form.submit()")
-            option(value="recent", selected=(sort === 'recent' || !sort)) Most Recent
-            option(value="oldest", selected=(sort === 'oldest')) Oldest First
-            option(value="alpha-asc", selected=(sort === 'alpha-asc')) A-Z
-            option(value="alpha-desc", selected=(sort === 'alpha-desc')) Z-A
+      .search-bar.p-4
+        .flex.flex-col.gap-3(class="md:flex-row md:gap-3")
+          // 검색창 (현재 선택된 facet 보존)
+          form(method="GET", action=`/facet/${klass}`, class="flex gap-2 flex-1")
+            .relative.flex-1
+              span.absolute.left-3.top-1/2(style="transform: translateY(-50%); font-size: 1.25rem;") 🔍
+              input(type="text", name="q", value=q || "", placeholder="Search for opportunities...", class="border-2 border-gray-200 rounded-lg px-3 py-3 pl-10 w-full text-sm focus:border-blue-500 focus:outline-none transition-colors", style="border-radius: 10px;")
+            if facetCfg && facetCfg.groups
+              each g in facetCfg.groups
+                if selected && selected[g.key]
+                  each v in selected[g.key]
+                    input(type="hidden", name=g.key, value=v)
+            input(type="hidden", name="limit", value=limit)
+            input(type="hidden", name="sort", value=sort || "recent")
+            button(type="submit", class="px-6 py-3 rounded-lg font-semibold text-sm transition-all duration-200", style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 10px;") Search
+          
+          // 정렬 드롭다운
+          form(method="GET", action=`/facet/${klass}`, class="flex gap-2 items-center")
+            input(type="hidden", name="q", value=q || "")
+            if facetCfg && facetCfg.groups
+              each g in facetCfg.groups
+                if selected && selected[g.key]
+                  each v in selected[g.key]
+                    input(type="hidden", name=g.key, value=v)
+            input(type="hidden", name="limit", value=limit)
+            label(class="text-sm font-semibold text-gray-700 whitespace-nowrap") Sort:
+            select(name="sort", class="border-2 border-gray-200 rounded-lg px-4 py-3 text-sm font-medium focus:border-blue-500 focus:outline-none transition-colors", style="border-radius: 10px;", onchange="this.form.submit()")
+              option(value="recent", selected=(sort === 'recent' || !sort)) 🆕 Most Recent
+              option(value="oldest", selected=(sort === 'oldest')) ⏰ Oldest First
+              option(value="alpha-asc", selected=(sort === 'alpha-asc')) 🔤 A-Z
+              option(value="alpha-desc", selected=(sort === 'alpha-desc')) 🔡 Z-A
 
     //- 모바일 전용: 상단 horizontal 드롭다운 패싯
     .mb-4(class="block md:hidden", style="max-width: 100vw; overflow-x: hidden;")
@@ -151,62 +298,116 @@ block content
     .grid.grid-cols-12.gap-4(class="md:gap-6")
       //- 데스크톱 전용: 좌측 vertical 패싯 (모바일에서 숨김)
       div(class="hidden md:block md:col-span-3")
-        form#facetForm(method="GET", action=`/facet/${klass}`, class="space-y-6 border rounded p-3")
-          input(type="hidden", name="q", value=q || "")
-          input(type="hidden", name="limit", value=limit)
-          input(type="hidden", name="sort", value=sort || "recent")
+        .sticky(style="top: 20px;")
+          form#facetForm(method="GET", action=`/facet/${klass}`, class="space-y-4")
+            input(type="hidden", name="q", value=q || "")
+            input(type="hidden", name="limit", value=limit)
+            input(type="hidden", name="sort", value=sort || "recent")
 
-          if facetCfg && facetCfg.groups && facetCfg.groups.length
-            each g in facetCfg.groups
-              .space-y-2
-                h3.font-semibold.text-gray-700= g.label
-                .space-y-1.max-h-64.overflow-auto.pr-1
-                  - var facetList = (facets && facets[g.key]) || []
-                  - var selList = (selected && selected[g.key]) || []
-                  if facetList.length
-                    each f in facetList
-                      - var checked = selList.indexOf(f._id) !== -1
-                      label.flex.items-center.gap-2.p-2.rounded.cursor-pointer.transition-colors(
-                        class=checked ? "bg-orange-50 border-2 border-orange-500" : "hover:bg-gray-50",
-                        style=checked ? "background-color: #fff7ed; border-color: #f97316;" : ""
-                      )
-                        //- 동일 name으로 여러 값 전송
-                        input(type="checkbox", name=g.key, value=f._id, checked=checked, class="w-4 h-4 accent-orange-500")
-                        span.flex-1.truncate(class=checked ? "font-bold text-orange-900" : "", style=checked ? "color: #7c2d12; font-weight: 700;" : "")= f._id
-                        span.text-xs(class=checked ? "text-orange-600 font-semibold" : "text-gray-500", style=checked ? "color: #ea580c; font-weight: 600;" : "") (#{f.c})
-                  else
-                    p.text-sm.text-gray-400 No values
+            if facetCfg && facetCfg.groups && facetCfg.groups.length
+              each g in facetCfg.groups
+                .filter-section
+                  .flex.items-center.gap-2.mb-3
+                    span(style="font-size: 1.25rem;") #{g.key === 'country' ? '🌍' : g.key === 'studentType' || g.key === 'StudentType' ? '🎓' : g.key === 'teachingArea' || g.key === 'Teaching_Area' ? '📚' : g.key === 'Nationality' ? '🌏' : g.key === 'Major' ? '📖' : g.key === 'Expertise' ? '⭐' : '🔍'}
+                    h3.filter-title= g.label
+                  
+                  .space-y-2.max-h-72.overflow-auto.pr-1(style="scrollbar-width: thin; scrollbar-color: #cbd5e1 #f1f5f9;")
+                    - var facetList = (facets && facets[g.key]) || []
+                    - var selList = (selected && selected[g.key]) || []
+                    if facetList.length
+                      each f in facetList
+                        - var checked = selList.indexOf(f._id) !== -1
+                        label.flex.items-center.gap-3.p-3.rounded-lg.cursor-pointer.border(
+                          class=checked ? "bg-orange-50 border-orange-500" : "border-gray-200 hover:bg-gray-50",
+                          style=checked ? "background-color: #fff7ed; border-color: #f97316; border-width: 2px;" : "border-width: 1px;"
+                        )
+                          input(type="checkbox", name=g.key, value=f._id, checked=checked, class="w-5 h-5 accent-orange-500 rounded")
+                          span.flex-1.truncate.text-sm.font-medium(class=checked ? "text-orange-900" : "text-gray-700", style=checked ? "color: #7c2d12; font-weight: 600;" : "")= f._id
+                          span.px-2.py-1.rounded-full.text-xs.font-semibold(class=checked ? "bg-orange-500 text-white" : "bg-gray-100 text-gray-600", style=checked ? "background: #f97316; color: white;" : "")= f.c
+                    else
+                      p.text-sm.text-gray-400.text-center.py-4 No options available
 
       //- 리스트 (모바일: 전체 너비 / 데스크톱: 9칸)
       div(class="col-span-12 md:col-span-9")
         if !docs || !docs.length
           .text-gray-500 No results.
         else
-          ul.space-y-3
+          ul.space-y-4
             each d in docs
               - var posted = (d.datePosted && new Date(d.datePosted).toISOString().slice(0,10)) || (d.updatedAt && new Date(d.updatedAt).toISOString().slice(0,10)) || '-'
               - var titleText = d.displayLabel || d._label || d.title || d.name || d.jobTitle || d.email || '(no title)'
-              li.border.rounded.p-3(style="max-width: calc(100vw - 2rem); overflow: hidden;")
-                .flex.flex-col.items-start.gap-2(class="md:flex-row md:items-center md:gap-3")
-                  .min-w-0.flex-1(style="max-width: 100%; overflow: hidden;")
-                    h2.font-semibold.text-base(class="md:text-lg", style="word-break: break-word; overflow-wrap: break-word;")
-                      a(href=`/rdf-resource/${klass}/${d._id}`)= titleText
-
-                    // 하부 메타: 가능한 필드를 자동 모아 표시
-                    - var parts = []
-                    - var fieldsForMeta = ['country','Country','studentType','StudentType','teachingArea','Teaching_Area','Nationality','Preferred_Work_Location','Major','Expertise','Tutoring_Experience','Gender']
-                    - for (var i = 0; i < fieldsForMeta.length; i++) {
-                    -   var k = fieldsForMeta[i];
-                    -   if (!d || typeof d[k] === 'undefined' || d[k] === null) continue;
-                    -   if (Array.isArray(d[k]) && d[k].length) parts.push(d[k].join(', '));
-                    -   else if (d[k]) parts.push(d[k]);
-                    - }
-                    if parts.length
-                      p(class="text-xs md:text-sm text-gray-600 mt-0.5", style="word-break: break-word; overflow-wrap: break-word;")= parts.join(' · ')
-
-                    p.text-xs.mt-1(class="md:text-sm") Posted: #{posted}
-                  .shrink-0
-                    a(href=`/rdf-resource/${klass}/${d._id}`, class="text-blue-700 underline text-sm") View
+              
+              //- Country flag mapping
+              - var countryFlags = { 'China': '🇨🇳', 'Japan': '🇯🇵', 'South Korea': '🇰🇷', 'Taiwan': '🇹🇼', 'Singapore': '🇸🇬', 'Thailand': '🇹🇭', 'Vietnam': '🇻🇳', 'USA': '🇺🇸', 'UK': '🇬🇧', 'Remote': '🌍' }
+              - var country = d.country || d.Country || ''
+              - var countryFlag = countryFlags[country] || '🌏'
+              
+              li.job-card(style="max-width: calc(100vw - 2rem);")
+                .flex.flex-col.gap-3
+                  //- Title with icon
+                  .flex.items-start.gap-3
+                    .text-3xl.shrink-0 #{klass === 'Job_Vacancies' ? '💼' : klass === 'Job_Seekers' ? '👤' : '👨‍🏫'}
+                    .flex-1.min-w-0
+                      h2.job-card-title(style="word-break: break-word;")
+                        a(href=`/rdf-resource/${klass}/${d._id}`)= titleText
+                  
+                  //- Badges for metadata
+                  .flex.flex-wrap.items-center.gap-2
+                    //- Country badge
+                    if country
+                      span.badge.badge-country
+                        span(style="margin-right: 4px;")= countryFlag
+                        = country
+                    
+                    //- Student Type / Nationality
+                    - var studentType = d.studentType || d.StudentType
+                    if studentType
+                      span.badge.badge-type= studentType
+                    - var nationality = d.Nationality
+                    if nationality
+                      span.badge.badge-type= nationality
+                    
+                    //- Teaching Area / Major / Expertise
+                    - var teachingArea = d.teachingArea || d.Teaching_Area
+                    if teachingArea
+                      if Array.isArray(teachingArea)
+                        each area in teachingArea.slice(0, 2)
+                          span.badge.badge-area= area
+                      else
+                        span.badge.badge-area= teachingArea
+                    
+                    - var major = d.Major
+                    if major
+                      span.badge.badge-area= major
+                    
+                    - var expertise = d.Expertise
+                    if expertise && Array.isArray(expertise)
+                      each exp in expertise.slice(0, 2)
+                        span.badge.badge-area= exp
+                    
+                    //- Preferred Work Location
+                    - var workLocation = d.Preferred_Work_Location
+                    if workLocation
+                      span.badge.badge-area
+                        | 📍 #{workLocation}
+                    
+                    //- Experience
+                    - var experience = d.Tutoring_Experience
+                    if experience
+                      span.badge.badge-type= experience
+                    
+                    //- Gender
+                    - var gender = d.Gender
+                    if gender
+                      span.badge.badge-type #{gender === 'Male' ? '👨' : gender === 'Female' ? '👩' : ''} #{gender}
+                  
+                  //- Footer: Date and View button
+                  .flex.items-center.justify-between.mt-2
+                    .flex.items-center.gap-2
+                      span.badge.badge-date
+                        | 📅 #{posted}
+                    a(href=`/rdf-resource/${klass}/${d._id}`, class="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-semibold text-sm hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-md hover:shadow-lg")
+                      | View Details →
 
         // 페이지네이션
         if typeof total !== 'undefined' && total > limit
