@@ -154,7 +154,17 @@ router.get('/dashboard', requireAdmin, async (req, res) => {
       }
     };
 
-    res.render('admin/dashboard', { employers, jobSeekers, onlineTutors, stats });
+    res.render('admin/dashboard', {
+      currentPage: 'overview',
+      pageTitle: 'Dashboard Overview',
+      employers,
+      jobSeekers,
+      onlineTutors,
+      stats,
+      employerCount: stats.employers.total,
+      jobSeekerCount: stats.jobSeekers.total,
+      tutorCount: stats.onlineTutors.total
+    });
   } catch (err) {
     console.error('❌ Admin dashboard error:', err);
     res.status(500).render('error', {
