@@ -6,6 +6,7 @@ require("dotenv").config();
 
 const { requireLogin } = require("../middleware/auth");
 const User = require("../model/user");
+const Payment = require("../model/payment");
 const priceConfig = require("../config/priceConfig");
 const resumePriceConfig = require("../config/resumePriceConfig");
 const tutorPriceConfig = require("../config/tutorPriceConfig");
@@ -133,26 +134,89 @@ router.post("/webhook", express.json(), async (req, res) => {
         return res.status(404).send("User not found");
       }
 
+      // Extract payment details
+      const amount = event.amount || event.paid_amount || 0;
+      const paymentMethod = event.pay_method || event.payment_method || 'UNKNOWN';
+      let packageType, packageDetails;
+
       // Handle by payment type
       if (type === "employer") {
         const packageId = parts[1]; // 1, 4, 12, 24
         const count = parseInt(packageId, 10);
+        
+        // Find price from config
+        const packageConfig = priceConfig.find(p => p.id === packageId);
+        
+        packageType = 'job_ads';
+        packageDetails = {
+          quantity: count,
+          description: packageConfig ? packageConfig.label : `${count} Job Ad Credits`
+        };
+        
         await User.findByIdAndUpdate(user._id, { $inc: { adsAvailable: count } });
         console.log(`✅ Added ${count} ad credits to user ${user._id}`);
+        
       } else if (type === "resume") {
         const daysStr = parts[1]; // "30d", "90d", "365d"
         const days = parseInt(daysStr.replace('d', ''), 10);
+        
+        // Find price from config
+        const packageConfig = resumePriceConfig.find(p => p.id === String(days));
+        
+        packageType = 'resume_access';
+        packageDetails = {
+          duration: days,
+          description: packageConfig ? packageConfig.label : `Resume Access - ${days} Days`
+        };
+        
         await User.findByIdAndUpdate(user._id, {
           resumeAccess: { startDate: new Date(), durationDays: days },
         });
         console.log(`✅ Activated resume access for ${days} days for user ${user._id}`);
+        
       } else if (type === "tutor") {
         const daysStr = parts[1]; // "30d", "90d", "365d"
         const days = parseInt(daysStr.replace('d', ''), 10);
+        
+        // Find price from config
+        const packageConfig = tutorPriceConfig.find(p => p.id === String(days));
+        
+        packageType = 'tutor_access';
+        packageDetails = {
+          duration: days,
+          description: packageConfig ? packageConfig.label : `Tutor Listing - ${days} Days`
+        };
+        
         await User.findByIdAndUpdate(user._id, {
           tutorAccess: { startDate: new Date(), durationDays: days },
         });
         console.log(`✅ Activated tutor listing for ${days} days for user ${user._id}`);
+      }
+
+      // Save payment record to database
+      try {
+        const payment = new Payment({
+          paymentId: paymentId,
+          merchantUid: event.merchant_uid || paymentId,
+          userId: user._id,
+          userEmail: user.email,
+          userRole: user.role,
+          amount: amount,
+          currency: event.currency || 'KRW',
+          paymentMethod: paymentMethod,
+          packageType: packageType,
+          packageDetails: packageDetails,
+          status: 'paid',
+          paidAt: new Date(),
+          gatewayResponse: event,
+          notes: `Payment completed via webhook for ${type}`
+        });
+
+        await payment.save();
+        console.log(`✅ Payment record saved: ${paymentId}`);
+      } catch (paymentError) {
+        console.error("⚠️ Failed to save payment record:", paymentError.message);
+        // Continue even if payment record fails - user already got their credits
       }
     }
 
@@ -218,6 +282,58 @@ router.post("/verify", requireLogin, async (req, res) => {
         success: false,
         message: "Order mismatch",
       });
+    }
+
+    // Extract payment details and save to database
+    try {
+      // Check if payment already saved (to avoid duplicates)
+      const existingPayment = await Payment.findOne({ paymentId: imp_uid });
+      
+      if (!existingPayment) {
+        // Parse payment details from merchant_uid
+        const parts = merchant_uid.split('_');
+        const type = parts[0]; // employer, resume, tutor
+        
+        let packageType, packageDetails;
+        const amount = payment.amount || 0;
+        
+        if (type === "employer") {
+          const count = parseInt(parts[1], 10);
+          packageType = 'job_ads';
+          packageDetails = { quantity: count, description: `${count} Job Ad Credits` };
+        } else if (type === "resume") {
+          const days = parseInt(parts[1].replace('d', ''), 10);
+          packageType = 'resume_access';
+          packageDetails = { duration: days, description: `Resume Access - ${days} Days` };
+        } else if (type === "tutor") {
+          const days = parseInt(parts[1].replace('d', ''), 10);
+          packageType = 'tutor_access';
+          packageDetails = { duration: days, description: `Tutor Listing - ${days} Days` };
+        }
+
+        const paymentRecord = new Payment({
+          paymentId: imp_uid,
+          merchantUid: merchant_uid,
+          userId: req.user._id,
+          userEmail: req.user.email,
+          userRole: req.user.role,
+          amount: amount,
+          currency: payment.currency || 'KRW',
+          paymentMethod: payment.pay_method || payment.payment_method || 'UNKNOWN',
+          packageType: packageType,
+          packageDetails: packageDetails,
+          status: 'paid',
+          paidAt: new Date(),
+          gatewayResponse: payment,
+          notes: 'Payment verified via /verify endpoint'
+        });
+
+        await paymentRecord.save();
+        console.log(`✅ Payment record saved via verify: ${imp_uid}`);
+      }
+    } catch (paymentError) {
+      console.error("⚠️ Failed to save payment record in verify:", paymentError.message);
+      // Continue - verification succeeded even if record save failed
     }
 
     // 성공 응답
