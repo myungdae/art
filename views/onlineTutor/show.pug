@@ -1,84 +1,342 @@
 extends ../layout
 
 block content
-  .container.mt-5
-    .row.justify-content-center
-      .col-md-10
-        .card.shadow
-          .card-header.bg-info.text-white.text-center
-            h4.mb-0= tutor.name
+  style.
+    .tutor-detail-container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+    }
+    
+    .tutor-header {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      border-radius: 24px;
+      padding: 3.5rem 2.5rem;
+      color: white;
+      margin-bottom: 2.5rem;
+      box-shadow: 0 20px 60px rgba(240, 147, 251, 0.35);
+      position: relative;
+      overflow: hidden;
+      text-align: center;
+    }
+    
+    .tutor-header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+      opacity: 0.3;
+    }
+    
+    .tutor-header > * {
+      position: relative;
+      z-index: 1;
+    }
+    
+    .tutor-name {
+      font-size: 2.5rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .tutor-jobtitle {
+      font-size: 1.3rem;
+      font-weight: 500;
+      opacity: 0.95;
+      margin-bottom: 0;
+    }
+    
+    .tutor-card {
+      background: white;
+      border-radius: 20px;
+      padding: 2.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      border: 1px solid #e2e8f0;
+      transition: all 0.3s ease;
+    }
+    
+    .tutor-card:hover {
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+      transform: translateY(-2px);
+    }
+    
+    .tutor-section-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 3px solid #f1f5f9;
+    }
+    
+    .tutor-description {
+      line-height: 1.9;
+      color: #475569;
+      font-size: 1.0625rem;
+      padding: 1.5rem;
+      background: #f8fafc;
+      border-radius: 16px;
+    }
+    
+    .info-grid-tutor {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.75rem;
+    }
+    
+    .info-item-tutor {
+      padding: 1.5rem;
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      border-radius: 16px;
+      border-left: 5px solid #f093fb;
+      transition: all 0.3s ease;
+    }
+    
+    .info-item-tutor:hover {
+      transform: translateX(4px);
+      border-left-color: #f5576c;
+      box-shadow: 0 4px 12px rgba(240, 147, 251, 0.15);
+    }
+    
+    .info-label-tutor {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.75rem;
+    }
+    
+    .info-value-tutor {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: #1e293b;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .badge-expertise {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 18px;
+      border-radius: 9999px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-right: 10px;
+      margin-bottom: 10px;
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: white;
+      transition: all 0.2s ease;
+    }
+    
+    .badge-expertise:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(240, 147, 251, 0.3);
+    }
+    
+    .action-buttons-tutor {
+      display: flex;
+      gap: 1.25rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    
+    .btn-tutor-edit {
+      padding: 1rem 2.25rem;
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      color: white;
+      border-radius: 12px;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      transition: all 0.3s ease;
+      box-shadow: 0 6px 20px rgba(79, 172, 254, 0.4);
+      border: none;
+    }
+    
+    .btn-tutor-edit:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 30px rgba(79, 172, 254, 0.5);
+      color: white;
+    }
+    
+    .btn-tutor-back {
+      padding: 1rem 2.25rem;
+      background: white;
+      border: 2px solid #e2e8f0;
+      color: #475569;
+      border-radius: 12px;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-tutor-back:hover {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+      color: #1e293b;
+      transform: translateX(-6px);
+    }
+    
+    @media (max-width: 768px) {
+      .tutor-header {
+        padding: 2.5rem 1.75rem;
+        border-radius: 20px;
+      }
+      
+      .tutor-name {
+        font-size: 2rem;
+      }
+      
+      .tutor-jobtitle {
+        font-size: 1.1rem;
+      }
+      
+      .tutor-card {
+        padding: 1.75rem;
+      }
+      
+      .info-grid-tutor {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+      }
+    }
 
-          .card-body
-            if tutor.jobTitle
-              p
-                strong Job Title:
-                |  #{tutor.jobTitle}
-
-            if tutor.description
-              p
-                strong Description:
-                br
-                | !{tutor.description}
-
-            p
-              strong Gender:
-              |  #{tutor.gender}
-
-            if tutor.expertise && tutor.expertise.length
-              p
-                strong Expertise:
-                |  #{tutor.expertise.join(', ')}
-
-            p
-              strong Tutoring Experience:
-              |  #{tutor.tutoringExperience}
-
-            if tutor.communicationMethods && tutor.communicationMethods.length
-              p
-                strong Communication Methods:
-                |  #{tutor.communicationMethods.join(', ')}
-
-            if tutor.language
-              p
-                strong Main Language:
-                |  #{tutor.language}
-
-            if tutor.languagesSpoken && tutor.languagesSpoken.length
-              p
-                strong Languages Spoken:
-                |  #{tutor.languagesSpoken.join(', ')}
-
-            if tutor.email
-              p
-                strong Email:
-                |  #{tutor.email}
-
-            if tutor.skypeId
-              p
-                strong Skype ID:
-                |  #{tutor.skypeId}
-
-            if tutor.zoomId
-              p
-                strong Zoom ID:
-                |  #{tutor.zoomId}
-
-            if tutor.hourlyRate
-              p
-                strong Hourly Rate (USD):
-                |  $#{tutor.hourlyRate}
-
-            if tutor.availableFrom
-              - const fromDate = new Date(tutor.availableFrom).toLocaleDateString('en-CA')
-              p
-                strong Available From:
-                |  #{fromDate}
-
-            if tutor.availableTime
-              p
-                strong Available Time:
-                |  #{tutor.availableTime}
-
-            .mt-4
-              a.btn.btn-warning(href=`/online-tutors/${tutor._id}/edit`) Edit
-              a.btn.btn-secondary.ms-2(href="/online-tutors") ← Back to List
+  .tutor-detail-container
+    //- Header Section
+    .tutor-header
+      .display-3(style="font-size: 4rem; margin-bottom: 1rem;") 👨‍🏫
+      h1.tutor-name= tutor.name
+      if tutor.jobTitle
+        h2.tutor-jobtitle= tutor.jobTitle
+    
+    //- Description Card
+    if tutor.description
+      .tutor-card
+        h2.tutor-section-title
+          span 📝
+          | About
+        .tutor-description !{tutor.description}
+    
+    //- Expertise Card
+    if tutor.expertise && tutor.expertise.length
+      .tutor-card
+        h2.tutor-section-title
+          span 📚
+          | Expertise
+        div
+          each exp in tutor.expertise
+            span.badge-expertise= exp
+    
+    //- Profile Information Card
+    .tutor-card
+      h2.tutor-section-title
+        span 👤
+        | Profile Information
+      
+      .info-grid-tutor
+        //- Gender
+        .info-item-tutor
+          .info-label-tutor Gender
+          .info-value-tutor
+            = tutor.gender === 'Male' ? '👨' : tutor.gender === 'Female' ? '👩' : '👤'
+            = ' ' + tutor.gender
+        
+        //- Experience
+        .info-item-tutor
+          .info-label-tutor Tutoring Experience
+          .info-value-tutor
+            | ⭐ #{tutor.tutoringExperience}
+        
+        //- Main Language
+        if tutor.language
+          .info-item-tutor
+            .info-label-tutor Main Language
+            .info-value-tutor
+              | 🌐 #{tutor.language}
+        
+        //- Languages Spoken
+        if tutor.languagesSpoken && tutor.languagesSpoken.length
+          .info-item-tutor
+            .info-label-tutor Languages Spoken
+            .info-value-tutor
+              | 💬 #{tutor.languagesSpoken.join(', ')}
+        
+        //- Hourly Rate
+        if tutor.hourlyRate
+          .info-item-tutor
+            .info-label-tutor Hourly Rate (USD)
+            .info-value-tutor
+              | 💵 $#{tutor.hourlyRate}
+        
+        //- Available From
+        if tutor.availableFrom
+          - const fromDate = new Date(tutor.availableFrom).toLocaleDateString('en-CA')
+          .info-item-tutor
+            .info-label-tutor Available From
+            .info-value-tutor
+              | 📅 #{fromDate}
+        
+        //- Available Time
+        if tutor.availableTime
+          .info-item-tutor
+            .info-label-tutor Available Time
+            .info-value-tutor
+              | ⏰ #{tutor.availableTime}
+    
+    //- Contact Information Card
+    .tutor-card
+      h2.tutor-section-title
+        span 📞
+        | Contact Information
+      
+      .info-grid-tutor
+        //- Communication Methods
+        if tutor.communicationMethods && tutor.communicationMethods.length
+          .info-item-tutor
+            .info-label-tutor Communication Methods
+            .info-value-tutor
+              | 💬 #{tutor.communicationMethods.join(', ')}
+        
+        //- Email
+        if tutor.email
+          .info-item-tutor
+            .info-label-tutor Email
+            .info-value-tutor
+              | 📧 #{tutor.email}
+        
+        //- Skype ID
+        if tutor.skypeId
+          .info-item-tutor
+            .info-label-tutor Skype ID
+            .info-value-tutor
+              | 📞 #{tutor.skypeId}
+        
+        //- Zoom ID
+        if tutor.zoomId
+          .info-item-tutor
+            .info-label-tutor Zoom ID
+            .info-value-tutor
+              | 🎥 #{tutor.zoomId}
+    
+    //- Actions
+    .tutor-card
+      .action-buttons-tutor
+        a.btn-tutor-edit(href=`/online-tutors/${tutor._id}/edit`)
+          | ✏️ Edit Profile
+        a.btn-tutor-back(href="/online-tutors")
+          | ← Back to List

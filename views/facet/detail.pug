@@ -11,76 +11,123 @@ block content
     
     .detail-header {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border-radius: 20px;
-      padding: 3rem 2rem;
+      border-radius: 24px;
+      padding: 3.5rem 2.5rem;
       color: white;
-      margin-bottom: 2rem;
-      box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);
+      margin-bottom: 2.5rem;
+      box-shadow: 0 20px 60px rgba(102, 126, 234, 0.35);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .detail-header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+      opacity: 0.3;
+    }
+    
+    .detail-header > * {
+      position: relative;
+      z-index: 1;
     }
     
     .detail-title {
-      font-size: 2rem;
+      font-size: 2.25rem;
       font-weight: 800;
       margin-bottom: 1rem;
       line-height: 1.3;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
     
     .detail-card {
       background: white;
-      border-radius: 16px;
-      padding: 2rem;
-      margin-bottom: 1.5rem;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      border-radius: 20px;
+      padding: 2.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
       border: 1px solid #e2e8f0;
+      transition: all 0.3s ease;
+    }
+    
+    .detail-card:hover {
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+      transform: translateY(-2px);
     }
     
     .detail-section-title {
-      font-size: 1.25rem;
+      font-size: 1.4rem;
       font-weight: 700;
       color: #1e293b;
-      margin-bottom: 1rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 3px solid #f1f5f9;
+    }
+    
+    .detail-section-title span {
+      font-size: 1.75rem;
+    }
+    
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.75rem;
+    }
+    
+    .info-item {
+      padding: 1.5rem;
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      border-radius: 16px;
+      border-left: 5px solid #667eea;
+      transition: all 0.3s ease;
+    }
+    
+    .info-item:hover {
+      transform: translateX(4px);
+      border-left-color: #764ba2;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+    }
+    
+    .info-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.75rem;
+    }
+    
+    .info-value {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: #1e293b;
       display: flex;
       align-items: center;
       gap: 0.5rem;
     }
     
-    .info-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 1.5rem;
-    }
-    
-    .info-item {
-      padding: 1rem;
-      background: #f8fafc;
-      border-radius: 12px;
-      border-left: 4px solid #667eea;
-    }
-    
-    .info-label {
-      font-size: 0.875rem;
-      font-weight: 600;
-      color: #64748b;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 0.5rem;
-    }
-    
-    .info-value {
-      font-size: 1rem;
-      font-weight: 600;
-      color: #1e293b;
-    }
-    
     .badge-detail {
       display: inline-flex;
       align-items: center;
-      padding: 6px 16px;
+      padding: 8px 18px;
       border-radius: 9999px;
-      font-size: 0.875rem;
+      font-size: 0.9rem;
       font-weight: 600;
-      margin-right: 8px;
-      margin-bottom: 8px;
+      margin-right: 10px;
+      margin-bottom: 10px;
+      transition: all 0.2s ease;
+    }
+    
+    .badge-detail:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
     
     .badge-primary {
@@ -99,69 +146,85 @@ block content
     }
     
     .description-content {
-      line-height: 1.8;
+      line-height: 1.9;
       color: #475569;
-      font-size: 1rem;
+      font-size: 1.0625rem;
+      padding: 1rem;
+      background: #f8fafc;
+      border-radius: 12px;
     }
     
     .back-button {
       display: inline-flex;
       align-items: center;
       gap: 0.5rem;
-      padding: 0.75rem 1.5rem;
-      background: white;
-      border: 2px solid #e2e8f0;
-      border-radius: 10px;
+      padding: 0.875rem 1.75rem;
+      background: rgba(255,255,255,0.2);
+      border: 2px solid rgba(255,255,255,0.4);
+      border-radius: 12px;
       font-weight: 600;
-      color: #475569;
+      color: white;
       text-decoration: none;
-      transition: all 0.2s;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
     }
     
     .back-button:hover {
-      background: #f8fafc;
-      border-color: #cbd5e1;
-      transform: translateX(-4px);
-      color: #1e293b;
+      background: rgba(255,255,255,0.3);
+      border-color: rgba(255,255,255,0.6);
+      transform: translateX(-6px);
+      color: white;
     }
     
     .action-buttons {
       display: flex;
-      gap: 1rem;
+      gap: 1.25rem;
       flex-wrap: wrap;
     }
     
     .btn-primary-gradient {
-      padding: 0.875rem 2rem;
+      padding: 1rem 2.25rem;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
-      border-radius: 10px;
+      border-radius: 12px;
       font-weight: 600;
       text-decoration: none;
       display: inline-flex;
       align-items: center;
-      gap: 0.5rem;
-      transition: all 0.3s;
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+      gap: 0.75rem;
+      transition: all 0.3s ease;
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+      border: none;
     }
     
     .btn-primary-gradient:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 30px rgba(102, 126, 234, 0.5);
       color: white;
     }
     
     @media (max-width: 768px) {
       .detail-header {
-        padding: 2rem 1.5rem;
+        padding: 2.5rem 1.75rem;
+        border-radius: 20px;
       }
       
       .detail-title {
-        font-size: 1.5rem;
+        font-size: 1.75rem;
       }
       
       .info-grid {
         grid-template-columns: 1fr;
+        gap: 1.25rem;
+      }
+      
+      .detail-card {
+        padding: 1.75rem;
+        margin-bottom: 1.5rem;
+      }
+      
+      .detail-section-title {
+        font-size: 1.25rem;
       }
     }
 
@@ -174,16 +237,16 @@ block content
       
       //- Header Section
       .detail-header
-        .mb-3
-          a.back-button(href=`/facet/${klass}`, style="background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); color: white;")
+        .mb-4
+          a.back-button(href=`/facet/${klass}`)
             | ← Back to List
         .d-flex.align-items-start.gap-3
-          .display-4= icon
-          div
+          .display-3(style="font-size: 4rem;")= icon
+          div(style="flex: 1;")
             h1.detail-title= titleText
             if doc.datePosted || doc.updatedAt
               - const posted = (doc.datePosted && new Date(doc.datePosted).toISOString().slice(0,10)) || (doc.updatedAt && new Date(doc.updatedAt).toISOString().slice(0,10)) || '-'
-              p.mb-0(style="opacity: 0.9;")
+              p.mb-0(style="opacity: 0.9; font-size: 1.1rem; font-weight: 500;")
                 | 📅 Posted: #{posted}
       
       //- Key Information Card

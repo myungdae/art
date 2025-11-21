@@ -1,29 +1,268 @@
 extends ../layout
 
 block content
-  .container.mt-5
-    .row.justify-content-center
-      .col-md-10
-        if !jobVacancy
-          .alert.alert-danger ❌ Error: Job data not found or has been deleted.
-        else
-          .card.shadow
-            .card-header.bg-light.d-flex.justify-content-between.align-items-center
-              h4.mb-0.text-dark= jobVacancy._label || jobVacancy.title || 'Untitled'
-              a.btn.btn-outline-primary(href='/job-vacancies') ← Back to List
+  style.
+    .job-detail-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+    }
+    
+    .job-header {
+      background: linear-gradient(135deg, #FF7A00 0%, #FF9A3D 100%);
+      border-radius: 24px;
+      padding: 3.5rem 2.5rem;
+      color: white;
+      margin-bottom: 2.5rem;
+      box-shadow: 0 20px 60px rgba(255, 122, 0, 0.35);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .job-header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+      opacity: 0.3;
+    }
+    
+    .job-header > * {
+      position: relative;
+      z-index: 1;
+    }
+    
+    .job-title {
+      font-size: 2.25rem;
+      font-weight: 800;
+      margin-bottom: 0;
+      line-height: 1.3;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .job-card {
+      background: white;
+      border-radius: 20px;
+      padding: 2.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      border: 1px solid #e2e8f0;
+      transition: all 0.3s ease;
+    }
+    
+    .job-card:hover {
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+      transform: translateY(-2px);
+    }
+    
+    .job-section-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 3px solid #f1f5f9;
+    }
+    
+    .job-description {
+      line-height: 1.9;
+      color: #475569;
+      font-size: 1.0625rem;
+      padding: 1.5rem;
+      background: #f8fafc;
+      border-radius: 16px;
+      border: none;
+    }
+    
+    .info-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+    
+    .info-table tbody tr {
+      transition: all 0.2s ease;
+    }
+    
+    .info-table tbody tr:hover {
+      background: #f8fafc;
+    }
+    
+    .info-table th {
+      padding: 1rem 1.5rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 0.8rem;
+      letter-spacing: 0.1em;
+      color: #64748b;
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      border-bottom: 2px solid #e2e8f0;
+      width: 35%;
+    }
+    
+    .info-table td {
+      padding: 1rem 1.5rem;
+      color: #1e293b;
+      font-weight: 500;
+      border-bottom: 1px solid #e2e8f0;
+      font-size: 1.05rem;
+    }
+    
+    .info-table tbody tr:first-child th {
+      border-top-left-radius: 12px;
+    }
+    
+    .info-table tbody tr:first-child td {
+      border-top-right-radius: 12px;
+    }
+    
+    .info-table tbody tr:last-child th {
+      border-bottom-left-radius: 12px;
+      border-bottom: none;
+    }
+    
+    .info-table tbody tr:last-child td {
+      border-bottom-right-radius: 12px;
+      border-bottom: none;
+    }
+    
+    .badge-area {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 18px;
+      border-radius: 9999px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-right: 10px;
+      margin-bottom: 10px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      transition: all 0.2s ease;
+    }
+    
+    .badge-area:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+    
+    .badge-extra {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+    
+    .back-button-job {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.875rem 1.75rem;
+      background: rgba(255,255,255,0.2);
+      border: 2px solid rgba(255,255,255,0.4);
+      border-radius: 12px;
+      font-weight: 600;
+      color: white;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+    }
+    
+    .back-button-job:hover {
+      background: rgba(255,255,255,0.3);
+      border-color: rgba(255,255,255,0.6);
+      transform: translateX(-6px);
+      color: white;
+    }
+    
+    .btn-modern {
+      padding: 1rem 2rem;
+      border-radius: 12px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .btn-modern-edit {
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      color: white;
+      box-shadow: 0 6px 20px rgba(79, 172, 254, 0.4);
+    }
+    
+    .btn-modern-edit:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 30px rgba(79, 172, 254, 0.5);
+      color: white;
+    }
+    
+    .btn-modern-delete {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: white;
+      box-shadow: 0 6px 20px rgba(240, 147, 251, 0.4);
+    }
+    
+    .btn-modern-delete:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 30px rgba(240, 147, 251, 0.5);
+      color: white;
+    }
+    
+    @media (max-width: 768px) {
+      .job-header {
+        padding: 2.5rem 1.75rem;
+        border-radius: 20px;
+      }
+      
+      .job-title {
+        font-size: 1.75rem;
+      }
+      
+      .job-card {
+        padding: 1.75rem;
+      }
+      
+      .info-table th, .info-table td {
+        padding: 0.75rem 1rem;
+        font-size: 0.95rem;
+      }
+    }
 
-            .card-body
-              h5.mb-3 📝 Job Description
-              .job-description.border.p-3.bg-light
-                if stripped
-                  div= stripped
-                else
-                  p.text-muted No description provided.
-
-              hr
-
-              h5.mb-3 RELATED INFORMATION
-              table.table.table-bordered
+  .job-detail-container
+    if !jobVacancy
+      .alert.alert-danger(style="border-radius: 16px; padding: 2rem;") ❌ Error: Job data not found or has been deleted.
+    else
+      //- Header Section
+      .job-header
+        .mb-4
+          a.back-button-job(href='/job-vacancies')
+            | ← Back to List
+        .d-flex.align-items-start.gap-3
+          .display-3(style="font-size: 4rem;") 💼
+          div(style="flex: 1;")
+            h1.job-title= jobVacancy._label || jobVacancy.title || 'Untitled'
+      
+      //- Description Card
+      .job-card
+        h2.job-section-title
+          span 📝
+          | Job Description
+        .job-description
+          if stripped
+            div= stripped
+          else
+            p.text-muted No description provided.
+      
+      //- Information Card
+      .job-card
+        h2.job-section-title
+          span 📋
+          | Job Details
+        table.info-table
                 tbody
                   tr
                     th Duration
@@ -40,7 +279,7 @@ block content
                       if jobVacancy.teachingArea && jobVacancy.teachingArea.length > 0
                         - const areas = Array.isArray(jobVacancy.teachingArea) ? jobVacancy.teachingArea : [jobVacancy.teachingArea]
                         each area, index in areas
-                          span.badge.bg-primary.me-1.mb-1= area
+                          span.badge-area= area
                       else
                         | N/A
                   tr
@@ -50,7 +289,7 @@ block content
                         - const extraAreas = jobVacancy.extraTeachingArea.split(',').map(a => a.trim()).filter(a => a)
                         if extraAreas.length > 0
                           each area in extraAreas
-                            span.badge.bg-secondary.me-1.mb-1= area
+                            span.badge-area.badge-extra= area
                         else
                           = jobVacancy.extraTeachingArea
                       else
@@ -77,21 +316,29 @@ block content
                     th Homepage
                     td
                       if jobVacancy.homepage && jobVacancy.homepage.trim() !== ''
-                        a(href=jobVacancy.homepage, target="_blank")= jobVacancy.homepage
+                        a(href=jobVacancy.homepage, target="_blank" style="color: #667eea; font-weight: 600;")= jobVacancy.homepage
                       else
                         | N/A
-
-              .mt-4.d-flex.justify-content-end
-                //- Show Edit/Delete buttons only for Admin or Owner
-                if user && (user.role === 'Admin' || (jobVacancy.user && user._id && String(jobVacancy.user._id || jobVacancy.user) === String(user._id)))
-                  a.btn.btn-secondary.me-2(href=`/job-vacancies/${jobVacancy._id}/edit`) 
-                    i.fas.fa-edit.me-1
-                    | Edit
-                  form.d-inline(method="POST", action=`/job-vacancies/${jobVacancy._id}?_method=DELETE`, style="display: inline;")
-                    button.btn.btn-danger(type="submit" onclick="return confirm('Are you sure you want to delete this job vacancy?')") 
-                      i.fas.fa-trash.me-1
-                      | Delete
-                else if !user
-                  a.btn.btn-outline-secondary.me-2(href="/user/login") 
-                    i.fas.fa-sign-in-alt.me-1
-                    | Login to Edit
+      
+      //- Actions Card
+      if user && (user.role === 'Admin' || (jobVacancy.user && user._id && String(jobVacancy.user._id || jobVacancy.user) === String(user._id)))
+        .job-card
+          h2.job-section-title
+            span ⚙️
+            | Manage Listing
+          .d-flex.gap-3.flex-wrap
+            a.btn-modern.btn-modern-edit(href=`/job-vacancies/${jobVacancy._id}/edit`) 
+              i.fas.fa-edit
+              | Edit Listing
+            form.d-inline(method="POST", action=`/job-vacancies/${jobVacancy._id}?_method=DELETE`, style="display: inline;")
+              button.btn-modern.btn-modern-delete(type="submit" onclick="return confirm('Are you sure you want to delete this job vacancy?')") 
+                i.fas.fa-trash
+                | Delete Listing
+      else if !user
+        .job-card
+          h2.job-section-title
+            span 🔐
+            | Authentication Required
+          a.btn-modern.btn-modern-edit(href="/user/login") 
+            i.fas.fa-sign-in-alt
+            | Login to Edit
