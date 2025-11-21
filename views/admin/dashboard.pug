@@ -1,6 +1,9 @@
 extends layout
 
 block content
+  //- Chart.js 추가
+  script(src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js")
+  
   style.
     .stats-grid {
       display: grid;
@@ -96,7 +99,105 @@ block content
       transform: translateY(-2px);
       box-shadow: 0 6px 12px rgba(239, 68, 68, 0.3);
     }
+    
+    .quick-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    
+    .quick-stat-item {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      border-left: 3px solid #3b82f6;
+      transition: transform 0.2s ease;
+    }
+    
+    .quick-stat-item:hover {
+      transform: translateY(-2px);
+    }
+    
+    .quick-stat-value {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #1e293b;
+      margin-bottom: 0.5rem;
+    }
+    
+    .quick-stat-label {
+      font-size: 0.875rem;
+      color: #64748b;
+      font-weight: 500;
+    }
+    
+    .chart-container {
+      background: white;
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      margin-bottom: 2rem;
+      height: 400px;
+    }
+    
+    .chart-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+    }
+    
+    .charts-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
 
+  //- Quick Stats Summary
+  .quick-stats
+    .quick-stat-item
+      .quick-stat-value= (stats.employers.total || 0) + (stats.jobSeekers.total || 0) + (stats.onlineTutors.total || 0)
+      .quick-stat-label 
+        i.fas.fa-users.me-2
+        | Total Users
+    .quick-stat-item
+      .quick-stat-value= (stats.employers.withCredits || 0) + (stats.jobSeekers.active || 0) + (stats.onlineTutors.active || 0)
+      .quick-stat-label 
+        i.fas.fa-check-circle.me-2
+        | Active Users
+    .quick-stat-item
+      .quick-stat-value= (stats.employers.withoutCredits || 0) + (stats.jobSeekers.inactive || 0) + (stats.onlineTutors.inactive || 0)
+      .quick-stat-label 
+        i.fas.fa-times-circle.me-2
+        | Inactive Users
+    .quick-stat-item
+      - const totalUsers = (stats.employers.total || 0) + (stats.jobSeekers.total || 0) + (stats.onlineTutors.total || 0)
+      - const activeUsers = (stats.employers.withCredits || 0) + (stats.jobSeekers.active || 0) + (stats.onlineTutors.active || 0)
+      - const activeRate = totalUsers > 0 ? ((activeUsers / totalUsers) * 100).toFixed(1) : 0
+      .quick-stat-value #{activeRate}%
+      .quick-stat-label 
+        i.fas.fa-chart-line.me-2
+        | Active Rate
+
+  //- Charts Section
+  .charts-row
+    .chart-container
+      h3.chart-title
+        i.fas.fa-chart-pie.me-2
+        | User Distribution
+      canvas#userDistributionChart
+    .chart-container
+      h3.chart-title
+        i.fas.fa-chart-bar.me-2
+        | Active vs Inactive
+      canvas#activeInactiveChart
+
+  //- Detailed Stats Grid
   .stats-grid
     //- Employers Card
     .stat-card.employers
@@ -196,3 +297,100 @@ block content
         btn.innerHTML = originalHTML;
       });
     }
+    
+    // Chart.js 차트 생성
+    document.addEventListener('DOMContentLoaded', function() {
+      // User Distribution Pie Chart
+      const userDistCtx = document.getElementById('userDistributionChart');
+      if (userDistCtx) {
+        new Chart(userDistCtx, {
+          type: 'doughnut',
+          data: {
+            labels: ['Employers', 'Job Seekers', 'Online Tutors'],
+            datasets: [{
+              data: [
+                #{stats.employers.total || 0},
+                #{stats.jobSeekers.total || 0},
+                #{stats.onlineTutors.total || 0}
+              ],
+              backgroundColor: ['#ef4444', '#3b82f6', '#8b5cf6'],
+              borderWidth: 2,
+              borderColor: '#fff'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: {
+                  padding: 15,
+                  font: {
+                    size: 12,
+                    weight: 600
+                  }
+                }
+              }
+            }
+          }
+        });
+      }
+      
+      // Active vs Inactive Bar Chart
+      const activeInactiveCtx = document.getElementById('activeInactiveChart');
+      if (activeInactiveCtx) {
+        new Chart(activeInactiveCtx, {
+          type: 'bar',
+          data: {
+            labels: ['Employers', 'Job Seekers', 'Tutors'],
+            datasets: [
+              {
+                label: 'Active',
+                data: [
+                  #{stats.employers.withCredits || 0},
+                  #{stats.jobSeekers.active || 0},
+                  #{stats.onlineTutors.active || 0}
+                ],
+                backgroundColor: '#10b981',
+                borderRadius: 8
+              },
+              {
+                label: 'Inactive',
+                data: [
+                  #{stats.employers.withoutCredits || 0},
+                  #{stats.jobSeekers.inactive || 0},
+                  #{stats.onlineTutors.inactive || 0}
+                ],
+                backgroundColor: '#ef4444',
+                borderRadius: 8
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: {
+                  padding: 15,
+                  font: {
+                    size: 12,
+                    weight: 600
+                  }
+                }
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  stepSize: 1
+                }
+              }
+            }
+          }
+        });
+      }
+    });
