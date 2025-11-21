@@ -28,6 +28,7 @@ const userRoutes = require("./router/user");
 const adminRouter = require("./router/admin");
 const jobVacancyRouter = require("./router/jobVacancy");
 const jobSeekerRouter = require("./router/jobSeeker");
+const applicationRouter = require("./router/application");
 const portoneRoutes = require("./router/portone");
 const onlineTutorRouter = require("./router/onlineTutor");
 const tutorAccessRouter = require("./router/tutorAccess");
@@ -124,6 +125,7 @@ app.use("/matching", matchingRouter);
 
 app.use(jobSeekerRouter);
 app.use(jobVacancyRouter);
+app.use(applicationRouter);
 app.use(onlineTutorRouter);
 
 app.use("/policy", policyRouter);

@@ -13,6 +13,10 @@ block content
         a.btn(href=`/matching/candidates/${vm.id}` style="background-color: #10b981; border-color: #10b981; color: white;")
           i.fas.fa-magic.mr-2
           | AI Find Candidates
+        if session && session.user && session.user.role === 'Job_Seeker'
+          a.btn(href=`/job-vacancies/${vm.id}/apply` style="background-color: #3b82f6; border-color: #3b82f6; color: white;")
+            i.fas.fa-paper-plane.mr-2
+            | Apply for this Job
         if vm.canEdit
           a.btn.btn-primary(href=`/job-vacancies/${vm.id}/edit` style="background-color: #FF7A00; border-color: #FF7A00;")
             i.fas.fa-edit.mr-2

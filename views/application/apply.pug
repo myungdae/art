@@ -1,0 +1,62 @@
+extends ../layout
+
+block content
+  .container.py-6
+    h1.text-2xl.font-bold.mb-6 Apply for Job
+
+    .max-w-2xl.mx-auto
+      // Job Info
+      .bg-blue-50.border.border-blue-200.rounded.p-4.mb-6
+        h2.text-xl.font-semibold.mb-2= jobVacancy.title || jobVacancy._label
+        if jobVacancy.companyName
+          p.text-gray-700
+            strong Company: 
+            | #{jobVacancy.companyName}
+        if jobVacancy.country
+          p.text-gray-700
+            strong Country: 
+            | #{jobVacancy.country}
+        if jobVacancy.jobLocation
+          p.text-gray-700
+            strong Location: 
+            | #{jobVacancy.jobLocation}
+
+      // Errors
+      if errors && Object.keys(errors).length
+        .bg-red-50.border.border-red-200.rounded.p-3.mb-5
+          ul
+            each val, key in errors
+              li #[strong #{key}]: #{val}
+
+      // Application Form
+      form(method="POST", action=`/job-vacancies/${jobVacancy._id}/apply`)
+        .space-y-5
+
+          // Cover Letter
+          .space-y-1
+            label.block(for="coverLetter") Cover Letter / Introduction
+              span.text-red-500 *
+            textarea#coverLetter(
+              name="coverLetter" 
+              rows="10" 
+              required
+              class="w-full border rounded px-3 py-2"
+              placeholder="Introduce yourself and explain why you're interested in this position..."
+            )= (values && values.coverLetter) || ""
+            p.text-xs.text-gray-500 Tell the employer why you're the right fit for this position.
+
+          // Resume (optional link or text)
+          .space-y-1
+            label.block(for="resume") Resume / CV (optional)
+            textarea#resume(
+              name="resume" 
+              rows="5" 
+              class="w-full border rounded px-3 py-2"
+              placeholder="You can paste a link to your resume or provide additional information..."
+            )= (values && values.resume) || ""
+            p.text-xs.text-gray-500 Provide a link to your online resume or paste relevant information.
+
+          // Buttons
+          .flex.gap-3
+            button.bg-blue-600.text-white.px-6.py-2.rounded.hover_bg-blue-700(type="submit") Submit Application
+            a.bg-gray-300.text-gray-700.px-6.py-2.rounded.hover_bg-gray-400(href=`/rdf-resource/Job_Vacancies/${jobVacancy._id}`) Cancel

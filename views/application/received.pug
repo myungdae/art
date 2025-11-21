@@ -1,0 +1,47 @@
+extends ../layout
+
+block content
+  .container.py-6
+    h1.text-2xl.font-bold.mb-6 Received Applications
+
+    .max-w-4xl.mx-auto
+      if !applications || applications.length === 0
+        .bg-yellow-50.border.border-yellow-200.rounded.p-4.text-center
+          p.text-gray-700 You haven't received any applications yet.
+          a.inline-block.mt-3.bg-blue-600.text-white.px-4.py-2.rounded.hover_bg-blue-700(href="/job-vacancies/mine") My Job Posts
+      else
+        // Summary stats
+        .mb-6.grid.grid-cols-2.gap-4(class="md:grid-cols-4")
+          - const stats = { pending: 0, reviewed: 0, accepted: 0, rejected: 0 }
+          - applications.forEach(app => { stats[app.status] = (stats[app.status] || 0) + 1 })
+          .bg-yellow-50.border.border-yellow-200.rounded.p-3.text-center
+            p.text-2xl.font-bold= stats.pending || 0
+            p.text-sm.text-gray-600 Pending
+          .bg-blue-50.border.border-blue-200.rounded.p-3.text-center
+            p.text-2xl.font-bold= stats.reviewed || 0
+            p.text-sm.text-gray-600 Reviewed
+          .bg-green-50.border.border-green-200.rounded.p-3.text-center
+            p.text-2xl.font-bold= stats.accepted || 0
+            p.text-sm.text-gray-600 Accepted
+          .bg-red-50.border.border-red-200.rounded.p-3.text-center
+            p.text-2xl.font-bold= stats.rejected || 0
+            p.text-sm.text-gray-600 Rejected
+
+        // Applications list
+        .space-y-4
+          each app in applications
+            .border.rounded.p-4.bg-white.shadow-sm
+              .flex.justify-between.items-start
+                div
+                  h3.text-lg.font-semibold.mb-1
+                    a.text-blue-600.hover_underline(href=`/applications/${app._id}`)= app.applicantName || app.applicantEmail
+                  p.text-sm.text-gray-600 Applied for: #{app.jobTitle || 'N/A'}
+                  if app.applicant && app.applicant.email
+                    p.text-xs.text-gray-500 Email: #{app.applicant.email}
+                  p.text-xs.text-gray-500 Applied on #{app.appliedAt ? new Date(app.appliedAt).toLocaleDateString() : 'N/A'}
+                div
+                  - const statusColors = { pending: 'bg-yellow-100 text-yellow-800', reviewed: 'bg-blue-100 text-blue-800', accepted: 'bg-green-100 text-green-800', rejected: 'bg-red-100 text-red-800', withdrawn: 'bg-gray-100 text-gray-800' }
+                  span.px-3.py-1.rounded.text-sm(class=statusColors[app.status] || 'bg-gray-100')= app.status.charAt(0).toUpperCase() + app.status.slice(1)
+              
+              .mt-3
+                a.text-blue-600.text-sm.hover_underline(href=`/applications/${app._id}`) View Details & Respond
