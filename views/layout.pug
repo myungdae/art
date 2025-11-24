@@ -346,6 +346,22 @@ html(lang='en')
             a(href="/policy/terms") Terms of Service
             a(href="/policy/privacy") Privacy Policy
             a(href="/policy/refund") Refund Policy
+            
+            // KB에스크로 이체 인증마크
+            div.mt-3
+              script.
+                function onPopKBAuthMark() {
+                  window.open('','KB_AUTHMARK','height=604, width=648, status=yes, toolbar=no, menubar=no, location=no');
+                  document.KB_AUTHMARK_FORM.action='https://okbfex.kbstar.com/quics';
+                  document.KB_AUTHMARK_FORM.target='KB_AUTHMARK';
+                  document.KB_AUTHMARK_FORM.submit();
+                }
+              form(name="KB_AUTHMARK_FORM" method="get")
+                input(type="hidden" name="page" value="C021590")
+                input(type="hidden" name="cc" value="b034066:b035526")
+                input(type="hidden" name="mHValue" value="86977a3fcb4ae78e1b41b6c412fba405")
+              a(href="#" onclick="javascript:onPopKBAuthMark();return false;")
+                img(src="http://img1.kbstar.com/img/escrow/escrowcmark.gif" border="0" alt="KB에스크로 인증마크")
            
       hr.my-3
       .row.mt-3 

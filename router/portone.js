@@ -12,6 +12,80 @@ const resumePriceConfig = require("../config/resumePriceConfig");
 const tutorPriceConfig = require("../config/tutorPriceConfig");
 
 /* -------------------------------------------------------------
+   GET /portone/checkout-demo (TEMP for Toss Payments demo)
+   - Same as /checkout but without login requirement
+------------------------------------------------------------- */
+router.get("/checkout-demo", (req, res) => {
+  const { type, accessPeriod } = req.query;
+  
+  // Create fake user for demo
+  const fakeUser = {
+    _id: "demo-user-id",
+    username: "Demo User",
+    email: "demo@eslplus.org",
+    role: "Employer"
+  };
+
+  // TUTOR
+  if (type === "tutor") {
+    const days = parseInt(accessPeriod, 10);
+    if (![30, 90, 365].includes(days)) {
+      return res.status(400).send("❌ Invalid tutor visibility period");
+    }
+    const selected = tutorPriceConfig.find((p) => p.id === String(days));
+    
+    return res.render("portone/checkout_tutor", {
+      user: fakeUser,
+      days,
+      price: selected ? selected.price : 0,
+      label: selected ? selected.label : `Tutor Listing - ${days} Days`,
+      paypalChannelKey: process.env.PORTONE_PAYPAL_CHANNEL_KEY,
+      tossChannelKey: process.env.PORTONE_TOSSPAYMENTS_CHANNEL_KEY,
+      storeId: process.env.PORTONE_STORE_ID,
+      testMode: process.env.PORTONE_TEST_MODE === "true",
+    });
+  }
+
+  // RESUME
+  if (type === "resume" || accessPeriod) {
+    const preselectDays = parseInt(accessPeriod, 10);
+    const packages = resumePriceConfig.map((p) => ({
+      value: p.id,
+      label: p.label,
+      price: p.price,
+      days: p.id,
+    }));
+    
+    return res.render("portone/checkout_resume", {
+      user: fakeUser,
+      packages,
+      preselectDays,
+      paypalChannelKey: process.env.PORTONE_PAYPAL_CHANNEL_KEY,
+      tossChannelKey: process.env.PORTONE_TOSSPAYMENTS_CHANNEL_KEY,
+      storeId: process.env.PORTONE_STORE_ID,
+      testMode: process.env.PORTONE_TEST_MODE === "true",
+    });
+  }
+
+  // EMPLOYER Job Ads (default)
+  const packages = priceConfig.map((p) => ({
+    value: p.id,
+    label: p.label,
+    price: p.price,
+    discount: p.discount || 0,
+  }));
+  
+  return res.render("portone/checkout", {
+    user: fakeUser,
+    packages,
+    paypalChannelKey: process.env.PORTONE_PAYPAL_CHANNEL_KEY,
+    tossChannelKey: process.env.PORTONE_TOSSPAYMENTS_CHANNEL_KEY,
+    storeId: process.env.PORTONE_STORE_ID,
+    testMode: process.env.PORTONE_TEST_MODE === "true",
+  });
+});
+
+/* -------------------------------------------------------------
    GET /portone/checkout
    - Employer Ads (default) or specify type via query
    - ?type=resume&accessPeriod=30

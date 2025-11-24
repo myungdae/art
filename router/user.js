@@ -138,10 +138,21 @@ router.post("/register", async (req, res) => {
 });
 
 /* --------------------------- Login / Logout --------------------------- */
-router.get("/login", (req, res) => res.render("user/login"));
+router.get("/login", (req, res) => {
+  res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  res.render("user/login");
+});
 
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
+  
+  // Prevent caching
+  res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  
   try {
     const user = await User.findOne({ email });
     if (!user || user.password !== password) {
