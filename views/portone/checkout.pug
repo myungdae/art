@@ -260,17 +260,22 @@ block content
             customerData.phoneNumber = userPhone;
           }
           
+          // Detect mobile device
+          const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+          
           console.log('🔍 Toss Payments request:', {
             storeId: '#{storeId}',
             channelKey: '#{tossChannelKey}',
             paymentId: merchantUid,
             orderName: 'Job Ad Package - ' + selectedPackage + ' ads',
             totalAmount: selectedPrice,
-            currency: 'KRW'
+            currency: 'KRW',
+            isMobile: isMobile
           });
           
           // Toss Payments checkout (V2 SDK - requestPayment)
-          // Note: requestPayment automatically handles window type - do not specify windowType
+          // Note: Do not specify windowType - PortOne handles it automatically
+          // payMethod: Use CARD for PC, EASY_PAY for mobile based on channel settings
           const response = await PortOne.requestPayment({
             storeId: '#{storeId}',
             channelKey: '#{tossChannelKey}',
@@ -278,7 +283,6 @@ block content
             orderName: 'Job Ad Package - ' + selectedPackage + ' ads',
             totalAmount: selectedPrice * 1300, // USD to KRW approximate exchange rate
             currency: 'KRW',
-            payMethod: 'CARD',  // Direct card payment
             customer: customerData,
             redirectUrl: window.location.origin + '/portone/success?type=employer'
           });

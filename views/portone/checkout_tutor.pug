@@ -257,17 +257,21 @@ block content
             customerData.phoneNumber = userPhone;
           }
           
+          // Detect mobile device
+          const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+          
           console.log('🔍 Toss Payments request:', {
             storeId: '#{storeId}',
             channelKey: '#{tossChannelKey}',
             paymentId: merchantUid,
             orderName: 'Tutor Listing Visibility - ' + selectedDays + ' days',
             totalAmount: selectedPrice,
-            currency: 'KRW'
+            currency: 'KRW',
+            isMobile: isMobile
           });
           
           // Toss Payments checkout
-          // Note: requestPayment automatically handles window type - do not specify windowType
+          // Note: Do not specify payMethod or windowType - PortOne handles them automatically
           const response = await PortOne.requestPayment({
             storeId: '#{storeId}',
             channelKey: '#{tossChannelKey}',
@@ -275,7 +279,6 @@ block content
             orderName: 'Tutor Listing Visibility - ' + selectedDays + ' days',
             totalAmount: selectedPrice * 1300,
             currency: 'KRW',
-            payMethod: 'CARD',  // Direct card payment
             customer: customerData,
             redirectUrl: window.location.origin + '/portone/success?type=tutor'
           });
