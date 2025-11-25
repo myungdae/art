@@ -274,6 +274,7 @@ block content
           });
           
           // Toss Payments checkout
+          // Note: requestPayment automatically handles window type - do not specify windowType
           const response = await PortOne.requestPayment({
             storeId: '#{storeId}',
             channelKey: '#{tossChannelKey}',
@@ -281,14 +282,9 @@ block content
             orderName: 'Resume Access - ' + selectedDays + ' days',
             totalAmount: selectedPrice * 1300,
             currency: 'KRW',
-            payMethod: 'CARD',  // Use CARD for direct card payment
+            payMethod: 'CARD',  // Direct card payment
             customer: customerData,
-            windowType: {
-              pc: 'REDIRECTION',  // Toss Payments requires REDIRECTION on PC
-              mobile: 'REDIRECTION'  // Direct redirection on mobile
-            },
-            redirectUrl: window.location.origin + '/portone/success?type=resume',
-            isTestChannel: #{testMode ? 'true' : 'false'}
+            redirectUrl: window.location.origin + '/portone/success?type=resume'
           });
           
           if (response.code != null) {

@@ -270,6 +270,7 @@ block content
           });
           
           // Toss Payments checkout (V2 SDK - requestPayment)
+          // Note: requestPayment automatically handles window type - do not specify windowType
           const response = await PortOne.requestPayment({
             storeId: '#{storeId}',
             channelKey: '#{tossChannelKey}',
@@ -277,14 +278,9 @@ block content
             orderName: 'Job Ad Package - ' + selectedPackage + ' ads',
             totalAmount: selectedPrice * 1300, // USD to KRW approximate exchange rate
             currency: 'KRW',
-            payMethod: 'CARD',  // Use CARD for direct card payment
+            payMethod: 'CARD',  // Direct card payment
             customer: customerData,
-            windowType: {
-              pc: 'REDIRECTION',  // Toss Payments requires REDIRECTION on PC
-              mobile: 'REDIRECTION'  // Direct redirection on mobile
-            },
-            redirectUrl: window.location.origin + '/portone/success?type=employer',
-            isTestChannel: #{testMode ? 'true' : 'false'}
+            redirectUrl: window.location.origin + '/portone/success?type=employer'
           });
           
           if (response.code != null) {
