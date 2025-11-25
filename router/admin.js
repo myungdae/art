@@ -512,6 +512,7 @@ router.get('/revenue/transactions', requireAdmin, async (req, res) => {
         paid: paidTransactions.length,
         pending: transactions.filter(t => t.status === 'pending').length,
         failed: transactions.filter(t => t.status === 'failed').length,
+        refunded: transactions.filter(t => t.status === 'refunded').length,
         totalRevenue,
         avgTransaction
       }

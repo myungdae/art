@@ -90,11 +90,22 @@ const paymentSchema = new mongoose.Schema({
   },
   
   // Refund Information
-  refundInfo: {
+  refundedAt: {
+    type: Date
+  },
+  refundAmount: {
+    type: Number
+  },
+  refundReason: {
+    type: String
+  },
+  refundHistory: [{
     refundedAt: Date,
-    refundAmount: Number,
-    refundReason: String
-  }
+    amount: Number,
+    reason: String,
+    refundId: String,
+    adminUser: String
+  }]
 });
 
 // Update timestamps on save
