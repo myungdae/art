@@ -277,7 +277,7 @@ block content
             payMethod: 'CARD',  // Use CARD for direct card payment
             customer: customerData,
             windowType: {
-              pc: 'IFRAME',  // Opens in iframe instead of popup
+              pc: 'REDIRECTION',  // Toss Payments requires REDIRECTION on PC
               mobile: 'REDIRECTION'  // Direct redirection on mobile
             },
             redirectUrl: window.location.origin + '/portone/success?type=tutor',
