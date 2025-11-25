@@ -150,6 +150,36 @@ block content
       background: #ede9fe;
       color: #7c3aed;
     }
+    
+    .status-badge.refunded {
+      background: #e0e7ff;
+      color: #6366f1;
+    }
+    
+    .action-btn {
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .refund-btn {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+    
+    .refund-btn:hover {
+      background: #fecaca;
+    }
+    
+    .refund-btn:disabled {
+      background: #f1f5f9;
+      color: #94a3b8;
+      cursor: not-allowed;
+    }
 
   //- Statistics Cards
   .stats-grid
@@ -173,6 +203,11 @@ block content
       .stat-label 
         i.fas.fa-times-circle.me-2
         | Failed
+    .stat-card(style="border-left-color: #6366f1;")
+      .stat-value= stats.refunded
+      .stat-label 
+        i.fas.fa-undo.me-2
+        | Refunded
     .stat-card(style="border-left-color: #8b5cf6;")
       .stat-value ₩#{stats.totalRevenue.toLocaleString()}
       .stat-label 
@@ -205,6 +240,7 @@ block content
             th Method
             th Status
             th Date
+            th Actions
         tbody
           if transactions && transactions.length > 0
             each txn in transactions
@@ -223,12 +259,23 @@ block content
                 td= txn.paymentMethod
                 td
                   span(class=`status-badge ${txn.status}`)
-                    i.fas(class=txn.status === 'paid' ? 'fa-check-circle' : txn.status === 'pending' ? 'fa-clock' : 'fa-times-circle')
+                    i.fas(class=txn.status === 'paid' ? 'fa-check-circle' : txn.status === 'pending' ? 'fa-clock' : txn.status === 'refunded' ? 'fa-undo' : 'fa-times-circle')
                     = txn.status.toUpperCase()
                 td= txn.paidAt
+                td
+                  if txn.status === 'paid'
+                    button.action-btn.refund-btn(
+                      onclick=`refundPayment('${txn.paymentId}', '${txn.userName}', ${txn.amount})`
+                    )
+                      i.fas.fa-undo.me-1
+                      | Refund
+                  else if txn.status === 'refunded'
+                    span(style="color: #6366f1; font-size: 0.75rem; font-weight: 600;") Refunded
+                  else
+                    span(style="color: #94a3b8; font-size: 0.75rem;") -
           else
             tr
-              td(colspan="7", style="text-align: center; padding: 3rem; color: #94a3b8;")
+              td(colspan="8", style="text-align: center; padding: 3rem; color: #94a3b8;")
                 i.fas.fa-inbox(style="font-size: 3rem; margin-bottom: 1rem; display: block;")
                 div No transactions found
 
@@ -246,4 +293,42 @@ block content
           row.style.display = text.includes(query) ? '' : 'none';
         });
       });
+    }
+    
+    // Refund Payment Function
+    async function refundPayment(paymentId, userName, amount) {
+      const reason = prompt(`Refund payment for ${userName}?\n\nAmount: ₩${amount.toLocaleString()}\n\nEnter refund reason:`);
+      
+      if (!reason) {
+        return; // User cancelled
+      }
+      
+      if (!confirm(`Are you sure you want to refund ₩${amount.toLocaleString()} to ${userName}?\n\nReason: ${reason}\n\nThis action cannot be undone.`)) {
+        return;
+      }
+      
+      try {
+        const response = await fetch('/portone/refund', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            paymentId: paymentId,
+            reason: reason
+          })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          alert('✅ Refund processed successfully!\n\nPayment ID: ' + paymentId);
+          location.reload(); // Reload to show updated status
+        } else {
+          alert('❌ Refund failed: ' + (result.message || 'Unknown error'));
+        }
+      } catch (error) {
+        console.error('Refund error:', error);
+        alert('❌ Refund request failed: ' + error.message);
+      }
     }

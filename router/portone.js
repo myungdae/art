@@ -469,4 +469,136 @@ router.get("/cancel", requireLogin, (req, res) => {
   return res.redirect("/user/mypage");
 });
 
+/* -------------------------------------------------------------
+   POST /portone/refund
+   - 결제 환불 처리 (Admin only)
+   - Supports both PayPal and Toss Payments via PortOne V2 API
+------------------------------------------------------------- */
+router.post("/refund", async (req, res) => {
+  try {
+    const { paymentId, reason, amount } = req.body;
+
+    // Check if user is admin (simple check - improve in production)
+    if (!req.session || !req.session.isAdmin) {
+      return res.status(403).json({
+        success: false,
+        message: "Unauthorized - Admin access required"
+      });
+    }
+
+    if (!paymentId) {
+      return res.status(400).json({
+        success: false,
+        message: "Payment ID is required"
+      });
+    }
+
+    // Get access token
+    const apiSecret = process.env.PORTONE_API_SECRET;
+    const tokenResponse = await axios.post(
+      "https://api.portone.io/login/api-secret",
+      { api_secret: apiSecret }
+    );
+
+    const accessToken = tokenResponse.data.access_token;
+
+    // Get payment details first
+    const paymentResponse = await axios.get(
+      `https://api.portone.io/payments/${paymentId}`,
+      {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      }
+    );
+
+    const payment = paymentResponse.data;
+
+    if (payment.status !== "paid") {
+      return res.status(400).json({
+        success: false,
+        message: "Payment is not in paid status"
+      });
+    }
+
+    // Prepare refund request
+    const refundAmount = amount ? parseInt(amount) : payment.amount;
+    
+    // PortOne V2 API: POST /payments/{paymentId}/cancel
+    const refundResponse = await axios.post(
+      `https://api.portone.io/payments/${paymentId}/cancel`,
+      {
+        reason: reason || "Admin requested refund",
+        amount: refundAmount,
+        cancelable_amount: payment.amount
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json"
+        }
+      }
+    );
+
+    const refund = refundResponse.data;
+
+    // Update payment record in database
+    try {
+      await Payment.findOneAndUpdate(
+        { paymentId: paymentId },
+        {
+          status: 'refunded',
+          refundedAt: new Date(),
+          refundReason: reason,
+          refundAmount: refundAmount,
+          $push: {
+            refundHistory: {
+              refundedAt: new Date(),
+              amount: refundAmount,
+              reason: reason,
+              refundId: refund.cancellation_id || refund.cancel_id,
+              adminUser: req.session.user?.email || 'admin'
+            }
+          }
+        }
+      );
+
+      // Also deduct credits from user if this was an employer ad purchase
+      const paymentRecord = await Payment.findOne({ paymentId: paymentId });
+      if (paymentRecord && paymentRecord.packageType === 'job_ads') {
+        const quantity = paymentRecord.packageDetails?.quantity || 0;
+        await User.findByIdAndUpdate(paymentRecord.userId, {
+          $inc: { adsAvailable: -quantity }
+        });
+        console.log(`✅ Deducted ${quantity} ad credits from user ${paymentRecord.userId}`);
+      }
+    } catch (dbError) {
+      console.error("⚠️ Failed to update payment record:", dbError.message);
+    }
+
+    return res.json({
+      success: true,
+      message: "Refund processed successfully",
+      refund: refund
+    });
+
+  } catch (error) {
+    console.error("❌ Refund error:", error.message);
+    
+    // PortOne API error details
+    if (error.response) {
+      console.error("PortOne API Error:", error.response.data);
+      return res.status(error.response.status || 500).json({
+        success: false,
+        message: error.response.data.message || "Refund failed",
+        error: error.response.data
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "Refund processing failed",
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;
