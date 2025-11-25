@@ -274,7 +274,7 @@ block content
           });
           
           // Toss Payments checkout (V2 SDK - requestPayment)
-          // Force EASY_PAY to match channel configuration
+          // Use CARD for direct card payment without QR code or other options
           const response = await PortOne.requestPayment({
             storeId: '#{storeId}',
             channelKey: '#{tossChannelKey}',
@@ -282,7 +282,7 @@ block content
             orderName: 'Job Ad Package - ' + selectedPackage + ' ads',
             totalAmount: selectedPrice * 1300, // USD to KRW approximate exchange rate
             currency: 'KRW',
-            payMethod: 'EASY_PAY',  // Match channel configuration requirement
+            payMethod: 'CARD',  // Direct card payment only
             customer: customerData,
             redirectUrl: window.location.origin + '/portone/success?type=employer'
           });
