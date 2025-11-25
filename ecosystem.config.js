@@ -22,7 +22,7 @@ module.exports = {
         PORTONE_PAYPAL_CHANNEL_KEY: 'channel-key-fbce0f54-b483-4364-9993-f0971b3e307d',
         PAYPAL_MID: 'UFYSG9T7RFW2A',
         // Toss Payments (Korea)
-        PORTONE_TOSSPAYMENTS_CHANNEL_KEY: 'channel-key-84d35b65-d8e8-4a22-8ad9-2d186749b80e',
+        PORTONE_TOSSPAYMENTS_CHANNEL_KEY: 'channel-key-2b825cc6-20f7-4886-a377-a4d2e7a178ef',
         TOSSPAYMENTS_MID: 'tosstest'
       }
     }
