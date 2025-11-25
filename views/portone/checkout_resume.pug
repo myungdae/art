@@ -278,7 +278,7 @@ block content
           });
           
           // Toss Payments checkout
-          // Note: Do not specify payMethod or windowType - PortOne handles them automatically
+          // Force EASY_PAY to match channel configuration
           const response = await PortOne.requestPayment({
             storeId: '#{storeId}',
             channelKey: '#{tossChannelKey}',
@@ -286,6 +286,7 @@ block content
             orderName: 'Resume Access - ' + selectedDays + ' days',
             totalAmount: selectedPrice * 1300,
             currency: 'KRW',
+            payMethod: 'EASY_PAY',  // Match channel configuration requirement
             customer: customerData,
             redirectUrl: window.location.origin + '/portone/success?type=resume'
           });

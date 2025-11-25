@@ -274,8 +274,7 @@ block content
           });
           
           // Toss Payments checkout (V2 SDK - requestPayment)
-          // Note: Do not specify windowType - PortOne handles it automatically
-          // payMethod: Use CARD for PC, EASY_PAY for mobile based on channel settings
+          // Force EASY_PAY to match channel configuration
           const response = await PortOne.requestPayment({
             storeId: '#{storeId}',
             channelKey: '#{tossChannelKey}',
@@ -283,6 +282,7 @@ block content
             orderName: 'Job Ad Package - ' + selectedPackage + ' ads',
             totalAmount: selectedPrice * 1300, // USD to KRW approximate exchange rate
             currency: 'KRW',
+            payMethod: 'EASY_PAY',  // Match channel configuration requirement
             customer: customerData,
             redirectUrl: window.location.origin + '/portone/success?type=employer'
           });
