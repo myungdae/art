@@ -277,8 +277,14 @@ block content
             orderName: 'Job Ad Package - ' + selectedPackage + ' ads',
             totalAmount: selectedPrice * 1300, // USD to KRW approximate exchange rate
             currency: 'KRW',
-            payMethod: 'CARD',
-            customer: customerData
+            payMethod: 'CARD',  // Use CARD for direct card payment
+            customer: customerData,
+            windowType: {
+              pc: 'IFRAME',  // Opens in iframe instead of popup
+              mobile: 'REDIRECTION'  // Direct redirection on mobile
+            },
+            redirectUrl: window.location.origin + '/portone/success?type=employer',
+            isTestChannel: #{testMode ? 'true' : 'false'}
           });
           
           if (response.code != null) {

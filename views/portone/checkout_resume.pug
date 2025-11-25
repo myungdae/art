@@ -281,8 +281,14 @@ block content
             orderName: 'Resume Access - ' + selectedDays + ' days',
             totalAmount: selectedPrice * 1300,
             currency: 'KRW',
-            payMethod: 'CARD',
-            customer: customerData
+            payMethod: 'CARD',  // Use CARD for direct card payment
+            customer: customerData,
+            windowType: {
+              pc: 'IFRAME',  // Opens in iframe instead of popup
+              mobile: 'REDIRECTION'  // Direct redirection on mobile
+            },
+            redirectUrl: window.location.origin + '/portone/success?type=resume',
+            isTestChannel: #{testMode ? 'true' : 'false'}
           });
           
           if (response.code != null) {
