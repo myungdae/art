@@ -246,17 +246,17 @@ block content
             each txn in transactions
               tr
                 td
-                  code(style="font-size: 0.75rem;")= txn.paymentId.substring(0, 20) + '...'
+                  code(style="font-size: 0.75rem;")= txn.paymentId ? (txn.paymentId.substring(0, 20) + '...') : 'N/A'
                 td
-                  div(style="font-weight: 600;")= txn.userName
-                  div(style="font-size: 0.75rem; color: #64748b;")= txn.userEmail
+                  div(style="font-weight: 600;")= txn.userName || 'Unknown'
+                  div(style="font-size: 0.75rem; color: #64748b;")= txn.userEmail || 'N/A'
                 td
-                  span(class=`package-badge ${txn.packageType}`)= txn.packageType.replace('_', ' ')
-                  div(style="font-size: 0.75rem; color: #64748b; margin-top: 0.25rem;")= txn.packageDescription
+                  span(class=`package-badge ${txn.packageType || 'unknown'}`)= txn.packageType ? txn.packageType.replace('_', ' ') : 'Unknown'
+                  div(style="font-size: 0.75rem; color: #64748b; margin-top: 0.25rem;")= txn.packageDescription || '-'
                 td
-                  strong ₩#{txn.amount.toLocaleString()}
-                  div(style="font-size: 0.75rem; color: #64748b;")= txn.currency
-                td= txn.paymentMethod
+                  strong ₩#{(txn.amount || 0).toLocaleString()}
+                  div(style="font-size: 0.75rem; color: #64748b;")= txn.currency || 'KRW'
+                td= txn.paymentMethod || 'N/A'
                 td
                   span(class=`status-badge ${txn.status}`)
                     i.fas(class=txn.status === 'paid' ? 'fa-check-circle' : txn.status === 'pending' ? 'fa-clock' : txn.status === 'refunded' ? 'fa-undo' : 'fa-times-circle')
