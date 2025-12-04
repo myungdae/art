@@ -22,15 +22,15 @@ async function checkAndUpdateErnieRole() {
     console.log('  Role:', ernie.role);
     console.log('  Created:', ernie.createdAt);
     
-    // If you want to change role from Admin to Employer:
-    // Uncomment the lines below and run again
-    /*
+    // Automatically change role from Admin to Employer
     if (ernie.role === 'Admin') {
-      ernie.role = 'Employer';  // or 'Job_Seeker' or 'Online_Tutor'
+      ernie.role = 'Employer';  // Changed to Employer
       await ernie.save();
       console.log('\n✅ Updated ernie role from Admin to Employer');
+      console.log('   Please logout and login again to see the change');
+    } else {
+      console.log('\n✅ Role is already:', ernie.role);
     }
-    */
     
     await mongoose.connection.close();
     console.log('\n✅ Done');

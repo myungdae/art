@@ -896,12 +896,25 @@ router.post('/approve-refund', requireAdmin, async (req, res) => {
         
         const accessToken = tokenResponse.data.access_token;
         
-        // Step 2: Request Refund
+        // Step 2: Get payment details from PortOne (verify current status)
+        const portonePaymentResponse = await axios.get(
+          `https://api.portone.io/payments/${payment.paymentId}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`
+            }
+          }
+        );
+        
+        const portonePayment = portonePaymentResponse.data;
+        
+        // Step 3: Request Refund with cancelable_amount
         await axios.post(
           `https://api.portone.io/payments/${payment.paymentId}/cancel`,
           {
             reason: payment.refundRequest.reason,
-            amount: payment.amount
+            amount: payment.amount,
+            cancelable_amount: portonePayment.amount
           },
           {
             headers: {
