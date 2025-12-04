@@ -8,19 +8,19 @@ async function resetRefundRequests() {
     
     const Payment = require('./model/payment');
     
-    // Find ernie's payments with pending refund requests
+    // Find ernie's payments with any refund requests
     const payments = await Payment.find({
       userId: mongoose.Types.ObjectId('68f83c28247ded1c7ff0a0d4'),
-      'refundRequest.status': 'pending'
+      refundRequest: { $exists: true, $ne: null }
     });
     
     if (payments.length === 0) {
-      console.log('ℹ️  No pending refund requests found');
+      console.log('ℹ️  No refund requests found');
       await mongoose.connection.close();
       return;
     }
     
-    console.log(`🔍 Found ${payments.length} payment(s) with pending refund requests:\n`);
+    console.log(`🔍 Found ${payments.length} payment(s) with refund requests:\n`);
     
     for (const payment of payments) {
       console.log('💳 Payment ID:', payment.paymentId);
@@ -28,9 +28,11 @@ async function resetRefundRequests() {
       console.log('   Refund Request Status:', payment.refundRequest.status);
       console.log('   Requested At:', payment.refundRequest.requestedAt);
       
-      // Reset refund request
-      payment.refundRequest = undefined;
-      await payment.save();
+      // Reset refund request using updateOne to avoid validation issues
+      await Payment.updateOne(
+        { _id: payment._id },
+        { $unset: { refundRequest: 1 } }
+      );
       
       console.log('   ✅ Refund request reset\n');
     }
