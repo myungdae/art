@@ -886,15 +886,26 @@ router.post('/approve-refund', requireAdmin, async (req, res) => {
       const portoneApiSecret = process.env.PORTONE_API_SECRET;
       
       try {
+        // Step 1: Get Access Token
+        const tokenResponse = await axios.post(
+          'https://api.portone.io/login/api-secret',
+          {
+            api_secret: portoneApiSecret
+          }
+        );
+        
+        const accessToken = tokenResponse.data.access_token;
+        
+        // Step 2: Request Refund
         await axios.post(
           `https://api.portone.io/payments/${payment.paymentId}/cancel`,
           {
-            storeId: process.env.PORTONE_STORE_ID,
-            reason: payment.refundRequest.reason
+            reason: payment.refundRequest.reason,
+            amount: payment.amount
           },
           {
             headers: {
-              'Authorization': `PortOne ${portoneApiSecret}`,
+              'Authorization': `Bearer ${accessToken}`,
               'Content-Type': 'application/json'
             }
           }

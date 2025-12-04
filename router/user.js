@@ -815,18 +815,28 @@ router.post("/request-refund", requireLogin, async (req, res) => {
       // Process refund via PortOne API
       const axios = require('axios');
       const portoneApiSecret = process.env.PORTONE_API_SECRET;
-      const portoneStoreId = process.env.PORTONE_STORE_ID;
       
       try {
+        // Step 1: Get Access Token
+        const tokenResponse = await axios.post(
+          'https://api.portone.io/login/api-secret',
+          {
+            api_secret: portoneApiSecret
+          }
+        );
+        
+        const accessToken = tokenResponse.data.access_token;
+        
+        // Step 2: Request Refund
         const refundResponse = await axios.post(
           `https://api.portone.io/payments/${payment.paymentId}/cancel`,
           {
-            storeId: portoneStoreId,
-            reason: `Auto-approved: ${reason}`
+            reason: `Auto-approved: ${reason}`,
+            amount: payment.amount
           },
           {
             headers: {
-              'Authorization': `PortOne ${portoneApiSecret}`,
+              'Authorization': `Bearer ${accessToken}`,
               'Content-Type': 'application/json'
             }
           }
