@@ -26,6 +26,8 @@ async function addMissingPayment() {
     // Payment data from PortOne dashboard
     const paymentData = {
       userId: ernie._id,
+      userEmail: ernie.email,
+      userRole: ernie.role,
       paymentId: 'employer_1_68f83c28_1764827821146',
       merchantUid: 'employer_1_68f83c28_1764827821146',
       amount: 39000,
