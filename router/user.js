@@ -728,10 +728,13 @@ router.get("/tutor/plan", (req, res) =>
    - Auto-approve if conditions met, otherwise pending for admin
 ------------------------------------------------------------- */
 router.post("/request-refund", requireLogin, async (req, res) => {
+  console.log('🔵 Refund request received:', { paymentId: req.body.paymentId, userId: req.session.user?._id });
+  
   try {
     const { paymentId, reason } = req.body;
     
     if (!paymentId || !reason) {
+      console.log('❌ Missing paymentId or reason');
       return res.status(400).json({ 
         success: false, 
         message: 'Payment ID and reason are required' 
@@ -741,7 +744,10 @@ router.post("/request-refund", requireLogin, async (req, res) => {
     const Payment = require('../model/payment');
     const payment = await Payment.findOne({ paymentId });
     
+    console.log('🔍 Payment lookup result:', payment ? `Found: ${payment._id}` : 'Not found');
+    
     if (!payment) {
+      console.log('❌ Payment not found:', paymentId);
       return res.status(404).json({ 
         success: false, 
         message: 'Payment not found' 
@@ -774,10 +780,13 @@ router.post("/request-refund", requireLogin, async (req, res) => {
     let autoApprove = false;
     let autoApproveReason = '';
     
+    console.log('📅 Days since purchase:', daysSincePurchase.toFixed(2));
+    
     // Condition 1: Within 7 days of purchase
     if (daysSincePurchase <= 7) {
       autoApprove = true;
       autoApproveReason = 'Within 7-day refund period';
+      console.log('✅ Auto-approve condition met: Within 7 days');
     }
     
     // Condition 2: Check if service was unused
