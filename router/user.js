@@ -156,9 +156,22 @@ router.post("/login", async (req, res) => {
   try {
     const user = await User.findOne({ email });
     if (!user || user.password !== password) {
+      // Destroy any existing session to prevent "Unknown role" issue
+      req.session.destroy((err) => {
+        if (err) console.error('Session destroy error on login failure:', err);
+      });
+      
       return res.render("user/login", {
         error: `❌ Email or password incorrect<br>
                 New here? <a href="/user/register" style="color:gold;text-decoration:underline;">Register</a> and choose your role.`,
+      });
+    }
+    
+    // Check if user has a valid role
+    if (!user.role || !['Employer', 'Job_Seeker', 'Online_Tutor', 'Admin'].includes(user.role)) {
+      console.error(`❌ User ${user.email} has invalid role: ${user.role}`);
+      return res.render("user/login", {
+        error: `❌ Your account has an invalid role. Please contact support.`,
       });
     }
 
@@ -169,6 +182,7 @@ router.post("/login", async (req, res) => {
       role: user.role,
       resumeAccess: user.resumeAccess ?? null,
       tutorAccess: user.tutorAccess ?? null,
+      adsAvailable: user.adsAvailable || 0,
     };
     
     // Set initial activity timestamp
@@ -189,6 +203,7 @@ router.post("/login", async (req, res) => {
       console.error("[thread] login log failed:", e.message || e);
     }
 
+    console.log(`✅ User ${user.email} logged in with role: ${user.role}`);
     return res.redirect("/user/mypage");
   } catch (err) {
     console.error("❌ Login error:", err.message);
@@ -390,10 +405,8 @@ router.post("/reset-password/:token", async (req, res) => {
 
     // Redirect to login with success message
     return res.render("user/login", {
-      error: `<div style="background-color: #d4edda; border-color: #c3e6cb; color: #155724; padding: 12px; border-radius: 8px;">
-                <i class="fas fa-check-circle"></i> 
-                Your password has been successfully reset! Please log in with your new password.
-              </div>`,
+      success: `✅ Your password has been successfully reset! Please log in with your new password.`,
+      email: user.email // Pre-fill email for convenience
     });
   } catch (err) {
     console.error("❌ Reset password POST error:", err.message);
@@ -408,7 +421,11 @@ router.post("/reset-password/:token", async (req, res) => {
 router.get("/mypage", requireLogin, async (req, res) => {
   try {
     const user = await User.findById(req.session.user._id).lean();
-    if (!user) return res.status(404).send("User not found");
+    if (!user) {
+      console.error(`❌ User not found in DB: ${req.session.user._id}`);
+      req.session.destroy();
+      return res.redirect('/user/login?error=User account not found. Please login again.');
+    }
 
     // Sync session role with DB role (in case it changed)
     if (user.role !== req.session.user.role) {
@@ -421,8 +438,30 @@ router.get("/mypage", requireLogin, async (req, res) => {
     if (user.role === "Job_Seeker")
       return res.redirect("/user/mypage-jobseeker");
     if (user.role === "Online_Tutor") return res.redirect("/user/mypage-tutor");
+    if (user.role === "Admin") return res.redirect("/admin/dashboard");
 
-    return res.send("Unknown role");
+    // If role is invalid or unknown
+    console.error(`❌ Unknown role for user ${user.email}: ${user.role}`);
+    return res.status(400).send(`
+      <div style="max-width: 600px; margin: 100px auto; padding: 40px; text-align: center; font-family: Arial, sans-serif;">
+        <h1 style="color: #dc3545; font-size: 3rem; margin-bottom: 20px;">⚠️ Unknown Role</h1>
+        <p style="font-size: 1.2rem; color: #666; margin-bottom: 30px;">
+          Your account has an invalid role: <strong>${user.role || 'None'}</strong>
+        </p>
+        <p style="color: #666; margin-bottom: 30px;">
+          This usually happens if your account data was corrupted. Please contact support.
+        </p>
+        <div style="margin-top: 30px;">
+          <p><strong>Your Account:</strong></p>
+          <p>Email: ${user.email}</p>
+          <p>Username: ${user.username}</p>
+        </div>
+        <div style="margin-top: 40px;">
+          <a href="/user/logout" style="background-color: #FF7A00; color: white; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; margin-right: 10px;">Logout</a>
+          <a href="/inquiry" style="background-color: #6c757d; color: white; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-weight: bold;">Contact Support</a>
+        </div>
+      </div>
+    `);
   } catch (err) {
     console.error("❌ Failed to load mypage:", err.message);
     return res.status(500).send("❌ Error loading My Page");
