@@ -869,7 +869,12 @@ router.post("/request-refund", requireLogin, async (req, res) => {
         });
         
       } catch (apiError) {
-        console.error('❌ Auto-refund API error:', apiError.response?.data || apiError.message);
+        console.error('❌ Auto-refund API error:', {
+          message: apiError.message,
+          response: apiError.response?.data,
+          status: apiError.response?.status,
+          paymentId: payment.paymentId
+        });
         
         // Keep as pending if API fails
         payment.refundRequest.status = 'pending';
@@ -877,10 +882,11 @@ router.post("/request-refund", requireLogin, async (req, res) => {
         payment.refundRequest.reviewNote = `API error: ${apiError.message}`;
         await payment.save();
         
-        return res.json({ 
-          success: true, 
-          autoApproved: false,
-          message: 'Refund request submitted for admin review (API processing pending)' 
+        // Return detailed error to frontend for debugging
+        return res.status(500).json({ 
+          success: false,
+          message: `Refund failed: ${apiError.response?.data?.message || apiError.message}`,
+          error: apiError.response?.data || apiError.message
         });
       }
       

@@ -941,8 +941,17 @@ router.post('/approve-refund', requireAdmin, async (req, res) => {
         return res.json({ success: true, message: 'Refund approved and processed' });
         
       } catch (apiError) {
-        console.error('❌ Refund API error:', apiError.response?.data || apiError.message);
-        return res.status(500).json({ success: false, message: 'Failed to process refund via payment gateway' });
+        console.error('❌ Refund API error:', {
+          message: apiError.message,
+          response: apiError.response?.data,
+          status: apiError.response?.status,
+          paymentId: payment.paymentId
+        });
+        return res.status(500).json({ 
+          success: false, 
+          message: `Failed to process refund: ${apiError.response?.data?.message || apiError.message}`,
+          error: apiError.response?.data
+        });
       }
       
     } else {
