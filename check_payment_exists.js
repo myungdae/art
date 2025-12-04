@@ -1,5 +1,20 @@
 const mongoose = require('mongoose');
-require('dotenv').config();
+const path = require('path');
+
+// Load .env from the correct path
+require('dotenv').config({ path: path.join(__dirname, '.env') });
+
+// Debug: Check if MONGODB_URI is loaded
+console.log('🔍 Checking environment variables...');
+console.log('MONGODB_URI exists:', !!process.env.MONGODB_URI);
+console.log('MONGODB_URI length:', process.env.MONGODB_URI?.length || 0);
+
+if (!process.env.MONGODB_URI) {
+  console.error('❌ MONGODB_URI is not defined in .env file');
+  console.log('\n📝 Please check your .env file contains:');
+  console.log('MONGODB_URI=mongodb://...');
+  process.exit(1);
+}
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI, {
