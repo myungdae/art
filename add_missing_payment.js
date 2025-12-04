@@ -24,13 +24,15 @@ async function addMissingPayment() {
     console.log('');
     
     // Payment data from PortOne dashboard
+    const uniqueOrderId = `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
     const paymentData = {
       userId: ernie._id,
       userEmail: ernie.email,
       userRole: ernie.role,
       paymentId: 'employer_1_68f83c28_1764827821146',
       merchantUid: 'employer_1_68f83c28_1764827821146',
-      orderId: 'employer_1_68f83c28_1764827821146', // Add orderId to prevent null duplicate
+      orderId: uniqueOrderId, // Generate unique orderId
       amount: 39000,
       status: 'paid',
       packageType: 'job_ads',
