@@ -200,10 +200,8 @@ router.post("/webhook", express.json(), async (req, res) => {
       // Extract userId (second to last part)
       const userIdPart = parts[parts.length - 2];
       
-      // MongoDB ObjectId is 24 chars, search by first 8 chars
-      const user = await User.findOne({ 
-        _id: { $regex: `^${userIdPart}` } 
-      });
+      // MongoDB ObjectId: use exact match
+      const user = await User.findById(userIdPart);
 
       if (!user) {
         console.error("❌ User not found for paymentId:", paymentId);
