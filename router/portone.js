@@ -200,8 +200,17 @@ router.post("/webhook", express.json(), async (req, res) => {
       // Extract userId (second to last part)
       const userIdPart = parts[parts.length - 2];
       
-      // MongoDB ObjectId: use exact match
-      const user = await User.findById(userIdPart);
+      // MongoDB ObjectId: try to find user
+      // First try: if it's a full 24-char ObjectId
+      let user;
+      if (userIdPart.length === 24) {
+        user = await User.findById(userIdPart);
+      } else {
+        // Partial ID (8 chars): find user whose _id starts with this prefix
+        // Convert partial hex to ObjectId range
+        const allUsers = await User.find({}).lean();
+        user = allUsers.find(u => u._id.toString().startsWith(userIdPart));
+      }
 
       if (!user) {
         console.error("❌ User not found for paymentId:", paymentId);
