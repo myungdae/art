@@ -561,14 +561,32 @@ router.post("/refund", async (req, res) => {
         }
       );
 
-      // Also deduct credits from user if this was an employer ad purchase
+      // Deduct credits/access from user based on package type
       const paymentRecord = await Payment.findOne({ paymentId: paymentId });
-      if (paymentRecord && paymentRecord.packageType === 'job_ads') {
-        const quantity = paymentRecord.packageDetails?.quantity || 0;
-        await User.findByIdAndUpdate(paymentRecord.userId, {
-          $inc: { adsAvailable: -quantity }
-        });
-        console.log(`✅ Deducted ${quantity} ad credits from user ${paymentRecord.userId}`);
+      
+      if (paymentRecord) {
+        if (paymentRecord.packageType === 'job_ads') {
+          // Employer: Deduct ad credits
+          const quantity = paymentRecord.packageDetails?.quantity || 0;
+          await User.findByIdAndUpdate(paymentRecord.userId, {
+            $inc: { adsAvailable: -quantity }
+          });
+          console.log(`✅ Deducted ${quantity} ad credits from user ${paymentRecord.userId}`);
+          
+        } else if (paymentRecord.packageType === 'resume_access') {
+          // Job Seeker: Deactivate resume access
+          await User.findByIdAndUpdate(paymentRecord.userId, {
+            $unset: { resumeAccess: "" }  // Remove resumeAccess field
+          });
+          console.log(`✅ Deactivated resume access for user ${paymentRecord.userId}`);
+          
+        } else if (paymentRecord.packageType === 'tutor_access') {
+          // Tutor: Deactivate tutor listing access
+          await User.findByIdAndUpdate(paymentRecord.userId, {
+            $unset: { tutorAccess: "" }  // Remove tutorAccess field
+          });
+          console.log(`✅ Deactivated tutor listing for user ${paymentRecord.userId}`);
+        }
       }
     } catch (dbError) {
       console.error("⚠️ Failed to update payment record:", dbError.message);
