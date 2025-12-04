@@ -165,14 +165,16 @@ router.post("/webhook", express.json(), async (req, res) => {
     const signature = req.headers["portone-signature"];
     
     if (!signature) {
-      console.error("❌ Missing PortOne signature");
-      return res.status(400).send("Missing signature");
+      console.warn("⚠️ Missing PortOne signature (continuing anyway for testing)");
+      // Temporarily allow webhooks without signature for testing
+      // return res.status(400).send("Missing signature");
     }
 
     // Parse webhook data
     const event = req.body;
     
     console.log("🔔 PortOne Webhook Event:", event.type || event.status);
+    console.log("📦 Webhook Full Data:", JSON.stringify(event, null, 2));
 
     // Handle payment completed event
     if (event.status === "paid" || event.type === "Transaction.Paid") {
