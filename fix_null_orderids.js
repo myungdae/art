@@ -19,13 +19,18 @@ async function fixNullOrderIds() {
       return;
     }
     
-    // Update each payment with a unique orderId
+    // Update each payment with a unique orderId (using updateOne to bypass validation)
     let updated = 0;
     for (const payment of paymentsWithNullOrderId) {
       const uniqueOrderId = `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      payment.orderId = uniqueOrderId;
-      await payment.save();
-      console.log(`✅ Updated payment ${payment.paymentId} with orderId: ${uniqueOrderId}`);
+      
+      // Use updateOne to bypass validation for incomplete records
+      await Payment.updateOne(
+        { _id: payment._id },
+        { $set: { orderId: uniqueOrderId } }
+      );
+      
+      console.log(`✅ Updated payment ${payment.paymentId || payment._id} with orderId: ${uniqueOrderId}`);
       updated++;
       
       // Small delay to ensure unique timestamps
