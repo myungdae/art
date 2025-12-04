@@ -11,13 +11,14 @@ async function testPortOneAuth() {
     console.log('');
     
     console.log('📤 Sending POST request to https://api.portone.io/login/api-secret');
-    console.log('Request body:', JSON.stringify({ api_secret: apiSecret }));
+    console.log('Request body:', JSON.stringify({ apiSecret: apiSecret }));
     console.log('');
     
+    // Try with camelCase apiSecret
     const tokenResponse = await axios.post(
       'https://api.portone.io/login/api-secret',
       {
-        api_secret: apiSecret
+        apiSecret: apiSecret
       },
       {
         headers: {
