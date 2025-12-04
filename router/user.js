@@ -739,7 +739,7 @@ router.post("/request-refund", requireLogin, async (req, res) => {
     }
     
     const Payment = require('../model/payment');
-    const payment = await Payment.findById(paymentId);
+    const payment = await Payment.findOne({ paymentId });
     
     if (!payment) {
       return res.status(404).json({ 
