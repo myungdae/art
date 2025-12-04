@@ -218,6 +218,11 @@ block content
       .stat-label 
         i.fas.fa-chart-line.me-2
         | Avg Transaction
+    .stat-card(style="border-left-color: #f97316;")
+      .stat-value= stats.refundRequests || 0
+      .stat-label 
+        i.fas.fa-exclamation-circle.me-2
+        | Refund Requests
 
   //- Transactions Table
   .transactions-table-card
@@ -263,7 +268,24 @@ block content
                     = txn.status.toUpperCase()
                 td= txn.paidAt
                 td
-                  if txn.status === 'paid'
+                  if txn.refundRequest && txn.status === 'paid'
+                    .d-flex.flex-column.gap-1
+                      button.action-btn(
+                        style="background: #10b981; color: white; margin-bottom: 0.25rem;"
+                        onclick=`approveRefund('${txn.paymentId}', '${txn.userName}', ${txn.amount})`
+                      )
+                        i.fas.fa-check.me-1
+                        | Approve
+                      button.action-btn(
+                        style="background: #f59e0b; color: white;"
+                        onclick=`rejectRefund('${txn.paymentId}', '${txn.userName}')`
+                      )
+                        i.fas.fa-times.me-1
+                        | Reject
+                      small.text-muted.mt-1(style="font-size: 0.7rem;")
+                        strong Reason: 
+                        = txn.refundRequest.reason || 'N/A'
+                  else if txn.status === 'paid'
                     button.action-btn.refund-btn(
                       onclick=`refundPayment('${txn.paymentId}', '${txn.userName}', ${txn.amount})`
                     )
@@ -295,7 +317,74 @@ block content
       });
     }
     
-    // Refund Payment Function
+    // Approve Refund Request
+    async function approveRefund(paymentId, userName, amount) {
+      if (!confirm(`Approve refund request from ${userName}?\n\nAmount: ₩${amount.toLocaleString()}\n\nThis will process the refund immediately.`)) {
+        return;
+      }
+      
+      try {
+        const response = await fetch('/admin/approve-refund', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            paymentId: paymentId,
+            approve: true
+          })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          alert('✅ Refund approved and processed successfully!');
+          location.reload();
+        } else {
+          alert('❌ Refund approval failed: ' + (result.message || 'Unknown error'));
+        }
+      } catch (error) {
+        console.error('Approve refund error:', error);
+        alert('❌ Failed to approve refund: ' + error.message);
+      }
+    }
+    
+    // Reject Refund Request
+    async function rejectRefund(paymentId, userName) {
+      const reason = prompt(`Reject refund request from ${userName}?\n\nEnter rejection reason:`);
+      
+      if (!reason) {
+        return;
+      }
+      
+      try {
+        const response = await fetch('/admin/approve-refund', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            paymentId: paymentId,
+            approve: false,
+            rejectionReason: reason
+          })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          alert('✅ Refund request rejected.');
+          location.reload();
+        } else {
+          alert('❌ Failed to reject refund: ' + (result.message || 'Unknown error'));
+        }
+      } catch (error) {
+        console.error('Reject refund error:', error);
+        alert('❌ Failed to reject refund: ' + error.message);
+      }
+    }
+    
+    // Refund Payment Function (Direct admin refund)
     async function refundPayment(paymentId, userName, amount) {
       const reason = prompt(`Refund payment for ${userName}?\n\nAmount: ₩${amount.toLocaleString()}\n\nEnter refund reason:`);
       

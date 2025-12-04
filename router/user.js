@@ -562,6 +562,13 @@ router.get("/mypage-jobseeker", requireLogin, async (req, res) => {
         })
       : "N/A";
 
+    // 구매 내역 조회
+    const Payment = require('../model/payment');
+    const payments = await Payment.find({ 
+      userId: user._id,
+      status: { $in: ['paid', 'refunded'] }
+    }).sort({ paidAt: -1 }).limit(10).lean();
+
     return res.render("user/mypage-jobseeker", {
       user,
       remainingDays,
@@ -570,6 +577,7 @@ router.get("/mypage-jobseeker", requireLogin, async (req, res) => {
       userResume,
       hasResume: !!userResume,
       formattedUpdatedAt,
+      payments: payments || []
     });
   } catch (err) {
     console.error("Job Seeker mypage error:", err.message);
@@ -618,7 +626,14 @@ router.get("/mypage-tutor", requireLogin, async (req, res) => {
       .lean()
       .catch(() => []);
 
-    const data = { user, tutor, tutorDoc: tutor, threads };
+    // 구매 내역 조회
+    const Payment = require('../model/payment');
+    const payments = await Payment.find({ 
+      userId: user._id,
+      status: { $in: ['paid', 'refunded'] }
+    }).sort({ paidAt: -1 }).limit(10).lean();
+
+    const data = { user, tutor, tutorDoc: tutor, threads, payments: payments || [] };
 
     // ✅ 폴백 제거: 오직 'user/mypage-tutor' 만 렌더
     return res.render("user/mypage-tutor", data);
