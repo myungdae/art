@@ -26,30 +26,60 @@ async function recoverPayment() {
     console.log('✅ Connected to MongoDB\n');
     
     // Get PortOne API credentials
-    const portoneApiSecret = process.env.PORTONE_API_SECRET;
+    const portoneApiSecret = process.env.PORTONE_API_SECRET?.trim();
+    const portoneApiKey = process.env.PORTONE_API_KEY?.trim();
+    
+    if (!portoneApiSecret && !portoneApiKey) {
+      console.log('❌ PORTONE_API_SECRET or PORTONE_API_KEY not found in .env');
+      process.exit(1);
+    }
     
     console.log('🔍 Fetching payment details from PortOne...\n');
     
-    // Step 1: Get Access Token
-    const tokenResponse = await axios.post(
-      'https://api.portone.io/login/api-secret',
-      { api_secret: portoneApiSecret }
-    );
+    let portonePayment;
     
-    const accessToken = tokenResponse.data.access_token;
-    console.log('✅ Access token obtained');
-    
-    // Step 2: Get Payment Details
-    const paymentResponse = await axios.get(
-      `https://api.portone.io/payments/${PAYMENT_ID}`,
-      {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`
-        }
+    // Try V2 API first (with api-secret)
+    if (portoneApiSecret) {
+      try {
+        console.log('Trying PortOne V2 API...');
+        
+        // Step 1: Get Access Token
+        const tokenResponse = await axios.post(
+          'https://api.portone.io/login/api-secret',
+          { api_secret: portoneApiSecret }
+        );
+        
+        const accessToken = tokenResponse.data.access_token;
+        console.log('✅ V2 Access token obtained');
+        
+        // Step 2: Get Payment Details
+        const paymentResponse = await axios.get(
+          `https://api.portone.io/payments/${PAYMENT_ID}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`
+            }
+          }
+        );
+        
+        portonePayment = paymentResponse.data;
+        
+      } catch (v2Error) {
+        console.log('⚠️  V2 API failed, trying V1 API...');
+        
+        // Fallback to V1 API (iamport)
+        const iamportResponse = await axios.get(
+          `https://api.iamport.kr/payments/${PAYMENT_ID}`,
+          {
+            headers: {
+              'Authorization': portoneApiKey || portoneApiSecret
+            }
+          }
+        );
+        
+        portonePayment = iamportResponse.data.response;
       }
-    );
-    
-    const portonePayment = paymentResponse.data;
+    }
     
     console.log('\n📋 Payment Details from PortOne:');
     console.log('   Payment ID:', portonePayment.id);
