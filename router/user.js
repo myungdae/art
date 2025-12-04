@@ -170,6 +170,9 @@ router.post("/login", async (req, res) => {
       resumeAccess: user.resumeAccess ?? null,
       tutorAccess: user.tutorAccess ?? null,
     };
+    
+    // Set initial activity timestamp
+    req.session.lastActivity = Date.now();
 
     // 선택: 로그인 로깅 (실패해도 무시)
     try {

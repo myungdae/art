@@ -52,6 +52,7 @@ router.post('/login', async (req, res) => {
   // Check .env hardcoded admin first
   if (email === adminEmail && password === adminPassword) {
     req.session.isAdmin = true;
+    req.session.lastActivity = Date.now();
     return res.redirect('/admin/dashboard');
   }
 
@@ -66,6 +67,7 @@ router.post('/login', async (req, res) => {
         email: user.email,
         role: 'Admin'
       };
+      req.session.lastActivity = Date.now();
       return res.redirect('/admin/dashboard');
     }
   } catch (err) {
