@@ -228,14 +228,22 @@ block content
   script.
     // Refund Request Handler (Bootstrap 4 Compatible)
     $(document).ready(function() {
+      console.log('🔍 Refund script loaded');
+      console.log('🔍 Found refund buttons:', $('.request-refund-btn').length);
+      
       const refundForm = document.getElementById('refundRequestForm');
       const submitBtn = document.getElementById('submit-refund-request');
       
       // Open modal when clicking refund button (Bootstrap 4 jQuery syntax)
-      $('.request-refund-btn').on('click', function() {
+      $('.request-refund-btn').on('click', function(e) {
+        console.log('🔍 Refund button clicked!');
+        e.preventDefault(); // Prevent any default behavior
+        
         const paymentId = $(this).data('payment-id');
         const merchantUid = $(this).data('merchant-uid');
         const amount = $(this).data('amount');
+        
+        console.log('🔍 Payment data:', { paymentId, merchantUid, amount });
         
         $('#refund-payment-id').val(paymentId);
         $('#refund-merchant-uid').val(merchantUid);
