@@ -30,6 +30,7 @@ async function addMissingPayment() {
       userRole: ernie.role,
       paymentId: 'employer_1_68f83c28_1764827821146',
       merchantUid: 'employer_1_68f83c28_1764827821146',
+      orderId: 'employer_1_68f83c28_1764827821146', // Add orderId to prevent null duplicate
       amount: 39000,
       status: 'paid',
       packageType: 'job_ads',

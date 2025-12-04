@@ -207,7 +207,13 @@ block content
 
   script.
     // Refund Request Handler (Bootstrap 4 Compatible)
-    $(document).ready(function() {
+    window.addEventListener('DOMContentLoaded', function() {
+      // Check if jQuery is loaded
+      if (typeof $ === 'undefined') {
+        console.error('❌ jQuery is not loaded!');
+        return;
+      }
+      
       console.log('🔍 Refund script loaded');
       console.log('🔍 Found refund buttons:', $('.request-refund-btn').length);
       
@@ -287,4 +293,4 @@ block content
           submitBtn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Submit Request';
         }
       });
-    });
+    }, false);
