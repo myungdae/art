@@ -144,6 +144,25 @@ block content
       background: #fee2e2;
       color: #dc2626;
     }
+    
+    .action-btn {
+      padding: 0.5rem 0.75rem;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .delete-btn {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+    
+    .delete-btn:hover {
+      background: #fecaca;
+    }
 
   //- Statistics
   .user-stats-grid
@@ -188,6 +207,7 @@ block content
             th Expires At
             th Registered
             th Status
+            th Actions
         tbody
           if onlineTutors && onlineTutors.length > 0
             each tutor in onlineTutors
@@ -210,13 +230,51 @@ block content
                     span.badge.inactive
                       i.fas.fa-times-circle
                       | Inactive
+                td
+                  button.action-btn.delete-btn(
+                    onclick=`deleteUser('${tutor.id}', '${tutor.username}', '${tutor.email}')`
+                  )
+                    i.fas.fa-trash.me-1
+                    | Delete
           else
             tr
-              td(colspan="6", style="text-align: center; padding: 3rem; color: #94a3b8;")
+              td(colspan="7", style="text-align: center; padding: 3rem; color: #94a3b8;")
                 i.fas.fa-inbox(style="font-size: 3rem; display: block; margin-bottom: 1rem;")
                 div No tutors found
 
   script.
+    // Delete user function
+    async function deleteUser(userId, username, email) {
+      if (!confirm(`Are you sure you want to delete this tutor?\n\nUsername: ${username}\nEmail: ${email}\n\nThis action cannot be undone.`)) {
+        return;
+      }
+      
+      try {
+        const response = await fetch('/admin/delete-user', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            userId: userId,
+            userType: 'tutor'
+          })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          alert('✅ Tutor deleted successfully!');
+          location.reload();
+        } else {
+          alert('❌ Failed to delete tutor: ' + (result.message || 'Unknown error'));
+        }
+      } catch (error) {
+        console.error('Delete error:', error);
+        alert('❌ Failed to delete tutor: ' + error.message);
+      }
+    }
+    
     // Filter functionality
     document.addEventListener('DOMContentLoaded', function() {
       const filterBtns = document.querySelectorAll('.filter-btn');

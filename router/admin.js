@@ -177,6 +177,57 @@ router.get('/dashboard', requireAdmin, async (req, res) => {
   }
 });
 
+/* ---------------------- Delete Single User ---------------------- */
+router.post('/delete-user', requireAdmin, async (req, res) => {
+  try {
+    const { userId, userType } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID is required'
+      });
+    }
+
+    // Find user first
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Delete user
+    await User.findByIdAndDelete(userId);
+
+    // Delete related profiles
+    if (user.role === 'Job_Seeker') {
+      await JobSeeker.deleteMany({ email: user.email });
+    } else if (user.role === 'Online_Tutor') {
+      await OnlineTutor.deleteMany({ email: user.email });
+    }
+
+    console.log(`✅ Deleted user: ${user.email} (${user.role})`);
+
+    res.json({
+      success: true,
+      message: `Successfully deleted user: ${user.email}`,
+      deletedUser: {
+        id: user._id,
+        email: user.email,
+        role: user.role
+      }
+    });
+  } catch (err) {
+    console.error('❌ Delete user error:', err);
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
+  }
+});
+
 /* ---------------------- Bulk Delete Inactive/No Credits Users ---------------------- */
 router.post('/delete-inactive', requireAdmin, async (req, res) => {
   try {

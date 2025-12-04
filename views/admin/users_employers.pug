@@ -144,6 +144,25 @@ block content
       background: #fee2e2;
       color: #dc2626;
     }
+    
+    .action-btn {
+      padding: 0.5rem 0.75rem;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .delete-btn {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+    
+    .delete-btn:hover {
+      background: #fecaca;
+    }
 
   //- Statistics
   .user-stats-grid
@@ -192,6 +211,7 @@ block content
             th Ad Credits
             th Registered
             th Status
+            th Actions
         tbody
           if employers && employers.length > 0
             each emp in employers
@@ -213,13 +233,51 @@ block content
                     span.badge.inactive
                       i.fas.fa-times-circle
                       | No Credits
+                td
+                  button.action-btn.delete-btn(
+                    onclick=`deleteUser('${emp.id}', '${emp.username}', '${emp.email}')`
+                  )
+                    i.fas.fa-trash.me-1
+                    | Delete
           else
             tr
-              td(colspan="5", style="text-align: center; padding: 3rem; color: #94a3b8;")
+              td(colspan="6", style="text-align: center; padding: 3rem; color: #94a3b8;")
                 i.fas.fa-inbox(style="font-size: 3rem; display: block; margin-bottom: 1rem;")
                 div No employers found
 
   script.
+    // Delete user function
+    async function deleteUser(userId, username, email) {
+      if (!confirm(`Are you sure you want to delete this employer?\n\nUsername: ${username}\nEmail: ${email}\n\nThis action cannot be undone.`)) {
+        return;
+      }
+      
+      try {
+        const response = await fetch('/admin/delete-user', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            userId: userId,
+            userType: 'employer'
+          })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          alert('✅ Employer deleted successfully!');
+          location.reload();
+        } else {
+          alert('❌ Failed to delete employer: ' + (result.message || 'Unknown error'));
+        }
+      } catch (error) {
+        console.error('Delete error:', error);
+        alert('❌ Failed to delete employer: ' + error.message);
+      }
+    }
+    
     // Filter functionality
     document.addEventListener('DOMContentLoaded', function() {
       const filterBtns = document.querySelectorAll('.filter-btn');
