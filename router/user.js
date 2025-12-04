@@ -742,11 +742,16 @@ router.post("/request-refund", requireLogin, async (req, res) => {
     }
     
     const Payment = require('../model/payment');
-    const payment = await Payment.findOne({ paymentId });
+    const mongoose = require('mongoose');
     
-    console.log('🔍 Payment lookup result:', payment ? `Found: ${payment._id}` : 'Not found');
+    // Use direct MongoDB query to bypass Mongoose cache
+    const db = mongoose.connection.db;
+    const paymentData = await db.collection('payments').findOne({ paymentId });
     
-    if (!payment) {
+    console.log('🔍 Payment lookup result:', paymentData ? `Found: ${paymentData._id}` : 'Not found');
+    console.log('📋 Raw refundRequest from DB:', paymentData?.refundRequest);
+    
+    if (!paymentData) {
       console.log('❌ Payment not found:', paymentId);
       return res.status(404).json({ 
         success: false, 
@@ -754,9 +759,12 @@ router.post("/request-refund", requireLogin, async (req, res) => {
       });
     }
     
-    console.log('🔐 Auth check - Payment userId:', payment.userId.toString(), 'Session userId:', req.session.user._id.toString());
+    // Now get Mongoose document for modifications
+    const payment = await Payment.findById(paymentData._id);
     
-    if (payment.userId.toString() !== req.session.user._id.toString()) {
+    console.log('🔐 Auth check - Payment userId:', paymentData.userId.toString(), 'Session userId:', req.session.user._id.toString());
+    
+    if (paymentData.userId.toString() !== req.session.user._id.toString()) {
       console.log('❌ Unauthorized access attempt');
       return res.status(403).json({ 
         success: false, 
@@ -764,9 +772,9 @@ router.post("/request-refund", requireLogin, async (req, res) => {
       });
     }
     
-    console.log('💰 Payment status:', payment.status);
+    console.log('💰 Payment status:', paymentData.status);
     
-    if (payment.status !== 'paid') {
+    if (paymentData.status !== 'paid') {
       console.log('❌ Payment status not paid');
       return res.status(400).json({ 
         success: false, 
@@ -774,9 +782,9 @@ router.post("/request-refund", requireLogin, async (req, res) => {
       });
     }
     
-    console.log('📋 Refund request check:', payment.refundRequest);
+    console.log('📋 Refund request check:', paymentData.refundRequest);
     
-    if (payment.refundRequest && payment.refundRequest.status === 'pending') {
+    if (paymentData.refundRequest && paymentData.refundRequest.status === 'pending') {
       console.log('❌ Refund request already submitted (status: pending)');
       return res.status(400).json({ 
         success: false, 
