@@ -32,7 +32,7 @@ db.once('open', () => {
 
 async function checkPaymentExists() {
   try {
-    const Payment = require('./models/Payment');
+    const Payment = require('./model/payment');
     
     const paymentId = 'employer_1_68f83c28_1764827821146';
     
@@ -56,7 +56,7 @@ async function checkPaymentExists() {
       console.log('👉 Check ernie\'s MyPage to verify it shows up in Purchase History');
       
       // Check user's credits
-      const User = require('./models/User');
+      const User = require('./model/user');
       const user = await User.findById(existingPayment.userId);
       
       if (user) {
@@ -71,7 +71,7 @@ async function checkPaymentExists() {
       console.log('This payment needs to be recovered.');
       
       // Check all payments for the user
-      const User = require('./models/User');
+      const User = require('./model/user');
       const user = await User.findOne({ email: 'dudehdi@gmail.com' });
       
       if (user) {
