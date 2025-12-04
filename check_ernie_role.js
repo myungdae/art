@@ -8,10 +8,10 @@ async function checkAndUpdateErnieRole() {
     await mongoose.connect(process.env.MONGO_URI);
     console.log('✅ Connected to MongoDB');
     
-    const ernie = await User.findOne({ email: 'dudenll@gmail.com' });
+    const ernie = await User.findOne({ email: 'dudehdi@gmail.com' });
     
     if (!ernie) {
-      console.log('❌ User "ernie" (dudenll@gmail.com) not found');
+      console.log('❌ User "ernie" (dudehdi@gmail.com) not found');
       await mongoose.connection.close();
       return;
     }
