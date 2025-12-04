@@ -460,6 +460,13 @@ router.get(
 
       // 버튼 노출 조건
       const canPost = credits > 0;
+      
+      // 구매 내역 조회
+      const Payment = require('../model/payment');
+      const payments = await Payment.find({ 
+        userId: user._id,
+        status: { $in: ['paid', 'refunded'] }
+      }).sort({ paidAt: -1 }).limit(10).lean();
 
       return res.render("user/mypage-employer", {
         user,
@@ -468,6 +475,7 @@ router.get(
         canPost,
         totalSlots: activeJobs + credits,
         remainingSlots: credits,
+        payments: payments || []
       });
     } catch (err) {
       console.error("Employer mypage error:", err.message);
@@ -656,5 +664,187 @@ router.post("/online-tutors/visibility", requireLogin, async (req, res) => {
 router.get("/tutor/plan", (req, res) =>
   res.redirect("/user/online-tutors/visibility")
 );
+
+/* -------------------------------------------------------------
+   POST /user/request-refund
+   - User-initiated refund request
+   - Auto-approve if conditions met, otherwise pending for admin
+------------------------------------------------------------- */
+router.post("/request-refund", requireLogin, async (req, res) => {
+  try {
+    const { paymentId, reason } = req.body;
+    
+    if (!paymentId || !reason) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Payment ID and reason are required' 
+      });
+    }
+    
+    const Payment = require('../model/payment');
+    const payment = await Payment.findById(paymentId);
+    
+    if (!payment) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Payment not found' 
+      });
+    }
+    
+    if (payment.userId.toString() !== req.session.user._id.toString()) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Unauthorized' 
+      });
+    }
+    
+    if (payment.status !== 'paid') {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'This payment cannot be refunded' 
+      });
+    }
+    
+    if (payment.refundRequest && payment.refundRequest.status === 'pending') {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Refund request already submitted' 
+      });
+    }
+    
+    // Auto-approval conditions
+    const daysSincePurchase = (Date.now() - payment.paidAt) / (1000 * 60 * 60 * 24);
+    let autoApprove = false;
+    let autoApproveReason = '';
+    
+    // Condition 1: Within 7 days of purchase
+    if (daysSincePurchase <= 7) {
+      autoApprove = true;
+      autoApproveReason = 'Within 7-day refund period';
+    }
+    
+    // Condition 2: Check if service was unused
+    if (autoApprove) {
+      const user = await User.findById(payment.userId);
+      
+      if (payment.packageType === 'job_ads') {
+        // Check if any job ads were posted after payment
+        const JobVacancy = require('../model/jobVacancy');
+        const adsPostedAfter = await JobVacancy.countDocuments({
+          user: user._id,
+          postedDate: { $gte: payment.paidAt }
+        });
+        
+        if (adsPostedAfter > 0) {
+          autoApprove = false;
+          autoApproveReason = 'Service already used (ads posted)';
+        }
+      }
+    }
+    
+    if (autoApprove) {
+      // Auto-approve: Process refund immediately
+      payment.refundRequest = {
+        requestedAt: new Date(),
+        reason: reason,
+        status: 'auto_approved',
+        autoApproved: true,
+        reviewedAt: new Date(),
+        reviewNote: autoApproveReason
+      };
+      
+      await payment.save();
+      
+      // Process refund via PortOne API
+      const axios = require('axios');
+      const portoneApiSecret = process.env.PORTONE_API_SECRET;
+      const portoneStoreId = process.env.PORTONE_STORE_ID;
+      
+      try {
+        const refundResponse = await axios.post(
+          `https://api.portone.io/payments/${payment.paymentId}/cancel`,
+          {
+            storeId: portoneStoreId,
+            reason: `Auto-approved: ${reason}`
+          },
+          {
+            headers: {
+              'Authorization': `PortOne ${portoneApiSecret}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+        
+        // Update payment status
+        payment.status = 'refunded';
+        payment.refundedAt = new Date();
+        payment.refundAmount = payment.amount;
+        payment.refundReason = reason;
+        
+        // Deduct credits/access
+        const user = await User.findById(payment.userId);
+        if (payment.packageType === 'job_ads') {
+          user.adsAvailable = Math.max(0, (user.adsAvailable || 0) - (payment.packageDetails.quantity || 0));
+        } else if (payment.packageType === 'resume_access') {
+          if (user.resumeAccess) user.resumeAccess.isActive = false;
+        } else if (payment.packageType === 'tutor_access') {
+          if (user.tutorAccess) user.tutorAccess.isActive = false;
+        }
+        await user.save();
+        await payment.save();
+        
+        console.log(`✅ Auto-approved refund: ${payment._id}`);
+        
+        return res.json({ 
+          success: true, 
+          autoApproved: true,
+          message: 'Refund approved and processed automatically' 
+        });
+        
+      } catch (apiError) {
+        console.error('❌ Auto-refund API error:', apiError.response?.data || apiError.message);
+        
+        // Keep as pending if API fails
+        payment.refundRequest.status = 'pending';
+        payment.refundRequest.autoApproved = false;
+        payment.refundRequest.reviewNote = `API error: ${apiError.message}`;
+        await payment.save();
+        
+        return res.json({ 
+          success: true, 
+          autoApproved: false,
+          message: 'Refund request submitted for admin review (API processing pending)' 
+        });
+      }
+      
+    } else {
+      // Pending: Requires admin approval
+      payment.refundRequest = {
+        requestedAt: new Date(),
+        reason: reason,
+        status: 'pending',
+        autoApproved: false,
+        reviewNote: autoApproveReason || 'Requires admin review'
+      };
+      
+      await payment.save();
+      
+      console.log(`📌 Refund request pending: ${payment._id}`);
+      
+      return res.json({ 
+        success: true, 
+        autoApproved: false,
+        message: 'Refund request submitted. Our team will review it within 1-2 business days.' 
+      });
+    }
+    
+  } catch (err) {
+    console.error('❌ Refund request error:', err);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Failed to process refund request' 
+    });
+  }
+});
 
 module.exports = router;
