@@ -337,15 +337,18 @@ router.post("/verify", requireLogin, async (req, res) => {
     const apiSecret = process.env.PORTONE_API_SECRET;
     const storeId = process.env.PORTONE_STORE_ID;
 
-    // Access Token 발급
+    // Access Token 발급 (V2 API)
     const tokenResponse = await axios.post(
       "https://api.portone.io/login/api-secret",
       {
-        api_secret: apiSecret,
+        apiSecret: apiSecret
+      },
+      {
+        headers: { "Content-Type": "application/json" }
       }
     );
 
-    const accessToken = tokenResponse.data.access_token;
+    const accessToken = tokenResponse.data.accessToken;
 
     // 결제 정보 조회
     const paymentResponse = await axios.get(
@@ -510,42 +513,56 @@ router.post("/refund", async (req, res) => {
       });
     }
 
-    // Get access token
+    // PortOne V2 API Authentication
     const apiSecret = process.env.PORTONE_API_SECRET;
+    const storeId = process.env.PORTONE_STORE_ID;
+    
+    console.log("🔑 Using V2 API with Store ID:", storeId);
+
+    // Step 1: Get access token using V2 API
     const tokenResponse = await axios.post(
       "https://api.portone.io/login/api-secret",
-      { api_secret: apiSecret }
+      {
+        apiSecret: apiSecret
+      },
+      {
+        headers: { "Content-Type": "application/json" }
+      }
     );
 
-    const accessToken = tokenResponse.data.access_token;
+    const accessToken = tokenResponse.data.accessToken;
+    console.log("✅ V2 Access Token obtained");
 
-    // Get payment details first
+    // Step 2: Get payment details first
     const paymentResponse = await axios.get(
       `https://api.portone.io/payments/${paymentId}`,
       {
-        headers: { Authorization: `Bearer ${accessToken}` }
+        headers: { 
+          Authorization: `Bearer ${accessToken}`
+        }
       }
     );
 
     const payment = paymentResponse.data;
+    console.log("📦 Payment found:", payment.id, "Status:", payment.status);
 
-    if (payment.status !== "paid") {
+    if (payment.status !== "PAID") {
       return res.status(400).json({
         success: false,
-        message: "Payment is not in paid status"
+        message: `Payment is not in paid status (current: ${payment.status})`
       });
     }
 
-    // Prepare refund request
-    const refundAmount = amount ? parseInt(amount) : payment.amount;
+    // Step 3: Calculate refund amount
+    const refundAmount = amount ? parseInt(amount) : payment.amount.total;
     
     // PortOne V2 API: POST /payments/{paymentId}/cancel
     const refundResponse = await axios.post(
       `https://api.portone.io/payments/${paymentId}/cancel`,
       {
+        storeId: storeId,
         reason: reason || "Admin requested refund",
-        amount: refundAmount,
-        cancelable_amount: payment.amount
+        amount: refundAmount
       },
       {
         headers: {
@@ -556,6 +573,7 @@ router.post("/refund", async (req, res) => {
     );
 
     const refund = refundResponse.data;
+    console.log("✅ Refund successful:", refund.paymentId);
 
     // Update payment record in database
     try {
