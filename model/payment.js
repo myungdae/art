@@ -105,7 +105,25 @@ const paymentSchema = new mongoose.Schema({
     reason: String,
     refundId: String,
     adminUser: String
-  }]
+  }],
+  
+  // Refund Request (User-initiated)
+  refundRequest: {
+    requestedAt: Date,
+    reason: String,
+    status: {
+      type: String,
+      enum: ['pending', 'approved', 'rejected', 'auto_approved'],
+      default: 'pending'
+    },
+    autoApproved: {
+      type: Boolean,
+      default: false
+    },
+    reviewedBy: String,
+    reviewedAt: Date,
+    reviewNote: String
+  }
 });
 
 // Update timestamps on save

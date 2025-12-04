@@ -79,24 +79,61 @@ app.use((req, res, next) => {
 });
 
 // ── Session (MUST be before flash)
+// Session configuration with configurable timeout
+const SESSION_LIFETIME_DAYS = parseInt(process.env.SESSION_LIFETIME_DAYS || '7', 10);
+const SESSION_LIFETIME_SECONDS = SESSION_LIFETIME_DAYS * 24 * 60 * 60;
+const SESSION_LIFETIME_MS = SESSION_LIFETIME_SECONDS * 1000;
+
+console.log(`🔐 Session lifetime configured: ${SESSION_LIFETIME_DAYS} days`);
+
 app.set("trust proxy", 1);
 app.use(
   session({
     secret: process.env.SESSION_SECRET || "change-me",
     resave: false,
     saveUninitialized: false,
+    rolling: true, // Reset maxAge on every request (activity-based session)
     store: MongoStore.create({
       mongoUrl: process.env.MONGO_URI,
-      ttl: 30 * 24 * 60 * 60, // 30 days (increased from 14 days)
+      ttl: SESSION_LIFETIME_SECONDS, // Configurable session lifetime
+      touchAfter: 24 * 3600 // Lazy session update (once per 24 hours)
     }),
     cookie: { 
       httpOnly: true, 
       sameSite: "lax", 
-      secure: false,
-      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days in milliseconds
+      secure: process.env.NODE_ENV === 'production', // Enable secure cookies in production
+      maxAge: SESSION_LIFETIME_MS // Configurable cookie lifetime
     },
   })
 );
+
+// ── Session Activity Check (Auto-logout for inactive sessions)
+app.use((req, res, next) => {
+  if (req.session && (req.session.user || req.session.isAdmin)) {
+    const now = Date.now();
+    const lastActivity = req.session.lastActivity || now;
+    const maxInactivity = SESSION_LIFETIME_MS; // Use configured session lifetime
+    
+    // Check if session has been inactive for too long
+    if (now - lastActivity > maxInactivity) {
+      const username = req.session.user?.username || req.session.user?.email || 'Admin';
+      const inactiveDays = Math.floor((now - lastActivity) / (24 * 60 * 60 * 1000));
+      console.log(`⚠️ Session expired for user ${username} (inactive for ${inactiveDays} days)`);
+      
+      const isAdminSession = req.session.isAdmin;
+      req.session.destroy((err) => {
+        if (err) console.error('Session destroy error:', err);
+      });
+      
+      const redirectUrl = isAdminSession ? '/admin/login' : '/user/login';
+      return res.redirect(`${redirectUrl}?message=Session expired. Please login again.`);
+    }
+    
+    // Update last activity timestamp
+    req.session.lastActivity = now;
+  }
+  next();
+});
 
 // ── Flash & locals (ONLY once, after session)
 app.use(flash());

@@ -9,6 +9,11 @@ block content
             h2(style="margin: 0; font-weight: bold; font-size: 1.8rem;") Login
 
           .card-body
+            if success
+              .alert.alert-success.mt-2
+                i.fas.fa-check-circle.me-2
+                = success
+            
             if error
               .alert.alert-danger.mt-2
                 != error
@@ -16,7 +21,7 @@ block content
             form(method="POST", action="/user/login")
               .form-group.mb-4
                 label(for="email", style="font-size: 1.1rem; font-weight: bold;") Email
-                input.form-control.rounded-pill(type="email", name="email", placeholder="Enter your email", required)
+                input.form-control.rounded-pill(type="email", name="email", placeholder="Enter your email", value=email || '', required)
 
               .form-group.mb-4
                 label(for="password", style="font-size: 1.1rem; font-weight: bold;") Password

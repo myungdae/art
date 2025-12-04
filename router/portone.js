@@ -200,10 +200,17 @@ router.post("/webhook", express.json(), async (req, res) => {
       // Extract userId (second to last part)
       const userIdPart = parts[parts.length - 2];
       
-      // MongoDB ObjectId is 24 chars, search by first 8 chars
-      const user = await User.findOne({ 
-        _id: { $regex: `^${userIdPart}` } 
-      });
+      // MongoDB ObjectId: try to find user
+      // First try: if it's a full 24-char ObjectId
+      let user;
+      if (userIdPart.length === 24) {
+        user = await User.findById(userIdPart);
+      } else {
+        // Partial ID (8 chars): find user whose _id starts with this prefix
+        // Convert partial hex to ObjectId range
+        const allUsers = await User.find({}).lean();
+        user = allUsers.find(u => u._id.toString().startsWith(userIdPart));
+      }
 
       if (!user) {
         console.error("❌ User not found for paymentId:", paymentId);
@@ -271,12 +278,20 @@ router.post("/webhook", express.json(), async (req, res) => {
 
       // Save payment record to database
       try {
+        // Map userRole based on packageType if user is Admin
+        let userRole = user.role;
+        if (user.role === 'Admin') {
+          if (packageType === 'job_ads') userRole = 'Employer';
+          else if (packageType === 'resume_access') userRole = 'Job_Seeker';
+          else if (packageType === 'tutor_access') userRole = 'Online_Tutor';
+        }
+        
         const payment = new Payment({
           paymentId: paymentId,
           merchantUid: event.merchant_uid || paymentId,
           userId: user._id,
           userEmail: user.email,
-          userRole: user.role,
+          userRole: userRole,
           amount: amount,
           currency: event.currency || 'KRW',
           paymentMethod: paymentMethod,
@@ -322,15 +337,18 @@ router.post("/verify", requireLogin, async (req, res) => {
     const apiSecret = process.env.PORTONE_API_SECRET;
     const storeId = process.env.PORTONE_STORE_ID;
 
-    // Access Token 발급
+    // Access Token 발급 (V2 API)
     const tokenResponse = await axios.post(
       "https://api.portone.io/login/api-secret",
       {
-        api_secret: apiSecret,
+        apiSecret: apiSecret
+      },
+      {
+        headers: { "Content-Type": "application/json" }
       }
     );
 
-    const accessToken = tokenResponse.data.access_token;
+    const accessToken = tokenResponse.data.accessToken;
 
     // 결제 정보 조회
     const paymentResponse = await axios.get(
@@ -495,42 +513,56 @@ router.post("/refund", async (req, res) => {
       });
     }
 
-    // Get access token
+    // PortOne V2 API Authentication
     const apiSecret = process.env.PORTONE_API_SECRET;
+    const storeId = process.env.PORTONE_STORE_ID;
+    
+    console.log("🔑 Using V2 API with Store ID:", storeId);
+
+    // Step 1: Get access token using V2 API
     const tokenResponse = await axios.post(
       "https://api.portone.io/login/api-secret",
-      { api_secret: apiSecret }
+      {
+        apiSecret: apiSecret
+      },
+      {
+        headers: { "Content-Type": "application/json" }
+      }
     );
 
-    const accessToken = tokenResponse.data.access_token;
+    const accessToken = tokenResponse.data.accessToken;
+    console.log("✅ V2 Access Token obtained");
 
-    // Get payment details first
+    // Step 2: Get payment details first
     const paymentResponse = await axios.get(
       `https://api.portone.io/payments/${paymentId}`,
       {
-        headers: { Authorization: `Bearer ${accessToken}` }
+        headers: { 
+          Authorization: `Bearer ${accessToken}`
+        }
       }
     );
 
     const payment = paymentResponse.data;
+    console.log("📦 Payment found:", payment.id, "Status:", payment.status);
 
-    if (payment.status !== "paid") {
+    if (payment.status !== "PAID") {
       return res.status(400).json({
         success: false,
-        message: "Payment is not in paid status"
+        message: `Payment is not in paid status (current: ${payment.status})`
       });
     }
 
-    // Prepare refund request
-    const refundAmount = amount ? parseInt(amount) : payment.amount;
+    // Step 3: Calculate refund amount
+    const refundAmount = amount ? parseInt(amount) : payment.amount.total;
     
     // PortOne V2 API: POST /payments/{paymentId}/cancel
     const refundResponse = await axios.post(
       `https://api.portone.io/payments/${paymentId}/cancel`,
       {
+        storeId: storeId,
         reason: reason || "Admin requested refund",
-        amount: refundAmount,
-        cancelable_amount: payment.amount
+        amount: refundAmount
       },
       {
         headers: {
@@ -541,6 +573,7 @@ router.post("/refund", async (req, res) => {
     );
 
     const refund = refundResponse.data;
+    console.log("✅ Refund successful:", refund.paymentId);
 
     // Update payment record in database
     try {

@@ -156,9 +156,22 @@ router.post("/login", async (req, res) => {
   try {
     const user = await User.findOne({ email });
     if (!user || user.password !== password) {
+      // Destroy any existing session to prevent "Unknown role" issue
+      req.session.destroy((err) => {
+        if (err) console.error('Session destroy error on login failure:', err);
+      });
+      
       return res.render("user/login", {
         error: `❌ Email or password incorrect<br>
                 New here? <a href="/user/register" style="color:gold;text-decoration:underline;">Register</a> and choose your role.`,
+      });
+    }
+    
+    // Check if user has a valid role
+    if (!user.role || !['Employer', 'Job_Seeker', 'Online_Tutor', 'Admin'].includes(user.role)) {
+      console.error(`❌ User ${user.email} has invalid role: ${user.role}`);
+      return res.render("user/login", {
+        error: `❌ Your account has an invalid role. Please contact support.`,
       });
     }
 
@@ -169,7 +182,11 @@ router.post("/login", async (req, res) => {
       role: user.role,
       resumeAccess: user.resumeAccess ?? null,
       tutorAccess: user.tutorAccess ?? null,
+      adsAvailable: user.adsAvailable || 0,
     };
+    
+    // Set initial activity timestamp
+    req.session.lastActivity = Date.now();
 
     // 선택: 로그인 로깅 (실패해도 무시)
     try {
@@ -186,6 +203,7 @@ router.post("/login", async (req, res) => {
       console.error("[thread] login log failed:", e.message || e);
     }
 
+    console.log(`✅ User ${user.email} logged in with role: ${user.role}`);
     return res.redirect("/user/mypage");
   } catch (err) {
     console.error("❌ Login error:", err.message);
@@ -387,10 +405,8 @@ router.post("/reset-password/:token", async (req, res) => {
 
     // Redirect to login with success message
     return res.render("user/login", {
-      error: `<div style="background-color: #d4edda; border-color: #c3e6cb; color: #155724; padding: 12px; border-radius: 8px;">
-                <i class="fas fa-check-circle"></i> 
-                Your password has been successfully reset! Please log in with your new password.
-              </div>`,
+      success: `✅ Your password has been successfully reset! Please log in with your new password.`,
+      email: user.email // Pre-fill email for convenience
     });
   } catch (err) {
     console.error("❌ Reset password POST error:", err.message);
@@ -405,7 +421,11 @@ router.post("/reset-password/:token", async (req, res) => {
 router.get("/mypage", requireLogin, async (req, res) => {
   try {
     const user = await User.findById(req.session.user._id).lean();
-    if (!user) return res.status(404).send("User not found");
+    if (!user) {
+      console.error(`❌ User not found in DB: ${req.session.user._id}`);
+      req.session.destroy();
+      return res.redirect('/user/login?error=User account not found. Please login again.');
+    }
 
     // Sync session role with DB role (in case it changed)
     if (user.role !== req.session.user.role) {
@@ -418,8 +438,30 @@ router.get("/mypage", requireLogin, async (req, res) => {
     if (user.role === "Job_Seeker")
       return res.redirect("/user/mypage-jobseeker");
     if (user.role === "Online_Tutor") return res.redirect("/user/mypage-tutor");
+    if (user.role === "Admin") return res.redirect("/admin/dashboard");
 
-    return res.send("Unknown role");
+    // If role is invalid or unknown
+    console.error(`❌ Unknown role for user ${user.email}: ${user.role}`);
+    return res.status(400).send(`
+      <div style="max-width: 600px; margin: 100px auto; padding: 40px; text-align: center; font-family: Arial, sans-serif;">
+        <h1 style="color: #dc3545; font-size: 3rem; margin-bottom: 20px;">⚠️ Unknown Role</h1>
+        <p style="font-size: 1.2rem; color: #666; margin-bottom: 30px;">
+          Your account has an invalid role: <strong>${user.role || 'None'}</strong>
+        </p>
+        <p style="color: #666; margin-bottom: 30px;">
+          This usually happens if your account data was corrupted. Please contact support.
+        </p>
+        <div style="margin-top: 30px;">
+          <p><strong>Your Account:</strong></p>
+          <p>Email: ${user.email}</p>
+          <p>Username: ${user.username}</p>
+        </div>
+        <div style="margin-top: 40px;">
+          <a href="/user/logout" style="background-color: #FF7A00; color: white; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; margin-right: 10px;">Logout</a>
+          <a href="/inquiry" style="background-color: #6c757d; color: white; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-weight: bold;">Contact Support</a>
+        </div>
+      </div>
+    `);
   } catch (err) {
     console.error("❌ Failed to load mypage:", err.message);
     return res.status(500).send("❌ Error loading My Page");
@@ -460,6 +502,13 @@ router.get(
 
       // 버튼 노출 조건
       const canPost = credits > 0;
+      
+      // 구매 내역 조회
+      const Payment = require('../model/payment');
+      const payments = await Payment.find({ 
+        userId: user._id,
+        status: { $in: ['paid', 'refunded'] }
+      }).sort({ paidAt: -1 }).limit(10).lean();
 
       return res.render("user/mypage-employer", {
         user,
@@ -468,6 +517,7 @@ router.get(
         canPost,
         totalSlots: activeJobs + credits,
         remainingSlots: credits,
+        payments: payments || []
       });
     } catch (err) {
       console.error("Employer mypage error:", err.message);
@@ -554,6 +604,13 @@ router.get("/mypage-jobseeker", requireLogin, async (req, res) => {
         })
       : "N/A";
 
+    // 구매 내역 조회
+    const Payment = require('../model/payment');
+    const payments = await Payment.find({ 
+      userId: user._id,
+      status: { $in: ['paid', 'refunded'] }
+    }).sort({ paidAt: -1 }).limit(10).lean();
+
     return res.render("user/mypage-jobseeker", {
       user,
       remainingDays,
@@ -562,6 +619,7 @@ router.get("/mypage-jobseeker", requireLogin, async (req, res) => {
       userResume,
       hasResume: !!userResume,
       formattedUpdatedAt,
+      payments: payments || []
     });
   } catch (err) {
     console.error("Job Seeker mypage error:", err.message);
@@ -610,7 +668,14 @@ router.get("/mypage-tutor", requireLogin, async (req, res) => {
       .lean()
       .catch(() => []);
 
-    const data = { user, tutor, tutorDoc: tutor, threads };
+    // 구매 내역 조회
+    const Payment = require('../model/payment');
+    const payments = await Payment.find({ 
+      userId: user._id,
+      status: { $in: ['paid', 'refunded'] }
+    }).sort({ paidAt: -1 }).limit(10).lean();
+
+    const data = { user, tutor, tutorDoc: tutor, threads, payments: payments || [] };
 
     // ✅ 폴백 제거: 오직 'user/mypage-tutor' 만 렌더
     return res.render("user/mypage-tutor", data);
@@ -656,5 +721,244 @@ router.post("/online-tutors/visibility", requireLogin, async (req, res) => {
 router.get("/tutor/plan", (req, res) =>
   res.redirect("/user/online-tutors/visibility")
 );
+
+/* -------------------------------------------------------------
+   POST /user/request-refund
+   - User-initiated refund request
+   - Auto-approve if conditions met, otherwise pending for admin
+------------------------------------------------------------- */
+router.post("/request-refund", requireLogin, async (req, res) => {
+  console.log('🔵 Refund request received:', { paymentId: req.body.paymentId, userId: req.session.user?._id });
+  
+  try {
+    const { paymentId, reason } = req.body;
+    
+    if (!paymentId || !reason) {
+      console.log('❌ Missing paymentId or reason');
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Payment ID and reason are required' 
+      });
+    }
+    
+    const Payment = require('../model/payment');
+    const mongoose = require('mongoose');
+    
+    // Use direct MongoDB query to bypass Mongoose cache
+    const db = mongoose.connection.db;
+    const paymentData = await db.collection('payments').findOne({ paymentId });
+    
+    console.log('🔍 Payment lookup result:', paymentData ? `Found: ${paymentData._id}` : 'Not found');
+    console.log('📋 Raw refundRequest from DB:', paymentData?.refundRequest);
+    
+    if (!paymentData) {
+      console.log('❌ Payment not found:', paymentId);
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Payment not found' 
+      });
+    }
+    
+    // Now get Mongoose document for modifications
+    const payment = await Payment.findById(paymentData._id);
+    
+    console.log('🔐 Auth check - Payment userId:', paymentData.userId.toString(), 'Session userId:', req.session.user._id.toString());
+    
+    if (paymentData.userId.toString() !== req.session.user._id.toString()) {
+      console.log('❌ Unauthorized access attempt');
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Unauthorized' 
+      });
+    }
+    
+    console.log('💰 Payment status:', paymentData.status);
+    
+    if (paymentData.status !== 'paid') {
+      console.log('❌ Payment status not paid');
+      return res.status(400).json({ 
+        success: false, 
+        message: 'This payment cannot be refunded' 
+      });
+    }
+    
+    console.log('📋 Refund request check:', paymentData.refundRequest);
+    
+    if (paymentData.refundRequest && paymentData.refundRequest.status === 'pending') {
+      console.log('❌ Refund request already submitted (status: pending)');
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Refund request already submitted' 
+      });
+    }
+    
+    console.log('✅ All validation checks passed, proceeding with refund logic');
+    
+    // Auto-approval conditions
+    const daysSincePurchase = (Date.now() - payment.paidAt) / (1000 * 60 * 60 * 24);
+    let autoApprove = false;
+    let autoApproveReason = '';
+    
+    console.log('📅 Days since purchase:', daysSincePurchase.toFixed(2));
+    
+    // Condition 1: Within 7 days of purchase
+    if (daysSincePurchase <= 7) {
+      autoApprove = true;
+      autoApproveReason = 'Within 7-day refund period';
+      console.log('✅ Auto-approve condition met: Within 7 days');
+    }
+    
+    // Condition 2: Check if service was unused
+    if (autoApprove) {
+      const user = await User.findById(payment.userId);
+      
+      if (payment.packageType === 'job_ads') {
+        // Check if any job ads were posted after payment
+        const JobVacancy = require('../model/jobVacancy');
+        const adsPostedAfter = await JobVacancy.countDocuments({
+          user: user._id,
+          postedDate: { $gte: payment.paidAt }
+        });
+        
+        if (adsPostedAfter > 0) {
+          autoApprove = false;
+          autoApproveReason = 'Service already used (ads posted)';
+        }
+      }
+    }
+    
+    if (autoApprove) {
+      // Auto-approve: Process refund immediately
+      payment.refundRequest = {
+        requestedAt: new Date(),
+        reason: reason,
+        status: 'auto_approved',
+        autoApproved: true,
+        reviewedAt: new Date(),
+        reviewNote: autoApproveReason
+      };
+      
+      await payment.save();
+      
+      // Process refund via PortOne API
+      const axios = require('axios');
+      const portoneApiSecret = process.env.PORTONE_API_SECRET;
+      
+      try {
+        // Step 1: Get Access Token
+        const tokenResponse = await axios.post(
+          'https://api.portone.io/login/api-secret',
+          {
+            api_secret: portoneApiSecret
+          }
+        );
+        
+        const accessToken = tokenResponse.data.access_token;
+        
+        // Step 2: Get payment details from PortOne (verify current status)
+        const portonePaymentResponse = await axios.get(
+          `https://api.portone.io/payments/${payment.paymentId}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`
+            }
+          }
+        );
+        
+        const portonePayment = portonePaymentResponse.data;
+        
+        // Step 3: Request Refund with cancelable_amount
+        const refundResponse = await axios.post(
+          `https://api.portone.io/payments/${payment.paymentId}/cancel`,
+          {
+            reason: `Auto-approved: ${reason}`,
+            amount: payment.amount,
+            cancelable_amount: portonePayment.amount
+          },
+          {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+        
+        // Update payment status
+        payment.status = 'refunded';
+        payment.refundedAt = new Date();
+        payment.refundAmount = payment.amount;
+        payment.refundReason = reason;
+        
+        // Deduct credits/access
+        const user = await User.findById(payment.userId);
+        if (payment.packageType === 'job_ads') {
+          user.adsAvailable = Math.max(0, (user.adsAvailable || 0) - (payment.packageDetails.quantity || 0));
+        } else if (payment.packageType === 'resume_access') {
+          if (user.resumeAccess) user.resumeAccess.isActive = false;
+        } else if (payment.packageType === 'tutor_access') {
+          if (user.tutorAccess) user.tutorAccess.isActive = false;
+        }
+        await user.save();
+        await payment.save();
+        
+        console.log(`✅ Auto-approved refund: ${payment._id}`);
+        
+        return res.json({ 
+          success: true, 
+          autoApproved: true,
+          message: 'Refund approved and processed automatically' 
+        });
+        
+      } catch (apiError) {
+        console.error('❌ Auto-refund API error:', {
+          message: apiError.message,
+          response: apiError.response?.data,
+          status: apiError.response?.status,
+          paymentId: payment.paymentId
+        });
+        
+        // Keep as pending if API fails
+        payment.refundRequest.status = 'pending';
+        payment.refundRequest.autoApproved = false;
+        payment.refundRequest.reviewNote = `API error: ${apiError.message}`;
+        await payment.save();
+        
+        // Return detailed error to frontend for debugging
+        return res.status(500).json({ 
+          success: false,
+          message: `Refund failed: ${apiError.response?.data?.message || apiError.message}`,
+          error: apiError.response?.data || apiError.message
+        });
+      }
+      
+    } else {
+      // Pending: Requires admin approval
+      payment.refundRequest = {
+        requestedAt: new Date(),
+        reason: reason,
+        status: 'pending',
+        autoApproved: false,
+        reviewNote: autoApproveReason || 'Requires admin review'
+      };
+      
+      await payment.save();
+      
+      console.log(`📌 Refund request pending: ${payment._id}`);
+      
+      return res.json({ 
+        success: true, 
+        autoApproved: false,
+        message: 'Refund request submitted. Our team will review it within 1-2 business days.' 
+      });
+    }
+    
+  } catch (err) {
+    console.error('❌ Refund request error:', err);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Failed to process refund request' 
+    });
+  }
+});
 
 module.exports = router;

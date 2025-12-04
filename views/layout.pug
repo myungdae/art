@@ -227,7 +227,7 @@ html(lang='en')
                     if session.user.adsAvailable !== undefined
                       | (#{session.user.adsAvailable} left)
                     a.nav-link.h5.my-0(href="/inquiry") Inquiry
-                    a.logou.nav-link.h5.my-0(href="/user/logout") Logout
+                    a.logout.nav-link.h5.my-0(href="/user/logout") Logout
                   else
                     a.nav-link.h5.my-0(href="/pricing") Pricing
                     a.nav-link.h5.my-0(href="/user/register") Membership
@@ -236,7 +236,7 @@ html(lang='en')
 
                   if session && session.isAdmin
                     a.nav-link.h5.my-0(href="/admin/dashboard") Admin
-                    a.nav-link.h5.my-0(href="/admin/logout").logout Logout
+                    a.logout.nav-link.h5.my-0(href="/admin/logout") Logout
             .text-center(style="margin-top: 60px;")
               // 검색바를 먼저 배치 (데스크탑에서만 표시)
               - var _ph = (typeof searchKeyword!=='undefined' && searchKeyword) ? searchKeyword : "Enter keyword...";

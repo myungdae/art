@@ -52,6 +52,7 @@ router.post('/login', async (req, res) => {
   // Check .env hardcoded admin first
   if (email === adminEmail && password === adminPassword) {
     req.session.isAdmin = true;
+    req.session.lastActivity = Date.now();
     return res.redirect('/admin/dashboard');
   }
 
@@ -66,6 +67,7 @@ router.post('/login', async (req, res) => {
         email: user.email,
         role: 'Admin'
       };
+      req.session.lastActivity = Date.now();
       return res.redirect('/admin/dashboard');
     }
   } catch (err) {
@@ -543,7 +545,9 @@ router.get('/revenue/transactions', requireAdmin, async (req, res) => {
       packageDescription: t.packageDetails?.description || '-',
       status: t.status,
       paidAt: toKST(t.paidAt),
-      createdAt: toKST(t.createdAt)
+      createdAt: toKST(t.createdAt),
+      refundRequest: t.refundRequest,
+      hasRefundRequest: t.refundRequest && t.refundRequest.status === 'pending'
     }));
 
     // Statistics
@@ -564,6 +568,7 @@ router.get('/revenue/transactions', requireAdmin, async (req, res) => {
         pending: transactions.filter(t => t.status === 'pending').length,
         failed: transactions.filter(t => t.status === 'failed').length,
         refunded: transactions.filter(t => t.status === 'refunded').length,
+        refundRequests: transactions.filter(t => t.refundRequest && t.refundRequest.status === 'pending').length,
         totalRevenue,
         avgTransaction
       }
@@ -853,6 +858,132 @@ router.get('/settings', requireAdmin, async (req, res) => {
       message: 'Settings Error',
       error: err
     });
+  }
+});
+
+/* -------------------------------------------------------------
+   POST /admin/approve-refund
+   - Admin approval for user refund requests
+------------------------------------------------------------- */
+router.post('/approve-refund', requireAdmin, async (req, res) => {
+  try {
+    const { paymentId, action, reviewNote } = req.body;
+    
+    if (!paymentId || !action || !['approve', 'reject'].includes(action)) {
+      return res.status(400).json({ success: false, message: 'Invalid request' });
+    }
+    
+    const Payment = require('../model/payment');
+    const payment = await Payment.findById(paymentId);
+    
+    if (!payment || !payment.refundRequest || payment.refundRequest.status !== 'pending') {
+      return res.status(404).json({ success: false, message: 'Invalid refund request' });
+    }
+    
+    if (action === 'approve') {
+      // Process refund via PortOne API
+      const axios = require('axios');
+      const portoneApiSecret = process.env.PORTONE_API_SECRET;
+      
+      try {
+        // Step 1: Get Access Token
+        const tokenResponse = await axios.post(
+          'https://api.portone.io/login/api-secret',
+          {
+            api_secret: portoneApiSecret
+          }
+        );
+        
+        const accessToken = tokenResponse.data.access_token;
+        
+        // Step 2: Get payment details from PortOne (verify current status)
+        const portonePaymentResponse = await axios.get(
+          `https://api.portone.io/payments/${payment.paymentId}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`
+            }
+          }
+        );
+        
+        const portonePayment = portonePaymentResponse.data;
+        
+        // Step 3: Request Refund with cancelable_amount
+        await axios.post(
+          `https://api.portone.io/payments/${payment.paymentId}/cancel`,
+          {
+            reason: payment.refundRequest.reason,
+            amount: payment.amount,
+            cancelable_amount: portonePayment.amount
+          },
+          {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+        
+        // Update payment
+        payment.status = 'refunded';
+        payment.refundedAt = new Date();
+        payment.refundAmount = payment.amount;
+        payment.refundReason = payment.refundRequest.reason;
+        payment.refundRequest.status = 'approved';
+        payment.refundRequest.reviewedBy = req.session.user.email;
+        payment.refundRequest.reviewedAt = new Date();
+        payment.refundRequest.reviewNote = reviewNote || 'Approved by admin';
+        
+        // Deduct credits/access
+        const User = require('../model/user');
+        const user = await User.findById(payment.userId);
+        
+        if (payment.packageType === 'job_ads') {
+          user.adsAvailable = Math.max(0, (user.adsAvailable || 0) - (payment.packageDetails.quantity || 0));
+        } else if (payment.packageType === 'resume_access') {
+          if (user.resumeAccess) user.resumeAccess.isActive = false;
+        } else if (payment.packageType === 'tutor_access') {
+          if (user.tutorAccess) user.tutorAccess.isActive = false;
+        }
+        
+        await user.save();
+        await payment.save();
+        
+        console.log(`✅ Admin approved refund: ${payment._id}`);
+        
+        return res.json({ success: true, message: 'Refund approved and processed' });
+        
+      } catch (apiError) {
+        console.error('❌ Refund API error:', {
+          message: apiError.message,
+          response: apiError.response?.data,
+          status: apiError.response?.status,
+          paymentId: payment.paymentId
+        });
+        return res.status(500).json({ 
+          success: false, 
+          message: `Failed to process refund: ${apiError.response?.data?.message || apiError.message}`,
+          error: apiError.response?.data
+        });
+      }
+      
+    } else {
+      // Reject refund request
+      payment.refundRequest.status = 'rejected';
+      payment.refundRequest.reviewedBy = req.session.user.email;
+      payment.refundRequest.reviewedAt = new Date();
+      payment.refundRequest.reviewNote = reviewNote || 'Rejected by admin';
+      
+      await payment.save();
+      
+      console.log(`❌ Admin rejected refund: ${payment._id}`);
+      
+      return res.json({ success: true, message: 'Refund request rejected' });
+    }
+    
+  } catch (err) {
+    console.error('❌ Approve refund error:', err);
+    return res.status(500).json({ success: false, message: 'Failed to process refund approval' });
   }
 });
 
