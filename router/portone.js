@@ -278,12 +278,20 @@ router.post("/webhook", express.json(), async (req, res) => {
 
       // Save payment record to database
       try {
+        // Map userRole based on packageType if user is Admin
+        let userRole = user.role;
+        if (user.role === 'Admin') {
+          if (packageType === 'job_ads') userRole = 'Employer';
+          else if (packageType === 'resume_access') userRole = 'Job_Seeker';
+          else if (packageType === 'tutor_access') userRole = 'Online_Tutor';
+        }
+        
         const payment = new Payment({
           paymentId: paymentId,
           merchantUid: event.merchant_uid || paymentId,
           userId: user._id,
           userEmail: user.email,
-          userRole: user.role,
+          userRole: userRole,
           amount: amount,
           currency: event.currency || 'KRW',
           paymentMethod: paymentMethod,
