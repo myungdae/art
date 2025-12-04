@@ -754,26 +754,37 @@ router.post("/request-refund", requireLogin, async (req, res) => {
       });
     }
     
+    console.log('🔐 Auth check - Payment userId:', payment.userId.toString(), 'Session userId:', req.session.user._id.toString());
+    
     if (payment.userId.toString() !== req.session.user._id.toString()) {
+      console.log('❌ Unauthorized access attempt');
       return res.status(403).json({ 
         success: false, 
         message: 'Unauthorized' 
       });
     }
     
+    console.log('💰 Payment status:', payment.status);
+    
     if (payment.status !== 'paid') {
+      console.log('❌ Payment status not paid');
       return res.status(400).json({ 
         success: false, 
         message: 'This payment cannot be refunded' 
       });
     }
     
+    console.log('📋 Refund request check:', payment.refundRequest);
+    
     if (payment.refundRequest && payment.refundRequest.status === 'pending') {
+      console.log('❌ Refund request already submitted (status: pending)');
       return res.status(400).json({ 
         success: false, 
         message: 'Refund request already submitted' 
       });
     }
+    
+    console.log('✅ All validation checks passed, proceeding with refund logic');
     
     // Auto-approval conditions
     const daysSincePurchase = (Date.now() - payment.paidAt) / (1000 * 60 * 60 * 24);
