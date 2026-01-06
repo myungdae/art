@@ -11,48 +11,48 @@ block content
         .alert.alert-danger= errors._global
 
       form(method="POST", action="/inquiry")
-      .mb-3
-        label.form-label(for="name") Name
-        input#name.form-control(
-          type="text",
-          name="name",
-          required,
-          value=(values && values.name) || ''
-          placeholder="Your name"
-        )
-        if errors && errors.name
-          small.text-danger= errors.name
+        .mb-3
+          label.form-label(for="name") Name
+          input#name.form-control(
+            type="text",
+            name="name",
+            required,
+            value=(values && values.name) || ''
+            placeholder="Your name"
+          )
+          if errors && errors.name
+            small.text-danger= errors.name
 
-      .mb-3
-        label.form-label(for="email") Email
-        input#email.form-control(
-          type="email",
-          name="email",
-          required,
-          value=(values && values.email) || ''
-          placeholder="you@example.com"
-        )
-        if errors && errors.email
-          small.text-danger= errors.email
+        .mb-3
+          label.form-label(for="email") Email
+          input#email.form-control(
+            type="email",
+            name="email",
+            required,
+            value=(values && values.email) || ''
+            placeholder="you@example.com"
+          )
+          if errors && errors.email
+            small.text-danger= errors.email
 
-      .mb-3
-        label.form-label(for="subject") Subject
-        input#subject.form-control(
-          type="text",
-          name="subject",
-          required,
-          value=(values && values.subject) || ''
-          placeholder="What is this about?"
-        )
-        if errors && errors.subject
-          small.text-danger= errors.subject
+        .mb-3
+          label.form-label(for="subject") Subject
+          input#subject.form-control(
+            type="text",
+            name="subject",
+            required,
+            value=(values && values.subject) || ''
+            placeholder="What is this about?"
+          )
+          if errors && errors.subject
+            small.text-danger= errors.subject
 
-      .mb-3
-        label.form-label(for="message") Message
-        textarea#message.form-control(name="message", rows="8", required, placeholder="Please include enough details so we can help.")
-          | #{(values && values.message) || ''}
-        if errors && errors.message
-          small.text-danger= errors.message
+        .mb-3
+          label.form-label(for="message") Message
+          textarea#message.form-control(name="message", rows="8", required, placeholder="Please include enough details so we can help.")
+            | #{(values && values.message) || ''}
+          if errors && errors.message
+            small.text-danger= errors.message
 
         .d-flex.gap-2
           button.btn.btn-primary(type="submit") Send
