@@ -16,11 +16,11 @@ function validate(body) {
   const subject = (body.subject || '').trim();
   const message = (body.message || '').trim();
 
-  if (name.length < 2) errors.name = 'Please enter at least 2 characters.';
+  if (name.length < 2) errors.name = 'Name must be at least 2 characters long.';
   const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRe.test(email)) errors.email = 'Please enter a valid email address.';
-  if (subject.length < 2) errors.subject = 'Please enter a subject (min 2 chars).';
-  if (message.length < 10) errors.message = 'Please enter at least 10 characters.';
+  if (subject.length < 2) errors.subject = 'Subject must be at least 2 characters long.';
+  if (message.length < 10) errors.message = 'Message must be at least 10 characters long. Please provide more details so we can help you better.';
 
   return errors;
 }
