@@ -125,4 +125,19 @@ router.get("/", async (req, res, next) => {
   }
 });
 
+// ── /api/home/stats — JSON API (카운트업용) ─────────────────
+router.get("/api/home/stats", async (req, res) => {
+  try {
+    const db = mongoose.connection.db;
+    const [artCount, artistCount, galleryCount, exhibCount, auctionCount] =
+      await Promise.all(
+        Object.values(COLLS).map((c) => db.collection(c).countDocuments({}))
+      );
+    res.json({ artCount, artistCount, galleryCount, exhibCount, auctionCount });
+  } catch (e) {
+    console.error("[HOME/API] stats error:", e);
+    res.status(500).json({ error: "stats fetch failed" });
+  }
+});
+
 module.exports = router;
