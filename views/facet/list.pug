@@ -189,6 +189,65 @@ block content
     /* ── 빈 상태 ──────────────────────────────────────────── */
     .empty-state { text-align:center; padding:80px 0; color:#bbb; font-size:15px; }
 
+    /* ── View toggle & limit controls ───────────────────────── */
+    .view-controls {
+      display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+    }
+    .view-btn-group {
+      display: flex; border: 1.5px solid #e0dbd0;
+      border-radius: 8px; overflow: hidden; background: #fff;
+    }
+    .view-btn {
+      width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+      background: #fff; border: none; cursor: pointer;
+      color: #aaa; font-size: 15px;
+      transition: background 0.15s, color 0.15s;
+    }
+    .view-btn:first-child { border-right: 1.5px solid #e0dbd0; }
+    .view-btn.active { background: #c9a227; color: #fff; }
+    .view-btn:not(.active):hover { background: #fdf8ee; color: #a07800; }
+    .limit-select {
+      height: 36px; padding: 0 10px;
+      background: #fff; border: 1.5px solid #e0dbd0;
+      border-radius: 8px; color: #555; font-size: 13px; font-weight: 700;
+      cursor: pointer; outline: none;
+      display: flex; align-items: center;
+    }
+    .limit-select:focus { border-color: #c9a227; }
+
+    /* ── List view 카드 ──────────────────────────────────────── */
+    .art-grid.list-view {
+      grid-template-columns: 1fr !important;
+      gap: 10px;
+    }
+    .art-grid.list-view .art-card {
+      display: grid;
+      grid-template-columns: 120px 1fr auto;
+      border-radius: 12px;
+    }
+    .art-grid.list-view .art-card-thumb {
+      width: 120px; aspect-ratio: 1/1;
+      border-radius: 12px 0 0 12px;
+      font-size: 2.2rem;
+    }
+    .art-grid.list-view .art-card-body {
+      padding: 14px 16px; display: flex; flex-direction: column; justify-content: center;
+    }
+    .art-grid.list-view .art-card-title { font-size: 15px; -webkit-line-clamp: 1; }
+    .art-grid.list-view .art-card-footer {
+      border-top: none; border-left: 1px solid #f0ece0;
+      padding: 0 16px; display: flex; flex-direction: column;
+      align-items: flex-end; justify-content: center; gap: 6px; min-width: 90px;
+    }
+    @media (max-width: 640px) {
+      .art-grid.list-view .art-card {
+        grid-template-columns: 80px 1fr;
+      }
+      .art-grid.list-view .art-card-footer { display: none; }
+      .art-grid.list-view .art-card-thumb { width: 80px; }
+    }
+
   - var klassMap = { Artworks: {icon:'🖼️', label:'작품'}, Artists: {icon:'👤', label:'작가'}, Galleries: {icon:'🏛️', label:'갤러리'}, Exhibitions: {icon:'🎭', label:'전시'}, Auctions: {icon:'🔨', label:'경매'} }
   - var km = klassMap[klass] || {icon:'📋', label: klass}
   - var facetIconMap = { genre:'🎨', style:'✦', medium:'🖌️', material:'🧱', theme:'💡', movement:'📚', country:'🌍', auctionHouse:'🏢' }
@@ -219,6 +278,26 @@ block content
             option(value="oldest"     selected=(sort==='oldest'))         오래된순
             option(value="alpha-asc"  selected=(sort==='alpha-asc'))      이름 A→Z
             option(value="alpha-desc" selected=(sort==='alpha-desc'))     이름 Z→A
+          //- ── 뷰 컨트롤 (리스트/그리드 + 페이지당 수) ──
+          .view-controls
+            .view-btn-group
+              button.view-btn#btnGrid(type="button" title="그리드 뷰" onclick="setView('grid')")
+                svg(width="16" height="16" viewBox="0 0 16 16" fill="currentColor")
+                  rect(x="1" y="1" width="6" height="6" rx="1")
+                  rect(x="9" y="1" width="6" height="6" rx="1")
+                  rect(x="1" y="9" width="6" height="6" rx="1")
+                  rect(x="9" y="9" width="6" height="6" rx="1")
+              button.view-btn#btnList(type="button" title="리스트 뷰" onclick="setView('list')")
+                svg(width="16" height="16" viewBox="0 0 16 16" fill="currentColor")
+                  rect(x="1" y="2" width="14" height="2.5" rx="1")
+                  rect(x="1" y="6.8" width="14" height="2.5" rx="1")
+                  rect(x="1" y="11.5" width="14" height="2.5" rx="1")
+            select.limit-select#limitSelect(onchange="changeLimit(this.value)")
+              option(value="10"  selected=(limit==10))  10
+              option(value="20"  selected=(limit==20))  20
+              option(value="30"  selected=(limit==30||(!limit)))  30
+              option(value="50"  selected=(limit==50))  50
+              option(value="100" selected=(limit==100)) 100
 
       //- Active filter chips
       - var hasActive = false
@@ -344,12 +423,44 @@ block content
   block append_js
     script.
       (function(){
+        // ── 패싯 체크박스 자동 submit
         var f = document.getElementById('facetForm');
-        if(!f) return;
-        f.querySelectorAll('input[type="checkbox"]').forEach(function(cb){
+        if(f) f.querySelectorAll('input[type="checkbox"]').forEach(function(cb){
           cb.addEventListener('change', function(){ f.submit(); });
         });
+
+        // ── 뷰 상태 초기화 (localStorage)
+        var grid = document.querySelector('.art-grid');
+        var saved = localStorage.getItem('artViewMode') || 'grid';
+        applyView(saved);
+
+        function applyView(mode) {
+          if(!grid) return;
+          if(mode === 'list') {
+            grid.classList.add('list-view');
+            document.getElementById('btnList') && document.getElementById('btnList').classList.add('active');
+            document.getElementById('btnGrid') && document.getElementById('btnGrid').classList.remove('active');
+          } else {
+            grid.classList.remove('list-view');
+            document.getElementById('btnGrid') && document.getElementById('btnGrid').classList.add('active');
+            document.getElementById('btnList') && document.getElementById('btnList').classList.remove('active');
+          }
+        }
+
+        window.setView = function(mode) {
+          localStorage.setItem('artViewMode', mode);
+          applyView(mode);
+        };
+
+        // ── 페이지당 수 변경 → URL 이동
+        window.changeLimit = function(val) {
+          var url = new URL(window.location.href);
+          url.searchParams.set('limit', val);
+          url.searchParams.set('page', '1');
+          window.location.href = url.toString();
+        };
       })();
+
       function toggleMobDD(btn) {
         var dd = btn.closest('.mob-facet-dd');
         var isOpen = dd.classList.contains('open');
