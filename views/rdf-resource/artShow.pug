@@ -100,13 +100,149 @@ block content
       text-transform: uppercase; letter-spacing: 2px; margin-bottom: 12px;
     }
 
-    /* 연관 링크 */
-    .related-section { margin-top: 48px; }
-    .related-title {
-      font-size: 14px; font-weight: 900; color: #1a1a1a;
-      margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
+    /* ── Photo Gallery (작가 작품 목록) ──────────────────────── */
+    .gallery-section {
+      margin-top: 64px;
+      padding-top: 40px;
+      border-top: 2px solid #ede9e0;
     }
-    .related-title span { color: #c9a227; }
+    .gallery-hd {
+      display: flex; align-items: baseline; justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .gallery-hd-title {
+      font-size: 1.2rem; font-weight: 900; color: #1a1a1a;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .gallery-hd-title .accent { color: #c9a227; }
+    .gallery-hd-title .cnt-badge {
+      font-size: 12px; font-weight: 700;
+      background: #fdf6e3; border: 1px solid #e8d9a0;
+      color: #a07800; padding: 2px 10px; border-radius: 50px;
+    }
+    .gallery-hd-more {
+      font-size: 13px; font-weight: 700; color: #bbb;
+      text-decoration: none; transition: color 0.2s;
+    }
+    .gallery-hd-more:hover { color: #c9a227; }
+
+    /* 스크롤 가능한 갤러리 그리드 */
+    .gallery-scroll-wrap {
+      position: relative;
+    }
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 18px;
+    }
+
+    /* 작품 카드 */
+    .gcard {
+      background: #fff;
+      border: 1.5px solid #e8e2d5;
+      border-radius: 14px;
+      overflow: hidden;
+      text-decoration: none;
+      display: block;
+      transition: transform 0.25s, border-color 0.25s, box-shadow 0.25s;
+    }
+    .gcard:hover {
+      transform: translateY(-5px);
+      border-color: #c9a227;
+      box-shadow: 0 12px 30px rgba(180,140,20,0.14);
+    }
+    .gcard-thumb {
+      width: 100%;
+      aspect-ratio: 4/3;
+      background: linear-gradient(135deg, #f5edd0 0%, #ede0b0 100%);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 3rem; overflow: hidden; position: relative;
+    }
+    .gcard-thumb img {
+      width: 100%; height: 100%; object-fit: cover;
+      transition: transform 0.4s ease;
+    }
+    .gcard:hover .gcard-thumb img { transform: scale(1.06); }
+    .gcard-body { padding: 12px 14px 14px; }
+    .gcard-title {
+      font-size: 13px; font-weight: 800; color: #1a1a1a;
+      margin-bottom: 6px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .gcard-year {
+      font-size: 11px; color: #aaa; margin-bottom: 8px;
+    }
+    .gcard-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+    .gtag {
+      display: inline-block; padding: 2px 9px;
+      border-radius: 50px; font-size: 10px; font-weight: 700;
+      text-decoration: none;
+    }
+    .gtag-gold { background: #fdf8ee; border: 1px solid #e8d9a0; color: #a07800; }
+    .gtag-blue { background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8; }
+    .gtag-gray { background: #f5f5f5; border: 1px solid #ddd; color: #555; }
+
+    /* 빈 갤러리 */
+    .gallery-empty {
+      text-align: center; padding: 48px 0;
+      color: #bbb; font-size: 14px;
+    }
+    .gallery-empty .ei { font-size: 2.5rem; margin-bottom: 10px; }
+
+    /* Lightbox 오버레이 */
+    .lb-overlay {
+      display: none;
+      position: fixed; inset: 0; z-index: 1000;
+      background: rgba(0,0,0,0.88);
+      align-items: center; justify-content: center;
+      flex-direction: column;
+    }
+    .lb-overlay.open { display: flex; }
+    .lb-img-wrap {
+      position: relative;
+      max-width: 90vw; max-height: 82vh;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .lb-img-wrap img {
+      max-width: 90vw; max-height: 80vh;
+      object-fit: contain;
+      border-radius: 10px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+    .lb-placeholder {
+      width: 60vw; max-width: 500px; aspect-ratio: 4/3;
+      background: #1a1a1a; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 6rem; color: #555;
+    }
+    .lb-close {
+      position: absolute; top: -44px; right: 0;
+      font-size: 28px; color: #fff; cursor: pointer;
+      background: none; border: none; opacity: 0.7; transition: opacity 0.2s;
+    }
+    .lb-close:hover { opacity: 1; }
+    .lb-nav {
+      display: flex; align-items: center; gap: 16px; margin-top: 18px;
+    }
+    .lb-btn {
+      background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25);
+      color: #fff; border-radius: 8px; padding: 8px 20px;
+      font-size: 14px; font-weight: 700; cursor: pointer;
+      transition: background 0.2s;
+    }
+    .lb-btn:hover { background: rgba(255,255,255,0.22); }
+    .lb-btn:disabled { opacity: 0.25; cursor: default; }
+    .lb-caption {
+      color: rgba(255,255,255,0.75); font-size: 13px; font-weight: 600;
+      text-align: center; max-width: 60vw;
+    }
+    .lb-counter {
+      color: rgba(255,255,255,0.45); font-size: 12px; margin-top: 4px;
+    }
+
+    @media (max-width: 640px) {
+      .gallery-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+    }
 
   .detail-wrap
 
@@ -201,3 +337,126 @@ block content
           .detail-desc
             h3 설명
             != vm.descriptionHtml
+
+    //- ── 작가 작품 Photo Gallery ────────────────────────────
+    - var works = Array.isArray(vm.artistWorks) ? vm.artistWorks : []
+    if vm.klassLabel === '작가'
+      .gallery-section
+        .gallery-hd
+          .gallery-hd-title
+            span.accent 🖼️
+            | 작품 갤러리
+            if works.length
+              span.cnt-badge= works.length + '점'
+          if works.length
+            a.gallery-hd-more(href=`/facet/Artworks?q=${encodeURIComponent(vm.title)}`) 전체 작품 →
+
+        if works.length
+          .gallery-grid
+            each w in works
+              - var wTitle = w._label || w.title || w.artworkTitle || '무제'
+              - var wId    = w._id.toString()
+              a.gcard(
+                href=`/rdf-resource/Artworks/${wId}`
+                data-idx=works.indexOf(w)
+              )
+                .gcard-thumb
+                  if w.imageUrl
+                    img(src=w.imageUrl alt=wTitle loading='lazy')
+                  else
+                    | 🖼️
+                .gcard-body
+                  .gcard-title= wTitle
+                  if w.creationYear
+                    .gcard-year= w.creationYear
+                  .gcard-tags
+                    if w.genre
+                      span.gtag.gtag-blue= w.genre
+                    if w.style
+                      span.gtag.gtag-gold= w.style
+                    if w.medium
+                      span.gtag.gtag-gray= w.medium
+        else
+          .gallery-empty
+            .ei 🖼️
+            p 등록된 작품이 없습니다.
+
+  //- ── Lightbox ─────────────────────────────────────────────
+  - var works2 = Array.isArray(vm.artistWorks) ? vm.artistWorks : []
+  if vm.klassLabel === '작가' && works2.length
+    //- JSON 데이터를 hidden script 태그에 삽입 (Pug 인터폴레이션 문제 우회)
+    script#lbData(type="application/json")
+      - var lbJson = works2.map(function(w){ return { id: w._id.toString(), title: (w._label||w.title||w.artworkTitle||'무제'), year: (w.creationYear||''), img: (w.imageUrl||'') }; })
+      = JSON.stringify(lbJson)
+
+    #lbOverlay.lb-overlay(onclick="lbClickOutside(event)")
+      .lb-img-wrap
+        button.lb-close(onclick="lbClose()" title="닫기") ✕
+        #lbImgContainer
+      .lb-nav
+        button.lb-btn#lbPrev(onclick="lbMove(-1)") ← 이전
+        .lb-caption
+          div#lbCaption
+          div.lb-counter#lbCounter
+        button.lb-btn#lbNext(onclick="lbMove(1)") 다음 →
+
+    script.
+      (function () {
+        var works = JSON.parse(document.getElementById('lbData').textContent || '[]');
+        var cur = 0;
+
+        function lbOpen(idx) {
+          cur = idx;
+          render();
+          document.getElementById('lbOverlay').classList.add('open');
+          document.body.style.overflow = 'hidden';
+        }
+
+        function lbClose() {
+          document.getElementById('lbOverlay').classList.remove('open');
+          document.body.style.overflow = '';
+        }
+        window.lbClose = lbClose;
+
+        function lbClickOutside(e) {
+          if (e.target.id === 'lbOverlay') lbClose();
+        }
+        window.lbClickOutside = lbClickOutside;
+
+        function lbMove(dir) {
+          cur = (cur + dir + works.length) % works.length;
+          render();
+        }
+        window.lbMove = lbMove;
+
+        function render() {
+          var w = works[cur];
+          var container = document.getElementById('lbImgContainer');
+          if (w.img) {
+            container.innerHTML = '<img src="' + w.img + '" alt="' + w.title.replace(/"/g,'&quot;') + '">';
+          } else {
+            container.innerHTML = '<div class="lb-placeholder">🖼️</div>';
+          }
+          document.getElementById('lbCaption').textContent = w.title + (w.year ? '  (' + w.year + ')' : '');
+          document.getElementById('lbCounter').textContent = (cur + 1) + ' / ' + works.length;
+          document.getElementById('lbPrev').disabled = false;
+          document.getElementById('lbNext').disabled = false;
+        }
+
+        // 갤러리 카드 클릭 → Lightbox 열기
+        document.querySelectorAll('.gcard').forEach(function (card) {
+          card.addEventListener('click', function (e) {
+            e.preventDefault();
+            lbOpen(parseInt(card.getAttribute('data-idx'), 10));
+          });
+        });
+
+        // 키보드 탐색
+        document.addEventListener('keydown', function (e) {
+          var overlay = document.getElementById('lbOverlay');
+          if (!overlay.classList.contains('open')) return;
+          if (e.key === 'ArrowLeft')  lbMove(-1);
+          if (e.key === 'ArrowRight') lbMove(1);
+          if (e.key === 'Escape')     lbClose();
+        });
+      })();

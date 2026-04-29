@@ -428,6 +428,22 @@ router.get("/:artKlass/:id", async (req, res, next) => {
       if (fv) extras.push({ key: k, label: labelize(k), value: fv });
     }
 
+    // Artists일 때: 해당 작가의 작품 갤러리 추가 쿼리
+    let artistWorks = [];
+    if (req.params.artKlass === "Artists") {
+      const artistName = doc.artistName || doc.name || doc._label || "";
+      if (artistName) {
+        artistWorks = await db.collection("Artworks_RDF")
+          .find(
+            { artistName: { $regex: new RegExp("^" + artistName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "$", "i") } },
+            { projection: { _id: 1, _label: 1, title: 1, artworkTitle: 1, imageUrl: 1, genre: 1, style: 1, medium: 1, creationYear: 1 } }
+          )
+          .sort({ creationYear: 1, updatedAt: -1 })
+          .limit(40)
+          .toArray();
+      }
+    }
+
     const vm = {
       id:           doc._id.toString(),
       facetBase:    meta.facetBase,
@@ -437,6 +453,7 @@ router.get("/:artKlass/:id", async (req, res, next) => {
       descriptionHtml,
       extras,
       raw:          doc,
+      artistWorks,
     };
 
     return res.render("rdf-resource/artShow", { vm });
