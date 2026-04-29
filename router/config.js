@@ -120,21 +120,7 @@ const createStructure = async () => {
 
 
 // ✅ 초기화 자동 실행 — MongoDB 연결 준비 후 실행
-exports.resetStructure = (async () => {
-  try {
-    const mongoose = require('mongoose');
-    if (mongoose.connection.readyState !== 1) {
-      await new Promise((resolve, reject) => {
-        const t = setTimeout(() => reject(new Error('DB 연결 대기 초과')), 15000);
-        mongoose.connection.once('connected', () => { clearTimeout(t); resolve(); });
-        mongoose.connection.once('error', (e) => { clearTimeout(t); reject(e); });
-      });
-    }
-    await createStructure();
-  } catch (e) {
-    console.error('[config] resetStructure 스킵:', e.message);
-  }
-})();
+exports.resetStructure = Promise.resolve(); // Art 플랫폼 — 비활성화
 
 // ✅ 구조 정보 반환 함수
 exports.getStructure = async () => {
