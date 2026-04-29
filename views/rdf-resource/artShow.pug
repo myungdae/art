@@ -299,9 +299,6 @@ block content
           if vm.raw.country
             a.dtag.dtag-blue(href=`/facet/${vm.facetBase}?country=${encodeURIComponent(vm.raw.country)}`)
               | 🌍 #{vm.raw.country}
-          if vm.raw.movement
-            a.dtag.dtag-gray(href=`/facet/${vm.facetBase}?movement=${encodeURIComponent(vm.raw.movement)}`)
-              | 📚 #{vm.raw.movement}
           if vm.raw.orientation
             a.dtag.dtag-gray(href=`/facet/Artworks?orientation=${encodeURIComponent(vm.raw.orientation)}`)
               | ⬛ #{vm.raw.orientation}
@@ -358,10 +355,6 @@ block content
               .prop-row
                 span.prop-key 테마
                 span.prop-val= Array.isArray(vm.raw.theme) ? vm.raw.theme.join(', ') : vm.raw.theme
-            if vm.raw.movement
-              .prop-row
-                span.prop-key 운동
-                span.prop-val= vm.raw.movement
             if vm.raw.orientation
               .prop-row
                 span.prop-key 방향

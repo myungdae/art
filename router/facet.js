@@ -40,11 +40,10 @@ const FACET_MAP = {
   Artworks: {
     groups: [
       { key: "genre",       aliases: ["Genre"],       label: "장르",   labelEn: "Genre",        array: false },
-      { key: "style",       aliases: ["Style"],       label: "양식",   labelEn: "Style",        array: false },
+      { key: "style",       aliases: ["Style"],       label: "양식",   labelEn: "Style",        array: true  },
       { key: "medium",      aliases: ["Medium"],      label: "매체",   labelEn: "Medium",       array: false },
       { key: "material",    aliases: ["Material"],    label: "재료",   labelEn: "Material",     array: true  },
       { key: "theme",       aliases: ["Theme"],       label: "테마",   labelEn: "Theme",        array: true  },
-      { key: "movement",    aliases: ["Movement"],    label: "운동",   labelEn: "Movement",     array: false },
       { key: "orientation", aliases: ["Orientation"], label: "방향",   labelEn: "Orientation",  array: false },
       { key: "size",        aliases: ["Size"],        label: "크기",   labelEn: "Size",         array: false },
       { key: "mainColor",   aliases: ["color","Color"], label: "색상",  labelEn: "Color",        array: false },
@@ -58,7 +57,6 @@ const FACET_MAP = {
   Artists: {
     groups: [
       { key: "country",  aliases: ["Artist_Country"], label: "국가",   labelEn: "Country",   array: false },
-      { key: "movement", aliases: ["Movement"],        label: "운동",   labelEn: "Movement",  array: false },
       { key: "genre",    aliases: ["Genre"],           label: "장르",   labelEn: "Genre",     array: true  },
     ],
     searchFields: ["_label", "artistName", "name", "title", "_description"],
