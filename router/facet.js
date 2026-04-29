@@ -8,6 +8,17 @@ const router = express.Router();
 
 /* -------------------- helpers -------------------- */
 const toArray = (v) => (Array.isArray(v) ? v.filter(Boolean) : v ? [v] : []);
+
+function getDb() {
+  if (mongoose.connection.readyState === 1 && mongoose.connection.db) {
+    return Promise.resolve(mongoose.connection.db);
+  }
+  return new Promise((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error("MongoDB 연결 대기 시간 초과")), 10000);
+    mongoose.connection.once("connected", () => { clearTimeout(t); resolve(mongoose.connection.db); });
+    mongoose.connection.once("error",     (e) => { clearTimeout(t); reject(e); });
+  });
+}
 const sanitizeRegex = (s) =>
   String(s || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -93,7 +104,7 @@ router.get("/:klass", async (req, res, next) => {
     const spec = FACET_MAP[klass] || FACET_MAP.Artworks;
     const coll = spec.coll ? spec.coll(klass) : `${klass}_RDF`;
 
-    const db = mongoose.connection.db;
+    const db = await getDb();
 
     // 선택된 필터 파싱 (클래스별 key 사용; aliases도 허용)
     const selected = {};
