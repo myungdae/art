@@ -540,10 +540,27 @@ block content
     script.
       (function(){
         // ── 패싯 체크박스 자동 submit
+        // submit 전에 URL에 이미 있는 q/limit/sort 중복을 제거하고 이동
         var f = document.getElementById('facetForm');
-        if(f) f.querySelectorAll('input[type="checkbox"]').forEach(function(cb){
-          cb.addEventListener('change', function(){ f.submit(); });
-        });
+        if(f) {
+          f.querySelectorAll('input[type="checkbox"]').forEach(function(cb){
+            cb.addEventListener('change', function(){ submitFacet(); });
+          });
+        }
+
+        function submitFacet() {
+          if(!f) return;
+          // form 데이터를 URLSearchParams로 수집
+          var params = new URLSearchParams();
+          new FormData(f).forEach(function(v, k){ params.append(k, v); });
+          // 중복 제거: 같은 key가 여러 개면 첫 번째만 유지
+          var seen = {}; var clean = new URLSearchParams();
+          params.forEach(function(v, k){
+            if(!seen[k]) { clean.set(k, v); seen[k] = true; }
+            else if(k !== 'q' && k !== 'limit' && k !== 'sort') { clean.append(k, v); }
+          });
+          window.location.href = f.action + '?' + clean.toString();
+        }
 
         // ── 뷰 상태 초기화 (localStorage)
         var grid = document.querySelector('.art-grid');

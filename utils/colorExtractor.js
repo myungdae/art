@@ -9,7 +9,13 @@
  */
 "use strict";
 
-const { getColorFromURL } = require("color-thief-node");
+/* color-thief-node 가 서버에 설치되지 않은 경우에도 앱이 기동되도록 방어 처리 */
+let getColorFromURL = null;
+try {
+  getColorFromURL = require("color-thief-node").getColorFromURL;
+} catch (e) {
+  console.warn("[colorExtractor] color-thief-node 미설치 — 색상 자동 추출 비활성화. `npm install color-thief-node` 로 설치하세요.");
+}
 
 /* ── 14색 팔레트 ── */
 const COLOR_PALETTE = [
@@ -50,11 +56,11 @@ function nearestColor(r, g, b) {
  */
 async function extractMainColor(imageUrl) {
   if (!imageUrl || typeof imageUrl !== "string") return null;
+  if (!getColorFromURL) return null;   // 패키지 미설치 시 조용히 skip
   try {
     const [r, g, b] = await getColorFromURL(imageUrl);
     return nearestColor(r, g, b);
   } catch (e) {
-    // 이미지 로드 실패, 지원하지 않는 형식 등 → 무시하고 null 반환
     console.warn(`[colorExtractor] 색상 추출 실패 (${imageUrl?.slice(0, 60)}): ${e.message}`);
     return null;
   }
