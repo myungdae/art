@@ -189,6 +189,42 @@ block content
     /* ── 빈 상태 ──────────────────────────────────────────── */
     .empty-state { text-align:center; padding:80px 0; color:#bbb; font-size:15px; }
 
+    /* ── Color 패싯 전용 UI ─────────────────────────────────── */
+    .color-swatch-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px 6px;
+      padding: 4px 2px 6px;
+    }
+    .color-swatch {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 5px; cursor: pointer; position: relative;
+    }
+    .color-swatch input[type="checkbox"] {
+      position: absolute; opacity: 0; width: 0; height: 0;
+    }
+    .color-swatch-circle {
+      width: 30px; height: 30px; border-radius: 50%;
+      border: 2.5px solid transparent;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.20);
+      transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+    }
+    .color-swatch:hover .color-swatch-circle {
+      transform: scale(1.2);
+      box-shadow: 0 3px 10px rgba(0,0,0,0.28);
+    }
+    .color-swatch.selected .color-swatch-circle {
+      border-color: #c9a227 !important;
+      box-shadow: 0 0 0 3px rgba(201,162,39,0.4);
+      transform: scale(1.15);
+    }
+    .color-swatch-name {
+      font-size: 9px; font-weight: 700; color: #888;
+      text-align: center; line-height: 1.1;
+    }
+    .color-swatch.selected .color-swatch-name { color: #a07800; font-weight: 800; }
+    .color-swatch.no-data { opacity: 0.28; pointer-events: none; }
+
     /* ── View toggle & limit controls ───────────────────────── */
     .view-controls {
       display: flex; align-items: center; gap: 8px; flex-shrink: 0;
@@ -251,7 +287,8 @@ block content
   - var klassMap = { Artworks: {icon:'🖼️', label:'작품'}, Artists: {icon:'👤', label:'작가'}, Galleries: {icon:'🏛️', label:'갤러리'}, Exhibitions: {icon:'🎭', label:'전시'}, Auctions: {icon:'🔨', label:'경매'} }
   - var km = klassMap[klass] || {icon:'📋', label: klass}
   - var facetIconMap = { genre:'🎨', style:'✦', medium:'🖌️', material:'🧱', theme:'💡', movement:'📚', country:'🌍', auctionHouse:'🏢', orientation:'⬛', size:'📐', mainColor:'🎨' }
-  - var colorDotMap = { '빨강':'#ef4444','주황':'#f97316','노랑':'#eab308','연두':'#84cc16','초록':'#22c55e','청록':'#14b8a6','파랑':'#3b82f6','남색':'#6366f1','보라':'#a855f7','분홍':'#ec4899','갈색':'#92400e','흰색':'#f5f5f0','회색':'#9ca3af','검정':'#1c1c1c' }
+  - var colorPalette = [{name:'빨강',hex:'#ef4444'},{name:'주황',hex:'#f97316'},{name:'노랑',hex:'#eab308'},{name:'연두',hex:'#84cc16'},{name:'초록',hex:'#22c55e'},{name:'청록',hex:'#14b8a6'},{name:'파랑',hex:'#3b82f6'},{name:'남색',hex:'#6366f1'},{name:'보라',hex:'#a855f7'},{name:'분홍',hex:'#ec4899'},{name:'갈색',hex:'#92400e'},{name:'흰색',hex:'#f0ece0'},{name:'회색',hex:'#9ca3af'},{name:'검정',hex:'#1c1c1c'}]
+  - var colorDotMap = {'빨강':'#ef4444','주황':'#f97316','노랑':'#eab308','연두':'#84cc16','초록':'#22c55e','청록':'#14b8a6','파랑':'#3b82f6','남색':'#6366f1','보라':'#a855f7','분홍':'#ec4899','갈색':'#92400e','흰색':'#f0ece0','회색':'#9ca3af','검정':'#1c1c1c'}
 
   .facet-page
     .container.mx-auto.px-4(style="max-width:1340px;")
@@ -357,16 +394,37 @@ block content
                   .filter-group-title= (facetIconMap[g.key]||'') + ' ' + g.label
                   - var flist = (facets && facets[g.key]) || []
                   - var slist = (selected && selected[g.key]) || []
-                  div(style="max-height:240px; overflow-y:auto; scrollbar-width:thin;")
-                    if flist.length
-                      each f in flist
-                        - var ck = slist.indexOf(f._id) !== -1
-                        label.filter-item(style=ck?"background:#fdf8ee;":"")
-                          input(type="checkbox" name=g.key value=f._id checked=ck)
-                          span.filter-item-label= f._id
-                          span.filter-item-count (#{f.c})
-                    else
-                      p(style="font-size:12px;color:#ccc;padding:6px;") 항목 없음
+                  if g.key === 'mainColor'
+                    //- ── 색상 전용: 원형 스와치 그리드 ──
+                    form#colorFacetForm(method="GET" action=`/facet/${klass}` style="margin:0;padding:0;")
+                      input(type="hidden" name="q" value=q||"")
+                      input(type="hidden" name="limit" value=limit)
+                      input(type="hidden" name="sort" value=sort||"recent")
+                      if facetCfg && facetCfg.groups
+                        each og in facetCfg.groups
+                          if og.key !== 'mainColor'
+                            each sv in ((selected && selected[og.key]) || [])
+                              input(type="hidden" name=og.key value=sv)
+                      .color-swatch-grid
+                        each cp in colorPalette
+                          - var isColorSel = slist.indexOf(cp.name) !== -1
+                          - var colorCount = flist.find(function(f){ return f._id === cp.name })
+                          - var hasData = !!colorCount
+                          label.color-swatch(class=(isColorSel?'selected':'') + (hasData?'':' no-data') title=cp.name + (colorCount?' ('+colorCount.c+')':''))
+                            input(type="checkbox" name="mainColor" value=cp.name checked=isColorSel onchange="document.getElementById('colorFacetForm').submit()")
+                            .color-swatch-circle(style=`background:${cp.hex};` + (cp.name==='흰색'?'border:1.5px solid #ccc;':''))
+                            span.color-swatch-name= cp.name
+                  else
+                    div(style="max-height:240px; overflow-y:auto; scrollbar-width:thin;")
+                      if flist.length
+                        each f in flist
+                          - var ck = slist.indexOf(f._id) !== -1
+                          label.filter-item(style=ck?"background:#fdf8ee;":"")
+                            input(type="checkbox" name=g.key value=f._id checked=ck)
+                            span.filter-item-label= f._id
+                            span.filter-item-count (#{f.c})
+                      else
+                        p(style="font-size:12px;color:#ccc;padding:6px;") 항목 없음
 
         //- RIGHT: 카드 그리드
         div(style="flex:1; min-width:0;")
