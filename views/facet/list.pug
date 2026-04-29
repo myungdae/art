@@ -250,7 +250,8 @@ block content
 
   - var klassMap = { Artworks: {icon:'🖼️', label:'작품'}, Artists: {icon:'👤', label:'작가'}, Galleries: {icon:'🏛️', label:'갤러리'}, Exhibitions: {icon:'🎭', label:'전시'}, Auctions: {icon:'🔨', label:'경매'} }
   - var km = klassMap[klass] || {icon:'📋', label: klass}
-  - var facetIconMap = { genre:'🎨', style:'✦', medium:'🖌️', material:'🧱', theme:'💡', movement:'📚', country:'🌍', auctionHouse:'🏢', orientation:'⬛', size:'📐' }
+  - var facetIconMap = { genre:'🎨', style:'✦', medium:'🖌️', material:'🧱', theme:'💡', movement:'📚', country:'🌍', auctionHouse:'🏢', orientation:'⬛', size:'📐', mainColor:'🎨' }
+  - var colorDotMap = { '빨강':'#ef4444','주황':'#f97316','노랑':'#eab308','연두':'#84cc16','초록':'#22c55e','청록':'#14b8a6','파랑':'#3b82f6','남색':'#6366f1','보라':'#a855f7','분홍':'#ec4899','갈색':'#92400e','흰색':'#f5f5f0','회색':'#9ca3af','검정':'#1c1c1c' }
 
   .facet-page
     .container.mx-auto.px-4(style="max-width:1340px;")
@@ -402,6 +403,12 @@ block content
                         span.art-tag= d.orientation
                       if d.size
                         span.art-tag= d.size
+                      if d.mainColor
+                        - var cdot = colorDotMap[d.mainColor]
+                        span.art-tag(style=cdot ? `border-left:4px solid ${cdot}` : '')
+                          if cdot
+                            span(style=`display:inline-block;width:9px;height:9px;border-radius:50%;background:${cdot};margin-right:5px;vertical-align:middle;`)
+                          = d.mainColor
                       if d.creationYear
                         span.art-tag.rose= d.creationYear
                       if d.priceValue

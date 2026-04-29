@@ -308,6 +308,13 @@ block content
           if vm.raw.size
             a.dtag.dtag-gray(href=`/facet/Artworks?size=${encodeURIComponent(vm.raw.size)}`)
               | 📐 #{vm.raw.size}
+          if vm.raw.mainColor
+            - var colorHexMap = {'빨강':'#ef4444','주황':'#f97316','노랑':'#eab308','연두':'#84cc16','초록':'#22c55e','청록':'#14b8a6','파랑':'#3b82f6','남색':'#6366f1','보라':'#a855f7','분홍':'#ec4899','갈색':'#92400e','흰색':'#f5f5f0','회색':'#9ca3af','검정':'#1c1c1c'}
+            - var chex = colorHexMap[vm.raw.mainColor]
+            a.dtag.dtag-gray(href=`/facet/Artworks?mainColor=${encodeURIComponent(vm.raw.mainColor)}` style=chex?`border-left:4px solid ${chex}`:'')
+              if chex
+                span(style=`display:inline-block;width:10px;height:10px;border-radius:50%;background:${chex};margin-right:5px;vertical-align:middle;`)
+              | 🎨 #{vm.raw.mainColor}
           if vm.raw.creationYear
             span.dtag.dtag-rose 📅 #{vm.raw.creationYear}
 
@@ -363,6 +370,15 @@ block content
               .prop-row
                 span.prop-key 크기
                 span.prop-val= vm.raw.size
+            if vm.raw.mainColor
+              .prop-row
+                span.prop-key 주요색상
+                span.prop-val
+                  - var colorHexMap2 = {'빨강':'#ef4444','주황':'#f97316','노랑':'#eab308','연두':'#84cc16','초록':'#22c55e','청록':'#14b8a6','파랑':'#3b82f6','남색':'#6366f1','보라':'#a855f7','분홍':'#ec4899','갈색':'#92400e','흰색':'#f5f5f0','회색':'#9ca3af','검정':'#1c1c1c'}
+                  - var chex2 = colorHexMap2[vm.raw.mainColor]
+                  if chex2
+                    span(style=`display:inline-block;width:14px;height:14px;border-radius:50%;background:${chex2};margin-right:7px;vertical-align:middle;border:1px solid #ddd;`)
+                  = vm.raw.mainColor
             if vm.raw.country
               .prop-row
                 span.prop-key 국가

@@ -47,6 +47,7 @@ const FACET_MAP = {
       { key: "movement",    aliases: ["Movement"],    label: "운동",   labelEn: "Movement",     array: false },
       { key: "orientation", aliases: ["Orientation"], label: "방향",   labelEn: "Orientation",  array: false },
       { key: "size",        aliases: ["Size"],        label: "크기",   labelEn: "Size",         array: false },
+      { key: "mainColor",   aliases: ["color","Color"], label: "색상",  labelEn: "Color",        array: false },
     ],
     searchFields: ["_label", "title", "artworkTitle", "artistName", "_description", "description"],
     coll: () => "Artworks_RDF",
