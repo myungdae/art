@@ -120,11 +120,16 @@ router.get("/:klass", async (req, res, next) => {
       selected[g.key] = Array.from(new Set(vals.filter(Boolean)));
     }
 
-    const qText = (req.query.q || "").trim();
-    const limit = Math.min(parseInt(req.query.limit || "50", 10), 5000);
-    const page = Math.max(parseInt(req.query.page || "1", 10), 1);
+    // q가 배열로 들어올 수 있으므로 String() 으로 강제 변환 후 trim
+    const qRaw = Array.isArray(req.query.q) ? req.query.q[0] : req.query.q;
+    const qText = String(qRaw || "").trim();
+    const limitRaw = Array.isArray(req.query.limit) ? req.query.limit[0] : req.query.limit;
+    const pageRaw  = Array.isArray(req.query.page)  ? req.query.page[0]  : req.query.page;
+    const sortRaw  = Array.isArray(req.query.sort)  ? req.query.sort[0]  : req.query.sort;
+    const limit = Math.min(parseInt(limitRaw || "50", 10), 5000);
+    const page = Math.max(parseInt(pageRaw  || "1",  10), 1);
     const skip = (page - 1) * limit;
-    const sortMode = req.query.sort || "recent"; // recent, oldest, alpha-asc, alpha-desc
+    const sortMode = sortRaw || "recent"; // recent, oldest, alpha-asc, alpha-desc
 
     /* -------------------- match -------------------- */
     const match = { _class: klass };
