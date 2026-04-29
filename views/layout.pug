@@ -1,468 +1,247 @@
-//- views/layout.pug
+//- views/layout.pug  — ART+ 미술 플랫폼
 doctype html
-html(lang='en')
+html(lang='ko')
   head
-    meta(http-equiv='Content-Type', content='text/html; charset=utf-8')
-    meta(name='viewport', content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0')
-
-    // Google tag (gtag.js)
-    script(async src='https://www.googletagmanager.com/gtag/js?id=G-4645N65FCR')
-    script.
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      
-      gtag('config', 'G-4645N65FCR');
-
-    // Title (Brand 우선, 없으면 기본)
-    title= (typeof pageTitle !== 'undefined' && pageTitle) || (typeof siteBrand !== 'undefined' && siteBrand) || 'ESL Plus'
-    link(rel='shortcut icon', href='/assets/img/favicon.ico', type='image/x-icon')
-
-    // CSS
-    link(rel='stylesheet', href='https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css')
-    link(rel='stylesheet', href='https://cdn.jsdelivr.net/npm/semantic-ui@2.5.0/dist/semantic.min.css')
-    link(rel='stylesheet', href='https://netdna.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css')
-    link(rel='stylesheet', href='/assets/css/jquery-ui.min.css')
-    link(rel='stylesheet', href='/assets/css/bootstrap.min.css')
-    link(href='/assets/css/animate.min.css', rel='stylesheet')
-    link(href='/assets/css/now-ui-kit.css?v=1.3.0', rel='stylesheet')
-    link(href='/assets/css/custom.css', rel='stylesheet')
+    meta(charset='utf-8')
+    meta(name='viewport' content='width=device-width, initial-scale=1.0')
+    title= (typeof pageTitle !== 'undefined' && pageTitle) || 'ART+'
+    link(rel='shortcut icon' href='/assets/img/favicon.ico' type='image/x-icon')
+    link(rel='stylesheet' href='https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css')
 
     block append_on_header
 
-    // ─────────────────────────────────────────────────────────
-    // Global styles
-    // ─────────────────────────────────────────────────────────
     style.
-      /* 헤더 */
-      .search-header {  background-color: #fff; display: flex; align-items: center; justify-content: space-between;  }
-      .menu-top {  gap: 30px; padding-top: 20px} /* 중앙 메뉴와 로그인 링크 분리 */
-      .menu-top a { font-weight: 700; color:#000; text-decoration: none; }
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { background: #0d0d0d; color: #fff; font-family: 'Helvetica Neue', Arial, sans-serif; min-height: 100vh; }
 
-      /* 모바일: 햄버거 메뉴만 사용 (계정 버튼 제거) */
-      .menu-top-mob { display: none !important; } /* 계정 버튼 완전 숨김 */
-      .menu-hamburger { 
-        position: absolute; top: 80px; right: 16px; display:none; z-index: 5; 
+      /* ── GNB ────────────────────────────────────────────────── */
+      .art-gnb {
+        position: sticky; top: 0; z-index: 100;
+        background: rgba(10,10,10,0.95);
+        border-bottom: 1px solid #1a1a1a;
+        backdrop-filter: blur(10px);
+        height: 64px;
       }
-      .menu-hamburger button {
-        background: #FF7A00 !important;
-        border: 2px solid #FF7A00 !important;
-        border-radius: 8px !important;
-        padding: 10px 14px !important;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+      .art-gnb-inner {
+        max-width: 1340px; margin: 0 auto;
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 0 24px; height: 64px;
       }
-      .menu-hamburger button:hover {
-        background: #E66D00 !important;
+      .art-logo {
+        display: flex; align-items: center; gap: 10px;
+        text-decoration: none; flex-shrink: 0;
       }
-      .menu-hamburger button i {
-        font-size: 20px !important;
-        color: #fff !important;
+      .art-logo-icon { font-size: 1.6rem; }
+      .art-logo-text {
+        font-size: 1.25rem; font-weight: 900; color: #fff; letter-spacing: -0.5px;
       }
-      .menu-drop {
-        position: absolute; top: 44px; right: 0;
-        background:#fff; border:1px solid #e5e7eb; border-radius:12px;
-        box-shadow:0 8px 20px rgba(0,0,0,.08); padding:10px; width: 210px; display:none;
+      .art-logo-text span { color: #d4af37; }
+
+      /* 데스크탑 nav */
+      .art-nav { display: flex; align-items: center; gap: 4px; }
+      .art-nav a {
+        padding: 8px 14px; border-radius: 8px;
+        color: rgba(255,255,255,0.6); text-decoration: none;
+        font-size: 14px; font-weight: 700; transition: all 0.2s;
+        white-space: nowrap;
       }
-      .main-menu-mobile {
-        position: fixed; top: 0; right: -280px; width: 280px; height: 100vh;
-        background:#fff; box-shadow: -2px 0 10px rgba(0,0,0,.1); 
-        padding: 60px 0 20px; transition: right 0.3s ease; z-index: 1000;
-        overflow-y: auto;
+      .art-nav a:hover { color: #fff; background: rgba(255,255,255,0.06); }
+      .art-nav a.active { color: #d4af37; background: rgba(212,175,55,0.1); }
+
+      /* 우측 계정 메뉴 */
+      .art-gnb-right { display: flex; align-items: center; gap: 8px; }
+      .gnb-login {
+        padding: 7px 16px; border-radius: 8px;
+        color: rgba(255,255,255,0.6); text-decoration: none;
+        font-size: 13px; font-weight: 700; transition: all 0.2s;
       }
-      .main-menu-mobile.show { right: 0; }
-      .main-menu-mobile a {
-        display: block; padding: 15px 24px; color: #111; font-weight: 600;
-        text-decoration: none; border-bottom: 1px solid #f0f0f0;
+      .gnb-login:hover { color: #fff; background: rgba(255,255,255,0.08); }
+      .gnb-join {
+        padding: 7px 16px; border-radius: 8px;
+        background: #d4af37; color: #0d0d0d;
+        text-decoration: none; font-size: 13px; font-weight: 800;
+        transition: background 0.2s;
       }
-      .main-menu-mobile a:hover { background: #f5f5f5; }
-      .menu-overlay {
-        position: fixed; top: 0; left: 0; width: 100%; height: 100vh;
-        background: rgba(0,0,0,0.5); display: none; z-index: 999;
+      .gnb-join:hover { background: #c9a227; }
+      .gnb-admin { color: #f87171; font-size: 12px; font-weight: 700; padding: 6px 12px; }
+
+      /* 햄버거 */
+      .art-hamburger {
+        display: none; flex-direction: column; gap: 5px;
+        cursor: pointer; padding: 6px; background: none; border: none;
       }
-      .menu-overlay.show { display: block; }
-      .container-fluid {
-        padding: 0px;
-      }
-      .main-menu {
-        display: flex;
-        flex-direction: row; /* 명시적으로 추가 */
-        justify-content: center; /* 가로 중앙 정렬 */
-      }
-      .account-menu {
-        display: flex;
-        flex-direction: row; /* 명시적으로 추가 */
-        justify-content: center; /* 가로 중앙 정렬 */
-      }
-      .main_header {
-        width: '100%';
-        height: 750px;
-        display: flex;
-        flex-direction: column; /* 명시적으로 추가 */
-        background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('assets/img/header-background.jpg');
-        background-size: cover; /* 이미지가 컨테이너를 가득 채우도록 설정 */
-        background-position: center; /* 이미지를 중앙에 배치 */
-        background-repeat: no-repeat; /* 이미지 반복 방지 */
+      .art-hamburger span {
+        width: 22px; height: 2px; background: #fff; border-radius: 2px;
+        transition: all 0.3s; display: block;
       }
 
-      .main-menu a {font-size: 18px; color: #FFFFFF; height: 'auto'}
-      .account-menu a {font-size: 14px; color:#D8D8D8}
-
-      .menu-drop a { display:block; padding:8px 10px; color:#111; text-decoration:none; border-radius:8px; font-weight:700; }
-      .menu-drop a:hover { background:#f3f4f6; }
-      .menu-drop.show { display:block; }
-      .head_div {display: flex; flex-direction: row; justify-content: center; /* 가로 중앙 정렬 */ }
-      
-      .black-text {
-        color: black !important;
+      /* 모바일 드로어 */
+      .art-drawer {
+        position: fixed; top: 0; right: -300px; width: 280px; height: 100vh;
+        background: #111; border-left: 1px solid #222;
+        z-index: 200; transition: right 0.3s ease;
+        padding: 70px 0 20px; overflow-y: auto;
+      }
+      .art-drawer.open { right: 0; }
+      .art-drawer a {
+        display: block; padding: 14px 24px; color: rgba(255,255,255,0.7);
+        text-decoration: none; font-weight: 700; font-size: 15px;
+        border-bottom: 1px solid #1a1a1a; transition: all 0.2s;
+      }
+      .art-drawer a:hover { color: #d4af37; background: rgba(212,175,55,0.05); }
+      .art-drawer a.active { color: #d4af37; }
+      .art-overlay {
+        position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+        z-index: 199; display: none;
+      }
+      .art-overlay.open { display: block; }
+      .drawer-close {
+        position: absolute; top: 20px; right: 20px;
+        background: rgba(255,255,255,0.1); border: none; border-radius: 8px;
+        color: #fff; width: 36px; height: 36px; cursor: pointer;
+        font-size: 18px; display: flex; align-items: center; justify-content: center;
       }
 
-      .gray-text {
-        color:rgb(90, 90, 90) !important;
+      /* ── Main & Footer ──────────────────────────────────────── */
+      main.art-main { min-height: calc(100vh - 64px); }
+
+      footer.art-footer {
+        background: #0d0d0d; border-top: 1px solid #1a1a1a;
+        padding: 48px 24px 24px;
+      }
+      .art-footer-inner {
+        max-width: 1280px; margin: 0 auto;
+        display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 40px;
+      }
+      .art-footer h4 {
+        font-size: 13px; font-weight: 800; color: #d4af37;
+        letter-spacing: 2px; text-transform: uppercase; margin-bottom: 16px;
+      }
+      .art-footer p, .art-footer a {
+        font-size: 13px; color: rgba(255,255,255,0.4);
+        text-decoration: none; line-height: 2.2;
+      }
+      .art-footer a:hover { color: #d4af37; }
+      .art-footer-bottom {
+        max-width: 1280px; margin: 32px auto 0;
+        border-top: 1px solid #1a1a1a; padding-top: 24px;
+        display: flex; justify-content: space-between; align-items: center;
+        font-size: 12px; color: rgba(255,255,255,0.25);
+      }
+      .ontology-badge {
+        display: inline-flex; align-items: center; gap: 6px;
+        background: rgba(212,175,55,0.08); border: 1px solid rgba(212,175,55,0.2);
+        border-radius: 50px; padding: 4px 12px;
+        font-size: 11px; color: #d4af37; font-weight: 700;
       }
 
-      /* 상단 검색 인풋 */
-      .search-input {
-        max-width: 650px; height: 70px; font-size: 16pt;
-        border: 3px solid #FF7A00 !important; border-radius: 12px !important; padding: 0 20px;
-        background-color: white;
-      }
-
-      .main-content { min-height: 500px; padding: 60px 30px; background-color: #fff; }
-      footer.footer { background-color: #E5E5E5; color: #666666; padding: 30px 0; margin-top: 0;}
-      
-      /* Footer 레이아웃 */
-      footer.footer .d-flex { gap: 40px; }
-      footer.footer .logo-area { flex: 0 0 auto; }
-      footer.footer .company-info { flex: 1 1 auto; }
-      footer.footer .link-area { flex: 0 0 auto; display: flex; flex-direction: column; gap: 8px; }
-      footer.footer .link-area a { color: #666666; text-decoration: none; font-size: 14px; }
-      footer.footer .link-area a:hover { color: #FF7A00; text-decoration: underline; }
-
-      /* GNB(파란 바) */
-      nav.main_nav_bar { background:#0d46ff; }
-      nav.main_nav_bar .nav-link { color:#fff !important; font-weight:700; letter-spacing:.3px; }
-      nav.main_nav_bar .navbar-nav { gap:24px; }
-      nav.main_nav_bar .nav-link.active { text-decoration: underline; text-underline-offset: 6px; }
-      /* nav에 혹시 검색 DOM이 생겨도 숨김 (안전장치) */
-      nav.main_nav_bar #searchText, nav.main_nav_bar .sstyly { display:none !important; }
-
-      /* 부트스트랩 토글러 색상 */
-      .navbar-toggler { border-color: rgba(255,255,255,.55); }
-      .navbar-toggler .fa { color:#fff; font-size:18px; }
-
-      /* 브랜드 로고 (좌측 상단) */
-      .brand-logo img{  width: 300px; height: auto }
-      .other_a {color: black;}
-
-      /* 모바일 레이아웃 스위치 */
-      @media (max-width: 767.98px) {
-        .menu-top { display:none; }
-        .menu-top-mob { display:block; }
-        .menu-hamburger { display:block; }
-        .search-header { padding: 20px 0 20px 0; }
-        .brand-logo{top:12px;left:60px}
-        .brand-logo img{height:30px}
-        /* 모바일에서 헤더 텍스트 폰트 크기 조정 */
-        .text-center h2 { font-size: 28px !important; }
-        .text-center p { font-size: 16px !important; }
-      }
-
-    // My Page 스코프 (원본 유지)
-    style.
-      .mypage-scope {
-        color:#222; --mp-text:#222; --mp-dim:#6b7280; --mp-bg:#f5f6f8; --mp-card:#f9f9f9;
-        --mp-line:#e5e7eb; --mp-primary:#0d6efd; --mp-radius:16px;
-      }
-      .mypage-scope .container, .mypage-scope .container-fluid { color: var(--mp-text); }
-      .mp-title-xl { font-size: 2.5rem; font-weight: 800; color: #333; letter-spacing: -0.2px; }
-      .mp-subtext { color: var(--mp-dim); }
-      .mp-card { background: var(--mp-card); border: 1px solid var(--mp-line); border-radius: var(--mp-radius); }
-      .mp-card .card-body { padding: 1.25rem; }
-      .mp-card .card-header { background: transparent; border-bottom: 1px solid var(--mp-line); padding: .875rem 1rem; }
-      .mp-field label { font-size: .92rem; color: var(--mp-dim); margin-bottom: .25rem; }
-      .mp-field .form-control, .mp-field .form-select, .mp-field textarea {
-        background: #fff; color: #111; border: 1px solid #d1d5db; border-radius: 12px; padding: .7rem .9rem;
-      }
-      .mp-field .form-control:focus, .mp-field .form-select:focus, .mp-field textarea:focus {
-        border-color: var(--mp-primary); box-shadow: 0 0 0 .25rem rgba(13,110,253,.15);
-      }
-      .mp-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-      @media (max-width: 992px) { .mp-grid-2 { grid-template-columns: 1fr; } }
-      .gap-6 { gap: 1.5rem !important; } .gap-8 { gap: 2rem !important; }
-      .mp-muted { color: var(--mp-dim) !important; }
-      .mp-divider { height: 1px; background: var(--mp-line); margin: 1rem 0; border: 0; }
-      .mp-btn-group .btn { border-radius: 10px !important; }
-      .mp-btn-tight .btn { padding-top: .55rem; padding-bottom: .55rem; }
-      .btn-outline-dark[aria-disabled="true"] { pointer-events: none; opacity: .65; }
-      .mp-list { list-style: none; margin: 0; padding: 0; }
-      .mp-list li + li { margin-top: .75rem; }
-      .mp-list-title { font-weight: 700; color: #111; }
-      .mp-list-sub { color: var(--mp-dim); font-size: .925rem; margin-top: .15rem; }
-      .mp-list a { text-decoration: none; color: var(--mp-primary); }
-      .mp-list a:hover { text-decoration: underline; }
-      @media (max-width: 576px) {
-        .btn-block-mobile .btn { width: 100%; }
-        .btn-block-mobile .btn + .btn { margin-top: .5rem; }
+      @media (max-width: 900px) {
+        .art-nav { display: none; }
+        .art-gnb-right { display: none; }
+        .art-hamburger { display: flex; }
+        .art-footer-inner { grid-template-columns: 1fr; gap: 24px; }
+        .art-footer-bottom { flex-direction: column; gap: 8px; }
       }
 
   body
-    include common_value
+    //- ── GNB ────────────────────────────────────────────────────
+    nav.art-gnb
+      .art-gnb-inner
+        a.art-logo(href='/')
+          .art-logo-icon 🎨
+          .art-logo-text ART<span>+</span>
 
-    // ───────── 상단 헤더 ─────────
-    header.main-search-header.search-header(class=(currentPage==='/' ? '' : 'compact'))
-      .container-fluid
-        // 'HOME'에서만 보이는 메인 콘텐츠 (검색창 등)
-        if currentPage==='/'
-          .main_header
-            .head_div
-              // 좌측 상단 브랜드 로고
-              a.brand-logo(
-                href=(typeof siteBrandLink!=='undefined' && siteBrandLink) || '/',
-                aria-label=(typeof siteBrand!=='undefined' && siteBrand) || 'ESL Plus',
-                title=(typeof siteBrand!=='undefined' && siteBrand) || 'ESL Plus'
-              )
-                img(src="/assets/img/eslplus.svg", alt=(typeof siteBrand!=='undefined' && siteBrand) || 'ESL Plus')
+        .art-nav
+          a(href='/' class=(currentPage==='/' ? 'active' : '')) HOME
+          a(href='/facet/Artworks'    class=(currentPage && currentPage.indexOf('/facet/Artworks')===0    ? 'active' : '')) 🖼️ 작품
+          a(href='/facet/Artists'     class=(currentPage && currentPage.indexOf('/facet/Artists')===0     ? 'active' : '')) 👤 작가
+          a(href='/facet/Galleries'   class=(currentPage && currentPage.indexOf('/facet/Galleries')===0   ? 'active' : '')) 🏛️ 갤러리
+          a(href='/facet/Exhibitions' class=(currentPage && currentPage.indexOf('/facet/Exhibitions')===0 ? 'active' : '')) 🎭 전시
+          a(href='/facet/Auctions'    class=(currentPage && currentPage.indexOf('/facet/Auctions')===0    ? 'active' : '')) 🔨 경매
 
-              // 데스크탑: 우상단 계정 링크
-              .menu-top.d-none.d-md-flex
-                .main-menu
-                  a.nav-link.h5.my-0(class=(currentPage==='/' ? 'active' : ''), href='/') HOME
-                  a.nav-link.h5.my-0(class=(currentPage && (currentPage.indexOf('/facet/Job_Vacancies')===0 || currentPage.indexOf('/job-vacancies')===0)) ? 'active' : '', href='/facet/Job_Vacancies') JOB VACANCIES
-                  a.nav-link.h5.my-0(class=(currentPage && currentPage.indexOf('/facet/Job_Seekers')===0) ? 'active' : '', href='/facet/Job_Seekers') JOB SEEKERS
-                  a.nav-link.h5.my-0(class=(currentPage && currentPage.indexOf('/facet/Online_Tutors')===0) ? 'active' : '', href='/facet/Online_Tutors') ONLINE TUTORS
-                .account-menu
-                  if session && session.user
-                    a.nav-link.h5.my-0(href="/user/mypage") Mypage
-                    if session.user.adsAvailable !== undefined
-                      | (#{session.user.adsAvailable} left)
-                    a.nav-link.h5.my-0(href="/inquiry") Inquiry
-                    a.logout.nav-link.h5.my-0(href="/user/logout") Logout
-                  else
-                    a.nav-link.h5.my-0(href="/pricing") Pricing
-                    a.nav-link.h5.my-0(href="/user/register") Membership
-                    a.nav-link.h5.my-0(href="/user/login") Login
-                    a.nav-link.h5.my-0(href="/inquiry") Inquiry
-
-                  if session && session.isAdmin
-                    a.nav-link.h5.my-0(href="/admin/dashboard") Admin
-                    a.logout.nav-link.h5.my-0(href="/admin/logout") Logout
-            .text-center(style="margin-top: 60px;")
-              // 검색바를 먼저 배치 (데스크탑에서만 표시)
-              - var _ph = (typeof searchKeyword!=='undefined' && searchKeyword) ? searchKeyword : "Enter keyword...";
-              .input-group.justify-content-center.d-none.d-md-flex(style="margin-bottom: 30px;")
-                input#searchText.form-control.search-input(
-                  autocomplete='off',
-                  type='text',
-                  placeholder=_ph.replace(/\[dot\]/g, '.'),
-                  value=searchText
-                )
-                span.input-group-append
-                  button.sstyly(
-                    style="margin-left:-55px;background:none;border:none;margin-top:5px; z-index: 2"
-                    type="button"
-                  )
-                    img(src="/assets/img/search.png", alt="Search", width="30")
-              
-              // 텍스트는 검색바 아래에 배치
-              h2(style="font-weight: bold; font-size: 50px; margin-bottom: 25px; color: #FFFFFF") ESL PLUS <br>The fast ESL hiring & tutoring hub
-              p(style="font-size: 20px; margin-bottom: 25px; color: #FFFFFF") Teaching opportunities available around the world
-        else 
-          .head_div
-              // 좌측 상단 브랜드 로고
-              a.brand-logo(
-                href=(typeof siteBrandLink!=='undefined' && siteBrandLink) || '/',
-                aria-label=(typeof siteBrand!=='undefined' && siteBrand) || 'ESL Plus',
-                title=(typeof siteBrand!=='undefined' && siteBrand) || 'ESL Plus'
-              )
-                img(src="/assets/img/eslplus.svg", alt=(typeof siteBrand!=='undefined' && siteBrand) || 'ESL Plus')
-
-              // 데스크탑: 우상단 계정 링크
-              .menu-top.d-none.d-md-flex
-                .main-menu
-                  a.nav-link.h5.my-0.black-text(class=(currentPage==='/' ? 'active' : ''), href='/') HOME
-                  a.nav-link.h5.my-0.black-text(class=(currentPage && (currentPage.indexOf('/facet/Job_Vacancies')===0 || currentPage.indexOf('/job-vacancies')===0)) ? 'active' : '', href='/facet/Job_Vacancies') JOB VACANCIES
-                  a.nav-link.h5.my-0.black-text(class=(currentPage && currentPage.indexOf('/facet/Job_Seekers')===0) ? 'active' : '', href='/facet/Job_Seekers') JOB SEEKERS
-                  a.nav-link.h5.my-0.black-text(class=(currentPage && currentPage.indexOf('/facet/Online_Tutors')===0) ? 'active' : '', href='/facet/Online_Tutors') ONLINE TUTORS
-                .account-menu
-                  if session && session.user
-                    a.gray-text.nav-link.h5(href="/user/mypage") Mypage
-                    if session.user.adsAvailable !== undefined
-                      | (#{session.user.adsAvailable} left)
-                    a.nav-link.h5.my-0.gray-text(href="/inquiry") Inquiry
-                    a.logout.nav-link.h5.my-0.gray-text(href="/user/logout") Logout
-                  else
-                    a.nav-link.h5.my-0.gray-text(href="/pricing") Pricing
-                    a.nav-link.h5.my-0.gray-text(href="/user/register") Membership
-                    a.nav-link.h5.my-0.gray-text(href="/user/login") Login
-                    a.nav-link.h5.my-0.gray-text(href="/inquiry") Inquiry
-
-                  if session && session.isAdmin
-                    a.nav-link.h5.my-0.gray-text(href="/admin/dashboard" ) Admin
-                    a.nav-link.h5.my-0.gray-text(href="/admin/logout").logout Logout
-
-        // 모바일: 햄버거 메뉴 (좌측)
-        .menu-hamburger.d-md-none
-          button#hamburgerToggle.btn.btn-outline-dark.btn-sm(type="button", aria-label="Menu")
-            i.fa.fa-bars
-        
-        // 모바일: 메인 메뉴 드로어 (메인 메뉴 + 계정 메뉴 통합)
-        .menu-overlay#menuOverlay
-        .main-menu-mobile#mainMenuMobile
-          a(href="/", class=(currentPage==='/' ? 'active' : '')) HOME
-          a(href="/facet/Job_Vacancies", class=(currentPage && (currentPage.indexOf('/facet/Job_Vacancies')===0 || currentPage.indexOf('/job-vacancies')===0)) ? 'active' : '') JOB VACANCIES
-          a(href="/facet/Job_Seekers", class=(currentPage && currentPage.indexOf('/facet/Job_Seekers')===0) ? 'active' : '') JOB SEEKERS
-          a(href="/facet/Online_Tutors", class=(currentPage && currentPage.indexOf('/facet/Online_Tutors')===0) ? 'active' : '') ONLINE TUTORS
-          
-          // 구분선
-          div(style="border-top: 2px solid #ddd; margin: 10px 0;")
-          
-          // 계정 메뉴
+        .art-gnb-right
           if session && session.user
-            a(href="/user/mypage") Mypage
-            if session.user.adsAvailable !== undefined
-              a(href="javascript:void(0)", style="pointer-events:none; color:#999;") (#{session.user.adsAvailable} left)
-            a(href="/inquiry") Inquiry
-            a(href="/user/logout").logout Logout
+            a.gnb-login(href='/user/mypage') 마이페이지
+            a.gnb-login(href='/user/logout') 로그아웃
           else
-            a(href="/pricing") Pricing
-            a(href="/user/register") Membership
-            a(href="/user/login") Login
-            a(href="/inquiry") Inquiry
-
+            a.gnb-login(href='/user/login')   로그인
+            a.gnb-join(href='/user/register') 회원가입
           if session && session.isAdmin
-            a(href="/admin/dashboard") Admin
-            a(href="/admin/logout").logout Logout
+            a.gnb-admin(href='/admin/dashboard') ⚙ Admin
 
-    // ───────── GNB (부트스트랩 햄버거)
+        button.art-hamburger#artHamburger(type='button' aria-label='메뉴')
+          span
+          span
+          span
 
-    // 메인 컨텐츠
-    main.main-content
+    .art-overlay#artOverlay
+    .art-drawer#artDrawer
+      button.drawer-close#drawerClose ✕
+      a(href='/') HOME
+      a(href='/facet/Artworks'    class=(currentPage && currentPage.indexOf('/facet/Artworks')===0    ? 'active' : '')) 🖼️ 작품
+      a(href='/facet/Artists'     class=(currentPage && currentPage.indexOf('/facet/Artists')===0     ? 'active' : '')) 👤 작가
+      a(href='/facet/Galleries'   class=(currentPage && currentPage.indexOf('/facet/Galleries')===0   ? 'active' : '')) 🏛️ 갤러리
+      a(href='/facet/Exhibitions' class=(currentPage && currentPage.indexOf('/facet/Exhibitions')===0 ? 'active' : '')) 🎭 전시
+      a(href='/facet/Auctions'    class=(currentPage && currentPage.indexOf('/facet/Auctions')===0    ? 'active' : '')) 🔨 경매
+      div(style='border-top:2px solid #222;margin:12px 0')
+      if session && session.user
+        a(href='/user/mypage') 마이페이지
+        a(href='/user/logout') 로그아웃
+      else
+        a(href='/user/login')   로그인
+        a(href='/user/register') 회원가입
+      if session && session.isAdmin
+        a(href='/admin/dashboard') ⚙ Admin
+
+    //- ── Main ───────────────────────────────────────────────────
+    main.art-main
       block content
 
-    // footer
-    footer.footer
-      .container
-        .d-flex.align-items-start
-          // 로고 (1)
-          div.logo-area
-            img(src="/assets/img/linked-data.png" alt="Linked Data Center" style="max-height:80px")
+    //- ── Footer ─────────────────────────────────────────────────
+    footer.art-footer
+      .art-footer-inner
+        div
+          h4 ART+
+          p 한국 미술을 OWL 온톨로지 기반으로
+          p 탐색하는 관계형 미술 플랫폼입니다.
+          br
+          span.ontology-badge 🔗 OWL Ontology Powered
+        div
+          h4 탐색
+          a(href='/facet/Artworks')    작품 탐색
+          br
+          a(href='/facet/Artists')     작가 탐색
+          br
+          a(href='/facet/Galleries')   갤러리
+          br
+          a(href='/facet/Exhibitions') 전시
+          br
+          a(href='/facet/Auctions')    경매 기록
+        div
+          h4 회사 정보
+          p Linked Data Center
+          p 대표: 조명대
+          p 사업자등록번호: 446-06-00440
+          p 경기도 화성시 봉담읍 상리 1길 167
+          a(href='mailto:myungdae.cho@gmail.com') myungdae.cho@gmail.com
+      .art-footer-bottom
+        span © 2025 ART+ · Linked Data Center
+        span art.exko.kr
 
-          // 회사 정보 (8)
-          div.company-info
-            h6 Company Information
-            p Company Name: Linked Data Center
-            p CEO: Youngdo Cho
-            p Business Registration No.: 446-06-00440
-            p Address: 167, Sangri 1-gil, Bongdam-eup, Hwaseong-si, Gyeonggi-do, Apt. 601-101 (Jungheung S-Class Edu Foret)
-            p Customer Support: myungdae.cho@gmail.com
-            p Contact Number: +82-10-9744-5425
-
-          // 링크 (1)
-          div.link-area
-            a(href="/pricing") Pricing
-            a(href="/policy/terms") Terms of Service
-            a(href="/policy/privacy") Privacy Policy
-            a(href="/policy/refund") Refund Policy
-            
-            // KB에스크로 이체 인증마크
-            div.mt-3
-              script.
-                function onPopKBAuthMark() {
-                  window.open('','KB_AUTHMARK','height=604, width=648, status=yes, toolbar=no, menubar=no, location=no');
-                  document.KB_AUTHMARK_FORM.action='https://okbfex.kbstar.com/quics';
-                  document.KB_AUTHMARK_FORM.target='KB_AUTHMARK';
-                  document.KB_AUTHMARK_FORM.submit();
-                }
-              form(name="KB_AUTHMARK_FORM" method="get")
-                input(type="hidden" name="page" value="C021590")
-                input(type="hidden" name="cc" value="b034066:b035526")
-                input(type="hidden" name="mHValue" value="86977a3fcb4ae78e1b41b6c412fba405")
-              a(href="#" onclick="javascript:onPopKBAuthMark();return false;")
-                img(src="http://img1.kbstar.com/img/escrow/escrowcmark.gif" border="0" alt="KB에스크로 인증마크")
-           
-      hr.my-3
-      .row.mt-3 
-        .col.text-center 
-          p © 2025 ESL PLUS. All rights reserved.
-        
-      
-
-    // ───────── Scripts ─────────
+    //- ── Scripts ────────────────────────────────────────────────
     script(src='https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js')
-    script(src='/assets/js/core/jquery-ui.min.js', type='text/javascript')
-    script(src='/assets/js/core/popper.min.js', type='text/javascript')
-    script(src='/assets/js/core/bootstrap.min.js', type='text/javascript')
-    script(src='/assets/js/plugins/perfect-scrollbar.jquery.min.js')
-    script(src='/assets/js/plugins/bootstrap-switch.js')
-    script(src='/assets/js/plugins/nouislider.min.js', type='text/javascript')
-    script(src='/assets/js/plugins/moment-with-locale.js', type='text/javascript')
-    script(src='/assets/js/plugins/bootstrap-selectpicker.js')
-    script(src='/assets/js/plugins/bootstrap-datetimepicker.js', type='text/javascript')
-    script(src='/assets/js/now-ui-kit.js?v=1.3.0', type='text/javascript')
-    script(src='/assets/js/plugins/bootstrap-notify.js', type='text/javascript')
 
-    // 커스텀
-    script(src='/assets/js/custom/searchBox.js', type='text/javascript')
-    script(src='/assets/js/custom/menu.js')
-    script(src='/assets/js/custom/nav-prettify.js')
-    script(src='/assets/js/custom/nav-dedupe.js')
-    script(src='/assets/js/custom/nav-hardfix.js')
-
-    // 모바일 햄버거 메뉴 토글
     script.
-      (function () {
-        var hamburger = document.getElementById('hamburgerToggle');
-        var menu = document.getElementById('mainMenuMobile');
-        var overlay = document.getElementById('menuOverlay');
-        
-        if (hamburger && menu && overlay) {
-          hamburger.addEventListener('click', function(e){
-            e.stopPropagation();
-            menu.classList.add('show');
-            overlay.classList.add('show');
-          });
-          
-          overlay.addEventListener('click', function(){
-            menu.classList.remove('show');
-            overlay.classList.remove('show');
-          });
-          
-          // 메뉴 링크 클릭 시 닫기
-          var menuLinks = menu.querySelectorAll('a');
-          menuLinks.forEach(function(link){
-            link.addEventListener('click', function(){
-              menu.classList.remove('show');
-              overlay.classList.remove('show');
-            });
-          });
-        }
+      (function(){
+        var btn     = document.getElementById('artHamburger');
+        var drawer  = document.getElementById('artDrawer');
+        var overlay = document.getElementById('artOverlay');
+        var close   = document.getElementById('drawerClose');
+        function open(){ drawer.classList.add('open'); overlay.classList.add('open'); }
+        function shut(){ drawer.classList.remove('open'); overlay.classList.remove('open'); }
+        if(btn)     btn.addEventListener('click', open);
+        if(close)   close.addEventListener('click', shut);
+        if(overlay) overlay.addEventListener('click', shut);
       })();
-    
-    // 모바일 계정 드롭 토글
-    script.
-      (function () {
-        var btn = document.getElementById('topMenuToggle');
-        var drop = document.getElementById('topMenuDrop');
-        if (!btn || !drop) return;
-        btn.addEventListener('click', function(e){
-          e.stopPropagation();
-          drop.classList.toggle('show');
-        });
-        document.addEventListener('click', function(e){
-          if (drop.classList.contains('show') && !drop.contains(e.target) && e.target !== btn) {
-            drop.classList.remove('show');
-          }
-        });
-      })();
-
-    // 공용 유틸
-    script.
-      function previewFileName(inputId, labelId){
-        const input = document.getElementById(inputId);
-        const label = document.getElementById(labelId);
-        if(!input || !label) return;
-        const f = input.files && input.files[0];
-        label.textContent = f ? f.name : 'No file selected';
-      }
 
     block append_js
