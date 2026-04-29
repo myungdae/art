@@ -3,8 +3,15 @@
 
 require("dotenv").config();
 
+// ── 전역 예외 핸들러 — 어떤 에러로 죽는지 로그에 남기고 앱 유지
+process.on("uncaughtException",  (err) => {
+  console.error("💥 uncaughtException:", err.stack || err);
+});
+process.on("unhandledRejection", (reason) => {
+  console.error("💥 unhandledRejection:", reason?.stack || reason);
+});
+
 const express        = require("express");
-const createError    = require("http-errors");
 const path           = require("path");
 const session        = require("express-session");
 const flash          = require("connect-flash");
@@ -14,22 +21,37 @@ const connect = require("./model");
 const app     = express();
 
 // ── Mailer (optional)
-const mailer = require("./utils/mailer");
-try { mailer.verify(); } catch (e) {
+try {
+  const mailer = require("./utils/mailer");
+  mailer.verify();
+} catch (e) {
   console.error("SMTP verify failed at boot:", e?.message || e);
 }
 
-// ── Routers
-const homeRouter        = require("./router/home");
-const userRoutes        = require("./router/user");
-const adminRouter       = require("./router/admin");
-const inquiryRouter     = require("./router/inquiry");
-const policyRouter      = require("./router/policy");
-const threadRouter      = require("./router/thread");
-const rdfResourceRouter = require("./router/rdf-resource");
+// ── Routers (require 실패해도 앱 살아있도록 try-catch)
+function safeRequire(p) {
+  try { return require(p); }
+  catch (e) { console.error("❌ require 실패:", p, e.message); return null; }
+}
+
+const homeRouter        = safeRequire("./router/home");
+const userRoutes        = safeRequire("./router/user");
+const adminRouter       = safeRequire("./router/admin");
+const inquiryRouter     = safeRequire("./router/inquiry");
+const policyRouter      = safeRequire("./router/policy");
+const threadRouter      = safeRequire("./router/thread");
+const rdfResourceRouter = safeRequire("./router/rdf-resource");
+const facetRouter       = safeRequire("./router/facet");
+const searchRouter      = safeRequire("./router/search");
+const dataRouter        = safeRequire("./router/data");
+const indexRouter       = safeRequire("./router/index");
+const publicRouter      = safeRequire("./router/public");
 
 console.log("📌 app.js 시작됨 (Art Platform)");
-require("./router/config");
+
+// config 는 별도 (resetStructure 자동 실행 포함)
+try { require("./router/config"); } catch (e) { console.error("config load error:", e.message); }
+
 connect();
 console.log("✅ DB 연결 시도");
 
@@ -50,17 +72,20 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use(methodOverride("_method"));
 
 // ── Request logging
-app.use((req, _res, next) => { console.log(`🔹 ${req.method} ${req.url}`); next(); });
+app.use((req, _res, next) => {
+  console.log(`🔹 ${req.method} ${req.url}`);
+  next();
+});
 
-// ── Session  (MemoryStore — MongoDB 권한 불필요)
+// ── Session (MemoryStore — MongoDB 권한 불필요)
 const SESSION_LIFETIME_MS = parseInt(process.env.SESSION_LIFETIME_DAYS || "7", 10) * 86400 * 1000;
 
 app.set("trust proxy", 1);
 app.use(session({
-  secret:           process.env.SESSION_SECRET || "art-platform-secret",
-  resave:           false,
+  secret:            process.env.SESSION_SECRET || "art-platform-secret",
+  resave:            false,
   saveUninitialized: false,
-  rolling:          true,
+  rolling:           true,
   cookie: {
     httpOnly: true,
     sameSite: "lax",
@@ -86,19 +111,24 @@ app.use((req, res, next) => {
 // ── Shortcuts
 app.get("/login", (_req, res) => res.redirect("/user/login"));
 
-// ── Route mounts  (순서 중요)
-app.use("/rdf-resource", rdfResourceRouter);
-app.use("/facet",        require("./router/facet"));
-app.use("/search",       require("./router/search"));
-app.use("/data",         require("./router/data"));
-app.use("/policy",       policyRouter);
-app.use("/admin",        adminRouter);
-app.use("/user",         userRoutes);
-app.use("/thread",       threadRouter);
-app.use("/",             inquiryRouter);
-app.use("/",             homeRouter);          // GET /  — stats 포함 홈
-app.use("/",             require("./router/index"));   // /:id/:sub?
-app.use("/",             require("./router/public"));  // /pricing 등
+// ── Route mounts (null 체크: require 실패한 라우터는 skip)
+function useRouter(path, router) {
+  if (router) app.use(path, router);
+  else console.warn("⚠️  라우터 없음, 건너뜀:", path);
+}
+
+useRouter("/rdf-resource", rdfResourceRouter);
+useRouter("/facet",        facetRouter);
+useRouter("/search",       searchRouter);
+useRouter("/data",         dataRouter);
+useRouter("/policy",       policyRouter);
+useRouter("/admin",        adminRouter);
+useRouter("/user",         userRoutes);
+useRouter("/thread",       threadRouter);
+useRouter("/",             inquiryRouter);
+useRouter("/",             homeRouter);
+useRouter("/",             indexRouter);
+useRouter("/",             publicRouter);
 
 // ── 404
 app.use((req, res) => {
@@ -108,7 +138,7 @@ app.use((req, res) => {
 // ── Error handler
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
-  console.error(err.stack || err);
+  console.error("🔴 Express error:", err.stack || err);
   res.status(err.status || 500).render("error", {
     message: err.message,
     error:   app.get("env") === "development" ? err : {},
