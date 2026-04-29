@@ -372,4 +372,78 @@ router.get("/Online_Tutors/:id", async (req, res, next) => {
   }
 });
 
+/* ─────────────────────────────────────────────────────────
+   ART+ 컬렉션 공통 헬퍼
+   ───────────────────────────────────────────────────────── */
+function getDb() {
+  if (mongoose.connection.readyState === 1 && mongoose.connection.db) {
+    return Promise.resolve(mongoose.connection.db);
+  }
+  return new Promise((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error("MongoDB 연결 대기 초과")), 10000);
+    mongoose.connection.once("connected", () => { clearTimeout(t); resolve(mongoose.connection.db); });
+    mongoose.connection.once("error",     (e) => { clearTimeout(t); reject(e); });
+  });
+}
+
+const ART_COLL_MAP = {
+  Artworks:    { coll: "Artworks_RDF",    icon: "🖼️", label: "작품",   facetBase: "Artworks" },
+  Artists:     { coll: "Artists_RDF",     icon: "👤", label: "작가",   facetBase: "Artists" },
+  Galleries:   { coll: "Galleries_RDF",   icon: "🏛️", label: "갤러리", facetBase: "Galleries" },
+  Exhibitions: { coll: "Exhibitions_RDF", icon: "🎭", label: "전시",   facetBase: "Exhibitions" },
+  Auctions:    { coll: "Auctions_RDF",    icon: "🔨", label: "경매",   facetBase: "Auctions" },
+};
+
+// GET /rdf-resource/:artKlass/:id  — Artworks / Artists / Galleries / Exhibitions / Auctions
+router.get("/:artKlass/:id", async (req, res, next) => {
+  const meta = ART_COLL_MAP[req.params.artKlass];
+  if (!meta) return next(); // 알 수 없는 클래스 → 다음 핸들러
+
+  try {
+    const _id = safeObjectId(req.params.id);
+    if (!_id) return res.status(404).render("error", { message: "잘못된 ID", error: {} });
+
+    const db  = await getDb();
+    const doc = await db.collection(meta.coll).findOne({ _id });
+    if (!doc) return res.status(404).render("error", { message: "문서를 찾을 수 없습니다.", error: {} });
+
+    // title 후보
+    const title = (
+      doc._label || doc.title || doc.artworkTitle ||
+      doc.artistName || doc.name || "(제목 없음)"
+    ).toString().trim();
+
+    // description
+    const descriptionHtml = cleanHtml(doc._description || doc.description || "");
+
+    // 나머지 extras (meta에 없는 필드 자동 표시)
+    const SKIP = new Set(["_id","__v","_class","_label","_description","createdAt","updatedAt",
+      "title","artworkTitle","artistName","name","description",
+      "genre","style","medium","material","theme","movement",
+      "country","creationYear","imageUrl","priceValue","priceDate"]);
+    const extras = [];
+    for (const [k, v] of Object.entries(doc)) {
+      if (SKIP.has(k) || k.startsWith("@")) continue;
+      const fv = fmtValue(v);
+      if (fv) extras.push({ key: k, label: labelize(k), value: fv });
+    }
+
+    const vm = {
+      id:           doc._id.toString(),
+      facetBase:    meta.facetBase,
+      klassLabel:   meta.label,
+      klassIcon:    meta.icon,
+      title,
+      descriptionHtml,
+      extras,
+      raw:          doc,
+    };
+
+    return res.render("rdf-resource/artShow", { vm });
+  } catch (err) {
+    console.error(`[rdf-resource/${req.params.artKlass}]`, err.message);
+    return next(err);
+  }
+});
+
 module.exports = router;

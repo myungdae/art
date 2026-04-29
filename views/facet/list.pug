@@ -1,365 +1,348 @@
-//- views/facet/list.pug  — Art Platform
+//- views/facet/list.pug  — Art Platform (밝은 테마)
 extends ../layout
 
 block content
   style.
     html, body {
       overflow-x: hidden !important;
-      background: #0d0d0d;
+      background: #f5f4f0;
+      color: #1a1a1a;
     }
 
-    /* ── Class icon/title map ─────────────────────────────── */
+    /* ── Page wrapper ─────────────────────────────────────── */
+    .facet-page { background: #f5f4f0; min-height: 100vh; }
 
     /* ── Art Card ─────────────────────────────────────────── */
     .art-card {
-      background: #161616;
-      border: 1px solid #222;
-      border-radius: 16px;
+      background: #fff;
+      border: 1px solid #e8e4da;
+      border-radius: 14px;
       overflow: hidden;
-      transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+      transition: transform 0.25s, border-color 0.25s, box-shadow 0.25s;
       text-decoration: none;
       display: block;
       color: inherit;
     }
     .art-card:hover {
       transform: translateY(-5px);
-      border-color: #d4af37;
-      box-shadow: 0 16px 40px rgba(0,0,0,0.5);
+      border-color: #c9a227;
+      box-shadow: 0 12px 32px rgba(180,140,20,0.15);
     }
     .art-card-thumb {
       width: 100%; aspect-ratio: 4/3;
-      background: #1a1a1a;
+      background: #f0ece0;
       display: flex; align-items: center; justify-content: center;
-      font-size: 3.5rem; color: rgba(255,255,255,0.08);
+      font-size: 3.5rem; color: #ccc;
       overflow: hidden;
     }
-    .art-card-thumb img {
-      width: 100%; height: 100%; object-fit: cover;
-    }
-    .art-card-body { padding: 16px; }
+    .art-card-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .art-card-body { padding: 14px 16px 10px; }
     .art-card-title {
-      font-size: 14px; font-weight: 700; color: #fff;
+      font-size: 14px; font-weight: 700; color: #1a1a1a;
       margin-bottom: 8px; line-height: 1.4;
       display: -webkit-box;
       -webkit-line-clamp: 2; -webkit-box-orient: vertical;
       overflow: hidden;
     }
-    .art-card-meta { display: flex; flex-wrap: wrap; gap: 6px; }
+    .art-card-meta { display: flex; flex-wrap: wrap; gap: 5px; }
+
+    /* 태그 */
     .art-tag {
       display: inline-flex; align-items: center;
-      padding: 3px 10px; border-radius: 50px;
+      padding: 2px 9px; border-radius: 50px;
       font-size: 11px; font-weight: 600;
-      background: #222; color: rgba(255,255,255,0.5);
-      border: 1px solid #2a2a2a;
+      background: #f0ece0; color: #555;
+      border: 1px solid #ddd;
     }
-    .art-tag.gold  { background: rgba(212,175,55,0.12); border-color: rgba(212,175,55,0.3); color: #d4af37; }
-    .art-tag.blue  { background: rgba(59,130,246,0.1);  border-color: rgba(59,130,246,0.3);  color: #60a5fa; }
-    .art-tag.green { background: rgba(34,197,94,0.1);   border-color: rgba(34,197,94,0.3);   color: #4ade80; }
-    .art-tag.rose  { background: rgba(244,63,94,0.1);   border-color: rgba(244,63,94,0.3);   color: #fb7185; }
+    .art-tag.gold  { background: #fdf6e3; border-color: #d4af37; color: #a07800; }
+    .art-tag.blue  { background: #eff6ff; border-color: #93c5fd; color: #1d4ed8; }
+    .art-tag.green { background: #f0fdf4; border-color: #86efac; color: #15803d; }
+    .art-tag.rose  { background: #fff1f2; border-color: #fda4af; color: #be123c; }
+
     .art-card-footer {
-      padding: 10px 16px 14px;
+      padding: 8px 16px 12px;
       display: flex; justify-content: space-between; align-items: center;
-      border-top: 1px solid #1e1e1e;
+      border-top: 1px solid #f0ece0;
     }
-    .art-card-date { font-size: 11px; color: rgba(255,255,255,0.25); }
-    .art-card-link {
-      font-size: 12px; font-weight: 700; color: #d4af37;
-      text-decoration: none;
-    }
-    .art-card-link:hover { color: #f0c940; }
+    .art-card-date { font-size: 11px; color: #aaa; }
+    .art-card-link { font-size: 12px; font-weight: 700; color: #c9a227; text-decoration: none; }
+    .art-card-link:hover { color: #a07800; }
 
     /* ── Grid ─────────────────────────────────────────────── */
     .art-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 20px;
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 18px;
     }
     @media (max-width: 767px) {
-      .art-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+      .art-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
       .facet-sidebar { display: none !important; }
     }
 
     /* ── Filter Panel ─────────────────────────────────────── */
     .filter-panel {
-      background: #161616; border: 1px solid #222;
-      border-radius: 16px; padding: 20px;
+      background: #fff; border: 1px solid #e8e4da;
+      border-radius: 14px; padding: 16px 18px;
+      margin-bottom: 12px;
     }
-    .filter-group { margin-bottom: 20px; }
     .filter-group-title {
-      font-size: 11px; font-weight: 800; color: #d4af37;
+      font-size: 10px; font-weight: 800; color: #c9a227;
       text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px;
     }
     .filter-item {
-      display: flex; align-items: center; gap-y: 4px;
-      padding: 6px 8px; border-radius: 8px; cursor: pointer;
+      display: flex; align-items: center;
+      padding: 5px 6px; border-radius: 7px; cursor: pointer;
       transition: background 0.15s;
     }
-    .filter-item:hover { background: #1e1e1e; }
+    .filter-item:hover { background: #fdf8ee; }
     .filter-item input[type="checkbox"] {
-      width: 14px; height: 14px; accent-color: #d4af37;
-      flex-shrink: 0; margin-right: 8px;
+      width: 14px; height: 14px; accent-color: #c9a227;
+      flex-shrink: 0; margin-right: 8px; cursor: pointer;
     }
     .filter-item-label {
-      flex: 1; font-size: 13px; color: rgba(255,255,255,0.6);
+      flex: 1; font-size: 13px; color: #555;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .filter-item-count {
-      font-size: 11px; color: rgba(255,255,255,0.25);
+      font-size: 11px; color: #bbb;
       flex-shrink: 0; margin-left: 6px;
     }
-    .filter-item input:checked + .filter-item-label { color: #fff; font-weight: 700; }
+    .filter-item input:checked ~ .filter-item-label { color: #1a1a1a; font-weight: 700; }
 
     /* ── Search / Sort bar ────────────────────────────────── */
     .search-sort-bar {
-      display: flex; gap: 12px; flex-wrap: wrap;
-      background: #161616; border: 1px solid #222;
-      border-radius: 14px; padding: 14px 18px;
-      margin-bottom: 20px;
+      display: flex; gap: 10px; flex-wrap: wrap;
+      background: #fff; border: 1px solid #e8e4da;
+      border-radius: 12px; padding: 12px 16px;
+      margin-bottom: 18px;
     }
     .search-sort-bar input[type="text"] {
       flex: 1; min-width: 160px;
-      background: #1e1e1e; border: 1px solid #2a2a2a;
-      border-radius: 8px; padding: 10px 14px;
-      color: #fff; font-size: 14px; outline: none;
+      background: #fafaf8; border: 1px solid #e0dbd0;
+      border-radius: 8px; padding: 9px 14px;
+      color: #1a1a1a; font-size: 14px; outline: none;
     }
-    .search-sort-bar input[type="text"]::placeholder { color: rgba(255,255,255,0.25); }
-    .search-sort-bar input:focus { border-color: #d4af37; }
+    .search-sort-bar input[type="text"]::placeholder { color: #bbb; }
+    .search-sort-bar input:focus { border-color: #c9a227; }
     .search-sort-bar button[type="submit"] {
-      padding: 10px 22px; background: #d4af37; border: none;
-      border-radius: 8px; color: #0d0d0d; font-weight: 800; font-size: 14px;
-      cursor: pointer; transition: background 0.2s; white-space: nowrap;
+      padding: 9px 22px; background: #c9a227; border: none;
+      border-radius: 8px; color: #fff; font-weight: 800; font-size: 14px;
+      cursor: pointer; transition: background 0.2s;
     }
-    .search-sort-bar button:hover { background: #c9a227; }
+    .search-sort-bar button:hover { background: #a07800; }
     .search-sort-bar select {
-      background: #1e1e1e; border: 1px solid #2a2a2a;
-      border-radius: 8px; padding: 10px 12px;
-      color: rgba(255,255,255,0.7); font-size: 13px; outline: none;
+      background: #fafaf8; border: 1px solid #e0dbd0;
+      border-radius: 8px; padding: 9px 12px;
+      color: #555; font-size: 13px; outline: none; cursor: pointer;
     }
-    .search-sort-bar select:focus { border-color: #d4af37; }
+    .search-sort-bar select:focus { border-color: #c9a227; }
 
     /* ── Page header ──────────────────────────────────────── */
-    .page-header {
-      padding: 36px 0 20px;
-    }
+    .page-header { padding: 32px 0 16px; }
     .page-header h1 {
-      font-size: clamp(1.5rem, 4vw, 2.25rem);
-      font-weight: 900; color: #fff; margin-bottom: 6px;
+      font-size: clamp(1.5rem, 4vw, 2.2rem);
+      font-weight: 900; color: #1a1a1a; margin-bottom: 4px;
     }
-    .page-header h1 span { color: #d4af37; }
-    .page-header p { font-size: 13px; color: rgba(255,255,255,0.35); }
+    .page-header h1 span { color: #c9a227; }
+    .page-header p { font-size: 13px; color: #888; }
 
     /* ── Mobile facet dropdown ────────────────────────────── */
-    .mob-facet-row {
-      display: none; flex-wrap: wrap; gap: 8px; margin-bottom: 16px;
-    }
+    .mob-facet-row { display: none; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
     @media (max-width: 767px) { .mob-facet-row { display: flex; } }
     .mob-facet-dd { position: relative; }
     .mob-facet-btn {
-      padding: 7px 14px; background: #1a1a1a; border: 1px solid #2a2a2a;
-      border-radius: 50px; color: rgba(255,255,255,0.6); font-size: 12px;
+      padding: 7px 14px; background: #fff; border: 1px solid #ddd;
+      border-radius: 50px; color: #555; font-size: 12px;
       font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px;
-      white-space: nowrap;
     }
-    .mob-facet-btn.has-sel { border-color: #d4af37; color: #d4af37; }
+    .mob-facet-btn.has-sel { border-color: #c9a227; color: #a07800; }
     .mob-facet-panel {
       display: none; position: absolute; top: calc(100% + 6px); left: 0;
-      background: #1a1a1a; border: 1px solid #2a2a2a;
+      background: #fff; border: 1px solid #e0dbd0;
       border-radius: 12px; min-width: 180px; max-height: 260px;
       overflow-y: auto; z-index: 50; padding: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
     }
     .mob-facet-dd.open .mob-facet-panel { display: block; }
 
     /* ── Pagination ───────────────────────────────────────── */
-    .pagination { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 32px; }
+    .pagination { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 28px; }
     .pagination a, .pagination span {
-      padding: 8px 14px; border-radius: 8px;
+      padding: 7px 14px; border-radius: 8px;
       font-size: 13px; font-weight: 700; text-decoration: none;
     }
-    .pagination a {
-      background: #1a1a1a; border: 1px solid #2a2a2a;
-      color: rgba(255,255,255,0.6); transition: all 0.2s;
-    }
-    .pagination a:hover { border-color: #d4af37; color: #d4af37; }
-    .pagination span { background: #d4af37; color: #0d0d0d; }
+    .pagination a { background: #fff; border: 1px solid #ddd; color: #555; transition: all 0.2s; }
+    .pagination a:hover { border-color: #c9a227; color: #a07800; }
+    .pagination span { background: #c9a227; color: #fff; }
 
-    /* ── Active filters strip ─────────────────────────────── */
-    .active-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+    /* ── Active filters ───────────────────────────────────── */
+    .active-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
     .active-filter-chip {
       display: inline-flex; align-items: center; gap: 6px;
-      padding: 5px 12px; border-radius: 50px;
-      background: rgba(212,175,55,0.12); border: 1px solid rgba(212,175,55,0.3);
-      color: #d4af37; font-size: 12px; font-weight: 700;
+      padding: 4px 12px; border-radius: 50px;
+      background: #fdf6e3; border: 1px solid #d4af37;
+      color: #a07800; font-size: 12px; font-weight: 700;
       text-decoration: none;
     }
-    .active-filter-chip:hover { background: rgba(212,175,55,0.22); }
+    .active-filter-chip:hover { background: #fcefc0; }
+
+    /* ── 빈 상태 ──────────────────────────────────────────── */
+    .empty-state { text-align:center; padding:80px 0; color:#bbb; font-size:15px; }
 
   - var klassMap = { Artworks: {icon:'🖼️', label:'작품'}, Artists: {icon:'👤', label:'작가'}, Galleries: {icon:'🏛️', label:'갤러리'}, Exhibitions: {icon:'🎭', label:'전시'}, Auctions: {icon:'🔨', label:'경매'} }
   - var km = klassMap[klass] || {icon:'📋', label: klass}
   - var facetIconMap = { genre:'🎨', style:'✦', medium:'🖌️', material:'🧱', theme:'💡', movement:'📚', country:'🌍', auctionHouse:'🏢' }
 
-  .container.mx-auto.px-4(style="max-width:1340px;")
+  .facet-page
+    .container.mx-auto.px-4(style="max-width:1340px;")
 
-    //- Page header
-    .page-header
-      h1
-        span= km.icon + ' '
-        span= km.label
-      p #{total || 0}개의 결과
+      //- Page header
+      .page-header
+        h1
+          span= km.icon + ' '
+          span= km.label
+        p #{total || 0}개의 결과
 
-    //- Search/sort bar
-    form#mainSearchForm(method="GET" action=`/facet/${klass}`)
-      .search-sort-bar
-        input(type="text" name="q" value=q||"" placeholder=`${km.label} 검색...`)
-        if facetCfg && facetCfg.groups
+      //- Search/sort bar
+      form#mainSearchForm(method="GET" action=`/facet/${klass}`)
+        .search-sort-bar
+          input(type="text" name="q" value=q||"" placeholder=`${km.label} 검색...`)
+          if facetCfg && facetCfg.groups
+            each g in facetCfg.groups
+              if selected && selected[g.key]
+                each v in selected[g.key]
+                  input(type="hidden" name=g.key value=v)
+          input(type="hidden" name="limit" value=limit)
+          button(type="submit") 검색
+          select(name="sort" onchange="this.form.submit()")
+            option(value="recent"     selected=(sort==='recent'||!sort))  최신순
+            option(value="oldest"     selected=(sort==='oldest'))         오래된순
+            option(value="alpha-asc"  selected=(sort==='alpha-asc'))      이름 A→Z
+            option(value="alpha-desc" selected=(sort==='alpha-desc'))     이름 Z→A
+
+      //- Active filter chips
+      - var hasActive = false
+      if facetCfg && facetCfg.groups
+        each g in facetCfg.groups
+          if selected && selected[g.key] && selected[g.key].length
+            - hasActive = true
+      if hasActive
+        .active-filters
           each g in facetCfg.groups
             if selected && selected[g.key]
               each v in selected[g.key]
-                input(type="hidden" name=g.key value=v)
-        input(type="hidden" name="limit" value=limit)
-        button(type="submit") 검색
-        select(name="sort" onchange="this.form.submit()")
-          option(value="recent"    selected=(sort==='recent'||!sort))  최신순
-          option(value="oldest"    selected=(sort==='oldest'))         오래된순
-          option(value="alpha-asc" selected=(sort==='alpha-asc'))      이름 A→Z
-          option(value="alpha-desc" selected=(sort==='alpha-desc'))    이름 Z→A
+                - var removeQs = '?q='+(q||'')+'&sort='+(sort||'recent')
+                - if(facetCfg&&facetCfg.groups){facetCfg.groups.forEach(function(gg){(selected[gg.key]||[]).forEach(function(sv){if(!(gg.key===g.key&&sv===v)){removeQs+='&'+gg.key+'='+encodeURIComponent(sv);}});})}
+                a.active-filter-chip(href=`/facet/${klass}${removeQs}`)
+                  span= (facetIconMap[g.key]||'') + ' ' + g.label + ': ' + v
+                  span ✕
 
-    //- Active filter chips
-    - var hasActive = false
-    if facetCfg && facetCfg.groups
-      each g in facetCfg.groups
-        if selected && selected[g.key] && selected[g.key].length
-          - hasActive = true
-    if hasActive
-      .active-filters
-        each g in facetCfg.groups
-          if selected && selected[g.key]
-            each v in selected[g.key]
-              - var removeQs = '?q='+(q||'')+'&sort='+(sort||'recent')
-              - if(facetCfg&&facetCfg.groups){facetCfg.groups.forEach(function(gg){(selected[gg.key]||[]).forEach(function(sv){if(!(gg.key===g.key&&sv===v)){removeQs+='&'+gg.key+'='+encodeURIComponent(sv);}});})}
-              a.active-filter-chip(href=`/facet/${klass}${removeQs}`)
-                span= (facetIconMap[g.key]||'') + ' ' + g.label + ': ' + v
-                span ✕
-
-    //- Mobile horizontal facet dropdowns
-    .mob-facet-row
-      form#mobFacetForm(method="GET" action=`/facet/${klass}` style="display:contents;")
-        input(type="hidden" name="q" value=q||"")
-        input(type="hidden" name="limit" value=limit)
-        input(type="hidden" name="sort" value=sort||"recent")
-        if facetCfg && facetCfg.groups
-          each g in facetCfg.groups
-            - var selCount = (selected && selected[g.key] && selected[g.key].length) || 0
-            .mob-facet-dd
-              button.mob-facet-btn(type="button" onclick="toggleMobDD(this)" class=(selCount?'has-sel':''))
-                span= (facetIconMap[g.key]||'') + ' ' + g.label
-                if selCount
-                  span(style="background:#d4af37;color:#0d0d0d;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;")= selCount
-                span ▾
-              .mob-facet-panel
-                - var fl = (facets && facets[g.key]) || []
-                - var sl = (selected && selected[g.key]) || []
-                each f in fl
-                  - var ck = sl.indexOf(f._id) !== -1
-                  label.filter-item(style=ck?"background:#1e1e1e;":"")
-                    input(type="checkbox" name=g.key value=f._id checked=ck onchange="document.getElementById('mobFacetForm').submit()")
-                    span.filter-item-label= f._id
-                    span.filter-item-count (#{f.c})
-
-    //- Main layout: left filter + right grid
-    div(style="display:flex; gap:24px; align-items:flex-start;")
-
-      //- Left panel
-      aside.facet-sidebar(style="width:260px; flex-shrink:0;")
-        form#facetForm(method="GET" action=`/facet/${klass}`)
+      //- Mobile facet dropdowns
+      .mob-facet-row
+        form#mobFacetForm(method="GET" action=`/facet/${klass}` style="display:contents;")
           input(type="hidden" name="q" value=q||"")
           input(type="hidden" name="limit" value=limit)
           input(type="hidden" name="sort" value=sort||"recent")
-
           if facetCfg && facetCfg.groups
             each g in facetCfg.groups
-              .filter-panel.mb-4
-                .filter-group-title= (facetIconMap[g.key]||'') + ' ' + g.label
-                - var flist = (facets && facets[g.key]) || []
-                - var slist = (selected && selected[g.key]) || []
-                div(style="max-height:260px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:#2a2a2a #161616;")
-                  if flist.length
-                    each f in flist
-                      - var ck = slist.indexOf(f._id) !== -1
-                      label.filter-item(style=ck?"background:#1e1e1e;":"")
-                        input(type="checkbox" name=g.key value=f._id checked=ck)
-                        span.filter-item-label= f._id
-                        span.filter-item-count (#{f.c})
-                  else
-                    p(style="font-size:12px;color:rgba(255,255,255,0.2);padding:8px;") 항목 없음
+              - var selCount = (selected && selected[g.key] && selected[g.key].length) || 0
+              .mob-facet-dd
+                button.mob-facet-btn(type="button" onclick="toggleMobDD(this)" class=(selCount?'has-sel':''))
+                  span= (facetIconMap[g.key]||'') + ' ' + g.label
+                  if selCount
+                    span(style="background:#c9a227;color:#fff;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;")= selCount
+                  span ▾
+                .mob-facet-panel
+                  - var fl = (facets && facets[g.key]) || []
+                  - var sl = (selected && selected[g.key]) || []
+                  each f in fl
+                    - var ck = sl.indexOf(f._id) !== -1
+                    label.filter-item(style=ck?"background:#fdf8ee;":"")
+                      input(type="checkbox" name=g.key value=f._id checked=ck onchange="document.getElementById('mobFacetForm').submit()")
+                      span.filter-item-label= f._id
+                      span.filter-item-count (#{f.c})
 
-      //- Right: grid
-      div(style="flex:1; min-width:0;")
-        if !docs || !docs.length
-          .text-center(style="padding:80px 0;color:rgba(255,255,255,0.25);font-size:15px;")
-            p 결과가 없습니다.
-        else
-          .art-grid
-            each d in docs
-              - var titleText = d.displayLabel || d._label || d.title || d.artworkTitle || d.artistName || d.name || '(제목 없음)'
-              - var posted = (d.updatedAt && new Date(d.updatedAt).toISOString().slice(0,10)) || (d.createdAt && new Date(d.createdAt).toISOString().slice(0,10)) || ''
+      //- Main: 왼쪽 패싯 + 오른쪽 카드 그리드
+      div(style="display:flex; gap:24px; align-items:flex-start;")
 
-              a.art-card(href=`/rdf-resource/${klass}/${d._id}`)
-                //- Thumbnail
-                .art-card-thumb
-                  if d.imageUrl
-                    img(src=d.imageUrl alt=titleText loading="lazy")
-                  else
-                    = km.icon
+        //- LEFT SIDEBAR
+        aside.facet-sidebar(style="width:260px; flex-shrink:0;")
+          form#facetForm(method="GET" action=`/facet/${klass}`)
+            input(type="hidden" name="q" value=q||"")
+            input(type="hidden" name="limit" value=limit)
+            input(type="hidden" name="sort" value=sort||"recent")
+            if facetCfg && facetCfg.groups
+              each g in facetCfg.groups
+                .filter-panel
+                  .filter-group-title= (facetIconMap[g.key]||'') + ' ' + g.label
+                  - var flist = (facets && facets[g.key]) || []
+                  - var slist = (selected && selected[g.key]) || []
+                  div(style="max-height:240px; overflow-y:auto; scrollbar-width:thin;")
+                    if flist.length
+                      each f in flist
+                        - var ck = slist.indexOf(f._id) !== -1
+                        label.filter-item(style=ck?"background:#fdf8ee;":"")
+                          input(type="checkbox" name=g.key value=f._id checked=ck)
+                          span.filter-item-label= f._id
+                          span.filter-item-count (#{f.c})
+                    else
+                      p(style="font-size:12px;color:#ccc;padding:6px;") 항목 없음
 
-                //- Body
-                .art-card-body
-                  .art-card-title= titleText
-                  .art-card-meta
-                    //- Artworks
-                    if d.artistName
-                      span.art-tag.gold= d.artistName
-                    if d.genre
-                      span.art-tag.blue= d.genre
-                    if d.style
-                      span.art-tag= d.style
-                    if d.medium
-                      span.art-tag= d.medium
-                    //- Artists
-                    if d.country && !d.genre
-                      span.art-tag.blue= d.country
-                    if d.movement
-                      span.art-tag= d.movement
-                    //- Galleries / Exhibitions
-                    if d.country && d.genre
-                      span.art-tag.blue= d.country
-                    //- Year
-                    if d.creationYear
-                      span.art-tag.rose= d.creationYear
-                    //- Price
-                    if d.priceValue
-                      span.art-tag.gold ₩#{Number(d.priceValue).toLocaleString()}
+        //- RIGHT: 카드 그리드
+        div(style="flex:1; min-width:0;")
+          if !docs || !docs.length
+            .empty-state 결과가 없습니다.
+          else
+            .art-grid
+              each d in docs
+                - var titleText = d.displayLabel || d._label || d.title || d.artworkTitle || d.artistName || d.name || '(제목 없음)'
+                - var posted = (d.updatedAt && new Date(d.updatedAt).toISOString().slice(0,10)) || (d.createdAt && new Date(d.createdAt).toISOString().slice(0,10)) || ''
 
-                .art-card-footer
-                  span.art-card-date= posted
-                  span.art-card-link 자세히 →
+                a.art-card(href=`/rdf-resource/${klass}/${d._id}`)
+                  .art-card-thumb
+                    if d.imageUrl
+                      img(src=d.imageUrl alt=titleText loading="lazy")
+                    else
+                      = km.icon
+                  .art-card-body
+                    .art-card-title= titleText
+                    .art-card-meta
+                      if d.artistName
+                        span.art-tag.gold= d.artistName
+                      if d.genre
+                        span.art-tag.blue= d.genre
+                      if d.style
+                        span.art-tag= d.style
+                      if d.medium
+                        span.art-tag= d.medium
+                      if d.country && !d.artistName
+                        span.art-tag.blue= d.country
+                      if d.movement
+                        span.art-tag= d.movement
+                      if d.creationYear
+                        span.art-tag.rose= d.creationYear
+                      if d.priceValue
+                        span.art-tag.gold ₩#{Number(d.priceValue).toLocaleString()}
+                  .art-card-footer
+                    span.art-card-date= posted
+                    span.art-card-link 자세히 →
 
-          //- Pagination
-          if typeof total !== 'undefined' && total > limit
-            - var totalPages = Math.ceil(total / limit)
-            - var qs = ''
-            - if(q){ qs += '&q=' + encodeURIComponent(q) }
-            - if(sort){ qs += '&sort=' + encodeURIComponent(sort) }
-            - if(facetCfg && facetCfg.groups){ facetCfg.groups.forEach(function(gg){ (selected && selected[gg.key] || []).forEach(function(sv){ qs += '&' + encodeURIComponent(gg.key) + '=' + encodeURIComponent(sv); }); }); }
-            nav.pagination
-              if page > 1
-                a(href=`/facet/${klass}?page=${page-1}&limit=${limit}${qs}`) ← 이전
-              span= `${page} / ${totalPages}`
-              if page < totalPages
-                a(href=`/facet/${klass}?page=${page+1}&limit=${limit}${qs}`) 다음 →
+            //- Pagination
+            if typeof total !== 'undefined' && total > limit
+              - var totalPages = Math.ceil(total / limit)
+              - var qs = ''
+              - if(q){ qs += '&q=' + encodeURIComponent(q) }
+              - if(sort){ qs += '&sort=' + encodeURIComponent(sort) }
+              - if(facetCfg && facetCfg.groups){ facetCfg.groups.forEach(function(gg){ (selected && selected[gg.key] || []).forEach(function(sv){ qs += '&' + encodeURIComponent(gg.key) + '=' + encodeURIComponent(sv); }); }); }
+              nav.pagination
+                if page > 1
+                  a(href=`/facet/${klass}?page=${page-1}&limit=${limit}${qs}`) ← 이전
+                span= `${page} / ${totalPages}`
+                if page < totalPages
+                  a(href=`/facet/${klass}?page=${page+1}&limit=${limit}${qs}`) 다음 →
 
   block append_js
     script.
-      // 데스크톱 패싯 자동 제출
       (function(){
         var f = document.getElementById('facetForm');
         if(!f) return;
@@ -367,19 +350,14 @@ block content
           cb.addEventListener('change', function(){ f.submit(); });
         });
       })();
-      // 모바일 드롭다운 토글
       function toggleMobDD(btn) {
         var dd = btn.closest('.mob-facet-dd');
         var isOpen = dd.classList.contains('open');
-        document.querySelectorAll('.mob-facet-dd.open').forEach(function(el){
-          el.classList.remove('open');
-        });
+        document.querySelectorAll('.mob-facet-dd.open').forEach(function(el){ el.classList.remove('open'); });
         if(!isOpen) dd.classList.add('open');
       }
       document.addEventListener('click', function(e){
         if(!e.target.closest('.mob-facet-dd')){
-          document.querySelectorAll('.mob-facet-dd.open').forEach(function(el){
-            el.classList.remove('open');
-          });
+          document.querySelectorAll('.mob-facet-dd.open').forEach(function(el){ el.classList.remove('open'); });
         }
       });

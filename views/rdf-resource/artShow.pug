@@ -1,0 +1,203 @@
+//- views/rdf-resource/artShow.pug — ART+ 상세 페이지 (밝은 테마)
+extends ../layout
+
+block content
+  style.
+    html, body { background: #f5f4f0; color: #1a1a1a; }
+
+    .detail-wrap {
+      max-width: 1100px; margin: 0 auto; padding: 40px 24px 80px;
+    }
+
+    /* 뒤로 가기 */
+    .back-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 13px; font-weight: 700; color: #888;
+      text-decoration: none; margin-bottom: 28px;
+      transition: color 0.2s;
+    }
+    .back-link:hover { color: #c9a227; }
+
+    /* 메인 그리드: 이미지 + 정보 */
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 40px;
+      align-items: start;
+    }
+    @media (max-width: 768px) {
+      .detail-grid { grid-template-columns: 1fr; gap: 24px; }
+    }
+
+    /* 이미지 */
+    .detail-img-box {
+      background: #f0ece0;
+      border-radius: 18px;
+      border: 1px solid #e8e4da;
+      aspect-ratio: 4/3;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 6rem; overflow: hidden;
+    }
+    .detail-img-box img {
+      width: 100%; height: 100%; object-fit: cover; border-radius: 18px;
+    }
+
+    /* 정보 패널 */
+    .detail-info {}
+    .detail-klass {
+      font-size: 11px; font-weight: 800; color: #c9a227;
+      text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px;
+    }
+    .detail-title {
+      font-size: clamp(1.5rem, 3vw, 2.2rem);
+      font-weight: 900; color: #1a1a1a; line-height: 1.2;
+      margin-bottom: 16px;
+    }
+
+    /* 태그 행 */
+    .tag-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+    .dtag {
+      display: inline-flex; align-items: center;
+      padding: 5px 14px; border-radius: 50px;
+      font-size: 12px; font-weight: 700;
+      text-decoration: none; transition: all 0.2s;
+    }
+    .dtag-gold { background: #fdf6e3; border: 1px solid #d4af37; color: #a07800; }
+    .dtag-gold:hover { background: #fcefc0; }
+    .dtag-blue { background: #eff6ff; border: 1px solid #93c5fd; color: #1d4ed8; }
+    .dtag-blue:hover { background: #dbeafe; }
+    .dtag-gray { background: #f5f5f5; border: 1px solid #ddd; color: #555; }
+    .dtag-gray:hover { background: #eee; }
+    .dtag-rose { background: #fff1f2; border: 1px solid #fda4af; color: #be123c; }
+
+    /* 속성 테이블 */
+    .detail-props {
+      background: #fff; border: 1px solid #e8e4da;
+      border-radius: 14px; overflow: hidden; margin-bottom: 20px;
+    }
+    .prop-row {
+      display: grid; grid-template-columns: 130px 1fr;
+      border-bottom: 1px solid #f0ece0; padding: 11px 18px;
+    }
+    .prop-row:last-child { border-bottom: none; }
+    .prop-key {
+      font-size: 12px; font-weight: 700; color: #888;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      padding-right: 12px;
+    }
+    .prop-val { font-size: 13px; color: #1a1a1a; word-break: break-word; }
+    .prop-val a { color: #c9a227; text-decoration: none; }
+    .prop-val a:hover { text-decoration: underline; }
+
+    /* 설명 */
+    .detail-desc {
+      background: #fff; border: 1px solid #e8e4da;
+      border-radius: 14px; padding: 20px 22px; margin-bottom: 20px;
+      font-size: 14px; line-height: 1.8; color: #333;
+    }
+    .detail-desc h3 {
+      font-size: 11px; font-weight: 800; color: #c9a227;
+      text-transform: uppercase; letter-spacing: 2px; margin-bottom: 12px;
+    }
+
+    /* 연관 링크 */
+    .related-section { margin-top: 48px; }
+    .related-title {
+      font-size: 14px; font-weight: 900; color: #1a1a1a;
+      margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
+    }
+    .related-title span { color: #c9a227; }
+
+  .detail-wrap
+
+    //- 뒤로가기
+    a.back-link(href=`/facet/${vm.facetBase}`) ← #{vm.klassLabel} 목록으로
+
+    .detail-grid
+
+      //- 이미지
+      .detail-img-box
+        if vm.raw && vm.raw.imageUrl
+          img(src=vm.raw.imageUrl alt=vm.title)
+        else
+          = vm.klassIcon
+
+      //- 정보
+      .detail-info
+        .detail-klass= vm.klassLabel
+        h1.detail-title= vm.title
+
+        //- 주요 태그
+        .tag-row
+          if vm.raw.genre
+            a.dtag.dtag-blue(href=`/facet/Artworks?genre=${encodeURIComponent(vm.raw.genre)}`)
+              | 🎨 #{vm.raw.genre}
+          if vm.raw.style
+            a.dtag.dtag-gold(href=`/facet/Artworks?style=${encodeURIComponent(vm.raw.style)}`)
+              | ✦ #{vm.raw.style}
+          if vm.raw.medium
+            a.dtag.dtag-gray(href=`/facet/Artworks?medium=${encodeURIComponent(vm.raw.medium)}`)
+              | 🖌️ #{vm.raw.medium}
+          if vm.raw.country
+            a.dtag.dtag-blue(href=`/facet/${vm.facetBase}?country=${encodeURIComponent(vm.raw.country)}`)
+              | 🌍 #{vm.raw.country}
+          if vm.raw.movement
+            a.dtag.dtag-gray(href=`/facet/${vm.facetBase}?movement=${encodeURIComponent(vm.raw.movement)}`)
+              | 📚 #{vm.raw.movement}
+          if vm.raw.creationYear
+            span.dtag.dtag-rose 📅 #{vm.raw.creationYear}
+
+        //- 속성 목록
+        .detail-props
+          if vm.raw.artistName
+            .prop-row
+              span.prop-key 작가
+              span.prop-val
+                a(href=`/facet/Artists?q=${encodeURIComponent(vm.raw.artistName)}`)= vm.raw.artistName
+          if vm.raw.creationYear
+            .prop-row
+              span.prop-key 제작연도
+              span.prop-val= vm.raw.creationYear
+          if vm.raw.genre
+            .prop-row
+              span.prop-key 장르
+              span.prop-val= vm.raw.genre
+          if vm.raw.style
+            .prop-row
+              span.prop-key 양식
+              span.prop-val= vm.raw.style
+          if vm.raw.medium
+            .prop-row
+              span.prop-key 매체
+              span.prop-val= vm.raw.medium
+          if vm.raw.material
+            .prop-row
+              span.prop-key 재료
+              span.prop-val= Array.isArray(vm.raw.material) ? vm.raw.material.join(', ') : vm.raw.material
+          if vm.raw.theme
+            .prop-row
+              span.prop-key 테마
+              span.prop-val= Array.isArray(vm.raw.theme) ? vm.raw.theme.join(', ') : vm.raw.theme
+          if vm.raw.movement
+            .prop-row
+              span.prop-key 운동
+              span.prop-val= vm.raw.movement
+          if vm.raw.country
+            .prop-row
+              span.prop-key 국가
+              span.prop-val= vm.raw.country
+          if vm.raw.priceValue
+            .prop-row
+              span.prop-key 경매가
+              span.prop-val ₩#{Number(vm.raw.priceValue).toLocaleString()}
+          each ex in (vm.extras || [])
+            if ex.value
+              .prop-row
+                span.prop-key= ex.label
+                span.prop-val= ex.value
+
+        //- 설명
+        if vm.descriptionHtml
+          .detail-desc
+            h3 설명
+            != vm.descriptionHtml
