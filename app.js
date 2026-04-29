@@ -3,7 +3,7 @@
 
 require("dotenv").config();
 
-// ── 전역 예외 핸들러 — 어떤 에러로 죽는지 로그에 남기고 앱 유지
+// ── 전역 예외 핸들러
 process.on("uncaughtException",  (err) => {
   console.error("💥 uncaughtException:", err.stack || err);
 });
@@ -34,23 +34,20 @@ function safeRequire(p) {
   catch (e) { console.error("❌ require 실패:", p, e.message); return null; }
 }
 
+// Art 플랫폼 전용 라우터만 로드
+// config / data / search 는 ESL 레거시 — 로드하지 않음
 const homeRouter        = safeRequire("./router/home");
+const rdfResourceRouter = safeRequire("./router/rdf-resource");
+const facetRouter       = safeRequire("./router/facet");
 const userRoutes        = safeRequire("./router/user");
 const adminRouter       = safeRequire("./router/admin");
 const inquiryRouter     = safeRequire("./router/inquiry");
 const policyRouter      = safeRequire("./router/policy");
 const threadRouter      = safeRequire("./router/thread");
-const rdfResourceRouter = safeRequire("./router/rdf-resource");
-const facetRouter       = safeRequire("./router/facet");
-const searchRouter      = safeRequire("./router/search");
-const dataRouter        = safeRequire("./router/data");
 const indexRouter       = safeRequire("./router/index");
 const publicRouter      = safeRequire("./router/public");
 
 console.log("📌 app.js 시작됨 (Art Platform)");
-
-// config 는 별도 (resetStructure 자동 실행 포함)
-try { require("./router/config"); } catch (e) { console.error("config load error:", e.message); }
 
 connect();
 console.log("✅ DB 연결 시도");
@@ -77,7 +74,7 @@ app.use((req, _res, next) => {
   next();
 });
 
-// ── Session (MemoryStore — MongoDB 권한 불필요)
+// ── Session
 const SESSION_LIFETIME_MS = parseInt(process.env.SESSION_LIFETIME_DAYS || "7", 10) * 86400 * 1000;
 
 app.set("trust proxy", 1);
@@ -111,16 +108,14 @@ app.use((req, res, next) => {
 // ── Shortcuts
 app.get("/login", (_req, res) => res.redirect("/user/login"));
 
-// ── Route mounts (null 체크: require 실패한 라우터는 skip)
-function useRouter(path, router) {
-  if (router) app.use(path, router);
-  else console.warn("⚠️  라우터 없음, 건너뜀:", path);
+// ── Route mounts
+function useRouter(mountPath, router) {
+  if (router) app.use(mountPath, router);
+  else console.warn("⚠️  라우터 없음, 건너뜀:", mountPath);
 }
 
 useRouter("/rdf-resource", rdfResourceRouter);
 useRouter("/facet",        facetRouter);
-useRouter("/search",       searchRouter);
-useRouter("/data",         dataRouter);
 useRouter("/policy",       policyRouter);
 useRouter("/admin",        adminRouter);
 useRouter("/user",         userRoutes);
