@@ -35,7 +35,7 @@ async function main() {
           size:        pick(SIZES,        i),
           mainColor:   pick(COLORS,       i),
           material:    [pick(MATERIALS,   i)],
-          style:       pick(STYLES,       i),
+          style:       [pick(STYLES,      i)],   // 배열로 저장
           theme:       [pick(THEMES,      i)],
       }}
 
