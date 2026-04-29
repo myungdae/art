@@ -79,19 +79,57 @@ block content
       .facet-sidebar { display: none !important; }
     }
 
-    /* ── Filter Panel ─────────────────────────────────────── */
+    /* ── Filter Panel (접기/펼치기) ──────────────────────────── */
     .filter-panel {
       background: #fff; border: 1px solid #e8e4da;
-      border-radius: 14px; padding: 16px 18px;
-      margin-bottom: 12px;
+      border-radius: 14px; margin-bottom: 8px;
+      overflow: hidden;
     }
+    /* 헤더 버튼 */
     .filter-group-title {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 11px 16px;
       font-size: 10px; font-weight: 800; color: #c9a227;
-      text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px;
+      text-transform: uppercase; letter-spacing: 1.8px;
+      cursor: pointer; user-select: none;
+      background: #fff;
+      border: none; width: 100%; text-align: left;
+      transition: background 0.15s;
     }
+    .filter-group-title:hover { background: #fdfaf2; }
+    .filter-group-title .fg-left { display: flex; align-items: center; gap: 6px; }
+    .filter-group-title .fg-badge {
+      background: #c9a227; color: #fff;
+      border-radius: 50%; width: 16px; height: 16px;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 9px; font-weight: 900; flex-shrink: 0;
+    }
+    .filter-group-title .fg-arrow {
+      font-size: 10px; color: #c9a227;
+      transition: transform 0.2s; display: inline-block;
+    }
+    .filter-panel.open .fg-arrow { transform: rotate(180deg); }
+    /* 패널 바디 — 애니메이션 */
+    .filter-panel-body {
+      max-height: 0; overflow: hidden;
+      transition: max-height 0.25s ease, padding 0.2s;
+      padding: 0 14px;
+    }
+    .filter-panel.open .filter-panel-body {
+      max-height: 320px; overflow-y: auto;
+      padding: 4px 14px 12px;
+      scrollbar-width: thin;
+      scrollbar-color: #d4af37 #f0ece0;
+    }
+    .filter-panel.open .filter-panel-body::-webkit-scrollbar { width: 4px; }
+    .filter-panel.open .filter-panel-body::-webkit-scrollbar-track { background: #f0ece0; }
+    .filter-panel.open .filter-panel-body::-webkit-scrollbar-thumb { background: #d4af37; border-radius: 4px; }
+    /* 색상 패널은 더 넓게 */
+    .filter-panel.open .filter-panel-body.color-body { max-height: 260px; }
+    /* 항목 */
     .filter-item {
       display: flex; align-items: center;
-      padding: 5px 6px; border-radius: 7px; cursor: pointer;
+      padding: 5px 4px; border-radius: 7px; cursor: pointer;
       transition: background 0.15s;
     }
     .filter-item:hover { background: #fdf8ee; }
@@ -391,32 +429,40 @@ block content
             input(type="hidden" name="sort" value=sort||"recent")
             if facetCfg && facetCfg.groups
               each g in facetCfg.groups
-                .filter-panel
-                  .filter-group-title= (facetIconMap[g.key]||'') + ' ' + g.label
-                  - var flist = (facets && facets[g.key]) || []
-                  - var slist = (selected && selected[g.key]) || []
+                - var flist = (facets && facets[g.key]) || []
+                - var slist = (selected && selected[g.key]) || []
+                - var selCount = slist.length
+                - var isOpen = selCount > 0
+                div(class='filter-panel' + (isOpen ? ' open' : '') data-panel=g.key)
+                  button.filter-group-title(type="button" onclick="togglePanel(this)")
+                    span.fg-left
+                      span= (facetIconMap[g.key]||'') + ' ' + g.label
+                      if selCount
+                        span.fg-badge= selCount
+                    span.fg-arrow ▼
                   if g.key === 'mainColor'
                     //- ── 색상 전용: 원형 스와치 그리드 ──
-                    form#colorFacetForm(method="GET" action=`/facet/${klass}` style="margin:0;padding:0;")
-                      input(type="hidden" name="q" value=q||"")
-                      input(type="hidden" name="limit" value=limit)
-                      input(type="hidden" name="sort" value=sort||"recent")
-                      if facetCfg && facetCfg.groups
-                        each og in facetCfg.groups
-                          if og.key !== 'mainColor'
-                            each sv in ((selected && selected[og.key]) || [])
-                              input(type="hidden" name=og.key value=sv)
-                      .color-swatch-grid
-                        each cp in colorPalette
-                          - var isColorSel = slist.indexOf(cp.name) !== -1
-                          - var colorCount = flist.find(function(f){ return f._id === cp.name })
-                          - var hasData = !!colorCount
-                          label.color-swatch(class=(isColorSel?'selected':'') + (hasData?'':' no-data') title=cp.name + (colorCount?' ('+colorCount.c+')':''))
-                            input(type="checkbox" name="mainColor" value=cp.name checked=isColorSel onchange="document.getElementById('colorFacetForm').submit()")
-                            .color-swatch-circle(style=`background:${cp.hex};` + (cp.name==='흰색'?'border:1.5px solid #ccc;':''))
-                            span.color-swatch-name= cp.name
+                    .filter-panel-body.color-body
+                      form#colorFacetForm(method="GET" action=`/facet/${klass}` style="margin:0;padding:0;")
+                        input(type="hidden" name="q" value=q||"")
+                        input(type="hidden" name="limit" value=limit)
+                        input(type="hidden" name="sort" value=sort||"recent")
+                        if facetCfg && facetCfg.groups
+                          each og in facetCfg.groups
+                            if og.key !== 'mainColor'
+                              each sv in ((selected && selected[og.key]) || [])
+                                input(type="hidden" name=og.key value=sv)
+                        .color-swatch-grid
+                          each cp in colorPalette
+                            - var isColorSel = slist.indexOf(cp.name) !== -1
+                            - var colorCount = flist.find(function(f){ return f._id === cp.name })
+                            - var hasData = !!colorCount
+                            label.color-swatch(class=(isColorSel?'selected':'') + (hasData?'':' no-data') title=cp.name + (colorCount?' ('+colorCount.c+')':''))
+                              input(type="checkbox" name="mainColor" value=cp.name checked=isColorSel onchange="document.getElementById('colorFacetForm').submit()")
+                              .color-swatch-circle(style=`background:${cp.hex};` + (cp.name==='흰색'?'border:1.5px solid #ccc;':''))
+                              span.color-swatch-name= cp.name
                   else
-                    div(style="max-height:240px; overflow-y:auto; scrollbar-width:thin;")
+                    .filter-panel-body
                       if flist.length
                         each f in flist
                           - var ck = slist.indexOf(f._id) !== -1
@@ -425,7 +471,7 @@ block content
                             span.filter-item-label= f._id
                             span.filter-item-count (#{f.c})
                       else
-                        p(style="font-size:12px;color:#ccc;padding:6px;") 항목 없음
+                        p(style="font-size:12px;color:#ccc;padding:6px 2px;") 항목 없음
 
         //- RIGHT: 카드 그리드
         div(style="flex:1; min-width:0;")
@@ -530,6 +576,12 @@ block content
           window.location.href = url.toString();
         };
       })();
+
+      // ── 패싯 패널 접기/펼치기
+      function togglePanel(btn) {
+        var panel = btn.closest('.filter-panel');
+        panel.classList.toggle('open');
+      }
 
       function toggleMobDD(btn) {
         var dd = btn.closest('.mob-facet-dd');
