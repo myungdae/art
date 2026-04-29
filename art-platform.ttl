@@ -1,0 +1,508 @@
+# baseURI: http://art.example.org/ontology/
+# imports: http://purl.org/dc/elements/1.1/
+
+@prefix : <http://art.example.org/ontology/> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix res: <http://art.example.org/resource/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+:
+  rdf:type owl:Ontology ;
+  rdfs:label "Art Platform Ontology"@en ;
+  rdfs:label "미술 플랫폼 온톨로지"@ko ;
+  owl:imports dc: ;
+.
+<http://art.example.org/ontology/1970s_단색화>
+  rdf:type owl:Class ;
+  rdfs:label "s 단색화"^^xsd:string ;
+  rdfs:subClassOf :Movement ;
+.
+:Acrylic
+  rdf:type owl:Class ;
+  rdfs:label "Acrylic"^^xsd:string ;
+  rdfs:subClassOf :Material ;
+.
+:Artist
+  rdf:type owl:Class ;
+.
+:Artist-subClassOf-owl_Thing
+  rdf:type rdf:Statement ;
+  rdf:object owl:Thing ;
+  rdf:predicate rdfs:subClassOf ;
+  rdf:subject :Artist ;
+  rdfs:label "Artist-sub class of-owl Thing"^^xsd:string ;
+.
+:Artist_Country
+  rdf:type owl:Class ;
+  rdfs:label "Artist Country"^^xsd:string ;
+  rdfs:subClassOf owl:Thing ;
+.
+:Artwork
+  rdf:type owl:Class ;
+.
+:Artwork-subClassOf-owl_Thing
+  rdf:type rdf:Statement ;
+  rdf:object owl:Thing ;
+  rdf:predicate rdfs:subClassOf ;
+  rdf:subject :Artwork ;
+  rdfs:label "Artwork-sub class of-owl Thing"^^xsd:string ;
+.
+:Artwork_Color
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain :Artwork ;
+  rdfs:label "Artwork Color"^^xsd:string ;
+  rdfs:range :Color ;
+  owl:inverseOf :Color_Artwork ;
+.
+:Artwork_Orientation
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain :Artwork ;
+  rdfs:label "Artwork Orientation"^^xsd:string ;
+  rdfs:range :Orientation ;
+.
+:Artwork_Theme
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain :Artwork ;
+  rdfs:label "Artwork Theme"^^xsd:string ;
+  rdfs:range :Theme ;
+  owl:inverseOf :Theme_Artwork ;
+.
+:AuctionHouse
+  rdf:type owl:Class ;
+  rdfs:label "Auction house"^^xsd:string ;
+  rdfs:subClassOf owl:Thing ;
+.
+:Bronze
+  rdf:type owl:Class ;
+  rdfs:label "Bronze"^^xsd:string ;
+  rdfs:subClassOf :Material ;
+.
+:Canvas
+  rdf:type owl:Class ;
+  rdfs:label "Canvas"^^xsd:string ;
+  rdfs:subClassOf :Material ;
+.
+:Color
+  rdf:type owl:Class ;
+  rdfs:label "Color"^^xsd:string ;
+  rdfs:subClassOf owl:Thing ;
+.
+:Color_Artwork
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain :Color ;
+  rdfs:label "Color Artwork"^^xsd:string ;
+  rdfs:range :Artwork ;
+  owl:inverseOf :Artwork_Color ;
+.
+:Exhibition
+  rdf:type owl:Class ;
+.
+:Gallery
+  rdf:type owl:Class ;
+.
+:Genre
+  rdf:type owl:Class ;
+.
+:Genre_Artwork
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain :Genre ;
+  rdfs:label "Genre Artwork"^^xsd:string ;
+  rdfs:range :Artwork ;
+  owl:inverseOf :belongsToGenre ;
+.
+:Glass
+  rdf:type owl:Class ;
+  rdfs:label "Glass"^^xsd:string ;
+  rdfs:subClassOf :Material ;
+.
+:Hanji
+  rdf:type owl:Class ;
+  rdfs:label "Hanji"^^xsd:string ;
+  rdfs:subClassOf :Material ;
+.
+:Horizontal
+  rdf:type owl:Class ;
+  rdfs:label "Horizontal"^^xsd:string ;
+  rdfs:subClassOf :Orientation ;
+.
+:Ink
+  rdf:type owl:Class ;
+  rdfs:label "Ink"^^xsd:string ;
+  rdfs:subClassOf :Medium ;
+.
+:Material
+  rdf:type owl:Class ;
+.
+:Material_Artwork
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain :Material ;
+  rdfs:label "Material Artwork"^^xsd:string ;
+  rdfs:range :Artwork ;
+  owl:inverseOf :usesMaterial ;
+.
+:Medium
+  rdf:type owl:Class ;
+.
+:Medium_
+  rdf:type owl:Class ;
+  rdfs:label "Medium "^^xsd:string ;
+  rdfs:subClassOf :Size ;
+.
+:Medium_Artwork
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain :Medium ;
+  rdfs:label "Medium Artwork"^^xsd:string ;
+  rdfs:range :Artwork ;
+  owl:inverseOf :usesMedium ;
+.
+:Mixed_Media
+  rdf:type owl:Class ;
+  rdfs:label "Mixed Media"^^xsd:string ;
+  rdfs:subClassOf :Medium ;
+.
+:Movement
+  rdf:type owl:Class ;
+  rdfs:label "Movement"^^xsd:string ;
+  rdfs:subClassOf owl:Thing ;
+.
+:Oil_Painting
+  rdf:type owl:Class ;
+  rdfs:label "Oil Painting"^^xsd:string ;
+  rdfs:subClassOf :Medium ;
+.
+:Orientation
+  rdf:type owl:Class ;
+  rdfs:label "Orientation"^^xsd:string ;
+  rdfs:subClassOf owl:Thing ;
+.
+:Oversized
+  rdf:type owl:Class ;
+  rdfs:label "Oversized"^^xsd:string ;
+  rdfs:subClassOf :Size ;
+.
+:Photography
+  rdf:type owl:Class ;
+  rdfs:label "Photography"^^xsd:string ;
+  rdfs:subClassOf :Medium ;
+.
+:Place
+  rdf:type owl:Class ;
+.
+:Price
+  rdf:type owl:Class ;
+  rdfs:label "Price"^^xsd:string ;
+  rdfs:subClassOf owl:Thing ;
+.
+:PriceRecord
+  rdf:type owl:Class ;
+.
+:ProvenanceRecord
+  rdf:type owl:Class ;
+.
+:Resin
+  rdf:type owl:Class ;
+  rdfs:label "Resin"^^xsd:string ;
+  rdfs:subClassOf :Material ;
+.
+:Size
+  rdf:type owl:Class ;
+  rdfs:label "Size"^^xsd:string ;
+  rdfs:subClassOf owl:Thing ;
+.
+:Small
+  rdf:type owl:Class ;
+  rdfs:label "Small"^^xsd:string ;
+  rdfs:subClassOf :Size ;
+.
+:Square
+  rdf:type owl:Class ;
+  rdfs:label "Square"^^xsd:string ;
+  rdfs:subClassOf :Orientation ;
+.
+:Stainless_Steel
+  rdf:type owl:Class ;
+  rdfs:label "Stainless Steel"^^xsd:string ;
+  rdfs:subClassOf :Material ;
+.
+:Steel
+  rdf:type owl:Class ;
+  rdfs:label "Steel"^^xsd:string ;
+  rdfs:subClassOf :Material ;
+.
+:Style
+  rdf:type owl:Class ;
+  dc:description "양식/사조 클래스"^^xsd:string ;
+.
+:Theme
+  rdf:type owl:Class ;
+  rdfs:label "Theme"^^xsd:string ;
+  rdfs:subClassOf owl:Thing ;
+.
+:Theme_Artwork
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain :Theme ;
+  rdfs:label "Theme Artwork"^^xsd:string ;
+  rdfs:range :Artwork ;
+  owl:inverseOf :Artwork_Theme ;
+.
+:Vertical
+  rdf:type owl:Class ;
+  rdfs:label "Vertical"^^xsd:string ;
+  rdfs:subClassOf :Orientation ;
+.
+:Video
+  rdf:type owl:Class ;
+  rdfs:label "Video"^^xsd:string ;
+  rdfs:subClassOf :Medium ;
+.
+:Wood
+  rdf:type owl:Class ;
+  rdfs:label "Wood"^^xsd:string ;
+  rdfs:subClassOf :Material ;
+.
+:artistName
+  rdf:type owl:DatatypeProperty ;
+  rdfs:domain :Artist ;
+  rdfs:range xsd:string ;
+.
+:artworkTitle
+  rdf:type owl:DatatypeProperty ;
+  rdfs:domain :Artwork ;
+  rdfs:range xsd:string ;
+.
+:belongsToGenre
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain :Artwork ;
+  rdfs:range :Genre ;
+  owl:inverseOf :Genre_Artwork ;
+.
+:belongsToStyle
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain :Artwork ;
+  rdfs:range :Style ;
+  owl:inverseOf :styleHasArtwork ;
+.
+:created
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain :Artist ;
+  rdfs:label "created"^^xsd:string ;
+  rdfs:range :Artwork ;
+  owl:inverseOf :createdBy ;
+.
+:createdBy
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain :Artwork ;
+  rdfs:range :Artist ;
+  owl:inverseOf :created ;
+.
+:creationYear
+  rdf:type owl:DatatypeProperty ;
+  rdfs:domain :Artwork ;
+  rdfs:range xsd:gYear ;
+.
+:exhibitedIn
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain :Artwork ;
+  rdfs:range :Exhibition ;
+  owl:inverseOf :includesArtwork ;
+.
+:hasPriceRecord
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain :Artwork ;
+  rdfs:range :PriceRecord ;
+.
+:hasProvenance
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain :Artwork ;
+  rdfs:range :ProvenanceRecord ;
+.
+:heldBy
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain :Exhibition ;
+  rdfs:range :Gallery ;
+  owl:inverseOf :holds ;
+.
+:holds
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain :Gallery ;
+  rdfs:label "holds"^^xsd:string ;
+  rdfs:range :Exhibition ;
+  owl:inverseOf :heldBy ;
+.
+:includesArtwork
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain :Exhibition ;
+  rdfs:label "includes artwork"^^xsd:string ;
+  rdfs:range :Artwork ;
+  owl:inverseOf :exhibitedIn ;
+.
+:priceDate
+  rdf:type owl:DatatypeProperty ;
+  rdfs:domain :PriceRecord ;
+  rdfs:range xsd:date ;
+.
+:priceValue
+  rdf:type owl:DatatypeProperty ;
+  rdfs:domain :PriceRecord ;
+  rdfs:range xsd:decimal ;
+.
+:styleHasArtwork
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain :Style ;
+  rdfs:label "style has artwork"^^xsd:string ;
+  rdfs:range :Artwork ;
+  owl:inverseOf :belongsToStyle ;
+.
+:usesMaterial
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain :Artwork ;
+  rdfs:range :Material ;
+  owl:inverseOf :Material_Artwork ;
+.
+:usesMedium
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain :Artwork ;
+  rdfs:range :Medium ;
+  owl:inverseOf :Medium_Artwork ;
+.
+:기억
+  rdf:type owl:Class ;
+  rdfs:label "기억"^^xsd:string ;
+  rdfs:subClassOf :Theme ;
+.
+:노동
+  rdf:type owl:Class ;
+  rdfs:label "노동"^^xsd:string ;
+  rdfs:subClassOf :Theme ;
+.
+:단색화
+  rdf:type owl:Class ;
+  rdfs:label "단색화"^^xsd:string ;
+  rdfs:subClassOf :Style ;
+.
+:도시
+  rdf:type owl:Class ;
+  rdfs:label "도시"^^xsd:string ;
+  rdfs:subClassOf :Theme ;
+.
+:미디어아트
+  rdf:type owl:Class ;
+  rdfs:label "미디어아트"^^xsd:string ;
+  rdfs:subClassOf :Genre ;
+.
+:민중미술
+  rdf:type owl:Class ;
+  rdfs:label "민중미술"^^xsd:string ;
+  rdfs:subClassOf :Style ;
+.
+:민중미술_1980s
+  rdf:type owl:Class ;
+  rdfs:label "민중미술 1980s"^^xsd:string ;
+  rdfs:subClassOf :Movement ;
+.
+:사진
+  rdf:type owl:Class ;
+  rdfs:label "사진"^^xsd:string ;
+  rdfs:subClassOf :Genre ;
+.
+:설치
+  rdf:type owl:Class ;
+  rdfs:label "설치"^^xsd:string ;
+  rdfs:subClassOf :Genre ;
+.
+:여성
+  rdf:type owl:Class ;
+  rdfs:label "여성"^^xsd:string ;
+  rdfs:subClassOf :Theme ;
+.
+:인상주의
+  rdf:type owl:Class ;
+  rdfs:label "인상주의"^^xsd:string ;
+  rdfs:subClassOf :Style ;
+.
+:자연
+  rdf:type owl:Class ;
+  rdfs:label "자연"^^xsd:string ;
+  rdfs:subClassOf :Theme ;
+.
+:전쟁
+  rdf:type owl:Class ;
+  rdfs:label "전쟁"^^xsd:string ;
+  rdfs:subClassOf :Theme ;
+.
+:조각
+  rdf:type owl:Class ;
+  rdfs:label "조각"^^xsd:string ;
+  rdfs:subClassOf :Genre ;
+.
+:추상표현주의
+  rdf:type owl:Class ;
+  rdfs:label "추상표현주의"^^xsd:string ;
+  rdfs:subClassOf :Style ;
+.
+:판화
+  rdf:type owl:Class ;
+  rdfs:label "판화"^^xsd:string ;
+  rdfs:subClassOf :Genre ;
+.
+:한국_근대미술
+  rdf:type owl:Class ;
+  rdfs:label "한국 근대미술"^^xsd:string ;
+  rdfs:subClassOf :Movement ;
+.
+:한국화
+  rdf:type owl:Class ;
+  rdfs:label "한국화"^^xsd:string ;
+  rdfs:subClassOf :Style ;
+.
+:회화
+  rdf:type owl:Class ;
+  rdfs:label "회화"^^xsd:string ;
+  rdfs:subClassOf :Genre ;
+.
+res:Artwork_001
+  rdf:type :Artwork ;
+  :artworkTitle "어디서 무엇이 되어 다시 만나랴" ;
+  :belongsToGenre res:Painting ;
+  :belongsToStyle res:Dansaekhwa ;
+  :createdBy res:Kim_Whanki ;
+  :creationYear "1970"^^xsd:gYear ;
+  :exhibitedIn res:ExampleExhibition ;
+  :hasPriceRecord res:PriceRecord_001 ;
+  :usesMaterial res:Canvas ;
+  :usesMedium res:Oil ;
+.
+res:Canvas
+  rdf:type :Material ;
+.
+res:Dansaekhwa
+  rdf:type :Style ;
+.
+res:ExampleExhibition
+  rdf:type :Exhibition ;
+  :heldBy res:ExampleGallery ;
+.
+res:ExampleGallery
+  rdf:type :Gallery ;
+.
+res:Kim_Whanki
+  rdf:type :Artist ;
+  :artistName "김환기" ;
+.
+res:Oil
+  rdf:type :Medium ;
+.
+res:Painting
+  rdf:type :Genre ;
+.
+res:PriceRecord_001
+  rdf:type :PriceRecord ;
+  :priceDate "2024-10-10"^^xsd:date ;
+  :priceValue "1200000000"^^xsd:decimal ;
+.
+dc:description
+  rdfs:subPropertyOf dc:format ;
+.

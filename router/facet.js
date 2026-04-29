@@ -25,45 +25,72 @@ const coalesce = (...fields) => {
  *  - array: 배열 필드이면 true (unwind 필요)
  */
 const FACET_MAP = {
-  Job_Vacancies: {
+  // ── 작품 ─────────────────────────────────────────────────────────────────
+  Artworks: {
     groups: [
-      { key: "country", aliases: ["Country"], label: "Country" },
-      { key: "studentType", aliases: ["StudentType"], label: "Student Type" },
-      {
-        key: "teachingArea",
-        aliases: ["Teaching_Area"],
-        label: "Teaching Area",
-        array: true,
-      },
+      { key: "genre",    aliases: ["Genre"],    label: "장르",   labelEn: "Genre",    array: false },
+      { key: "style",    aliases: ["Style"],    label: "양식",   labelEn: "Style",    array: false },
+      { key: "medium",   aliases: ["Medium"],   label: "매체",   labelEn: "Medium",   array: false },
+      { key: "material", aliases: ["Material"], label: "재료",   labelEn: "Material", array: true  },
+      { key: "theme",    aliases: ["Theme"],    label: "테마",   labelEn: "Theme",    array: true  },
+      { key: "movement", aliases: ["Movement"], label: "운동",   labelEn: "Movement", array: false },
     ],
-    searchFields: ["_label", "title", "_description", "description"],
-    coll: (klass) => `${klass}_RDF`,
+    searchFields: ["_label", "title", "artworkTitle", "artistName", "_description", "description"],
+    coll: () => "Artworks_RDF",
+    sortDefault: "alpha-asc",
   },
-  Job_Seekers: {
+
+  // ── 작가 ─────────────────────────────────────────────────────────────────
+  Artists: {
     groups: [
-      { key: "Nationality", aliases: ["nationality"], label: "Nationality" },
-      { key: "Preferred_Work_Location", aliases: ["preferredWorkLocation", "preferred_work_location"], label: "Preferred Work Location" },
-      { key: "Major", aliases: ["major"], label: "Major" },
+      { key: "country",  aliases: ["Artist_Country"], label: "국가",   labelEn: "Country",   array: false },
+      { key: "movement", aliases: ["Movement"],        label: "운동",   labelEn: "Movement",  array: false },
+      { key: "genre",    aliases: ["Genre"],           label: "장르",   labelEn: "Genre",     array: true  },
     ],
-    searchFields: ["_label", "title", "_description", "description"],
-    coll: (klass) => `${klass}_RDF`,
+    searchFields: ["_label", "artistName", "name", "title", "_description"],
+    coll: () => "Artists_RDF",
+    sortDefault: "alpha-asc",
   },
-  Online_Tutors: {
+
+  // ── 갤러리 ────────────────────────────────────────────────────────────────
+  Galleries: {
     groups: [
-      { key: "Expertise", label: "Expertise", array: true },
-      { key: "Tutoring_Experience", label: "Tutoring Experience" },
-      { key: "Gender", label: "Gender" },
+      { key: "country", aliases: ["Country"], label: "국가",   labelEn: "Country",  array: false },
+      { key: "genre",   aliases: ["Genre"],   label: "전문장르", labelEn: "Genre",   array: true  },
     ],
-    searchFields: ["_label", "title", "_description", "description"],
-    coll: (klass) => `${klass}_RDF`,
+    searchFields: ["_label", "name", "title", "_description", "description"],
+    coll: () => "Galleries_RDF",
+    sortDefault: "alpha-asc",
+  },
+
+  // ── 전시 ─────────────────────────────────────────────────────────────────
+  Exhibitions: {
+    groups: [
+      { key: "genre",   aliases: ["Genre"],   label: "장르",   labelEn: "Genre",   array: true  },
+      { key: "country", aliases: ["Country"], label: "국가",   labelEn: "Country", array: false },
+    ],
+    searchFields: ["_label", "name", "title", "_description", "description"],
+    coll: () => "Exhibitions_RDF",
+    sortDefault: "recent",
+  },
+
+  // ── 경매 ─────────────────────────────────────────────────────────────────
+  Auctions: {
+    groups: [
+      { key: "auctionHouse", aliases: ["AuctionHouse"], label: "경매사",  labelEn: "Auction House", array: false },
+      { key: "genre",        aliases: ["Genre"],        label: "장르",    labelEn: "Genre",         array: false },
+    ],
+    searchFields: ["_label", "title", "artworkTitle", "artistName", "_description"],
+    coll: () => "Auctions_RDF",
+    sortDefault: "recent",
   },
 };
 
 /* -------------------- facet 엔드포인트 -------------------- */
 router.get("/:klass", async (req, res, next) => {
   try {
-    const klass = req.params.klass; // ex) "Online_Tutors"
-    const spec = FACET_MAP[klass] || FACET_MAP.Job_Vacancies;
+    const klass = req.params.klass; // ex) "Artworks"
+    const spec = FACET_MAP[klass] || FACET_MAP.Artworks;
     const coll = spec.coll ? spec.coll(klass) : `${klass}_RDF`;
 
     const db = mongoose.connection.db;

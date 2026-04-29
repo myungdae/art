@@ -22,33 +22,19 @@ try {
   console.error("SMTP verify failed at boot:", e?.message || e);
 }
 
-// Routers
-const homeRouter = require("./router/home");
-const userRoutes = require("./router/user");
-const adminRouter = require("./router/admin");
-const jobVacancyRouter = require("./router/jobVacancy");
-const jobSeekerRouter = require("./router/jobSeeker");
-const applicationRouter = require("./router/application");
-const portoneRoutes = require("./router/portone");
-const onlineTutorRouter = require("./router/onlineTutor");
-const tutorAccessRouter = require("./router/tutorAccess");
+// ── Routers
+const homeRouter      = require("./router/home");
+const userRoutes      = require("./router/user");
+const adminRouter     = require("./router/admin");
+const inquiryRouter   = require("./router/inquiry");
+const policyRouter    = require("./router/policy");
+const threadRouter    = require("./router/thread");
 const rdfResourceRouter = require("./router/rdf-resource");
-const resourceRouter = require("./router/resource");
-const resumeAccessRouter = require("./router/resume-access");
-const threadRouter = require("./router/thread");
-const inquiryRouter = require("./router/inquiry");
-const policyRouter = require("./router/policy");
-const matchingRouter = require("./router/matching");
 
-console.log("📌 app.js 시작됨");
+console.log("📌 app.js 시작됨 (Art Platform)");
 require("./router/config");
 connect();
 console.log("✅ DB 연결 시도");
-
-// Cron Scheduler 초기화 (DB 연결 후)
-const { initScheduler } = require('./jobs/scheduler');
-const scheduledJobs = initScheduler();
-console.log("✅ Cron Scheduler 초기화 완료");
 
 // ── App settings
 app.set("views", path.join(__dirname, "views"));
@@ -72,116 +58,62 @@ app.use((req, _res, next) => {
   next();
 });
 
-// ── Headers
-app.use((req, res, next) => {
-  res.set("Content-Language", "en");
-  next();
-});
-
-// ── Session (MUST be before flash)
-// Session configuration with configurable timeout
-const SESSION_LIFETIME_DAYS = parseInt(process.env.SESSION_LIFETIME_DAYS || '7', 10);
+// ── Session
+const SESSION_LIFETIME_DAYS    = parseInt(process.env.SESSION_LIFETIME_DAYS || "7", 10);
 const SESSION_LIFETIME_SECONDS = SESSION_LIFETIME_DAYS * 24 * 60 * 60;
-const SESSION_LIFETIME_MS = SESSION_LIFETIME_SECONDS * 1000;
-
-console.log(`🔐 Session lifetime configured: ${SESSION_LIFETIME_DAYS} days`);
+const SESSION_LIFETIME_MS      = SESSION_LIFETIME_SECONDS * 1000;
 
 app.set("trust proxy", 1);
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || "change-me",
+    secret: process.env.SESSION_SECRET || "art-platform-secret",
     resave: false,
     saveUninitialized: false,
-    rolling: true, // Reset maxAge on every request (activity-based session)
+    rolling: true,
     store: MongoStore.create({
       mongoUrl: process.env.MONGO_URI,
-      ttl: SESSION_LIFETIME_SECONDS, // Configurable session lifetime
-      touchAfter: 24 * 3600 // Lazy session update (once per 24 hours)
+      ttl: SESSION_LIFETIME_SECONDS,
+      touchAfter: 24 * 3600,
     }),
-    cookie: { 
-      httpOnly: true, 
-      sameSite: "lax", 
-      secure: process.env.NODE_ENV === 'production', // Enable secure cookies in production
-      maxAge: SESSION_LIFETIME_MS // Configurable cookie lifetime
+    cookie: {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      maxAge: SESSION_LIFETIME_MS,
     },
   })
 );
 
-// ── Session Activity Check (Auto-logout for inactive sessions)
-app.use((req, res, next) => {
-  if (req.session && (req.session.user || req.session.isAdmin)) {
-    const now = Date.now();
-    const lastActivity = req.session.lastActivity || now;
-    const maxInactivity = SESSION_LIFETIME_MS; // Use configured session lifetime
-    
-    // Check if session has been inactive for too long
-    if (now - lastActivity > maxInactivity) {
-      const username = req.session.user?.username || req.session.user?.email || 'Admin';
-      const inactiveDays = Math.floor((now - lastActivity) / (24 * 60 * 60 * 1000));
-      console.log(`⚠️ Session expired for user ${username} (inactive for ${inactiveDays} days)`);
-      
-      const isAdminSession = req.session.isAdmin;
-      req.session.destroy((err) => {
-        if (err) console.error('Session destroy error:', err);
-      });
-      
-      const redirectUrl = isAdminSession ? '/admin/login' : '/user/login';
-      return res.redirect(`${redirectUrl}?message=Session expired. Please login again.`);
-    }
-    
-    // Update last activity timestamp
-    req.session.lastActivity = now;
-  }
-  next();
-});
-
-// ── Flash & locals (ONLY once, after session)
+// ── Flash & locals
 app.use(flash());
 app.use((req, res, next) => {
-  res.locals.currentPage = req.path;
-  res.locals.session = req.session;
-  res.locals.message = req.flash("message")[0];
-  res.locals.success = req.flash("success")[0];
-  res.locals.error = req.flash("error")[0];
-  res.locals.showPayment = req.flash("showPayment")[0] === "true";
-
-  // Global brand for header/title
-  res.locals.siteBrand = process.env.SITE_BRAND || "ESL Plus";
+  res.locals.currentPage  = req.path;
+  res.locals.session      = req.session;
+  res.locals.message      = req.flash("message")[0];
+  res.locals.success      = req.flash("success")[0];
+  res.locals.error        = req.flash("error")[0];
+  res.locals.siteBrand    = process.env.SITE_BRAND      || "ART+";
   res.locals.siteBrandLink = process.env.SITE_BRAND_LINK || "/";
-  res.locals.pageTitle = res.locals.pageTitle || res.locals.siteBrand;
+  res.locals.pageTitle    = res.locals.pageTitle || res.locals.siteBrand;
   next();
 });
 
 // ── Shortcuts
 app.get("/login", (_req, res) => res.redirect("/user/login"));
 
-// ── Router mounts
-app.use("/resource", resourceRouter);
+// ── Route mounts
 app.use("/rdf-resource", rdfResourceRouter);
-app.use("/matching", matchingRouter);
-
-app.use(jobSeekerRouter);
-app.use(jobVacancyRouter);
-app.use(applicationRouter);
-app.use(onlineTutorRouter);
-
-app.use("/policy", policyRouter);
-app.use("/portone", portoneRoutes);
-app.use("/resume-access", resumeAccessRouter);
-app.use("/tutor-access", tutorAccessRouter);
-app.use("/admin", adminRouter);
-app.use("/facet", require("./router/facet"));
-app.use("/api", require("./router/mobileApi")); // Mobile JSON API
-app.use("/search", require("./router/search"));
-app.use("/intro", require("./router/intro"));
-app.use("/sitemap", require("./router/sitemap"));
-app.use("/data", require("./router/data"));
-app.use("/user", userRoutes);
-app.use("/thread", threadRouter);
-app.use("/", inquiryRouter);
-app.use("/", require("./router/index"));
-app.use("/", require("./router/public"));
-app.use("/", homeRouter);
+app.use("/facet",   require("./router/facet"));
+app.use("/search",  require("./router/search"));
+app.use("/data",    require("./router/data"));
+app.use("/policy",  policyRouter);
+app.use("/admin",   adminRouter);
+app.use("/user",    userRoutes);
+app.use("/thread",  threadRouter);
+app.use("/",        inquiryRouter);
+app.use("/",        require("./router/index"));
+app.use("/",        require("./router/public"));
+app.use("/",        homeRouter);
 
 // ── 404
 app.use((req, res) => {
@@ -201,7 +133,7 @@ app.use((err, req, res, next) => {
 
 // ── Start
 app.listen(app.get("port"), () => {
-  console.log(`✅ Listening on port ${app.get("port")}`);
+  console.log(`✅ Art Platform listening on port ${app.get("port")}`);
 });
 
 module.exports = app;
