@@ -9,252 +9,240 @@ block content
   - var TS = Array.isArray(topStyles)      ? topStyles      : [];
 
   style.
-    /* ── 홈 전용 스타일 ──────────────────────────────── */
     body { background: #0d0d0d; }
 
-    /* Hero */
+    /* ── Hero ────────────────────────────────────────────── */
     .hero-section {
       position: relative;
-      min-height: 480px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
+      padding: 56px 24px 48px;
       background: linear-gradient(135deg, #0d0d0d 0%, #1a1200 50%, #0d0d0d 100%);
       border-bottom: 1px solid #1a1a1a;
+      text-align: center;
     }
     .hero-bg-grid {
-      position: absolute; inset: 0;
+      position: absolute; inset: 0; pointer-events: none;
       background-image:
         linear-gradient(rgba(212,175,55,0.04) 1px, transparent 1px),
         linear-gradient(90deg, rgba(212,175,55,0.04) 1px, transparent 1px);
       background-size: 48px 48px;
     }
-    .hero-content {
-      position: relative; z-index: 2;
-      text-align: center; padding: 60px 24px;
-      max-width: 800px;
-    }
+    .hero-inner { position: relative; z-index: 2; max-width: 700px; margin: 0 auto; }
     .hero-badge {
       display: inline-flex; align-items: center; gap: 8px;
-      background: rgba(212,175,55,0.1);
-      border: 1px solid rgba(212,175,55,0.3);
-      border-radius: 50px; padding: 6px 18px;
-      font-size: 12px; font-weight: 700; color: #d4af37;
-      letter-spacing: 2px; text-transform: uppercase;
-      margin-bottom: 24px;
+      background: rgba(212,175,55,0.1); border: 1px solid rgba(212,175,55,0.3);
+      border-radius: 50px; padding: 5px 16px;
+      font-size: 11px; font-weight: 700; color: #d4af37;
+      letter-spacing: 2px; text-transform: uppercase; margin-bottom: 20px;
     }
     .hero-title {
-      font-size: clamp(2.4rem, 6vw, 4rem);
-      font-weight: 900; color: #fff; line-height: 1.15;
-      margin-bottom: 16px; letter-spacing: -1px;
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 900; color: #fff; line-height: 1.2;
+      margin-bottom: 12px; letter-spacing: -1px;
     }
     .hero-title span { color: #d4af37; }
     .hero-sub {
-      font-size: 1.1rem; color: rgba(255,255,255,0.5);
-      margin-bottom: 40px; line-height: 1.7;
+      font-size: 1rem; color: rgba(255,255,255,0.45);
+      margin-bottom: 32px; line-height: 1.7;
     }
-    .hero-cta-row {
-      display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
-    }
-    .hero-cta-primary {
-      display: inline-flex; align-items: center; gap: 8px;
+    .hero-cta-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    .hero-btn-gold {
+      display: inline-flex; align-items: center; gap: 7px;
       background: #d4af37; color: #0d0d0d;
-      padding: 14px 32px; border-radius: 12px;
-      font-weight: 800; font-size: 15px; text-decoration: none;
+      padding: 12px 28px; border-radius: 10px;
+      font-weight: 800; font-size: 14px; text-decoration: none;
       transition: background 0.2s, transform 0.2s;
     }
-    .hero-cta-primary:hover { background: #c9a227; transform: translateY(-2px); color: #0d0d0d; }
-    .hero-cta-secondary {
-      display: inline-flex; align-items: center; gap: 8px;
-      background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.8);
-      padding: 14px 28px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
-      font-weight: 700; font-size: 15px; text-decoration: none;
+    .hero-btn-gold:hover { background: #c9a227; transform: translateY(-2px); color: #0d0d0d; }
+    .hero-btn-ghost {
+      display: inline-flex; align-items: center; gap: 7px;
+      background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.75);
+      padding: 12px 24px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);
+      font-weight: 700; font-size: 14px; text-decoration: none;
       transition: all 0.2s;
     }
-    .hero-cta-secondary:hover { background: rgba(255,255,255,0.1); color: #fff; transform: translateY(-2px); }
+    .hero-btn-ghost:hover { background: rgba(255,255,255,0.1); color: #fff; transform: translateY(-2px); }
 
-    /* Stats 바 */
-    .stats-bar {
-      background: #111; border-bottom: 1px solid #1a1a1a;
-    }
+    /* ── Stats bar ────────────────────────────────────────── */
+    .stats-bar { background: #111; border-bottom: 1px solid #1a1a1a; }
     .stats-bar-inner {
-      max-width: 1100px; margin: 0 auto;
+      max-width: 1340px; margin: 0 auto;
       display: flex; justify-content: center; flex-wrap: wrap;
-      padding: 0;
     }
     .stat-item {
       display: flex; flex-direction: column; align-items: center;
-      padding: 24px 40px; text-decoration: none;
+      padding: 20px 36px; text-decoration: none;
       border-right: 1px solid #1a1a1a;
-      transition: background 0.2s;
-      flex: 1; min-width: 140px;
+      transition: background 0.2s; flex: 1; min-width: 120px;
     }
     .stat-item:last-child { border-right: none; }
     .stat-item:hover { background: rgba(212,175,55,0.05); }
     .stat-num {
-      font-size: 2.2rem; font-weight: 900; color: #d4af37;
-      font-variant-numeric: tabular-nums; line-height: 1;
-      margin-bottom: 6px;
+      font-size: 2rem; font-weight: 900; color: #d4af37;
+      font-variant-numeric: tabular-nums; line-height: 1; margin-bottom: 5px;
     }
     .stat-lbl {
-      font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.4);
+      font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.35);
       text-transform: uppercase; letter-spacing: 1.5px;
     }
 
-    /* 섹션 공통 */
-    .home-section {
-      max-width: 1280px; margin: 0 auto; padding: 64px 24px;
-    }
-    .section-header {
-      display: flex; align-items: baseline; justify-content: space-between;
-      margin-bottom: 32px;
-    }
-    .section-title {
-      font-size: 1.5rem; font-weight: 900; color: #fff;
-      display: flex; align-items: center; gap: 10px;
-    }
-    .section-title .dot { color: #d4af37; }
-    .section-more {
-      font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.3);
-      text-decoration: none; transition: color 0.2s;
-    }
-    .section-more:hover { color: #d4af37; }
-    .section-divider {
-      border: none; border-top: 1px solid #1a1a1a; margin: 0;
-    }
-
-    /* 작품 카드 그리드 */
-    .artwork-grid {
+    /* ── 2-column layout ─────────────────────────────────── */
+    .home-wrap {
+      max-width: 1340px; margin: 0 auto;
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-      gap: 20px;
+      grid-template-columns: 280px 1fr;
+      gap: 28px;
+      padding: 32px 24px 64px;
+      align-items: start;
     }
-    .artwork-card {
-      background: #111; border: 1px solid #1e1e1e;
-      border-radius: 16px; overflow: hidden;
-      text-decoration: none; display: block;
-      transition: transform 0.25s, border-color 0.25s, box-shadow 0.25s;
+    @media (max-width: 900px) {
+      .home-wrap { grid-template-columns: 1fr; }
+      .home-sidebar { display: none; }
     }
-    .artwork-card:hover {
-      transform: translateY(-6px);
-      border-color: #d4af37;
-      box-shadow: 0 12px 40px rgba(212,175,55,0.15);
-    }
-    .artwork-img {
-      width: 100%; aspect-ratio: 4/3; object-fit: cover;
-      background: linear-gradient(135deg, #1a1a1a 0%, #252525 100%);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 3rem;
-    }
-    .artwork-img-placeholder {
-      width: 100%; aspect-ratio: 4/3;
-      background: linear-gradient(135deg, #141414 0%, #1f1a00 100%);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 3rem;
-    }
-    .artwork-body { padding: 16px; }
-    .artwork-title {
-      font-size: 15px; font-weight: 800; color: #fff;
-      margin-bottom: 6px; white-space: nowrap;
-      overflow: hidden; text-overflow: ellipsis;
-    }
-    .artwork-meta {
-      font-size: 12px; color: rgba(255,255,255,0.4);
-      margin-bottom: 10px; display: flex; gap: 8px; flex-wrap: wrap;
-    }
-    .artwork-tags { display: flex; flex-wrap: wrap; gap: 6px; }
-    .art-tag {
-      display: inline-block; padding: 3px 10px;
-      background: rgba(212,175,55,0.08);
-      border: 1px solid rgba(212,175,55,0.2);
-      border-radius: 50px; font-size: 11px;
-      font-weight: 700; color: #d4af37; text-decoration: none;
-      transition: background 0.2s;
-    }
-    .art-tag:hover { background: rgba(212,175,55,0.18); color: #d4af37; }
 
-    /* 작가 카드 */
-    .artist-grid {
+    /* ── Sidebar ─────────────────────────────────────────── */
+    .home-sidebar { position: sticky; top: 80px; }
+    .sidebar-section {
+      background: #111; border: 1px solid #1e1e1e;
+      border-radius: 16px; padding: 20px; margin-bottom: 16px;
+    }
+    .sidebar-title {
+      font-size: 10px; font-weight: 800; color: #d4af37;
+      text-transform: uppercase; letter-spacing: 2px;
+      margin-bottom: 14px;
+    }
+    .sidebar-chip-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
+    .sidebar-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 14px; border-radius: 50px;
+      background: #1a1a1a; border: 1px solid #222;
+      color: rgba(255,255,255,0.55); font-size: 12px; font-weight: 700;
+      text-decoration: none; transition: all 0.2s; white-space: nowrap;
+    }
+    .sidebar-chip:hover {
+      border-color: #d4af37; color: #d4af37;
+      background: rgba(212,175,55,0.07);
+    }
+    .sidebar-chip .chip-cnt {
+      font-size: 10px; color: rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.06);
+      padding: 1px 7px; border-radius: 50px;
+    }
+    .sidebar-nav-link {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 12px; border-radius: 10px;
+      text-decoration: none; transition: background 0.2s;
+      color: rgba(255,255,255,0.55); font-size: 13px; font-weight: 700;
+    }
+    .sidebar-nav-link:hover { background: rgba(212,175,55,0.07); color: #d4af37; }
+    .sidebar-nav-link .arrow { color: rgba(255,255,255,0.2); font-size: 11px; }
+
+    /* ── Right content ───────────────────────────────────── */
+    .section-hd {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 18px;
+    }
+    .section-hd-title {
+      font-size: 14px; font-weight: 900; color: #fff;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .section-hd-title .dot { color: #d4af37; font-size: 10px; }
+    .section-hd-more {
+      font-size: 12px; font-weight: 700;
+      color: rgba(255,255,255,0.25); text-decoration: none;
+      transition: color 0.2s;
+    }
+    .section-hd-more:hover { color: #d4af37; }
+    .section-divider { border: none; border-top: 1px solid #1a1a1a; margin: 28px 0; }
+
+    /* ── Artwork card ─────────────────────────────────────── */
+    .artwork-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
       gap: 16px;
     }
-    .artist-card {
+    .artwork-card {
       background: #111; border: 1px solid #1e1e1e;
-      border-radius: 16px; padding: 24px 16px;
-      text-decoration: none; display: flex;
-      flex-direction: column; align-items: center; text-align: center;
+      border-radius: 14px; overflow: hidden;
+      text-decoration: none; display: block;
       transition: transform 0.25s, border-color 0.25s, box-shadow 0.25s;
     }
-    .artist-card:hover {
+    .artwork-card:hover {
       transform: translateY(-5px);
+      border-color: rgba(212,175,55,0.6);
+      box-shadow: 0 10px 32px rgba(212,175,55,0.12);
+    }
+    .artwork-thumb {
+      width: 100%; aspect-ratio: 4/3;
+      background: linear-gradient(135deg, #141414 0%, #1f1a00 100%);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2.8rem; overflow: hidden;
+    }
+    .artwork-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .artwork-body { padding: 12px 14px; }
+    .artwork-ttl {
+      font-size: 13px; font-weight: 800; color: #fff;
+      margin-bottom: 6px; white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis;
+    }
+    .artwork-meta {
+      font-size: 11px; color: rgba(255,255,255,0.35);
+      margin-bottom: 8px;
+    }
+    .tag-row { display: flex; flex-wrap: wrap; gap: 5px; }
+    .atag {
+      display: inline-block; padding: 2px 9px;
+      background: rgba(212,175,55,0.08);
+      border: 1px solid rgba(212,175,55,0.2);
+      border-radius: 50px; font-size: 10px; font-weight: 700;
+      color: #d4af37; text-decoration: none; transition: background 0.2s;
+    }
+    .atag:hover { background: rgba(212,175,55,0.18); color: #d4af37; }
+
+    /* ── Artist card ──────────────────────────────────────── */
+    .artist-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 14px;
+    }
+    .artist-card {
+      background: #111; border: 1px solid #1e1e1e;
+      border-radius: 14px; padding: 20px 14px;
+      text-decoration: none; display: flex;
+      flex-direction: column; align-items: center; text-align: center;
+      transition: transform 0.25s, border-color 0.25s;
+    }
+    .artist-card:hover {
+      transform: translateY(-4px);
       border-color: rgba(212,175,55,0.5);
-      box-shadow: 0 8px 30px rgba(212,175,55,0.12);
     }
     .artist-avatar {
-      width: 72px; height: 72px; border-radius: 50%;
+      width: 60px; height: 60px; border-radius: 50%;
       background: linear-gradient(135deg, #1f1a00, #2a2000);
-      border: 2px solid rgba(212,175,55,0.25);
+      border: 2px solid rgba(212,175,55,0.2);
       display: flex; align-items: center; justify-content: center;
-      font-size: 2rem; margin-bottom: 14px; flex-shrink: 0;
+      font-size: 1.7rem; margin-bottom: 12px;
     }
-    .artist-name {
-      font-size: 15px; font-weight: 800; color: #fff; margin-bottom: 4px;
-    }
-    .artist-meta {
-      font-size: 12px; color: rgba(255,255,255,0.35);
-      margin-bottom: 10px;
-    }
+    .artist-name { font-size: 13px; font-weight: 800; color: #fff; margin-bottom: 4px; }
+    .artist-sub  { font-size: 11px; color: rgba(255,255,255,0.3); }
 
-    /* 장르 칩 */
-    .genre-chips {
-      display: flex; flex-wrap: wrap; gap: 10px;
+    /* ── Empty ────────────────────────────────────────────── */
+    .empty-box {
+      text-align: center; padding: 40px 16px;
+      color: rgba(255,255,255,0.2); font-size: 13px;
     }
-    .genre-chip {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 10px 20px; border-radius: 50px;
-      background: #111; border: 1px solid #1e1e1e;
-      color: rgba(255,255,255,0.6); text-decoration: none;
-      font-size: 13px; font-weight: 700;
-      transition: all 0.2s;
-    }
-    .genre-chip:hover {
-      border-color: #d4af37; color: #d4af37;
-      background: rgba(212,175,55,0.06);
-    }
-    .genre-chip .cnt {
-      font-size: 11px; color: rgba(255,255,255,0.25);
-      background: rgba(255,255,255,0.06);
-      padding: 1px 8px; border-radius: 50px;
-    }
+    .empty-box .ei { font-size: 2.5rem; margin-bottom: 12px; }
 
-    /* 빈 상태 */
-    .empty-state {
-      text-align: center; padding: 60px 24px;
-      color: rgba(255,255,255,0.2);
-    }
-    .empty-state .ei { font-size: 3rem; margin-bottom: 16px; }
-    .empty-state p { font-size: 14px; }
-
-    @media (max-width: 768px) {
-      .hero-title { font-size: 2rem; }
-      .stat-item { padding: 18px 20px; }
-      .stat-num  { font-size: 1.6rem; }
-      .artwork-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
-      .artist-grid  { grid-template-columns: 1fr 1fr; gap: 12px; }
-      .home-section { padding: 40px 16px; }
-      .section-header { flex-direction: column; gap: 8px; }
-    }
-    @media (max-width: 480px) {
-      .artwork-grid { grid-template-columns: 1fr; }
-      .artist-grid  { grid-template-columns: 1fr 1fr; }
+    @media (max-width: 640px) {
+      .artwork-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+      .artist-grid  { grid-template-columns: 1fr 1fr; gap: 10px; }
+      .stat-item { padding: 14px 16px; }
+      .stat-num  { font-size: 1.5rem; }
     }
 
   //- ── Hero ───────────────────────────────────────────────
   section.hero-section
     .hero-bg-grid
-    .hero-content
+    .hero-inner
       .hero-badge 🔗 OWL Ontology Powered
       h1.hero-title
         | 한국 미술을
@@ -265,14 +253,14 @@ block content
         br
         | 온톨로지 기반으로 연결하는 미술 플랫폼
       .hero-cta-row
-        a.hero-cta-primary(href='/facet/Artworks') 🖼️ 작품 탐색
-        a.hero-cta-secondary(href='/facet/Artists') 👤 작가 탐색
+        a.hero-btn-gold(href='/facet/Artworks') 🖼️ 작품 탐색
+        a.hero-btn-ghost(href='/facet/Artists') 👤 작가 탐색
 
-  //- ── Stats Bar ──────────────────────────────────────────
+  //- ── Stats bar ──────────────────────────────────────────
   section.stats-bar
     .stats-bar-inner
       a.stat-item(href='/facet/Artworks')
-        .stat-num#stat-art= (S.artCount != null ? S.artCount : 0)
+        .stat-num#stat-art= (S.artCount    != null ? S.artCount    : 0)
         .stat-lbl 작품
       a.stat-item(href='/facet/Artists')
         .stat-num#stat-artist= (S.artistCount != null ? S.artistCount : 0)
@@ -281,101 +269,117 @@ block content
         .stat-num#stat-gal= (S.galleryCount != null ? S.galleryCount : 0)
         .stat-lbl 갤러리
       a.stat-item(href='/facet/Exhibitions')
-        .stat-num#stat-exh= (S.exhibCount != null ? S.exhibCount : 0)
+        .stat-num#stat-exh= (S.exhibCount   != null ? S.exhibCount   : 0)
         .stat-lbl 전시
       a.stat-item(href='/facet/Auctions')
         .stat-num#stat-auc= (S.auctionCount != null ? S.auctionCount : 0)
         .stat-lbl 경매
 
-  //- ── 장르 탐색 ──────────────────────────────────────────
-  if TG.length
-    hr.section-divider
-    section.home-section
-      .section-header
-        .section-title
+  //- ── 2-column: sidebar + content ───────────────────────
+  .home-wrap
+
+    //- ── LEFT SIDEBAR ─────────────────────────────────────
+    aside.home-sidebar
+
+      //- 카테고리 빠른 이동
+      .sidebar-section
+        .sidebar-title 카테고리
+        a.sidebar-nav-link(href='/facet/Artworks')
+          span 🖼️ 작품
+          span.arrow →
+        a.sidebar-nav-link(href='/facet/Artists')
+          span 👤 작가
+          span.arrow →
+        a.sidebar-nav-link(href='/facet/Galleries')
+          span 🏛️ 갤러리
+          span.arrow →
+        a.sidebar-nav-link(href='/facet/Exhibitions')
+          span 🎭 전시
+          span.arrow →
+        a.sidebar-nav-link(href='/facet/Auctions')
+          span 🔨 경매
+          span.arrow →
+
+      //- 장르 필터
+      if TG.length
+        .sidebar-section
+          .sidebar-title 🎨 장르로 탐색
+          .sidebar-chip-wrap
+            each g in TG
+              a.sidebar-chip(href='/facet/Artworks?genre=' + encodeURIComponent(g._id))
+                span= g._id
+                span.chip-cnt= g.count
+
+      //- 양식 필터
+      if TS.length
+        .sidebar-section
+          .sidebar-title ✦ 양식으로 탐색
+          .sidebar-chip-wrap
+            each s in TS
+              a.sidebar-chip(href='/facet/Artworks?style=' + encodeURIComponent(s._id))
+                span= s._id
+                span.chip-cnt= s.count
+
+    //- ── RIGHT CONTENT ────────────────────────────────────
+    div
+
+      //- 최근 등록 작품
+      .section-hd
+        .section-hd-title
           span.dot ◆
-          | 장르로 탐색
-        a.section-more(href='/facet/Artworks') 전체 보기 →
-      .genre-chips
-        each g in TG
-          a.genre-chip(href='/facet/Artworks?genre=' + encodeURIComponent(g._id))
-            span= g._id
-            span.cnt= g.count
+          | 최근 등록 작품
+        a.section-hd-more(href='/facet/Artworks') 전체 작품 →
 
-  //- ── 최근 등록 작품 ──────────────────────────────────────
-  hr.section-divider
-  section.home-section
-    .section-header
-      .section-title
-        span.dot ◆
-        | 최근 등록 작품
-      a.section-more(href='/facet/Artworks') 전체 작품 →
-    if RA.length
-      .artwork-grid
-        each w in RA
-          a.artwork-card(href='/rdf-resource/Artworks_RDF/' + w.id)
-            if w.imageUrl
-              img.artwork-img(src=w.imageUrl alt=w.title loading='lazy')
-            else
-              .artwork-img-placeholder 🖼️
-            .artwork-body
-              .artwork-title= w.title || '무제'
-              .artwork-meta
-                if w.artistName
-                  span= w.artistName
-                if w.year
-                  span · #{w.year}
-              .artwork-tags
-                if w.genre
-                  a.art-tag(href='/facet/Artworks?genre=' + encodeURIComponent(w.genre))= w.genre
-                if w.style
-                  a.art-tag(href='/facet/Artworks?style=' + encodeURIComponent(w.style))= w.style
-                if w.medium
-                  a.art-tag(href='/facet/Artworks?medium=' + encodeURIComponent(w.medium))= w.medium
-    else
-      .empty-state
-        .ei 🖼️
-        p 등록된 작품이 없습니다.
-        p
-          a(href='/facet/Artworks' style='color:#d4af37') 작품 탐색 페이지로 이동 →
+      if RA.length
+        .artwork-grid
+          each w in RA
+            a.artwork-card(href='/rdf-resource/Artworks_RDF/' + w.id)
+              .artwork-thumb
+                if w.imageUrl
+                  img(src=w.imageUrl alt=w.title loading='lazy')
+                else
+                  | 🖼️
+              .artwork-body
+                .artwork-ttl= w.title || '무제'
+                .artwork-meta
+                  | #{[w.artistName, w.year].filter(Boolean).join(' · ')}
+                .tag-row
+                  if w.genre
+                    a.atag(href='/facet/Artworks?genre=' + encodeURIComponent(w.genre))= w.genre
+                  if w.style
+                    a.atag(href='/facet/Artworks?style=' + encodeURIComponent(w.style))= w.style
+                  if w.medium
+                    a.atag(href='/facet/Artworks?medium=' + encodeURIComponent(w.medium))= w.medium
+      else
+        .empty-box
+          .ei 🖼️
+          p 등록된 작품이 없습니다.
+          p
+            a(href='/facet/Artworks' style='color:#d4af37') 작품 탐색 →
 
-  //- ── 작가 ───────────────────────────────────────────────
-  hr.section-divider
-  section.home-section
-    .section-header
-      .section-title
-        span.dot ◆
-        | 작가
-      a.section-more(href='/facet/Artists') 전체 작가 →
-    if RT.length
-      .artist-grid
-        each a in RT
-          a.artist-card(href='/rdf-resource/Artists_RDF/' + a.id)
-            .artist-avatar 👤
-            .artist-name= a.name || '이름 없음'
-            .artist-meta= [a.country, a.movement].filter(Boolean).join(' · ')
-            if a.genre
-              .artwork-tags(style='justify-content:center')
-                span.art-tag= a.genre
-    else
-      .empty-state
-        .ei 👤
-        p 등록된 작가가 없습니다.
+      hr.section-divider
 
-  //- ── 양식(Style) 칩 ──────────────────────────────────────
-  if TS.length
-    hr.section-divider
-    section.home-section
-      .section-header
-        .section-title
+      //- 작가
+      .section-hd
+        .section-hd-title
           span.dot ◆
-          | 양식으로 탐색
-        a.section-more(href='/facet/Artworks') 작품 탐색 →
-      .genre-chips
-        each s in TS
-          a.genre-chip(href='/facet/Artworks?style=' + encodeURIComponent(s._id))
-            span= s._id
-            span.cnt= s.count
+          | 작가
+        a.section-hd-more(href='/facet/Artists') 전체 작가 →
+
+      if RT.length
+        .artist-grid
+          each a in RT
+            a.artist-card(href='/rdf-resource/Artists_RDF/' + a.id)
+              .artist-avatar 👤
+              .artist-name= a.name || '이름 없음'
+              .artist-sub= [a.country, a.movement].filter(Boolean).join(' · ')
+              if a.genre
+                .tag-row(style='justify-content:center;margin-top:8px;')
+                  span.atag= a.genre
+      else
+        .empty-box
+          .ei 👤
+          p 등록된 작가가 없습니다.
 
   //- ── 카운트업 스크립트 ───────────────────────────────────
   script.
@@ -409,7 +413,7 @@ block content
             var el = document.getElementById(kv[0]);
             if (el) countUp(el, kv[1], 900);
           });
-        } catch (e) { /* 서버 렌더링 값 유지 */ }
+        } catch (e) {}
       }
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', hydrate);
