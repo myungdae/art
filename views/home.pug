@@ -1,4 +1,4 @@
-//- views/home.pug — ART+ 미술 플랫폼 홈
+//- views/home.pug — ART+ 홈 (밝은 테마, 작품 모자이크 배경)
 extends layout
 
 block content
@@ -9,413 +9,379 @@ block content
   - var TS = Array.isArray(topStyles)      ? topStyles      : [];
 
   style.
-    body { background: #0d0d0d; }
+    html, body { background: #faf8f3; color: #1a1a1a; }
 
-    /* ── Hero ────────────────────────────────────────────── */
-    .hero-section {
+    /* ── Hero ─────────────────────────────────────────────── */
+    .hero {
       position: relative;
-      padding: 56px 24px 48px;
-      background: linear-gradient(135deg, #0d0d0d 0%, #1a1200 50%, #0d0d0d 100%);
-      border-bottom: 1px solid #1a1a1a;
-      text-align: center;
+      min-height: 520px;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+      background: #faf8f3;
     }
-    .hero-bg-grid {
-      position: absolute; inset: 0; pointer-events: none;
-      background-image:
-        linear-gradient(rgba(212,175,55,0.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(212,175,55,0.04) 1px, transparent 1px);
-      background-size: 48px 48px;
+
+    /* 배경 작품 이미지 격자 (전체를 꽉 채움) */
+    .hero-mosaic {
+      position: absolute; inset: 0;
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      grid-template-rows: repeat(4, 1fr);
+      gap: 2px;
+      opacity: 0.12;
+      pointer-events: none;
     }
-    .hero-inner { position: relative; z-index: 2; max-width: 700px; margin: 0 auto; }
+    .hero-mosaic-cell {
+      background: linear-gradient(135deg, #e8d490, #c9a227);
+      overflow: hidden;
+    }
+    .hero-mosaic-cell img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    /* 이미지 없는 셀은 색상 변화로 예쁘게 */
+    .hero-mosaic-cell:nth-child(3n)   { background: linear-gradient(135deg, #d4af37, #8b7355); }
+    .hero-mosaic-cell:nth-child(5n)   { background: linear-gradient(135deg, #e8c870, #c9a227); }
+    .hero-mosaic-cell:nth-child(7n)   { background: linear-gradient(135deg, #f0d880, #a07800); }
+    .hero-mosaic-cell:nth-child(2n)   { background: linear-gradient(135deg, #fdf6d0, #e8d490); }
+    .hero-mosaic-cell:nth-child(11n)  { background: linear-gradient(135deg, #c9a227, #8b7355); }
+
+    /* 그라데이션 오버레이 — 가운데 텍스트 가독성 */
+    .hero-overlay {
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 65% 70% at 50% 50%,
+        rgba(250,248,243,0.92) 0%,
+        rgba(250,248,243,0.60) 55%,
+        rgba(250,248,243,0.10) 100%);
+      pointer-events: none;
+    }
+
+    /* Hero 콘텐츠 */
+    .hero-content {
+      position: relative; z-index: 10;
+      text-align: center; padding: 72px 24px 80px;
+      max-width: 700px;
+    }
     .hero-badge {
-      display: inline-flex; align-items: center; gap: 8px;
-      background: rgba(212,175,55,0.1); border: 1px solid rgba(212,175,55,0.3);
-      border-radius: 50px; padding: 5px 16px;
-      font-size: 11px; font-weight: 700; color: #d4af37;
-      letter-spacing: 2px; text-transform: uppercase; margin-bottom: 20px;
+      display: inline-flex; align-items: center; gap: 7px;
+      background: rgba(201,162,39,0.13);
+      border: 1px solid rgba(201,162,39,0.38);
+      border-radius: 50px; padding: 5px 18px;
+      font-size: 11px; font-weight: 800; color: #a07800;
+      letter-spacing: 2px; text-transform: uppercase;
+      margin-bottom: 24px;
     }
     .hero-title {
-      font-size: clamp(2rem, 5vw, 3.2rem);
-      font-weight: 900; color: #fff; line-height: 1.2;
-      margin-bottom: 12px; letter-spacing: -1px;
+      font-size: clamp(2.4rem, 5.5vw, 3.8rem);
+      font-weight: 900; color: #1a1a1a; line-height: 1.15;
+      margin-bottom: 16px; letter-spacing: -1.5px;
     }
-    .hero-title span { color: #d4af37; }
+    .hero-title em { color: #c9a227; font-style: normal; }
     .hero-sub {
-      font-size: 1rem; color: rgba(255,255,255,0.45);
-      margin-bottom: 32px; line-height: 1.7;
+      font-size: 1.05rem; color: #666;
+      margin-bottom: 40px; line-height: 1.85;
     }
-    .hero-cta-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-    .hero-btn-gold {
-      display: inline-flex; align-items: center; gap: 7px;
-      background: #d4af37; color: #0d0d0d;
-      padding: 12px 28px; border-radius: 10px;
-      font-weight: 800; font-size: 14px; text-decoration: none;
+    .hero-btns { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+    .btn-gold {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: #c9a227; color: #fff;
+      padding: 14px 32px; border-radius: 10px;
+      font-weight: 800; font-size: 15px; text-decoration: none;
       transition: background 0.2s, transform 0.2s;
+      box-shadow: 0 4px 18px rgba(201,162,39,0.35);
     }
-    .hero-btn-gold:hover { background: #c9a227; transform: translateY(-2px); color: #0d0d0d; }
-    .hero-btn-ghost {
-      display: inline-flex; align-items: center; gap: 7px;
-      background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.75);
-      padding: 12px 24px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);
-      font-weight: 700; font-size: 14px; text-decoration: none;
-      transition: all 0.2s;
+    .btn-gold:hover { background: #a07800; transform: translateY(-2px); color: #fff; }
+    .btn-outline {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(255,255,255,0.9); color: #444;
+      padding: 14px 28px; border-radius: 10px; border: 1.5px solid #ddd;
+      font-weight: 700; font-size: 15px; text-decoration: none;
+      transition: all 0.2s; backdrop-filter: blur(4px);
     }
-    .hero-btn-ghost:hover { background: rgba(255,255,255,0.1); color: #fff; transform: translateY(-2px); }
+    .btn-outline:hover { border-color: #c9a227; color: #a07800; transform: translateY(-2px); }
 
-    /* ── Stats bar ────────────────────────────────────────── */
-    .stats-bar { background: #111; border-bottom: 1px solid #1a1a1a; }
-    .stats-bar-inner {
-      max-width: 1340px; margin: 0 auto;
-      display: flex; justify-content: center; flex-wrap: wrap;
+    /* 갤러리 앵커 바 */
+    .anchor-bar {
+      background: #fff;
+      border-top: 1px solid #ede9e0;
+      border-bottom: 1px solid #ede9e0;
     }
-    .stat-item {
-      display: flex; flex-direction: column; align-items: center;
-      padding: 20px 36px; text-decoration: none;
-      border-right: 1px solid #1a1a1a;
-      transition: background 0.2s; flex: 1; min-width: 120px;
+    .anchor-inner {
+      max-width: 1280px; margin: 0 auto;
+      display: flex; flex-wrap: wrap; justify-content: center;
     }
-    .stat-item:last-child { border-right: none; }
-    .stat-item:hover { background: rgba(212,175,55,0.05); }
-    .stat-num {
-      font-size: 2rem; font-weight: 900; color: #d4af37;
-      font-variant-numeric: tabular-nums; line-height: 1; margin-bottom: 5px;
+    .anchor-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 18px 36px; text-decoration: none;
+      border-right: 1px solid #f0ece0;
+      transition: background 0.2s, color 0.2s;
+      font-size: 14px; font-weight: 700; color: #555;
     }
-    .stat-lbl {
-      font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.35);
-      text-transform: uppercase; letter-spacing: 1.5px;
-    }
-
-    /* ── 2-column layout ─────────────────────────────────── */
-    .home-wrap {
-      max-width: 1340px; margin: 0 auto;
-      display: grid;
-      grid-template-columns: 280px 1fr;
-      gap: 28px;
-      padding: 32px 24px 64px;
-      align-items: start;
-    }
-    @media (max-width: 900px) {
-      .home-wrap { grid-template-columns: 1fr; }
-      .home-sidebar { display: none; }
+    .anchor-item:last-child { border-right: none; }
+    .anchor-item:hover { background: #fdf8ee; color: #a07800; }
+    .anchor-item .ai-icon { font-size: 1.2rem; }
+    .anchor-item .ai-cnt {
+      font-size: 11px; font-weight: 800; color: #c9a227;
+      background: #fdf6e3; border: 1px solid #e8d9a0;
+      padding: 1px 8px; border-radius: 50px;
     }
 
-    /* ── Sidebar ─────────────────────────────────────────── */
-    .home-sidebar { position: sticky; top: 80px; }
-    .sidebar-section {
-      background: #111; border: 1px solid #1e1e1e;
-      border-radius: 16px; padding: 20px; margin-bottom: 16px;
-    }
-    .sidebar-title {
-      font-size: 10px; font-weight: 800; color: #d4af37;
-      text-transform: uppercase; letter-spacing: 2px;
-      margin-bottom: 14px;
-    }
-    .sidebar-chip-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
-    .sidebar-chip {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 7px 14px; border-radius: 50px;
-      background: #1a1a1a; border: 1px solid #222;
-      color: rgba(255,255,255,0.55); font-size: 12px; font-weight: 700;
-      text-decoration: none; transition: all 0.2s; white-space: nowrap;
-    }
-    .sidebar-chip:hover {
-      border-color: #d4af37; color: #d4af37;
-      background: rgba(212,175,55,0.07);
-    }
-    .sidebar-chip .chip-cnt {
-      font-size: 10px; color: rgba(255,255,255,0.2);
-      background: rgba(255,255,255,0.06);
-      padding: 1px 7px; border-radius: 50px;
-    }
-    .sidebar-nav-link {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 10px 12px; border-radius: 10px;
-      text-decoration: none; transition: background 0.2s;
-      color: rgba(255,255,255,0.55); font-size: 13px; font-weight: 700;
-    }
-    .sidebar-nav-link:hover { background: rgba(212,175,55,0.07); color: #d4af37; }
-    .sidebar-nav-link .arrow { color: rgba(255,255,255,0.2); font-size: 11px; }
-
-    /* ── Right content ───────────────────────────────────── */
+    /* ── 섹션 공통 ────────────────────────────────────────── */
+    .home-section { max-width: 1280px; margin: 0 auto; padding: 56px 24px; }
     .section-hd {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 18px;
+      display: flex; align-items: baseline; justify-content: space-between;
+      margin-bottom: 28px;
     }
     .section-hd-title {
-      font-size: 14px; font-weight: 900; color: #fff;
+      font-size: 1.3rem; font-weight: 900; color: #1a1a1a;
       display: flex; align-items: center; gap: 8px;
     }
-    .section-hd-title .dot { color: #d4af37; font-size: 10px; }
+    .section-hd-title .dot { color: #c9a227; font-size: 1rem; }
     .section-hd-more {
-      font-size: 12px; font-weight: 700;
-      color: rgba(255,255,255,0.25); text-decoration: none;
+      font-size: 13px; font-weight: 700; color: #bbb; text-decoration: none;
       transition: color 0.2s;
     }
-    .section-hd-more:hover { color: #d4af37; }
-    .section-divider { border: none; border-top: 1px solid #1a1a1a; margin: 28px 0; }
+    .section-hd-more:hover { color: #c9a227; }
+    .section-divider { border: none; border-top: 1px solid #ede9e0; margin: 0; }
 
-    /* ── Artwork card ─────────────────────────────────────── */
+    /* ── 장르 칩 ──────────────────────────────────────────── */
+    .genre-chips { display: flex; flex-wrap: wrap; gap: 10px; }
+    .genre-chip {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 9px 20px; border-radius: 50px;
+      background: #fff; border: 1.5px solid #e8e2d5;
+      color: #555; font-size: 13px; font-weight: 700;
+      text-decoration: none; transition: all 0.2s;
+    }
+    .genre-chip:hover { border-color: #c9a227; color: #a07800; background: #fdf8ee; }
+    .genre-chip .cnt {
+      font-size: 11px; color: #bbb;
+      background: #f5f0e8; padding: 1px 8px; border-radius: 50px;
+    }
+
+    /* ── 작품 카드 ────────────────────────────────────────── */
     .artwork-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 16px;
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 18px;
     }
     .artwork-card {
-      background: #111; border: 1px solid #1e1e1e;
+      background: #fff; border: 1.5px solid #e8e2d5;
       border-radius: 14px; overflow: hidden;
       text-decoration: none; display: block;
       transition: transform 0.25s, border-color 0.25s, box-shadow 0.25s;
     }
     .artwork-card:hover {
       transform: translateY(-5px);
-      border-color: rgba(212,175,55,0.6);
-      box-shadow: 0 10px 32px rgba(212,175,55,0.12);
+      border-color: #c9a227;
+      box-shadow: 0 12px 30px rgba(180,140,20,0.14);
     }
     .artwork-thumb {
       width: 100%; aspect-ratio: 4/3;
-      background: linear-gradient(135deg, #141414 0%, #1f1a00 100%);
+      background: linear-gradient(135deg, #f5edd0 0%, #ede0b0 100%);
       display: flex; align-items: center; justify-content: center;
       font-size: 2.8rem; overflow: hidden;
     }
     .artwork-thumb img { width: 100%; height: 100%; object-fit: cover; }
-    .artwork-body { padding: 12px 14px; }
+    .artwork-body { padding: 12px 14px 14px; }
     .artwork-ttl {
-      font-size: 13px; font-weight: 800; color: #fff;
-      margin-bottom: 6px; white-space: nowrap;
+      font-size: 13px; font-weight: 800; color: #1a1a1a;
+      margin-bottom: 5px; white-space: nowrap;
       overflow: hidden; text-overflow: ellipsis;
     }
-    .artwork-meta {
-      font-size: 11px; color: rgba(255,255,255,0.35);
-      margin-bottom: 8px;
-    }
+    .artwork-meta { font-size: 11px; color: #aaa; margin-bottom: 8px; }
     .tag-row { display: flex; flex-wrap: wrap; gap: 5px; }
     .atag {
       display: inline-block; padding: 2px 9px;
-      background: rgba(212,175,55,0.08);
-      border: 1px solid rgba(212,175,55,0.2);
+      background: #fdf8ee; border: 1px solid #e8d9a0;
       border-radius: 50px; font-size: 10px; font-weight: 700;
-      color: #d4af37; text-decoration: none; transition: background 0.2s;
+      color: #a07800; text-decoration: none; transition: background 0.2s;
     }
-    .atag:hover { background: rgba(212,175,55,0.18); color: #d4af37; }
+    .atag:hover { background: #fcefc0; }
+    .atag.blue { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
+    .atag.gray { background: #f5f5f5; border-color: #ddd; color: #555; }
 
-    /* ── Artist card ──────────────────────────────────────── */
+    /* ── 작가 카드 ────────────────────────────────────────── */
     .artist-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-      gap: 14px;
+      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      gap: 16px;
     }
     .artist-card {
-      background: #111; border: 1px solid #1e1e1e;
-      border-radius: 14px; padding: 20px 14px;
+      background: #fff; border: 1.5px solid #e8e2d5;
+      border-radius: 14px; padding: 22px 14px;
       text-decoration: none; display: flex;
       flex-direction: column; align-items: center; text-align: center;
-      transition: transform 0.25s, border-color 0.25s;
+      transition: transform 0.25s, border-color 0.25s, box-shadow 0.25s;
     }
     .artist-card:hover {
       transform: translateY(-4px);
-      border-color: rgba(212,175,55,0.5);
+      border-color: #c9a227;
+      box-shadow: 0 8px 24px rgba(180,140,20,0.10);
     }
     .artist-avatar {
-      width: 60px; height: 60px; border-radius: 50%;
-      background: linear-gradient(135deg, #1f1a00, #2a2000);
-      border: 2px solid rgba(212,175,55,0.2);
+      width: 64px; height: 64px; border-radius: 50%;
+      background: linear-gradient(135deg, #f5edd0, #e8d490);
+      border: 2px solid #e8d9a0;
       display: flex; align-items: center; justify-content: center;
-      font-size: 1.7rem; margin-bottom: 12px;
+      font-size: 1.8rem; margin-bottom: 12px;
+      overflow: hidden;
     }
-    .artist-name { font-size: 13px; font-weight: 800; color: #fff; margin-bottom: 4px; }
-    .artist-sub  { font-size: 11px; color: rgba(255,255,255,0.3); }
+    .artist-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .artist-name { font-size: 14px; font-weight: 800; color: #1a1a1a; margin-bottom: 4px; }
+    .artist-sub  { font-size: 11px; color: #aaa; margin-bottom: 8px; }
 
-    /* ── Empty ────────────────────────────────────────────── */
-    .empty-box {
-      text-align: center; padding: 40px 16px;
-      color: rgba(255,255,255,0.2); font-size: 13px;
-    }
-    .empty-box .ei { font-size: 2.5rem; margin-bottom: 12px; }
+    /* ── 빈 상태 ──────────────────────────────────────────── */
+    .empty-box { text-align:center; padding:48px 16px; color:#bbb; font-size:13px; }
+    .empty-box .ei { font-size:2.5rem; margin-bottom:10px; }
 
     @media (max-width: 640px) {
       .artwork-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
       .artist-grid  { grid-template-columns: 1fr 1fr; gap: 10px; }
-      .stat-item { padding: 14px 16px; }
-      .stat-num  { font-size: 1.5rem; }
+      .anchor-item  { padding: 14px 18px; font-size: 12px; }
+      .hero-mosaic  { grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(6, 1fr); }
     }
 
-  //- ── Hero ───────────────────────────────────────────────
-  section.hero-section
-    .hero-bg-grid
-    .hero-inner
+  //- ── Hero (배경: 작품 이미지 격자 모자이크) ────────────────
+  section.hero
+
+    //- 배경 모자이크 격자 (작품 이미지 or 색상 칸)
+    .hero-mosaic
+      //- 24칸 (6×4) — 작품 이미지 우선, 없으면 색상 그라데이션
+      - var mosaicSlots = 24;
+      - for(var mi = 0; mi < mosaicSlots; mi++)
+        - var mw = RA[mi % Math.max(RA.length,1)]
+        .hero-mosaic-cell
+          if mw && mw.imageUrl
+            img(src=mw.imageUrl alt="" aria-hidden="true")
+
+    //- 중앙 페이드 오버레이
+    .hero-overlay
+
+    //- 중앙 텍스트
+    .hero-content
       .hero-badge 🔗 OWL Ontology Powered
       h1.hero-title
         | 한국 미술을
         br
-        span 관계로 탐색하다
+        em 관계로 탐색하다
       p.hero-sub
         | 작품 · 작가 · 갤러리 · 전시 · 경매를
         br
         | 온톨로지 기반으로 연결하는 미술 플랫폼
-      .hero-cta-row
-        a.hero-btn-gold(href='/facet/Artworks') 🖼️ 작품 탐색
-        a.hero-btn-ghost(href='/facet/Artists') 👤 작가 탐색
+      .hero-btns
+        a.btn-gold(href='/facet/Artworks') 🖼️ 작품 탐색
+        a.btn-outline(href='/facet/Artists') 👤 작가 탐색
 
-  //- ── Stats bar ──────────────────────────────────────────
-  section.stats-bar
-    .stats-bar-inner
-      a.stat-item(href='/facet/Artworks')
-        .stat-num#stat-art= (S.artCount    != null ? S.artCount    : 0)
-        .stat-lbl 작품
-      a.stat-item(href='/facet/Artists')
-        .stat-num#stat-artist= (S.artistCount != null ? S.artistCount : 0)
-        .stat-lbl 작가
-      a.stat-item(href='/facet/Galleries')
-        .stat-num#stat-gal= (S.galleryCount != null ? S.galleryCount : 0)
-        .stat-lbl 갤러리
-      a.stat-item(href='/facet/Exhibitions')
-        .stat-num#stat-exh= (S.exhibCount   != null ? S.exhibCount   : 0)
-        .stat-lbl 전시
-      a.stat-item(href='/facet/Auctions')
-        .stat-num#stat-auc= (S.auctionCount != null ? S.auctionCount : 0)
-        .stat-lbl 경매
+  //- ── 앵커 바 (Artist / Artwork / Gallery 링크 + 카운트) ───
+  section.anchor-bar
+    .anchor-inner
+      a.anchor-item(href='/facet/Artists')
+        span.ai-icon 👤
+        span Artist
+        span.ai-cnt= (S.artistCount != null ? S.artistCount : 0)
+      a.anchor-item(href='/facet/Artworks')
+        span.ai-icon 🖼️
+        span Artwork
+        span.ai-cnt= (S.artCount != null ? S.artCount : 0)
+      a.anchor-item(href='/facet/Galleries')
+        span.ai-icon 🏛️
+        span Gallery
+        span.ai-cnt= (S.galleryCount != null ? S.galleryCount : 0)
+      a.anchor-item(href='/facet/Exhibitions')
+        span.ai-icon 🎭
+        span Exhibition
+        span.ai-cnt= (S.exhibCount != null ? S.exhibCount : 0)
+      a.anchor-item(href='/facet/Auctions')
+        span.ai-icon 🔨
+        span Auction
+        span.ai-cnt= (S.auctionCount != null ? S.auctionCount : 0)
 
-  //- ── 2-column: sidebar + content ───────────────────────
-  .home-wrap
-
-    //- ── LEFT SIDEBAR ─────────────────────────────────────
-    aside.home-sidebar
-
-      //- 카테고리 빠른 이동
-      .sidebar-section
-        .sidebar-title 카테고리
-        a.sidebar-nav-link(href='/facet/Artworks')
-          span 🖼️ 작품
-          span.arrow →
-        a.sidebar-nav-link(href='/facet/Artists')
-          span 👤 작가
-          span.arrow →
-        a.sidebar-nav-link(href='/facet/Galleries')
-          span 🏛️ 갤러리
-          span.arrow →
-        a.sidebar-nav-link(href='/facet/Exhibitions')
-          span 🎭 전시
-          span.arrow →
-        a.sidebar-nav-link(href='/facet/Auctions')
-          span 🔨 경매
-          span.arrow →
-
-      //- 장르 필터
-      if TG.length
-        .sidebar-section
-          .sidebar-title 🎨 장르로 탐색
-          .sidebar-chip-wrap
-            each g in TG
-              a.sidebar-chip(href='/facet/Artworks?genre=' + encodeURIComponent(g._id))
-                span= g._id
-                span.chip-cnt= g.count
-
-      //- 양식 필터
-      if TS.length
-        .sidebar-section
-          .sidebar-title ✦ 양식으로 탐색
-          .sidebar-chip-wrap
-            each s in TS
-              a.sidebar-chip(href='/facet/Artworks?style=' + encodeURIComponent(s._id))
-                span= s._id
-                span.chip-cnt= s.count
-
-    //- ── RIGHT CONTENT ────────────────────────────────────
-    div
-
-      //- 최근 등록 작품
+  //- ── 장르 탐색 ──────────────────────────────────────────
+  if TG.length
+    hr.section-divider
+    section.home-section(style="padding-top:44px; padding-bottom:36px;")
       .section-hd
         .section-hd-title
           span.dot ◆
-          | 최근 등록 작품
-        a.section-hd-more(href='/facet/Artworks') 전체 작품 →
+          | 장르로 탐색
+        a.section-hd-more(href='/facet/Artworks') 전체 보기 →
+      .genre-chips
+        each g in TG
+          a.genre-chip(href='/facet/Artworks?genre=' + encodeURIComponent(g._id))
+            span= g._id
+            span.cnt= g.count
 
-      if RA.length
-        .artwork-grid
-          each w in RA
-            a.artwork-card(href='/rdf-resource/Artworks_RDF/' + w.id)
-              .artwork-thumb
-                if w.imageUrl
-                  img(src=w.imageUrl alt=w.title loading='lazy')
-                else
-                  | 🖼️
-              .artwork-body
-                .artwork-ttl= w.title || '무제'
-                .artwork-meta
-                  | #{[w.artistName, w.year].filter(Boolean).join(' · ')}
-                .tag-row
-                  if w.genre
-                    a.atag(href='/facet/Artworks?genre=' + encodeURIComponent(w.genre))= w.genre
-                  if w.style
-                    a.atag(href='/facet/Artworks?style=' + encodeURIComponent(w.style))= w.style
-                  if w.medium
-                    a.atag(href='/facet/Artworks?medium=' + encodeURIComponent(w.medium))= w.medium
-      else
-        .empty-box
-          .ei 🖼️
-          p 등록된 작품이 없습니다.
-          p
-            a(href='/facet/Artworks' style='color:#d4af37') 작품 탐색 →
+  //- ── 최근 등록 작품 ──────────────────────────────────────
+  hr.section-divider
+  section.home-section
+    .section-hd
+      .section-hd-title
+        span.dot ◆
+        | 최근 등록 작품
+      a.section-hd-more(href='/facet/Artworks') 전체 작품 →
+    if RA.length
+      .artwork-grid
+        each w in RA
+          a.artwork-card(href='/rdf-resource/Artworks/' + w.id)
+            .artwork-thumb
+              if w.imageUrl
+                img(src=w.imageUrl alt=w.title loading='lazy')
+              else
+                | 🖼️
+            .artwork-body
+              .artwork-ttl= w.title || '무제'
+              .artwork-meta= [w.artistName, w.year].filter(Boolean).join(' · ')
+              .tag-row
+                if w.genre
+                  a.atag.blue(href='/facet/Artworks?genre=' + encodeURIComponent(w.genre))= w.genre
+                if w.style
+                  a.atag(href='/facet/Artworks?style=' + encodeURIComponent(w.style))= w.style
+                if w.medium
+                  a.atag.gray(href='/facet/Artworks?medium=' + encodeURIComponent(w.medium))= w.medium
+    else
+      .empty-box
+        .ei 🖼️
+        p 등록된 작품이 없습니다.
 
-      hr.section-divider
+  //- ── 작가 ───────────────────────────────────────────────
+  hr.section-divider
+  section.home-section
+    .section-hd
+      .section-hd-title
+        span.dot ◆
+        | 작가
+      a.section-hd-more(href='/facet/Artists') 전체 작가 →
+    if RT.length
+      .artist-grid
+        each a in RT
+          a.artist-card(href='/rdf-resource/Artists/' + a.id)
+            .artist-avatar
+              if a.imageUrl
+                img(src=a.imageUrl alt=a.name loading='lazy')
+              else
+                | 👤
+            .artist-name= a.name || '이름 없음'
+            .artist-sub= [a.country, a.movement].filter(Boolean).join(' · ')
+            if a.genre
+              .tag-row(style='justify-content:center;')
+                span.atag= a.genre
+    else
+      .empty-box
+        .ei 👤
+        p 등록된 작가가 없습니다.
 
-      //- 작가
+  //- ── 양식 탐색 ──────────────────────────────────────────
+  if TS.length
+    hr.section-divider
+    section.home-section(style="padding-top:44px; padding-bottom:64px;")
       .section-hd
         .section-hd-title
           span.dot ◆
-          | 작가
-        a.section-hd-more(href='/facet/Artists') 전체 작가 →
-
-      if RT.length
-        .artist-grid
-          each a in RT
-            a.artist-card(href='/rdf-resource/Artists_RDF/' + a.id)
-              .artist-avatar 👤
-              .artist-name= a.name || '이름 없음'
-              .artist-sub= [a.country, a.movement].filter(Boolean).join(' · ')
-              if a.genre
-                .tag-row(style='justify-content:center;margin-top:8px;')
-                  span.atag= a.genre
-      else
-        .empty-box
-          .ei 👤
-          p 등록된 작가가 없습니다.
-
-  //- ── 카운트업 스크립트 ───────────────────────────────────
-  script.
-    (function () {
-      function countUp(el, to, ms) {
-        var from = 0, start = null;
-        to = Number(to) || 0;
-        if (!to) { el.textContent = '0'; return; }
-        function step(ts) {
-          if (!start) start = ts;
-          var p = Math.min((ts - start) / ms, 1);
-          var eased = 1 - Math.pow(1 - p, 3);
-          el.textContent = Math.round(from + (to - from) * eased);
-          if (p < 1) requestAnimationFrame(step);
-        }
-        requestAnimationFrame(step);
-      }
-      async function hydrate() {
-        try {
-          var r = await fetch('/api/home/stats', { headers: { Accept: 'application/json' } });
-          if (!r || !r.ok) return;
-          var d = await r.json();
-          var map = {
-            'stat-art':    d.artCount,
-            'stat-artist': d.artistCount,
-            'stat-gal':    d.galleryCount,
-            'stat-exh':    d.exhibCount,
-            'stat-auc':    d.auctionCount,
-          };
-          Object.entries(map).forEach(function(kv) {
-            var el = document.getElementById(kv[0]);
-            if (el) countUp(el, kv[1], 900);
-          });
-        } catch (e) {}
-      }
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', hydrate);
-      } else { hydrate(); }
-    })();
+          | 양식으로 탐색
+        a.section-hd-more(href='/facet/Artworks') 작품 탐색 →
+      .genre-chips
+        each s in TS
+          a.genre-chip(href='/facet/Artworks?style=' + encodeURIComponent(s._id))
+            span= s._id
+            span.cnt= s.count
