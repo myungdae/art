@@ -44,6 +44,7 @@ const adminRouter       = safeRequire("./router/admin");
 const inquiryRouter     = safeRequire("./router/inquiry");
 const policyRouter      = safeRequire("./router/policy");
 const threadRouter      = safeRequire("./router/thread");
+const artworkRouter     = safeRequire("./router/artwork");
 const indexRouter       = safeRequire("./router/index");
 const publicRouter      = safeRequire("./router/public");
 
@@ -115,6 +116,7 @@ function useRouter(mountPath, router) {
 }
 
 useRouter("/rdf-resource", rdfResourceRouter);
+useRouter("/artwork",      artworkRouter);
 useRouter("/facet",        facetRouter);
 useRouter("/policy",       policyRouter);
 useRouter("/admin",        adminRouter);
