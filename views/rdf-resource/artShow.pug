@@ -89,32 +89,38 @@ block content
     .prop-val a { color: #c9a227; text-decoration: none; }
     .prop-val a:hover { text-decoration: underline; }
 
-    /* 설명 */
-    .detail-desc {
-      background: #fff; border: 1px solid #e8e4da;
-      border-radius: 14px; padding: 20px 22px; margin-bottom: 20px;
-      font-size: 14px; line-height: 1.8; color: #333;
+    /* ── 통합 정보 카드 (설명 + 속성 테이블) ── */
+    .detail-card {
+      background: #fff;
+      border: 1px solid #e8e4da;
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 20px;
     }
-    .detail-desc h3 {
-      font-size: 11px; font-weight: 800; color: #c9a227;
-      text-transform: uppercase; letter-spacing: 2px; margin-bottom: 12px;
+
+    /* 설명 영역 */
+    .detail-desc {
+      padding: 18px 22px 16px;
+      border-bottom: 2px solid #f0ece0;
+    }
+    .detail-desc-label {
+      font-size: 10px; font-weight: 800; color: #c9a227;
+      text-transform: uppercase; letter-spacing: 2px;
+      margin-bottom: 10px;
     }
     .detail-desc-body {
-      max-height: 180px;
+      max-height: 130px;
       overflow-y: auto;
-      padding-right: 4px;
+      font-size: 13.5px; line-height: 1.85; color: #444;
+      padding-right: 6px;
     }
-    .detail-desc-body::-webkit-scrollbar { width: 5px; }
-    .detail-desc-body::-webkit-scrollbar-track { background: #f0ece0; border-radius: 4px; }
+    .detail-desc-body.no-desc {
+      color: #bbb; font-style: italic; font-size: 13px;
+    }
+    .detail-desc-body::-webkit-scrollbar { width: 4px; }
+    .detail-desc-body::-webkit-scrollbar-track { background: #f5f2ea; border-radius: 4px; }
     .detail-desc-body::-webkit-scrollbar-thumb { background: #d4af37; border-radius: 4px; }
     .detail-desc-body::-webkit-scrollbar-thumb:hover { background: #c9a227; }
-
-    /* 설명 없을 때 안내 */
-    .detail-desc-empty {
-      background: #faf9f5; border: 1px dashed #e0d9c8;
-      border-radius: 14px; padding: 18px 22px; margin-bottom: 20px;
-      font-size: 13px; color: #bbb; text-align: center;
-    }
 
     /* ── Photo Gallery (작가 작품 목록) ──────────────────────── */
     .gallery-section {
@@ -299,63 +305,63 @@ block content
           if vm.raw.creationYear
             span.dtag.dtag-rose 📅 #{vm.raw.creationYear}
 
-        //- ① 설명 (태그칩 바로 아래)
-        if vm.descriptionHtml
+        //- ── 통합 카드: 설명 + 속성 테이블 ──
+        .detail-card
+
+          //- ① 설명 영역 (라우터에서 항상 finalDescriptionHtml 로 전달됨)
           .detail-desc
-            h3 설명
+            .detail-desc-label 설명
             .detail-desc-body
               != vm.descriptionHtml
-        else
-          .detail-desc-empty 등록된 설명이 없습니다.
 
-        //- ② 속성 목록 (설명 아래)
-        .detail-props
-          if vm.raw.artistName
-            .prop-row
-              span.prop-key 작가
-              span.prop-val
-                a(href=`/facet/Artists?q=${encodeURIComponent(vm.raw.artistName)}`)= vm.raw.artistName
-          if vm.raw.creationYear
-            .prop-row
-              span.prop-key 제작연도
-              span.prop-val= vm.raw.creationYear
-          if vm.raw.genre
-            .prop-row
-              span.prop-key 장르
-              span.prop-val= vm.raw.genre
-          if vm.raw.style
-            .prop-row
-              span.prop-key 양식
-              span.prop-val= vm.raw.style
-          if vm.raw.medium
-            .prop-row
-              span.prop-key 매체
-              span.prop-val= vm.raw.medium
-          if vm.raw.material
-            .prop-row
-              span.prop-key 재료
-              span.prop-val= Array.isArray(vm.raw.material) ? vm.raw.material.join(', ') : vm.raw.material
-          if vm.raw.theme
-            .prop-row
-              span.prop-key 테마
-              span.prop-val= Array.isArray(vm.raw.theme) ? vm.raw.theme.join(', ') : vm.raw.theme
-          if vm.raw.movement
-            .prop-row
-              span.prop-key 운동
-              span.prop-val= vm.raw.movement
-          if vm.raw.country
-            .prop-row
-              span.prop-key 국가
-              span.prop-val= vm.raw.country
-          if vm.raw.priceValue
-            .prop-row
-              span.prop-key 경매가
-              span.prop-val ₩#{Number(vm.raw.priceValue).toLocaleString()}
-          each ex in (vm.extras || [])
-            if ex.value
+          //- ② 속성 목록
+          .detail-props
+            if vm.raw.artistName
               .prop-row
-                span.prop-key= ex.label
-                span.prop-val= ex.value
+                span.prop-key 작가
+                span.prop-val
+                  a(href=`/facet/Artists?q=${encodeURIComponent(vm.raw.artistName)}`)= vm.raw.artistName
+            if vm.raw.creationYear
+              .prop-row
+                span.prop-key 제작연도
+                span.prop-val= vm.raw.creationYear
+            if vm.raw.genre
+              .prop-row
+                span.prop-key 장르
+                span.prop-val= vm.raw.genre
+            if vm.raw.style
+              .prop-row
+                span.prop-key 양식
+                span.prop-val= vm.raw.style
+            if vm.raw.medium
+              .prop-row
+                span.prop-key 매체
+                span.prop-val= vm.raw.medium
+            if vm.raw.material
+              .prop-row
+                span.prop-key 재료
+                span.prop-val= Array.isArray(vm.raw.material) ? vm.raw.material.join(', ') : vm.raw.material
+            if vm.raw.theme
+              .prop-row
+                span.prop-key 테마
+                span.prop-val= Array.isArray(vm.raw.theme) ? vm.raw.theme.join(', ') : vm.raw.theme
+            if vm.raw.movement
+              .prop-row
+                span.prop-key 운동
+                span.prop-val= vm.raw.movement
+            if vm.raw.country
+              .prop-row
+                span.prop-key 국가
+                span.prop-val= vm.raw.country
+            if vm.raw.priceValue
+              .prop-row
+                span.prop-key 경매가
+                span.prop-val ₩#{Number(vm.raw.priceValue).toLocaleString()}
+            each ex in (vm.extras || [])
+              if ex.value
+                .prop-row
+                  span.prop-key= ex.label
+                  span.prop-val= ex.value
 
     //- ── 작가 작품 Photo Gallery ────────────────────────────
     - var works = Array.isArray(vm.artistWorks) ? vm.artistWorks : []

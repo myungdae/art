@@ -444,15 +444,55 @@ router.get("/:artKlass/:id", async (req, res, next) => {
       }
     }
 
+    // 설명이 없을 때 메타 정보 기반 mock 설명 생성
+    let finalDescriptionHtml = descriptionHtml;
+    if (!finalDescriptionHtml) {
+      const parts = [];
+      const artistName = doc.artistName || doc.name || "";
+      const year       = doc.creationYear || "";
+      const genre      = doc.genre || "";
+      const style      = doc.style || "";
+      const medium     = doc.medium || "";
+      const material   = doc.material ? (Array.isArray(doc.material) ? doc.material.join(", ") : doc.material) : "";
+      const country    = doc.country || "";
+      const klass      = meta.label;
+
+      if (klass === "작품") {
+        if (artistName) parts.push(`${artistName} 작가의 작품입니다.`);
+        if (year)       parts.push(`${year}년에 제작되었으며,`);
+        if (genre)      parts.push(`${genre} 장르에 속합니다.`);
+        if (style)      parts.push(`${style} 양식으로 표현된 이 작품은`);
+        if (medium)     parts.push(`${medium}을(를) 매체로 사용하였고,`);
+        if (material)   parts.push(`재료로는 ${material}을(를) 활용하였습니다.`);
+        if (country)    parts.push(`제작 국가는 ${country}입니다.`);
+        parts.push("작가의 독창적인 시각과 조형 언어가 담긴 작품으로, 당대의 사회·문화적 맥락을 반영하며 깊은 울림을 전합니다.");
+      } else if (klass === "작가") {
+        if (artistName || title) parts.push(`${artistName || title}은(는)`);
+        if (country)   parts.push(`${country} 출신의 작가로,`);
+        parts.push("독자적인 예술 세계를 구축한 작가입니다. 작품 활동을 통해 다양한 시각적 언어를 탐구하며, 국내외 전시에서 활발히 활동하고 있습니다.");
+      } else if (klass === "갤러리") {
+        if (country)   parts.push(`${country}에 위치한`);
+        parts.push(`${title}은(는) 다양한 장르의 예술 작품을 소개하는 공간입니다. 신진 및 중견 작가들의 전시를 기획하며, 예술과 대중의 접점을 넓혀가고 있습니다.`);
+      } else if (klass === "전시") {
+        parts.push(`${title} 전시는 다채로운 작품들을 한자리에서 선보이는 기획전입니다. 참여 작가들의 역량과 주제 의식이 돋보이는 전시로, 관람객에게 풍부한 예술적 경험을 제공합니다.`);
+      } else if (klass === "경매") {
+        parts.push(`${title}은(는) 엄선된 작품들이 출품되는 경매입니다. 미술 시장의 흐름을 반영한 작품들이 소개되며, 컬렉터와 애호가 모두에게 주목받는 행사입니다.`);
+      } else {
+        parts.push("상세 설명이 준비 중입니다. 작품 및 작가에 대한 정보는 곧 업데이트될 예정입니다.");
+      }
+
+      finalDescriptionHtml = parts.join(" ");
+    }
+
     const vm = {
-      id:           doc._id.toString(),
-      facetBase:    meta.facetBase,
-      klassLabel:   meta.label,
-      klassIcon:    meta.icon,
+      id:              doc._id.toString(),
+      facetBase:       meta.facetBase,
+      klassLabel:      meta.label,
+      klassIcon:       meta.icon,
       title,
-      descriptionHtml,
+      descriptionHtml: finalDescriptionHtml,
       extras,
-      raw:          doc,
+      raw:             doc,
       artistWorks,
     };
 
