@@ -74,8 +74,9 @@ block content
       grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
       gap: 20px;
     }
-    @media (max-width: 640px) {
+    @media (max-width: 767px) {
       .art-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+      .facet-sidebar { display: none !important; }
     }
 
     /* ── Filter Panel ─────────────────────────────────────── */
@@ -265,10 +266,10 @@ block content
                     span.filter-item-count (#{f.c})
 
     //- Main layout: left filter + right grid
-    .grid.gap-6(class="md:grid-cols-[260px_1fr]")
+    div(style="display:flex; gap:24px; align-items:flex-start;")
 
-      //- Left panel (desktop only)
-      aside(class="hidden md:block")
+      //- Left panel
+      aside.facet-sidebar(style="width:260px; flex-shrink:0;")
         form#facetForm(method="GET" action=`/facet/${klass}`)
           input(type="hidden" name="q" value=q||"")
           input(type="hidden" name="limit" value=limit)
@@ -280,7 +281,7 @@ block content
                 .filter-group-title= (facetIconMap[g.key]||'') + ' ' + g.label
                 - var flist = (facets && facets[g.key]) || []
                 - var slist = (selected && selected[g.key]) || []
-                .max-h-64.overflow-y-auto(style="scrollbar-width:thin;scrollbar-color:#2a2a2a #161616;")
+                div(style="max-height:260px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:#2a2a2a #161616;")
                   if flist.length
                     each f in flist
                       - var ck = slist.indexOf(f._id) !== -1
@@ -292,7 +293,7 @@ block content
                     p(style="font-size:12px;color:rgba(255,255,255,0.2);padding:8px;") 항목 없음
 
       //- Right: grid
-      div
+      div(style="flex:1; min-width:0;")
         if !docs || !docs.length
           .text-center(style="padding:80px 0;color:rgba(255,255,255,0.25);font-size:15px;")
             p 결과가 없습니다.
