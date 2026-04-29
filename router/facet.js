@@ -39,12 +39,14 @@ const FACET_MAP = {
   // ── 작품 ─────────────────────────────────────────────────────────────────
   Artworks: {
     groups: [
-      { key: "genre",    aliases: ["Genre"],    label: "장르",   labelEn: "Genre",    array: false },
-      { key: "style",    aliases: ["Style"],    label: "양식",   labelEn: "Style",    array: false },
-      { key: "medium",   aliases: ["Medium"],   label: "매체",   labelEn: "Medium",   array: false },
-      { key: "material", aliases: ["Material"], label: "재료",   labelEn: "Material", array: true  },
-      { key: "theme",    aliases: ["Theme"],    label: "테마",   labelEn: "Theme",    array: true  },
-      { key: "movement", aliases: ["Movement"], label: "운동",   labelEn: "Movement", array: false },
+      { key: "genre",       aliases: ["Genre"],       label: "장르",   labelEn: "Genre",        array: false },
+      { key: "style",       aliases: ["Style"],       label: "양식",   labelEn: "Style",        array: false },
+      { key: "medium",      aliases: ["Medium"],      label: "매체",   labelEn: "Medium",       array: false },
+      { key: "material",    aliases: ["Material"],    label: "재료",   labelEn: "Material",     array: true  },
+      { key: "theme",       aliases: ["Theme"],       label: "테마",   labelEn: "Theme",        array: true  },
+      { key: "movement",    aliases: ["Movement"],    label: "운동",   labelEn: "Movement",     array: false },
+      { key: "orientation", aliases: ["Orientation"], label: "방향",   labelEn: "Orientation",  array: false },
+      { key: "size",        aliases: ["Size"],        label: "크기",   labelEn: "Size",         array: false },
     ],
     searchFields: ["_label", "title", "artworkTitle", "artistName", "_description", "description"],
     coll: () => "Artworks_RDF",

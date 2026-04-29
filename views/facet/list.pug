@@ -250,7 +250,7 @@ block content
 
   - var klassMap = { Artworks: {icon:'🖼️', label:'작품'}, Artists: {icon:'👤', label:'작가'}, Galleries: {icon:'🏛️', label:'갤러리'}, Exhibitions: {icon:'🎭', label:'전시'}, Auctions: {icon:'🔨', label:'경매'} }
   - var km = klassMap[klass] || {icon:'📋', label: klass}
-  - var facetIconMap = { genre:'🎨', style:'✦', medium:'🖌️', material:'🧱', theme:'💡', movement:'📚', country:'🌍', auctionHouse:'🏢' }
+  - var facetIconMap = { genre:'🎨', style:'✦', medium:'🖌️', material:'🧱', theme:'💡', movement:'📚', country:'🌍', auctionHouse:'🏢', orientation:'⬛', size:'📐' }
 
   .facet-page
     .container.mx-auto.px-4(style="max-width:1340px;")
@@ -398,6 +398,10 @@ block content
                         span.art-tag.blue= d.country
                       if d.movement
                         span.art-tag= d.movement
+                      if d.orientation
+                        span.art-tag= d.orientation
+                      if d.size
+                        span.art-tag= d.size
                       if d.creationYear
                         span.art-tag.rose= d.creationYear
                       if d.priceValue

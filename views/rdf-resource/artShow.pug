@@ -302,6 +302,12 @@ block content
           if vm.raw.movement
             a.dtag.dtag-gray(href=`/facet/${vm.facetBase}?movement=${encodeURIComponent(vm.raw.movement)}`)
               | 📚 #{vm.raw.movement}
+          if vm.raw.orientation
+            a.dtag.dtag-gray(href=`/facet/Artworks?orientation=${encodeURIComponent(vm.raw.orientation)}`)
+              | ⬛ #{vm.raw.orientation}
+          if vm.raw.size
+            a.dtag.dtag-gray(href=`/facet/Artworks?size=${encodeURIComponent(vm.raw.size)}`)
+              | 📐 #{vm.raw.size}
           if vm.raw.creationYear
             span.dtag.dtag-rose 📅 #{vm.raw.creationYear}
 
@@ -349,6 +355,14 @@ block content
               .prop-row
                 span.prop-key 운동
                 span.prop-val= vm.raw.movement
+            if vm.raw.orientation
+              .prop-row
+                span.prop-key 방향
+                span.prop-val= vm.raw.orientation
+            if vm.raw.size
+              .prop-row
+                span.prop-key 크기
+                span.prop-val= vm.raw.size
             if vm.raw.country
               .prop-row
                 span.prop-key 국가
