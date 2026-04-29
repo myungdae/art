@@ -1,24 +1,12 @@
-const express = require('express');
-const router = express.Router();
-// const JobSeeker = require('../model/jobSeeker');
-const OnlineTutor = require('../model/onlineTutor');
+// router/public.js — Art Platform
+"use strict";
 
-// ✅ Pricing Page (Public)
-router.get('/pricing', (req, res) => {
-  res.render('pricing', { title: 'Pricing - ESL PLUS' });
-});
+const express = require("express");
+const router  = express.Router();
 
-// ✅ Job Seekers 공개 목록
-router.get('/Job_Seekers', async (req, res) => {
-  // const seekers = await JobSeeker.find();
-  res.render('public/job_seekers', { seekers });
-});
-
-// ✅ Online Tutors 공개 목록
-router.get('/Online_Tutors', async (req, res) => {
-  const tutors = await OnlineTutor.find();
-  res.render('public/online_tutors', { tutors });
+// /pricing 페이지 (있으면 렌더, 없으면 next)
+router.get("/pricing", (req, res, next) => {
+  res.render("pricing", { title: "ART+ Pricing" });
 });
 
 module.exports = router;
-
