@@ -158,6 +158,7 @@ html(lang='ko')
           a(href='/facet/Galleries'   class=(currentPage && currentPage.indexOf('/facet/Galleries')===0   ? 'active' : '')) 🏛️ 갤러리
           a(href='/facet/Exhibitions' class=(currentPage && currentPage.indexOf('/facet/Exhibitions')===0 ? 'active' : '')) 🎭 전시
           a(href='/facet/Auctions'    class=(currentPage && currentPage.indexOf('/facet/Auctions')===0    ? 'active' : '')) 🔨 경매
+          a(href='/joseon_defense'    class=(currentPage && currentPage.indexOf('/joseon_defense')===0    ? 'active' : '')) 🏯 조선국방
 
         .art-gnb-right
           if session && session.user
@@ -183,6 +184,7 @@ html(lang='ko')
       a(href='/facet/Galleries'   class=(currentPage && currentPage.indexOf('/facet/Galleries')===0   ? 'active' : '')) 🏛️ 갤러리
       a(href='/facet/Exhibitions' class=(currentPage && currentPage.indexOf('/facet/Exhibitions')===0 ? 'active' : '')) 🎭 전시
       a(href='/facet/Auctions'    class=(currentPage && currentPage.indexOf('/facet/Auctions')===0    ? 'active' : '')) 🔨 경매
+      a(href='/joseon_defense'    class=(currentPage && currentPage.indexOf('/joseon_defense')===0    ? 'active' : '')) 🏯 조선국방
       div(style='border-top:2px solid #222;margin:12px 0')
       if session && session.user
         a(href='/user/mypage') 마이페이지
