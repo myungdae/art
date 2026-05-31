@@ -1156,3 +1156,126 @@ res:GochangEupseongHeritage
   rdfs:label "고창읍성 (모양성)"@ko ;
   dc:description "전라북도 고창군 소재. 조선시대 읍성. 사적 145호"@ko ;
 .
+
+# ════════════════════════════════════════════
+#  Instances — 장소 (Place / Province / Battlefield)
+# ════════════════════════════════════════════
+
+res:JeollaProvince
+  rdf:type jos:Province ;
+  rdfs:label "전라도"@ko ;
+  dc:description "조선시대 전라병영 관할 도. 현재 전라남도·전라북도·제주도 포함"@ko ;
+  jos:hasHeritage res:JeollaMilitaryHeritage ;
+.
+res:GangjinGun
+  rdf:type jos:Place ;
+  rdfs:label "강진"@ko ;
+  dc:description "전라남도 강진군. 전라병영성 소재지"@ko ;
+  jos:hasHeritage res:JeollaMilitaryHeritage ;
+.
+res:NamwonCity
+  rdf:type jos:Battlefield ;
+  rdfs:label "남원"@ko ;
+  dc:description "전라북도 남원시. 정유재란 남원성 전투(1597) 현장"@ko ;
+.
+res:HaengJuPlace
+  rdf:type jos:Battlefield ;
+  rdfs:label "행주 (경기 고양)"@ko ;
+  dc:description "경기도 고양시. 행주대첩(1593) 현장"@ko ;
+.
+res:DaemadoIsland
+  rdf:type jos:BorderArea ;
+  rdfs:label "대마도"@ko ;
+  dc:description "기해동정(1419) 대마도 정벌 목표지. 왜구 본거지"@ko ;
+.
+res:ManchuriaBorderArea
+  rdf:type jos:BorderArea ;
+  rdfs:label "만주·함경도 접경"@ko ;
+  dc:description "여진 정벌(세종~성종) 원정 대상 지역"@ko ;
+.
+res:GwanggyoSanPlace
+  rdf:type jos:Battlefield ;
+  rdfs:label "광교산 (경기 수원)"@ko ;
+  dc:description "병자호란 광교산 전투(1637) 현장. 김준룡 전라병사 승전지"@ko ;
+.
+res:HaenamPlace
+  rdf:type jos:Battlefield ;
+  rdfs:label "해남"@ko ;
+  dc:description "전라남도 해남군. 을묘왜변(1555) 주요 전장"@ko ;
+.
+res:JeonjuCity
+  rdf:type jos:Place ;
+  rdfs:label "전주"@ko ;
+  dc:description "전라북도 전주시. 전주 거진 소재지"@ko ;
+.
+res:NajuCity
+  rdf:type jos:Place ;
+  rdfs:label "나주"@ko ;
+  dc:description "전라남도 나주시. 나주 거진 소재지"@ko ;
+.
+res:SuncheonCity
+  rdf:type jos:Place ;
+  rdfs:label "순천"@ko ;
+  dc:description "전라남도 순천시. 순천 거진 소재지"@ko ;
+.
+res:JejuIsland
+  rdf:type jos:Place ;
+  rdfs:label "제주"@ko ;
+  dc:description "제주특별자치도. 제주 거진 소재지"@ko ;
+.
+
+# ════════════════════════════════════════════
+#  추가 관계 트리플 — Place ↔ Fortress/Event 연결
+# ════════════════════════════════════════════
+
+# 전라병영성 → 강진(장소)
+res:GangjinJeollaByeongyeongseong
+  jos:hasHeritage res:JeollaMilitaryHeritage ;
+.
+
+# 낙안읍성 → 유산
+res:NaganEupseong
+  jos:hasHeritage res:NaganEupseongHeritage ;
+.
+# 고창읍성 → 유산
+res:GochangEupseong
+  jos:hasHeritage res:GochangEupseongHeritage ;
+.
+
+# 전투 → 장소 보완
+res:DaemadoExpedition1419
+  jos:occurredAt res:DaemadoIsland ;
+.
+res:JurchenExpedition
+  jos:occurredAt res:ManchuriaBorderArea ;
+.
+res:EulmyoWaebyeon
+  jos:occurredAt res:HaenamPlace ;
+.
+res:BattleOfGwanggyoSan
+  jos:occurredAt res:GwanggyoSanPlace ;
+.
+res:BattleOfNamwon
+  jos:occurredAt res:NamwonCity ;
+.
+res:BattleOfHaengju
+  jos:occurredAt res:HaengJuPlace ;
+.
+
+# 군사조직 → 주둔지 보완
+res:JeollaByeongyeong
+  jos:stationedAt res:GangjinGun ;
+  jos:stationedAt res:JeollaProvince ;
+.
+res:JeonjuGeojin
+  jos:stationedAt res:JeonjuCity ;
+.
+res:NajuGeojin
+  jos:stationedAt res:NajuCity ;
+.
+res:SuncheonGeojin
+  jos:stationedAt res:SuncheonCity ;
+.
+res:JejuGeojin
+  jos:stationedAt res:JejuIsland ;
+.
