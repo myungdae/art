@@ -1,4 +1,5 @@
 # baseURI: http://joseon-defense.eventpool.kr/ontology
+# 출처: 이원승, 『전라병영성의 영웅과 보물들』(2025) + 조선시대 국방 온톨로지 v0.1
 
 @prefix dc: <http://purl.org/dc/elements/1.1/> .
 @prefix jos: <http://joseon-defense.eventpool.kr/ontology/> .
@@ -11,9 +12,14 @@
 
 <http://joseon-defense.eventpool.kr/ontology>
   rdf:type owl:Ontology ;
-  dc:description "전라병영성과 조선시대 지방군사체계를 중심으로 한 Static Ontology 초안"@ko ;
-  rdfs:label "조선시대 국방 온톨로지 v0.1"@ko ;
+  dc:description "전라병영성과 조선시대 지방군사체계를 중심으로 한 Static Ontology — 이원승(2025) 자료 보강판"@ko ;
+  rdfs:label "조선시대 국방 온톨로지 v0.2"@ko ;
 .
+
+# ════════════════════════════════════════════
+#  Classes
+# ════════════════════════════════════════════
+
 jos:Barbican
   rdf:type owl:Class ;
   rdfs:label "옹성"@ko ;
@@ -217,13 +223,6 @@ jos:War
   rdfs:label "전쟁"@ko ;
   rdfs:subClassOf jos:MilitaryEvent ;
 .
-jos:WeaponDevelopedBy
-  rdf:type owl:ObjectProperty ;
-  rdfs:domain jos:WeaponSystem ;
-  rdfs:label "무기쳬계가 개발되다"^^xsd:string ;
-  rdfs:range jos:Person ;
-  owl:inverseOf jos:developedWeapon ;
-.
 jos:WeaponSystem
   rdf:type owl:Class ;
   rdfs:label "무기체계"@ko ;
@@ -232,6 +231,18 @@ jos:Wokou
   rdf:type owl:Class ;
   rdfs:label "왜구"@ko ;
   rdfs:subClassOf jos:EnemyForce ;
+.
+
+# ════════════════════════════════════════════
+#  Object Properties
+# ════════════════════════════════════════════
+
+jos:WeaponDevelopedBy
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain jos:WeaponSystem ;
+  rdfs:label "무기체계가 개발되다"@ko ;
+  rdfs:range jos:Person ;
+  owl:inverseOf jos:developedWeapon ;
 .
 jos:againstEnemy
   rdf:type owl:ObjectProperty ;
@@ -242,7 +253,7 @@ jos:againstEnemy
 jos:appointedBy
   rdf:type owl:ObjectProperty ;
   rdfs:domain jos:Commander ;
-  rdfs:label "appointed by"^^xsd:string ;
+  rdfs:label "임명을 받다"@ko ;
   rdfs:range jos:King ;
   owl:inverseOf jos:appoints ;
 .
@@ -256,7 +267,7 @@ jos:appoints
 jos:build
   rdf:type owl:ObjectProperty ;
   rdfs:domain jos:Person ;
-  rdfs:label "build"^^xsd:string ;
+  rdfs:label "축성/건립하다"@ko ;
   rdfs:range jos:MilitaryFacility ;
   owl:inverseOf jos:builtBy ;
 .
@@ -318,11 +329,6 @@ jos:involvesForce
   rdfs:label "군사조직이 관여하다"@ko ;
   rdfs:range jos:MilitaryOrganization ;
 .
-jos:modernEquivalent
-  rdf:type owl:DatatypeProperty ;
-  rdfs:label "현대적 대응개념"@ko ;
-  rdfs:range xsd:string ;
-.
 jos:occurredAt
   rdf:type owl:ObjectProperty ;
   rdfs:domain jos:MilitaryEvent ;
@@ -334,6 +340,46 @@ jos:participatedIn
   rdfs:domain jos:Person ;
   rdfs:label "참전/참여하다"@ko ;
   rdfs:range jos:MilitaryEvent ;
+.
+jos:stationedAt
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain jos:MilitaryOrganization ;
+  rdfs:label "주둔하다"@ko ;
+  rdfs:range jos:Place ;
+.
+jos:subordinateTo
+  rdf:type owl:ObjectProperty ;
+  rdfs:label "예속되다"@ko ;
+  owl:inverseOf jos:hasSubordinateCommand ;
+.
+jos:usedInMilitaryEvent
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain jos:WeaponSystem ;
+  rdfs:label "군사이벤트에 사용되다"@ko ;
+  rdfs:range jos:MilitaryEvent ;
+  owl:inverseOf jos:usesWeapon ;
+.
+jos:usesWeapon
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain jos:MilitaryEvent ;
+  rdfs:label "무기체계를 사용하다"@ko ;
+  rdfs:range jos:WeaponSystem ;
+  owl:inverseOf jos:usedInMilitaryEvent ;
+.
+
+# ════════════════════════════════════════════
+#  Datatype Properties
+# ════════════════════════════════════════════
+
+jos:achievementNote
+  rdf:type owl:DatatypeProperty ;
+  rdfs:label "주요업적"@ko ;
+  rdfs:range xsd:string ;
+.
+jos:modernEquivalent
+  rdf:type owl:DatatypeProperty ;
+  rdfs:label "현대적 대응개념"@ko ;
+  rdfs:range xsd:string ;
 .
 jos:periodLabel
   rdf:type owl:DatatypeProperty ;
@@ -350,30 +396,10 @@ jos:sourceNote
   rdfs:label "출처/근거 메모"@ko ;
   rdfs:range xsd:string ;
 .
-jos:stationedAt
-  rdf:type owl:ObjectProperty ;
-  rdfs:domain jos:MilitaryOrganization ;
-  rdfs:label "주둔하다"@ko ;
-  rdfs:range jos:Place ;
-.
-jos:subordinateTo
-  rdf:type owl:ObjectProperty ;
-  rdfs:label "예속되다"@ko ;
-  owl:inverseOf jos:hasSubordinateCommand ;
-.
-jos:usedInMilitaryEvent
-  rdf:type owl:ObjectProperty ;
-  rdfs:domain jos:WeaponSystem ;
-  rdfs:label "무기체계가 군사이벤트에 사용되다"^^xsd:string ;
-  rdfs:range jos:MilitaryEvent ;
-  owl:inverseOf jos:usesWeapon ;
-.
-jos:usesWeapon
-  rdf:type owl:ObjectProperty ;
-  rdfs:domain jos:MilitaryEvent ;
-  rdfs:label "무기체계를 사용하다"@ko ;
-  rdfs:range jos:WeaponSystem ;
-  owl:inverseOf jos:usedInMilitaryEvent ;
+jos:specNote
+  rdf:type owl:DatatypeProperty ;
+  rdfs:label "제원/사양"@ko ;
+  rdfs:range xsd:string ;
 .
 jos:yearEnd
   rdf:type owl:DatatypeProperty ;
@@ -385,49 +411,748 @@ jos:yearStart
   rdfs:label "시작연도"@ko ;
   rdfs:range xsd:gYear ;
 .
-res:BattleAgainstWokouUsingSingijeon
-  rdf:type jos:Battle ;
+
+# ════════════════════════════════════════════
+#  Instances — 적대세력 (EnemyForce)
+# ════════════════════════════════════════════
+
+res:WokouForce
+  rdf:type jos:Wokou ;
+  rdfs:label "왜구"@ko ;
+  dc:description "고려말~조선초 전라·경상 해안을 침략한 일본 해적 집단"@ko ;
+.
+res:JurchenForce
+  rdf:type jos:Jurchen ;
+  rdfs:label "여진족"@ko ;
+  dc:description "만주·함경도 접경 여진 부족. 세종~성종 대 정벌 대상"@ko ;
+.
+res:QingForce
+  rdf:type jos:LaterJinQing ;
+  rdfs:label "후금/청군"@ko ;
+  dc:description "정묘호란(1627)·병자호란(1636~7)의 주체"@ko ;
+.
+res:ImjinJapaneseArmy
+  rdf:type jos:JapaneseArmy ;
+  rdfs:label "임진왜란 일본군"@ko ;
+  dc:description "도요토미 히데요시가 파병한 조선 침략 일본군(1592~1598)"@ko ;
+.
+
+# ════════════════════════════════════════════
+#  Instances — 국왕 (King)
+# ════════════════════════════════════════════
+
+res:KingTaejong
+  rdf:type jos:King ;
+  rdfs:label "태종"@ko ;
+  jos:periodLabel "재위 1400~1418"@ko ;
+  jos:achievementNote "전라병영성을 광주에서 강진으로 이전(1417) 명령"@ko ;
+.
+res:KingSejong
+  rdf:type jos:King ;
+  rdfs:label "세종"@ko ;
+  jos:periodLabel "재위 1418~1450"@ko ;
+  jos:achievementNote "대마도 정벌(1419) 명령, 4군6진 개척, 신기전·화포 개발 지원"@ko ;
+.
+res:KingSejo
+  rdf:type jos:King ;
+  rdfs:label "세조"@ko ;
+  jos:periodLabel "재위 1455~1468"@ko ;
+  jos:achievementNote "여진 정벌 군사 동원, 5위도총부 체계 정비"@ko ;
+.
+res:KingMyeongjong
+  rdf:type jos:King ;
+  rdfs:label "명종"@ko ;
+  jos:periodLabel "재위 1545~1567"@ko ;
+  jos:achievementNote "을묘왜변(1555) 대응, 전라병영 방어 체계 강화"@ko ;
+.
+res:KingSeonjo
+  rdf:type jos:King ;
+  rdfs:label "선조"@ko ;
+  jos:periodLabel "재위 1567~1608"@ko ;
+  jos:achievementNote "임진왜란·정유재란 대응 총지휘, 훈련도감 창설"@ko ;
+.
+res:KingInjo
+  rdf:type jos:King ;
+  rdfs:label "인조"@ko ;
+  jos:periodLabel "재위 1623~1649"@ko ;
+  jos:achievementNote "정묘호란·병자호란 대응, 어영청·총융청 창설"@ko ;
+.
+res:KingHyojong
+  rdf:type jos:King ;
+  rdfs:label "효종"@ko ;
+  jos:periodLabel "재위 1649~1659"@ko ;
+  jos:achievementNote "북벌 정책 추진, 거북차 개발 지원, 군비 확충"@ko ;
+.
+
+# ════════════════════════════════════════════
+#  Instances — 지휘관 (Commander / JeollaByeongsa)
+# ════════════════════════════════════════════
+
+res:JinEulseo
+  rdf:type jos:JeollaByeongsa ;
+  rdfs:label "진을서"@ko ;
+  jos:rankLabel "전라도 병마절도사 (종2품)"@ko ;
+  jos:periodLabel "1393~1395 (태조 2~4년)"@ko ;
+  jos:achievementNote "전라도 군사 군적을 최초로 작성하여 전라병영 행정 기틀 마련"@ko ;
+  jos:participatedIn res:ConstructionOfJeollaByeongyeongseong ;
+  jos:sourceNote "이원승(2025), 전라병영성의 영웅과 보물들"@ko ;
+.
+res:BakJaan
+  rdf:type jos:JeollaByeongsa ;
+  rdfs:label "박자안"@ko ;
+  jos:rankLabel "전라도 병마절도사 (종2품)"@ko ;
+  jos:periodLabel "1397 (태조 6년)"@ko ;
+  jos:achievementNote "고려말·조선초 대마도 정벌 및 왜구 격퇴"@ko ;
   jos:againstEnemy res:WokouForce ;
-  jos:usesWeapon res:ChongtongCannon ;
-  jos:usesWeapon res:SingijeonWeapon ;
-  rdfs:label "신기전과 총통을 활용한 왜구 격멸"@ko ;
+  jos:sourceNote "이원승(2025)"@ko ;
 .
-res:ByeongjaHoran
-  rdf:type jos:War ;
-  jos:againstEnemy res:QingForce ;
-  jos:involvesForce res:JeollaByeongyeong ;
-  jos:yearEnd "1637"^^xsd:gYear ;
-  jos:yearStart "1636"^^xsd:gYear ;
-  rdfs:label "병자호란"@ko ;
+res:MaCheonmok
+  rdf:type jos:JeollaByeongsa ;
+  rdfs:label "마천목"@ko ;
+  jos:rankLabel "전라도 병마절도사 (종2품)"@ko ;
+  jos:periodLabel "1417~? (태종 17년, 두 차례 재임)"@ko ;
+  jos:achievementNote "강진 전라병영성 축성 주도, 효행, 무과 장원 급제, 좌명공신 추대"@ko ;
+  jos:participatedIn res:ConstructionOfJeollaByeongyeongseong ;
+  jos:build res:GangjinJeollaByeongyeongseong ;
+  jos:appointedBy res:KingTaejong ;
+  jos:sourceNote "이원승(2025)"@ko ;
 .
-res:ChongtongCannon
-  rdf:type jos:Cannon ;
-  rdfs:label "총통"@ko ;
+res:BakCho
+  rdf:type jos:JeollaByeongsa ;
+  rdfs:label "박초"@ko ;
+  jos:rankLabel "전라도 병마절도사 (종2품)"@ko ;
+  jos:periodLabel "1419 (세종 1년, 대마도 정벌)"@ko ;
+  jos:achievementNote "대마도 정벌(1419) 전라도 군사 지휘, 전후 개선 조치 건의, 적선 129척 소각·포로 131명 구출"@ko ;
+  jos:participatedIn res:DaemadoExpedition1419 ;
+  jos:appointedBy res:KingSejong ;
+  jos:commands res:JeollaByeongyeong ;
+  jos:sourceNote "이원sung(2025)"@ko ;
 .
-res:ConstructionOfJeollaByeongyeongseong
-  rdf:type jos:MilitaryEvent ;
-  jos:involvesForce res:JeollaByeongyeong ;
-  jos:occurredAt res:GangjinJeollaByeongyeongseong ;
-  jos:periodLabel "태종 대"@ko ;
-  rdfs:label "강진 전라병영성 축성"@ko ;
+res:SinJu
+  rdf:type jos:JeollaByeongsa ;
+  rdfs:label "신주"@ko ;
+  jos:rankLabel "전라도 병마절도사 (종2품)"@ko ;
+  jos:periodLabel "세조~성종 연간"@ko ;
+  jos:achievementNote "여진 정벌 전라도 군사 2,000~3,000명 동원 지휘"@ko ;
+  jos:participatedIn res:JurchenExpedition ;
+  jos:againstEnemy res:JurchenForce ;
+  jos:sourceNote "이원승(2025)"@ko ;
 .
-res:DaejeonghyeonJin
-  rdf:type jos:LocalGarrison ;
-  jos:subordinateTo res:JejuGeojin ;
-  rdfs:label "대정현 제진"@ko ;
+res:ByeonHyeop
+  rdf:type jos:JeollaByeongsa ;
+  rdfs:label "변협"@ko ;
+  jos:rankLabel "전라도 병마절도사 (종2품)"@ko ;
+  jos:periodLabel "1555·1568 (명종~선조)"@ko ;
+  jos:achievementNote "을묘왜변(1555) 달량성 방어, 해남현감으로 초기 대응, 후에 전라병사로 군 강화"@ko ;
+  jos:participatedIn res:EulmyoWaebyeon ;
+  jos:againstEnemy res:WokouForce ;
+  jos:sourceNote "이원승(2025)"@ko ;
 .
+res:ChoiWon
+  rdf:type jos:JeollaByeongsa ;
+  rdfs:label "최원"@ko ;
+  jos:rankLabel "전라도 병마절도사 (종2품)"@ko ;
+  jos:periodLabel "1592 (선조 25년, 임진왜란)"@ko ;
+  jos:achievementNote "임진왜란 초기 전라도 근왕군 북상 지휘, 웅치·이치 전투 방어 지원"@ko ;
+  jos:participatedIn res:ImjinWaeran ;
+  jos:participatedIn res:BattleOfWongchiIchi ;
+  jos:commands res:JeollaByeongyeong ;
+  jos:sourceNote "이원승(2025)"@ko ;
+.
+res:JeongGeol
+  rdf:type jos:JeollaByeongsa ;
+  rdfs:label "정걸"@ko ;
+  jos:rankLabel "전라도 병마절도사 (종2품)"@ko ;
+  jos:periodLabel "1583·1592~1597 (선조 연간)"@ko ;
+  jos:achievementNote "임진왜란 기간 전라도 수군·육군 지휘, 행주대첩 지원"@ko ;
+  jos:participatedIn res:ImjinWaeran ;
+  jos:participatedIn res:BattleOfHaengju ;
+  jos:commands res:JeollaByeongyeong ;
+  jos:sourceNote "이원승(2025)"@ko ;
+.
+res:LeeBokmam
+  rdf:type jos:JeollaByeongsa ;
+  rdfs:label "이복남"@ko ;
+  jos:rankLabel "전라도 병마절도사 (종2품)"@ko ;
+  jos:periodLabel "1597 (선조 30년, 정유재란)"@ko ;
+  jos:achievementNote "남원성 전투(1597)에서 명나라·조선군·백성과 함께 끝까지 항전 후 순국. 5대 영웅 명문가"@ko ;
+  jos:participatedIn res:BattleOfNamwon ;
+  jos:commands res:JeollaByeongyeong ;
+  jos:sourceNote "이원승(2025)"@ko ;
+.
+res:LeeSunsin1610
+  rdf:type jos:JeollaByeongsa ;
+  rdfs:label "이순신 (무의공)"@ko ;
+  jos:rankLabel "전라도 병마절도사 (종2품)"@ko ;
+  jos:periodLabel "1610 (광해군 2년)"@ko ;
+  jos:achievementNote "임진왜란 후 전라도 재건 기여, 전라병사 재직 중 순직. 충무공 이순신과 동명이인(본관 전주, 무의공 시호)"@ko ;
+  jos:commands res:JeollaByeongyeong ;
+  jos:sourceNote "이원승(2025) — 충무공(덕수 이씨)과 구별되는 전주 이씨 무의공"@ko ;
+.
+res:SinGyeongin
+  rdf:type jos:JeollaByeongsa ;
+  rdfs:label "신경인"@ko ;
+  jos:rankLabel "전라도 병마절도사 (종2품)"@ko ;
+  jos:periodLabel "1627 (인조 5년, 정묘호란)"@ko ;
+  jos:achievementNote "정묘호란 시 전라도 군사 1만 명을 이끌고 서울 진격, 후금 철수 후 귀환"@ko ;
+  jos:participatedIn res:JeongmyoHoran ;
+  jos:commands res:JeollaByeongyeong ;
+  jos:sourceNote "이원승(2025)"@ko ;
+.
+res:KimJunryong
+  rdf:type jos:JeollaByeongsa ;
+  rdfs:label "김준룡"@ko ;
+  jos:rankLabel "전라도 병마절도사 (종2품)"@ko ;
+  jos:periodLabel "인조~효종 연간"@ko ;
+  jos:achievementNote "병자호란 광교산 전투 승리, 청군 격파, 선무공신 책봉. 남한산성 포위 청군 격퇴"@ko ;
+  jos:participatedIn res:ByeongjaHoran ;
+  jos:participatedIn res:BattleOfGwanggyoSan ;
+  jos:commands res:JeollaByeongyeong ;
+  jos:sourceNote "이원승(2025)"@ko ;
+.
+res:GuIngi
+  rdf:type jos:JeollaByeongsa ;
+  rdfs:label "구인기"@ko ;
+  jos:rankLabel "전라도 병마절도사 (종2품) / 전라우수사"@ko ;
+  jos:periodLabel "1651~1652 (효종 2~3년)"@ko ;
+  jos:achievementNote "거북차(거북선 원리 응용 대형 장갑 전투차량) 개발·전투 실험. 인력 70명 견인. 거북선 육상 버전 최초 시도"@ko ;
+  jos:participatedIn res:GeobukchaDevelopment ;
+  jos:developedWeapon res:GeobukchaWeapon ;
+  jos:commands res:JeollaByeongyeong ;
+  jos:sourceNote "이원승(2025)"@ko ;
+.
+res:SeonGeoyi
+  rdf:type jos:Commander ;
+  rdfs:label "선거이"@ko ;
+  jos:rankLabel "전라병사 / 행주대첩 지휘관"@ko ;
+  jos:periodLabel "임진왜란 (1593)"@ko ;
+  jos:achievementNote "행주대첩에서 전라도 군사 지휘, 신기전·화차 사용으로 일본군 격퇴"@ko ;
+  jos:participatedIn res:BattleOfHaengju ;
+  jos:commands res:JeollaByeongyeong ;
+  jos:sourceNote "이원승(2025)"@ko ;
+.
+res:WonJeok
+  rdf:type jos:Commander ;
+  rdfs:label "원적"@ko ;
+  jos:rankLabel "전라병사 (종2품)"@ko ;
+  jos:periodLabel "1555 (을묘왜변)"@ko ;
+  jos:achievementNote "을묘왜변 달량성 전투에서 전사(순국)"@ko ;
+  jos:participatedIn res:EulmyoWaebyeon ;
+  jos:againstEnemy res:WokouForce ;
+  jos:sourceNote "이원승(2025)"@ko ;
+.
+
+# ════════════════════════════════════════════
+#  Instances — 성곽 (Fortress)
+# ════════════════════════════════════════════
+
 res:GangjinJeollaByeongyeongseong
   rdf:type jos:Fortress ;
+  rdfs:label "강진 전라병영성"@ko ;
+  skos:altLabel "전라병영성"@ko ;
+  dc:description "전라도 육군 최고사령부 주둔지. 둘레 약 1.1km. 1417년 태종 명으로 광주에서 강진으로 이전"@ko ;
+  jos:periodLabel "태종 17년(1417) 이전 ~ 1895년 폐영"@ko ;
   jos:hasFacility res:JeollaByeongyeongseongBarbican ;
   jos:hasFacility res:JeollaByeongyeongseongMoat ;
   jos:hasFacility res:JeollaByeongyeongseongTrap ;
   jos:hasHeritage res:JeollaMilitaryHeritage ;
-  jos:periodLabel "태종 17년(1417) 전라병영이 강진으로 이전한 뒤 중심 주둔지"@ko ;
-  rdfs:label "강진 전라병영성"@ko ;
-  skos:altLabel "전라병영성"@ko ;
+  jos:builtBy res:MaCheonmok ;
+  jos:sourceNote "이원승(2025); 둘레 약 1.1km, 병영면 소재"@ko ;
+.
+res:NamwonEupseong
+  rdf:type jos:Fortress ;
+  rdfs:label "남원읍성"@ko ;
+  dc:description "1597년 정유재란 남원성 전투 현장. 전라북도 남원시"@ko ;
+  jos:periodLabel "정유재란(1597) 격전지"@ko ;
+  jos:sourceNote "이원승(2025)"@ko ;
+.
+res:JeonjuBuseong
+  rdf:type jos:Fortress ;
+  rdfs:label "전주부성"@ko ;
+  dc:description "전라도 거진 핵심 성. 전라북도 전주시"@ko ;
+  jos:periodLabel "조선시대 전라도 행정·군사 중심지"@ko ;
+.
+res:NajuEupseong
+  rdf:type jos:Fortress ;
+  rdfs:label "나주읍성"@ko ;
+  dc:description "전라남도 나주시 소재 거진 성곽"@ko ;
+.
+res:SuncheonBuEupseong
+  rdf:type jos:Fortress ;
+  rdfs:label "순천부읍성"@ko ;
+  dc:description "전라남도 순천시 소재 거진 성곽"@ko ;
+.
+res:JangheungEupseong
+  rdf:type jos:Fortress ;
+  rdfs:label "장흥읍성"@ko ;
+  dc:description "전라남도 장흥군 소재 거진 성곽"@ko ;
+.
+res:JejuEupseong
+  rdf:type jos:Fortress ;
+  rdfs:label "제주읍성"@ko ;
+  dc:description "제주특별자치도 제주시 소재. 제주 거진 중심 성곽"@ko ;
+.
+res:NaganEupseong
+  rdf:type jos:Fortress ;
+  rdfs:label "낙안읍성"@ko ;
+  dc:description "전라남도 순천시 낙안면 소재 제진 성곽. 둘레 약 1.4km. 현재 사적"@ko ;
+  jos:sourceNote "이원승(2025)"@ko ;
+.
+res:GochangEupseong
+  rdf:type jos:Fortress ;
+  rdfs:label "고창읍성"@ko ;
+  dc:description "전라북도 고창군 소재 제진 성곽. 둘레 약 1.7km. 현재 사적"@ko ;
+  jos:sourceNote "이원승(2025)"@ko ;
+.
+res:SuinSanseong
+  rdf:type jos:Fortress ;
+  rdfs:label "수인산성"@ko ;
+  dc:description "전라남도 강진군 병영면 소재 산성. 전라병영성 배후 방어 산성"@ko ;
+  jos:sourceNote "이원승(2025)"@ko ;
+.
+res:GeumseongSanseong
+  rdf:type jos:Fortress ;
+  rdfs:label "금성산성"@ko ;
+  dc:description "나주·담양 경계 산성. 전라병영 관할 주요 산성"@ko ;
+.
+res:IbamSanseong
+  rdf:type jos:Fortress ;
+  rdfs:label "입암산성"@ko ;
+  dc:description "전라남도 장성 소재 산성"@ko ;
+.
+res:GyoryongSanseong
+  rdf:type jos:Fortress ;
+  rdfs:label "교룡산성"@ko ;
+  dc:description "전라북도 남원 소재 산성. 임진왜란 시 전략 거점"@ko ;
+.
+res:DallyangSeong
+  rdf:type jos:Fortress ;
+  rdfs:label "달량성"@ko ;
+  dc:description "전라남도 해남 소재. 을묘왜변(1555) 왜구 침입 주요 격전지"@ko ;
+  jos:sourceNote "이원승(2025)"@ko ;
+.
+res:HaengJuSanseong
+  rdf:type jos:Fortress ;
+  rdfs:label "행주산성"@ko ;
+  dc:description "경기도 고양시 소재. 행주대첩(1593) 격전지"@ko ;
+.
+
+# ════════════════════════════════════════════
+#  Instances — 군사시설 (MilitaryFacility)
+# ════════════════════════════════════════════
+
+res:JeollaByeongyeongseongBarbican
+  rdf:type jos:Barbican ;
+  rdfs:label "전라병영성 옹성"@ko ;
+  dc:description "전라병영성 성문 보호용 반원형 방어 시설"@ko ;
+.
+res:JeollaByeongyeongseongMoat
+  rdf:type jos:Moat ;
+  rdfs:label "전라병영성 해자"@ko ;
+  dc:description "전라병영성 외곽 수로 방어 시설"@ko ;
+.
+res:JeollaByeongyeongseongTrap
+  rdf:type jos:TrapObstacle ;
+  rdfs:label "전라병영성 함정장애물"@ko ;
+  dc:description "전라병영성 성벽 외부 접근 차단 함정"@ko ;
+.
+
+# ════════════════════════════════════════════
+#  Instances — 군사조직 (MilitaryOrganization)
+# ════════════════════════════════════════════
+
+res:JeollaByeongyeong
+  rdf:type jos:ProvincialArmyCommand ;
+  rdfs:label "전라병영"@ko ;
+  skos:altLabel "전라도 병영"@ko ;
+  dc:description "전라도 육군 최고지휘부. 병사(종2품) 1명, 병마우후(종3품) 1명, 군관 5명, 차비군 20명, 나장 30명, 장인 12명, 심약 1명, 공노비 200명으로 구성"@ko ;
+  jos:modernEquivalent "사단급 지휘부"@ko ;
+  jos:stationedAt res:GangjinJeollaByeongyeongseong ;
+  jos:hasSubordinateCommand res:JeonjuGeojin ;
+  jos:hasSubordinateCommand res:NajuGeojin ;
+  jos:hasSubordinateCommand res:SuncheonGeojin ;
+  jos:hasSubordinateCommand res:NamwonGeojin ;
+  jos:hasSubordinateCommand res:JangheungGeojin ;
+  jos:hasSubordinateCommand res:JejuGeojin ;
+  jos:sourceNote "이원승(2025); 조선시대 전라도 육군 최고사령부"@ko ;
+.
+res:JeonjuGeojin
+  rdf:type jos:LargeGarrison ;
+  rdfs:label "전주 거진"@ko ;
+  dc:description "전라북도 전주 소재 여단급 지휘부"@ko ;
+  jos:modernEquivalent "여단급 지휘부"@ko ;
+  jos:subordinateTo res:JeollaByeongyeong ;
+  jos:stationedAt res:JeonjuBuseong ;
+.
+res:NajuGeojin
+  rdf:type jos:LargeGarrison ;
+  rdfs:label "나주 거진"@ko ;
+  dc:description "전라남도 나주 소재 여단급 지휘부"@ko ;
+  jos:modernEquivalent "여단급 지휘부"@ko ;
+  jos:subordinateTo res:JeollaByeongyeong ;
+  jos:stationedAt res:NajuEupseong ;
+.
+res:SuncheonGeojin
+  rdf:type jos:LargeGarrison ;
+  rdfs:label "순천 거진"@ko ;
+  dc:description "전라남도 순천 소재 여단급 지휘부"@ko ;
+  jos:modernEquivalent "여단급 지휘부"@ko ;
+  jos:subordinateTo res:JeollaByeongyeong ;
+  jos:stationedAt res:SuncheonBuEupseong ;
+.
+res:NamwonGeojin
+  rdf:type jos:LargeGarrison ;
+  rdfs:label "남원 거진"@ko ;
+  dc:description "전라북도 남원 소재 여단급 지휘부"@ko ;
+  jos:modernEquivalent "여단급 지휘부"@ko ;
+  jos:subordinateTo res:JeollaByeongyeong ;
+  jos:stationedAt res:NamwonEupseong ;
+.
+res:JangheungGeojin
+  rdf:type jos:LargeGarrison ;
+  rdfs:label "장흥 거진"@ko ;
+  dc:description "전라남도 장흥 소재 여단급 지휘부"@ko ;
+  jos:modernEquivalent "여단급 지휘부"@ko ;
+  jos:subordinateTo res:JeollaByeongyeong ;
+  jos:stationedAt res:JangheungEupseong ;
+.
+res:JejuGeojin
+  rdf:type jos:LargeGarrison ;
+  rdfs:label "제주 거진"@ko ;
+  dc:description "제주도 소재 여단급 지휘부. 대정현·정의현 2개 제진 관할"@ko ;
+  jos:modernEquivalent "여단급 지휘부"@ko ;
+  jos:subordinateTo res:JeollaByeongyeong ;
+  jos:stationedAt res:JejuEupseong ;
+  jos:hasSubordinateCommand res:DaejeonghyeonJin ;
+  jos:hasSubordinateCommand res:JeonguihyeonJin ;
+.
+res:DaejeonghyeonJin
+  rdf:type jos:LocalGarrison ;
+  rdfs:label "대정현 제진"@ko ;
+  dc:description "제주 서귀포시 대정읍 소재 중대급 지휘부"@ko ;
+  jos:modernEquivalent "중대급 지휘부"@ko ;
+  jos:subordinateTo res:JejuGeojin ;
+.
+res:JeonguihyeonJin
+  rdf:type jos:LocalGarrison ;
+  rdfs:label "정의현 제진"@ko ;
+  dc:description "제주 서귀포시 표선면 소재 중대급 지휘부"@ko ;
+  jos:modernEquivalent "중대급 지휘부"@ko ;
+  jos:subordinateTo res:JejuGeojin ;
+.
+res:NaganJin
+  rdf:type jos:LocalGarrison ;
+  rdfs:label "낙안 제진"@ko ;
+  dc:description "전라남도 순천시 낙안면. 낙안읍성 주둔 제진"@ko ;
+  jos:subordinateTo res:SuncheonGeojin ;
+  jos:stationedAt res:NaganEupseong ;
+.
+res:GochangJin
+  rdf:type jos:LocalGarrison ;
+  rdfs:label "고창 제진"@ko ;
+  dc:description "전라북도 고창군. 고창읍성 주둔 제진"@ko ;
+  jos:subordinateTo res:NamwonGeojin ;
+  jos:stationedAt res:GochangEupseong ;
+.
+res:WiMilitaryUnit
+  rdf:type jos:Unit ;
+  rdfs:label "5위(五衛)"@ko ;
+  dc:description "조선 중앙군 5위도총부 예하 중앙 군사조직. 의흥·용양·호분·충좌·충무위"@ko ;
+  jos:modernEquivalent "수도방위사령부 예하 부대"@ko ;
+.
+
+# ════════════════════════════════════════════
+#  Instances — 무기체계 (WeaponSystem)
+# ════════════════════════════════════════════
+
+res:CheonjaTongtong
+  rdf:type jos:Cannon ;
+  rdfs:label "천자총통"@ko ;
+  dc:description "조선 최대 화포. 대장군전(3.5m 화살) 발사"@ko ;
+  jos:specNote "길이 1.3m, 구경 13cm, 중량 300kg, 최대사거리 1,080m. 화살/포환/조란환 발사"@ko ;
+  jos:sourceNote "이원승(2025)"@ko ;
+.
+res:JijaTongtong
+  rdf:type jos:Cannon ;
+  rdfs:label "지자총통"@ko ;
+  dc:description "조선 중형 화포"@ko ;
+  jos:specNote "길이 0.9m, 구경 7.5cm, 중량 73kg, 최대사거리 960m"@ko ;
+  jos:sourceNote "이원승(2025)"@ko ;
+.
+res:HyeonjaTongtong
+  rdf:type jos:Cannon ;
+  rdfs:label "현자총통"@ko ;
+  dc:description "조선 중형 화포. 산탄 발사 가능"@ko ;
+  jos:specNote "길이 0.8m, 구경 7.5cm, 중량 40kg, 사거리 1,500m"@ko ;
+  jos:sourceNote "이원승(2025)"@ko ;
+.
+res:HwangjaTongtong
+  rdf:type jos:Cannon ;
+  rdfs:label "황자총통"@ko ;
+  dc:description "조선 소형 화포"@ko ;
+  jos:specNote "길이 0.5m, 구경 4cm, 중량 20kg, 사거리 1,100m"@ko ;
+  jos:sourceNote "이원승(2025)"@ko ;
+.
+res:ChongtongCannon
+  rdf:type jos:Cannon ;
+  rdfs:label "총통"@ko ;
+  dc:description "조선시대 총칭 화포류. 천자·지자·현자·황자총통 등 포함"@ko ;
+.
+res:SingijeonWeapon
+  rdf:type jos:Singijeon ;
+  rdfs:label "신기전"@ko ;
+  dc:description "로켓 추진 화살 무기. 대·산화·중·소신기전 4종"@ko ;
+  jos:specNote "대신기전 최대사거리 약 2km. 신기전기화차에 장착하면 100여 발 동시 발사"@ko ;
+  jos:sourceNote "이원승(2025)"@ko ;
+.
+res:SingijeongiHwacha
+  rdf:type jos:Hwacha ;
+  rdfs:label "신기전기화차"@ko ;
+  dc:description "신기전을 대량 탑재한 다련장 발사 플랫폼"@ko ;
+  jos:specNote "한 번에 100여 발 동시 발사 가능"@ko ;
+  jos:sourceNote "이원승(2025)"@ko ;
+.
+res:BigyeokJincheolloe
+  rdf:type jos:WeaponSystem ;
+  rdfs:label "비격진천뢰"@ko ;
+  dc:description "임진왜란 시 개발된 시한 폭탄. 적 함선·진지 공격용"@ko ;
+  jos:sourceNote "이원승(2025)"@ko ;
+.
+res:SeungjaTongtong
+  rdf:type jos:Cannon ;
+  rdfs:label "승자총통"@ko ;
+  dc:description "개인 휴대용 소형 화포. 화차에도 장착"@ko ;
+  jos:specNote "길이 56.8cm, 중량 4.5kg, 사거리 720m"@ko ;
+  jos:sourceNote "이원승(2025)"@ko ;
+.
+res:SajeonTongtong
+  rdf:type jos:Cannon ;
+  rdfs:label "사전총통"@ko ;
+  dc:description "25cm 화살 4발 동시 발사 개인용 4연장 소형 화포"@ko ;
+  jos:specNote "최대사거리 480m"@ko ;
+  jos:sourceNote "이원승(2025)"@ko ;
+.
+res:TongtongWangu
+  rdf:type jos:Cannon ;
+  rdfs:label "총통완구"@ko ;
+  dc:description "돌탄환(석탄) 발사용 곡사 화포"@ko ;
+  jos:specNote "45kg 돌탄환 발사, 사거리 440m"@ko ;
+  jos:sourceNote "이원승(2025)"@ko ;
+.
+res:GeobukchaWeapon
+  rdf:type jos:Geobukcha ;
+  rdfs:label "거북차"@ko ;
+  dc:description "효종 연간 구인기가 개발한 거북선 원리 응용 대형 장갑 전투차량"@ko ;
+  jos:specNote "인력 70명 견인, 선박/차륜형 전투차량 실험. 거북선의 육상 버전"@ko ;
+  jos:WeaponDevelopedBy res:GuIngi ;
+  jos:sourceNote "이원승(2025)"@ko ;
+.
+res:CheонboChong
+  rdf:type jos:WeaponSystem ;
+  rdfs:label "천보총"@ko ;
+  dc:description "숙종 대 개발된 장거리 신형 개인화기. 기존 조총보다 사거리 우수"@ko ;
+  jos:sourceNote "이원승(2025)"@ko ;
+.
+res:Jochong
+  rdf:type jos:WeaponSystem ;
+  rdfs:label "조총"@ko ;
+  dc:description "임진왜란 시기 일본군이 사용한 화승총. 이후 조선도 도입"@ko ;
+.
+res:Hongipo
+  rdf:type jos:Cannon ;
+  rdfs:label "홍이포"@ko ;
+  dc:description "명나라·청군이 사용한 대형 장거리 화포. 병자호란 남한산성 공격에 사용"@ko ;
+  jos:sourceNote "이원승(2025)"@ko ;
+.
+
+# ════════════════════════════════════════════
+#  Instances — 전쟁/전투/군사사건 (MilitaryEvent)
+# ════════════════════════════════════════════
+
+res:ConstructionOfJeollaByeongyeongseong
+  rdf:type jos:MilitaryEvent ;
+  rdfs:label "강진 전라병영성 축성"@ko ;
+  dc:description "태종 명으로 전라병영을 광주에서 강진으로 이전하고 병영성 축성"@ko ;
+  jos:yearStart "1417"^^xsd:gYear ;
+  jos:periodLabel "태종 17년(1417)"@ko ;
+  jos:occurredAt res:GangjinJeollaByeongyeongseong ;
+  jos:involvesForce res:JeollaByeongyeong ;
+  jos:sourceNote "이원승(2025)"@ko ;
+.
+res:DaemadoExpedition1419
+  rdf:type jos:Campaign ;
+  rdfs:label "대마도 정벌 (기해동정)"@ko ;
+  dc:description "세종 1년(1419) 이종무 총지휘하에 전라·경상·충청 군사 16,616명이 대마도를 공격. 적선 129척 소각, 포로 131명 구출"@ko ;
+  jos:yearStart "1419"^^xsd:gYear ;
+  jos:againstEnemy res:WokouForce ;
+  jos:involvesForce res:JeollaByeongyeong ;
+  jos:sourceNote "이원승(2025)"@ko ;
+.
+res:JurchenExpedition
+  rdf:type jos:Campaign ;
+  rdfs:label "여진 정벌"@ko ;
+  dc:description "세종~성종 연간 만주·함경도 접경 여진 부족 원정. 신주 등 전라병사 2,000~3,000명 동원"@ko ;
+  jos:yearStart "1431"^^xsd:gYear ;
+  jos:yearEnd "1470"^^xsd:gYear ;
+  jos:againstEnemy res:JurchenForce ;
+  jos:involvesForce res:JeollaByeongyeong ;
+  jos:sourceNote "이원승(2025)"@ko ;
+.
+res:EulmyoWaebyeon
+  rdf:type jos:Invasion ;
+  rdfs:label "을묘왜변"@ko ;
+  dc:description "명종 10년(1555) 왜구 수천 명이 달량성·해남·장흥·강진·제주 등 침입. 원적·한온·이남 전사. 변협·양달사·김수문 등이 격퇴"@ko ;
+  jos:yearStart "1555"^^xsd:gYear ;
+  jos:againstEnemy res:WokouForce ;
+  jos:involvesForce res:JeollaByeongyeong ;
+  jos:occurredAt res:DallyangSeong ;
+  jos:sourceNote "이원승(2025)"@ko ;
+.
+res:ImjinWaeran
+  rdf:type jos:War ;
+  rdfs:label "임진왜란"@ko ;
+  dc:description "선조 25년(1592) 일본군 침략으로 시작된 7년 전쟁. 전라도 육군·의병이 호남 곡창지대 방어"@ko ;
+  jos:yearStart "1592"^^xsd:gYear ;
+  jos:yearEnd "1598"^^xsd:gYear ;
+  jos:againstEnemy res:ImjinJapaneseArmy ;
+  jos:involvesForce res:JeollaByeongyeong ;
+  jos:usesWeapon res:SingijeonWeapon ;
+  jos:usesWeapon res:ChongtongCannon ;
+  jos:usesWeapon res:BigyeokJincheolloe ;
+  jos:sourceNote "이원승(2025)"@ko ;
+.
+res:BattleOfWongchiIchi
+  rdf:type jos:Battle ;
+  rdfs:label "웅치·이치 전투"@ko ;
+  dc:description "임진왜란(1592) 전라도 관군·의병이 웅치(전북 완주)·이치(전북 완주)에서 일본군의 호남 진입을 저지한 전투. 호남 곡창지대 수호"@ko ;
+  jos:yearStart "1592"^^xsd:gYear ;
+  jos:againstEnemy res:ImjinJapaneseArmy ;
+  jos:involvesForce res:JeollaByeongyeong ;
+  jos:sourceNote "이원승(2025)"@ko ;
+.
+res:BattleOfHaengju
+  rdf:type jos:Battle ;
+  rdfs:label "행주대첩"@ko ;
+  dc:description "임진왜란(1593) 권율 장군 지휘하에 행주산성에서 일본군을 대파한 전투. 전라도 군사(선거이·정걸 등) 참여. 신기전·화차·총통 대거 사용"@ko ;
+  jos:yearStart "1593"^^xsd:gYear ;
+  jos:againstEnemy res:ImjinJapaneseArmy ;
+  jos:involvesForce res:JeollaByeongyeong ;
+  jos:occurredAt res:HaengJuSanseong ;
+  jos:usesWeapon res:SingijeonWeapon ;
+  jos:usesWeapon res:SingijeongiHwacha ;
+  jos:usesWeapon res:ChongtongCannon ;
+  jos:sourceNote "이원승(2025)"@ko ;
+.
+res:BattleOfNamwon
+  rdf:type jos:Battle ;
+  rdfs:label "남원성 전투"@ko ;
+  dc:description "정유재란(1597) 이복남 전라병사 지휘하에 남원성에서 일본군에 맞서 끝까지 항전. 조선·명군·백성 1만여 명 순국"@ko ;
+  jos:yearStart "1597"^^xsd:gYear ;
+  jos:againstEnemy res:ImjinJapaneseArmy ;
+  jos:involvesForce res:JeollaByeongyeong ;
+  jos:occurredAt res:NamwonEupseong ;
+  jos:sourceNote "이원승(2025)"@ko ;
+.
+res:BattleAgainstWokouUsingSingijeon
+  rdf:type jos:Battle ;
+  rdfs:label "신기전과 총통을 활용한 왜구 격멸"@ko ;
+  dc:description "조선 전기 전라도 해안 왜구 침입 격퇴 전투. 신기전·총통 사용"@ko ;
+  jos:againstEnemy res:WokouForce ;
+  jos:usesWeapon res:ChongtongCannon ;
+  jos:usesWeapon res:SingijeonWeapon ;
+.
+res:JeongmyoHoran
+  rdf:type jos:War ;
+  rdfs:label "정묘호란"@ko ;
+  dc:description "인조 5년(1627) 후금의 침략. 신경인 등 전라도 군사 1만 명 서울 진격, 후금 철수 후 귀환"@ko ;
+  jos:yearStart "1627"^^xsd:gYear ;
+  jos:againstEnemy res:QingForce ;
+  jos:involvesForce res:JeollaByeongyeong ;
+  jos:sourceNote "이원승(2025)"@ko ;
+.
+res:ByeongjaHoran
+  rdf:type jos:War ;
+  rdfs:label "병자호란"@ko ;
+  dc:description "인조 14~15년(1636~1637) 청의 침략. 김준룡 전라병사가 광교산 전투에서 청군 격파"@ko ;
+  jos:yearStart "1636"^^xsd:gYear ;
+  jos:yearEnd "1637"^^xsd:gYear ;
+  jos:againstEnemy res:QingForce ;
+  jos:involvesForce res:JeollaByeongyeong ;
+  jos:usesWeapon res:Hongipo ;
+  jos:sourceNote "이원승(2025)"@ko ;
+.
+res:BattleOfGwanggyoSan
+  rdf:type jos:Battle ;
+  rdfs:label "광교산 전투"@ko ;
+  dc:description "병자호란(1636~1637) 중 김준룡이 광교산(경기 수원)에서 청군을 격파. 남한산성 포위 청군 일시 격퇴"@ko ;
+  jos:yearStart "1637"^^xsd:gYear ;
+  jos:againstEnemy res:QingForce ;
+  jos:involvesForce res:JeollaByeongyeong ;
+  jos:sourceNote "이원승(2025)"@ko ;
 .
 res:GeobukchaDevelopment
   rdf:type jos:MilitaryInnovation ;
+  rdfs:label "거북차 개발과 전투실험"@ko ;
+  dc:description "효종 2~3년(1651~1652) 구인기가 거북선 원리를 응용한 대형 장갑 전투차량(거북차) 개발·실험. 인력 70명 견인. 거북선의 육상 응용 최초 시도"@ko ;
+  jos:yearStart "1651"^^xsd:gYear ;
+  jos:yearEnd "1652"^^xsd:gYear ;
   jos:involvesForce res:JeollaByeongyeong ;
   jos:usesWeapon res:GeobukchaWeapon ;
-  rdfs:label "대형 거북차 개발과 전투실험"@ko ;
+  jos:sourceNote "이원승(2025)"@ko ;
+.
+res:GyeongsinEulbyeongFamine
+  rdf:type jos:DisasterRelief ;
+  rdfs:label "경신·을병 대기근 대민지원"@ko ;
+  dc:description "숙종 연간(1670년대~1690년대) 대기근 시 전라병영이 전라도 백성 진휼·구제 활동 전개"@ko ;
+  jos:yearStart "1670"^^xsd:gYear ;
+  jos:yearEnd "1700"^^xsd:gYear ;
+  jos:involvesForce res:JeollaByeongyeong ;
+  jos:sourceNote "이원승(2025)"@ko ;
+.
+res:LeeinJwaRebellion
+  rdf:type jos:DefenseOperation ;
+  rdfs:label "이인좌의 난 진압"@ko ;
+  dc:description "영조 4년(1728) 이인좌 반란 시 전라병사 및 관군이 진압에 참여"@ko ;
+  jos:yearStart "1728"^^xsd:gYear ;
+  jos:involvesForce res:JeollaByeongyeong ;
+  jos:sourceNote "이원승(2025)"@ko ;
+.
+res:HamelCaptivity
+  rdf:type jos:MilitaryEvent ;
+  rdfs:label "하멜 일행 강진 병영 유배"@ko ;
+  dc:description "효종~현종 연간(1653~1666) 네덜란드인 하멜 일행이 강진 전라병영성 인근에 유배. 서양인이 직접 목격한 전라병영 기록"@ko ;
+  jos:yearStart "1653"^^xsd:gYear ;
+  jos:yearEnd "1666"^^xsd:gYear ;
+  jos:occurredAt res:GangjinJeollaByeongyeongseong ;
+  jos:sourceNote "이원승(2025)"@ko ;
+.
+res:JeollaByeongyeongClosure
+  rdf:type jos:MilitaryEvent ;
+  rdfs:label "전라병영성 폐영"@ko ;
+  dc:description "고종 32년(1895) 조선 8도 지방 병영 체계 전면 해체. 조선 500년 전라병영 역사 종료"@ko ;
+  jos:yearStart "1895"^^xsd:gYear ;
+  jos:occurredAt res:GangjinJeollaByeongyeongseong ;
+  jos:involvesForce res:JeollaByeongyeong ;
+  jos:sourceNote "이원승(2025)"@ko ;
+.
+
+# ════════════════════════════════════════════
+#  Instances — 유산 (Heritage)
+# ════════════════════════════════════════════
+
+res:JeollaMilitaryHeritage
+  rdf:type jos:TangibleHeritage ;
+  rdfs:label "전라병영성 유적"@ko ;
+  dc:description "강진 전라병영성 성곽·문지·관아지 등 유적. 사적 지정"@ko ;
+  jos:sourceNote "이원승(2025)"@ko ;
+.
+res:NaganEupseongHeritage
+  rdf:type jos:TangibleHeritage ;
+  rdfs:label "낙안읍성 민속마을"@ko ;
+  dc:description "전라남도 순천시 낙안면 소재. 조선시대 읍성 원형 보존. 사적 302호"@ko ;
+.
+res:GochangEupseongHeritage
+  rdf:type jos:TangibleHeritage ;
+  rdfs:label "고창읍성 (모양성)"@ko ;
+  dc:description "전라북도 고창군 소재. 조선시대 읍성. 사적 145호"@ko ;
+.
