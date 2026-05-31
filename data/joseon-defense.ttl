@@ -903,6 +903,10 @@ res:SingijeonWeapon
   rdfs:label "신기전"@ko ;
   dc:description "로켓 추진 화살 무기. 대·산화·중·소신기전 4종"@ko ;
   jos:specNote "대신기전 최대사거리 약 2km. 신기전기화차에 장착하면 100여 발 동시 발사"@ko ;
+  jos:WeaponDevelopedBy res:KingSejong ;
+  jos:usedInMilitaryEvent res:BattleOfHaengju ;
+  jos:usedInMilitaryEvent res:ImjinWaeran ;
+  jos:usedInMilitaryEvent res:BattleAgainstWokouUsingSingijeon ;
   jos:sourceNote "이원승(2025)"@ko ;
 .
 res:SingijeongiHwacha
@@ -910,12 +914,14 @@ res:SingijeongiHwacha
   rdfs:label "신기전기화차"@ko ;
   dc:description "신기전을 대량 탑재한 다련장 발사 플랫폼"@ko ;
   jos:specNote "한 번에 100여 발 동시 발사 가능"@ko ;
+  jos:usedInMilitaryEvent res:BattleOfHaengju ;
   jos:sourceNote "이원승(2025)"@ko ;
 .
 res:BigyeokJincheolloe
   rdf:type jos:WeaponSystem ;
   rdfs:label "비격진천뢰"@ko ;
   dc:description "임진왜란 시 개발된 시한 폭탄. 적 함선·진지 공격용"@ko ;
+  jos:usedInMilitaryEvent res:ImjinWaeran ;
   jos:sourceNote "이원승(2025)"@ko ;
 .
 res:SeungjaTongtong
@@ -923,6 +929,9 @@ res:SeungjaTongtong
   rdfs:label "승자총통"@ko ;
   dc:description "개인 휴대용 소형 화포. 화차에도 장착"@ko ;
   jos:specNote "길이 56.8cm, 중량 4.5kg, 사거리 720m"@ko ;
+  jos:usedInMilitaryEvent res:BattleOfHaengju ;
+  jos:usedInMilitaryEvent res:ImjinWaeran ;
+  jos:usedInMilitaryEvent res:BattleAgainstWokouUsingSingijeon ;
   jos:sourceNote "이원승(2025)"@ko ;
 .
 res:SajeonTongtong
@@ -945,7 +954,46 @@ res:GeobukchaWeapon
   dc:description "효종 연간 구인기가 개발한 거북선 원리 응용 대형 장갑 전투차량"@ko ;
   jos:specNote "인력 70명 견인, 선박/차륜형 전투차량 실험. 거북선의 육상 버전"@ko ;
   jos:WeaponDevelopedBy res:GuIngi ;
+  jos:WeaponDevelopedBy res:KingHyojong ;
+  jos:usedInMilitaryEvent res:GeobukchaDevelopment ;
   jos:sourceNote "이원승(2025)"@ko ;
+.
+res:CheonjaTongtong
+  rdf:type jos:Cannon ;
+  rdfs:label "천자총통"@ko ;
+  dc:description "조선 최대 화포. 대장군전(3.5m 화살) 발사"@ko ;
+  jos:specNote "길이 1.3m, 구경 13cm, 중량 300kg, 최대사거리 1,080m. 화살/포환/조란환 발사"@ko ;
+  jos:usedInMilitaryEvent res:BattleAgainstWokouUsingSingijeon ;
+  jos:sourceNote "이원승(2025)"@ko ;
+.
+res:JijaTongtong
+  rdf:type jos:Cannon ;
+  rdfs:label "지자총통"@ko ;
+  dc:description "조선 중형 화포"@ko ;
+  jos:specNote "길이 0.9m, 구경 7.5cm, 중량 73kg, 최대사거리 960m"@ko ;
+  jos:sourceNote "이원승(2025)"@ko ;
+.
+res:HyeonjaTongtong
+  rdf:type jos:Cannon ;
+  rdfs:label "현자총통"@ko ;
+  dc:description "조선 중형 화포. 산탄 발사 가능"@ko ;
+  jos:specNote "길이 0.8m, 구경 7.5cm, 중량 40kg, 사거리 1,500m"@ko ;
+  jos:sourceNote "이원승(2025)"@ko ;
+.
+res:HwangjaTongtong
+  rdf:type jos:Cannon ;
+  rdfs:label "황자총통"@ko ;
+  dc:description "조선 소형 화포"@ko ;
+  jos:specNote "길이 0.5m, 구경 4cm, 중량 20kg, 사거리 1,100m"@ko ;
+  jos:sourceNote "이원승(2025)"@ko ;
+.
+res:ChongtongCannon
+  rdf:type jos:Cannon ;
+  rdfs:label "총통"@ko ;
+  dc:description "조선시대 총칭 화포류. 천자·지자·현자·황자총통 등 포함"@ko ;
+  jos:usedInMilitaryEvent res:ImjinWaeran ;
+  jos:usedInMilitaryEvent res:BattleOfHaengju ;
+  jos:usedInMilitaryEvent res:BattleAgainstWokouUsingSingijeon ;
 .
 res:CheонboChong
   rdf:type jos:WeaponSystem ;
@@ -957,11 +1005,13 @@ res:Jochong
   rdf:type jos:WeaponSystem ;
   rdfs:label "조총"@ko ;
   dc:description "임진왜란 시기 일본군이 사용한 화승총. 이후 조선도 도입"@ko ;
+  jos:usedInMilitaryEvent res:ImjinWaeran ;
 .
 res:Hongipo
   rdf:type jos:Cannon ;
   rdfs:label "홍이포"@ko ;
   dc:description "명나라·청군이 사용한 대형 장거리 화포. 병자호란 남한산성 공격에 사용"@ko ;
+  jos:usedInMilitaryEvent res:ByeongjaHoran ;
   jos:sourceNote "이원승(2025)"@ko ;
 .
 
@@ -1019,6 +1069,8 @@ res:ImjinWaeran
   jos:usesWeapon res:SingijeonWeapon ;
   jos:usesWeapon res:ChongtongCannon ;
   jos:usesWeapon res:BigyeokJincheolloe ;
+  jos:usesWeapon res:SeungjaTongtong ;
+  jos:usesWeapon res:Jochong ;
   jos:sourceNote "이원승(2025)"@ko ;
 .
 res:BattleOfWongchiIchi
@@ -1038,9 +1090,11 @@ res:BattleOfHaengju
   jos:againstEnemy res:ImjinJapaneseArmy ;
   jos:involvesForce res:JeollaByeongyeong ;
   jos:occurredAt res:HaengJuSanseong ;
+  jos:occurredAt res:HaengJuPlace ;
   jos:usesWeapon res:SingijeonWeapon ;
   jos:usesWeapon res:SingijeongiHwacha ;
   jos:usesWeapon res:ChongtongCannon ;
+  jos:usesWeapon res:SeungjaTongtong ;
   jos:sourceNote "이원승(2025)"@ko ;
 .
 res:BattleOfNamwon
@@ -1058,8 +1112,11 @@ res:BattleAgainstWokouUsingSingijeon
   rdfs:label "신기전과 총통을 활용한 왜구 격멸"@ko ;
   dc:description "조선 전기 전라도 해안 왜구 침입 격퇴 전투. 신기전·총통 사용"@ko ;
   jos:againstEnemy res:WokouForce ;
+  jos:involvesForce res:JeollaByeongyeong ;
   jos:usesWeapon res:ChongtongCannon ;
   jos:usesWeapon res:SingijeonWeapon ;
+  jos:usesWeapon res:CheonjaTongtong ;
+  jos:usesWeapon res:SeungjaTongtong ;
 .
 res:JeongmyoHoran
   rdf:type jos:War ;

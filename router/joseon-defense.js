@@ -34,7 +34,26 @@ function parseTTL(text) {
 
   const cleaned = text.replace(/#[^\n]*/g, "").replace(/\s+/g, " ");
   const triples = [];
-  const lines = cleaned.split(".");
+  // Split on '.' only when NOT inside a quoted string
+  // This handles literals containing periods (e.g., dc:description "text. more text")
+  function splitOnDot(str) {
+    const parts = [];
+    let buf = "";
+    let inQuote = false;
+    for (let i = 0; i < str.length; i++) {
+      const c = str[i];
+      if (c === '"' && (i === 0 || str[i-1] !== '\\')) inQuote = !inQuote;
+      if (c === '.' && !inQuote) {
+        parts.push(buf);
+        buf = "";
+      } else {
+        buf += c;
+      }
+    }
+    if (buf.trim()) parts.push(buf);
+    return parts;
+  }
+  const lines = splitOnDot(cleaned);
   lines.forEach(block => {
     block = block.trim();
     if (!block) return;
