@@ -308,6 +308,10 @@ block content
         span.ai-icon 🏛️
         span 유산
         span.ai-cnt= (S.heritageCount != null ? S.heritageCount : 0)
+      a.anchor-item(href='/joseon-defense/facet/HistoricalTime')
+        span.ai-icon 🕰️
+        span 시간
+        span.ai-cnt= (S.timeCount != null ? S.timeCount : 0)
 
   //- ── 본문 ───────────────────────────────────────────────────
   .section-wrap
@@ -392,6 +396,11 @@ block content
         span.class-label 군사사건
         span.class-label-en MilitaryEvent
         span.class-sub 전투·전쟁·방어작전·원정
+      a.class-card(href='/joseon-defense/facet/HistoricalTime')
+        span.class-icon 🕰️
+        span.class-label 역사적 시간
+        span.class-label-en HistoricalTime
+        span.class-sub 치세·사건 시점·시기/기간
 
     //- 구분선
     hr.section-divider
@@ -440,75 +449,147 @@ block content
       .prop-card
         .prop-head
           span.prop-badge.prop-badge-obj ObjectProperty
-          span.prop-name occurredAt
-        p.prop-desc 발생장소
+          span.prop-name occurredAt / wasSceneOf
+        p.prop-desc 발생장소 / 사건 발생지 (↔ inverseOf)
         .prop-domain-range
           span MilitaryEvent
           span.arrow →
           span Place
+        .prop-domain-range(style='margin-top:3px; color:#4f46e5; font-size:10px;')
+          span ↩ inverseOf:
+          span(style='margin-left:4px') Place → MilitaryEvent
       .prop-card
         .prop-head
           span.prop-badge.prop-badge-obj ObjectProperty
-          span.prop-name hasFacility
-        p.prop-desc 군사시설을 갖다
+          span.prop-name hasFacility / facilityOf
+        p.prop-desc 군사시설을 갖다 / 소속 성곽 (↔ inverseOf)
         .prop-domain-range
           span Fortress
           span.arrow →
           span MilitaryFacility
+        .prop-domain-range(style='margin-top:3px; color:#4f46e5; font-size:10px;')
+          span ↩ inverseOf:
+          span(style='margin-left:4px') MilitaryFacility → Fortress
       .prop-card
         .prop-head
           span.prop-badge.prop-badge-obj ObjectProperty
-          span.prop-name hasHeritage
-        p.prop-desc 유산을 갖다
+          span.prop-name hasHeritage / heritageOf
+        p.prop-desc 유산을 갖다 / 유산 소재지 (↔ inverseOf)
         .prop-domain-range
           span Place
           span.arrow →
           span Heritage
+        .prop-domain-range(style='margin-top:3px; color:#4f46e5; font-size:10px;')
+          span ↩ inverseOf:
+          span(style='margin-left:4px') Heritage → Place
       .prop-card
         .prop-head
           span.prop-badge.prop-badge-obj ObjectProperty
-          span.prop-name participatedIn
-        p.prop-desc 참전/참여하다
+          span.prop-name participatedIn / hasParticipant
+        p.prop-desc 참전/참여하다 / 참전 인물 (↔ inverseOf)
         .prop-domain-range
           span Person
           span.arrow →
           span MilitaryEvent
+        .prop-domain-range(style='margin-top:3px; color:#4f46e5; font-size:10px;')
+          span ↩ inverseOf:
+          span(style='margin-left:4px') MilitaryEvent → Person
       .prop-card
         .prop-head
           span.prop-badge.prop-badge-obj ObjectProperty
-          span.prop-name stationedAt
-        p.prop-desc 주둔하다
+          span.prop-name stationedAt / hasGarrison
+        p.prop-desc 주둔하다 / 주둔 군사조직 (↔ inverseOf)
         .prop-domain-range
           span MilitaryOrganization
           span.arrow →
           span Place
+        .prop-domain-range(style='margin-top:3px; color:#4f46e5; font-size:10px;')
+          span ↩ inverseOf:
+          span(style='margin-left:4px') Place → MilitaryOrganization
       .prop-card
         .prop-head
           span.prop-badge.prop-badge-obj ObjectProperty
-          span.prop-name hasSubordinateCommand
-        p.prop-desc 예하 지휘부를 두다
+          span.prop-name hasSubordinateCommand / subordinateTo
+        p.prop-desc 예하 지휘부를 두다 / 예속되다 (↔ inverseOf)
         .prop-domain-range
           span CommandPost
           span.arrow →
           span CommandPost
+        .prop-domain-range(style='margin-top:3px; color:#4f46e5; font-size:10px;')
+          span ↩ inverseOf:
+          span(style='margin-left:4px') CommandPost → CommandPost
       .prop-card
         .prop-head
           span.prop-badge.prop-badge-obj ObjectProperty
           span.prop-name build / builtBy
-        p.prop-desc 축성/건립 주도
+        p.prop-desc 축성/건립 주도 (↔ inverseOf)
         .prop-domain-range
           span Person
           span.arrow →
           span MilitaryFacility
+        .prop-domain-range(style='margin-top:3px; color:#4f46e5; font-size:10px;')
+          span ↩ inverseOf:
+          span(style='margin-left:4px') MilitaryFacility → Person
       .prop-card
         .prop-head
           span.prop-badge.prop-badge-obj ObjectProperty
-          span.prop-name WeaponDevelopedBy
-        p.prop-desc 무기체계를 개발하다
+          span.prop-name WeaponDevelopedBy / developedWeapon
+        p.prop-desc 무기체계 개발 / 개발한 무기 (↔ inverseOf)
         .prop-domain-range
           span WeaponSystem
           span.arrow →
           span Person
+        .prop-domain-range(style='margin-top:3px; color:#4f46e5; font-size:10px;')
+          span ↩ inverseOf:
+          span(style='margin-left:4px') Person → WeaponSystem
+      .prop-card
+        .prop-head
+          span.prop-badge.prop-badge-obj ObjectProperty
+          span.prop-name involvesForce / participatedAsForce
+        p.prop-desc 군사조직 관여 / 관여된 군사사건 (↔ inverseOf)
+        .prop-domain-range
+          span MilitaryEvent
+          span.arrow →
+          span MilitaryOrganization
+        .prop-domain-range(style='margin-top:3px; color:#4f46e5; font-size:10px;')
+          span ↩ inverseOf:
+          span(style='margin-left:4px') MilitaryOrganization → MilitaryEvent
+      .prop-card
+        .prop-head
+          span.prop-badge.prop-badge-obj ObjectProperty
+          span.prop-name againstEnemy / facedInEvent
+        p.prop-desc 적대세력 상대 / 대적된 사건 (↔ inverseOf)
+        .prop-domain-range
+          span MilitaryEvent
+          span.arrow →
+          span EnemyForce
+        .prop-domain-range(style='margin-top:3px; color:#4f46e5; font-size:10px;')
+          span ↩ inverseOf:
+          span(style='margin-left:4px') EnemyForce → MilitaryEvent
+      .prop-card(style='border-color: rgba(201,162,39,0.5); background: rgba(201,162,39,0.04);')
+        .prop-head
+          span.prop-badge.prop-badge-obj ObjectProperty
+          span.prop-name occurredDuring / hasEvent
+        p.prop-desc 발생 시기 / 해당 시기의 사건 (↔ inverseOf)
+        .prop-domain-range
+          span MilitaryEvent
+          span.arrow →
+          span HistoricalTime
+        .prop-domain-range(style='margin-top:3px; color:#4f46e5; font-size:10px;')
+          span ↩ inverseOf:
+          span(style='margin-left:4px') HistoricalTime → MilitaryEvent
+      .prop-card(style='border-color: rgba(201,162,39,0.5); background: rgba(201,162,39,0.04);')
+        .prop-head
+          span.prop-badge.prop-badge-obj ObjectProperty
+          span.prop-name reignedDuring / reignOf
+        p.prop-desc 재위 기간 / 재위 국왕 (↔ inverseOf)
+        .prop-domain-range
+          span King
+          span.arrow →
+          span ReignPeriod
+        .prop-domain-range(style='margin-top:3px; color:#4f46e5; font-size:10px;')
+          span ↩ inverseOf:
+          span(style='margin-left:4px') ReignPeriod → King
 
     //- 데이터 속성
     div(style='margin-top:28px')
@@ -538,6 +619,16 @@ block content
           span.prop-badge.prop-badge-data DatatypeProperty
           span.prop-name sourceNote
         p.prop-desc 출처/근거 메모 (xsd:string)
+      .prop-card(style='border-color: rgba(201,162,39,0.5); background: rgba(201,162,39,0.04);')
+        .prop-head
+          span.prop-badge.prop-badge-data DatatypeProperty
+          span.prop-name dynastyEraLabel
+        p.prop-desc 조선 왕력 표현 (xsd:string) — 예: 태종 17년, 선조 25년
+      .prop-card(style='border-color: rgba(201,162,39,0.5); background: rgba(201,162,39,0.04);')
+        .prop-head
+          span.prop-badge.prop-badge-data DatatypeProperty
+          span.prop-name centuryLabel
+        p.prop-desc 세기 표현 (xsd:string) — 예: 14~16세기
 
     //- 구분선
     hr.section-divider
@@ -593,3 +684,54 @@ block content
         p.inst-type Battle
         p.inst-title 신기전과 총통을 활용한 왜구 격멸
         p.inst-meta 신기전·총통 사용 · 왜구 상대
+
+    //- ── 역사적 시간 인스턴스 ─────────────────────────────────────
+    hr.section-divider
+    .section-header
+      span.section-title 🕰️ 역사적 시간 (HistoricalTime)
+      span.section-sub 치세 · 사건 시점 · 시기/기간 — 군사사건과 연결되는 시간 개념
+      a.section-more(href='/joseon-defense/facet/HistoricalTime') 모두 보기 →
+    .instance-grid
+      a.inst-card(href='/joseon-defense/resource/ImjinWarPeriod')
+        p.inst-type Period
+        p.inst-title 임진왜란기
+        p.inst-meta 1592 ~ 1598 · 선조 25~31년
+        .inst-tags
+          span.inst-tag 임진왜란
+          span.inst-tag 행주대첩
+          span.inst-tag 남원성 전투
+      a.inst-card(href='/joseon-defense/resource/HoranPeriod')
+        p.inst-type Period
+        p.inst-title 호란기
+        p.inst-meta 1627 ~ 1637 · 인조 5~15년
+        .inst-tags
+          span.inst-tag 정묘호란
+          span.inst-tag 병자호란
+      a.inst-card(href='/joseon-defense/resource/SeonjoReign')
+        p.inst-type ReignPeriod
+        p.inst-title 선조 치세
+        p.inst-meta 재위 1567 ~ 1608
+        .inst-tags
+          span.inst-tag 임진왜란
+          span.inst-tag 행주대첩
+      a.inst-card(href='/joseon-defense/resource/HyojongReign')
+        p.inst-type ReignPeriod
+        p.inst-title 효종 치세
+        p.inst-meta 재위 1649 ~ 1659 · 북벌 정책
+        .inst-tags
+          span.inst-tag 거북차 개발
+          span.inst-tag 하멜 유배
+      a.inst-card(href='/joseon-defense/resource/Year1592')
+        p.inst-type EventDate
+        p.inst-title 선조 25년 (1592)
+        p.inst-meta 임진왜란 발발 연도
+        .inst-tags
+          span.inst-tag 임진왜란
+      a.inst-card(href='/joseon-defense/resource/EarlyJoseonPeriod')
+        p.inst-type Period
+        p.inst-title 조선 전기
+        p.inst-meta 1392 ~ 1591 · 14~16세기
+        .inst-tags
+          span.inst-tag 병영성 축성
+          span.inst-tag 대마도 정벌
+          span.inst-tag 을묘왜변

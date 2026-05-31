@@ -216,6 +216,11 @@ const CLASS_META = {
   Jurchen:              { icon:"🗺️", label:"여진",             tab:false },
   LaterJinQing:         { icon:"🗺️", label:"후금/청군",       tab:false },
   JapaneseArmy:         { icon:"⚔️", label:"일본군",          tab:false },
+  // ── 역사적 시간 ──
+  HistoricalTime:       { icon:"🕰️", label:"역사적 시간",     tab:true  },
+  ReignPeriod:          { icon:"👑", label:"치세/연호",        tab:false },
+  EventDate:            { icon:"📅", label:"사건 시점",        tab:false },
+  Period:               { icon:"⏳", label:"시기/기간",        tab:false },
 };
 
 // 탭 정의 (순서 고정)
@@ -229,35 +234,52 @@ const TABS = [
   { key:"MilitaryOrganization",icon:"🚩", label:"군사조직"},
   { key:"Place",               icon:"📍", label:"장소"   },
   { key:"Heritage",            icon:"🏛️", label:"유산"   },
+  { key:"HistoricalTime",      icon:"🕰️", label:"시간"   },
 ];
 
 const PRED_LABEL = {
   againstEnemy:           "적대세력",
+  facedInEvent:           "대적된 군사사건",
   involvesForce:          "관련 군사조직",
+  participatedAsForce:    "관여된 군사사건",
   usesWeapon:             "사용 무기체계",
   usedInMilitaryEvent:    "사용된 군사사건",
   occurredAt:             "발생장소",
+  wasSceneOf:             "사건 발생지",
   commandedBy:            "지휘를 받다",
   commands:               "지휘하다",
   appointedBy:            "임명자",
   appoints:               "임명",
   hasFacility:            "군사시설",
+  facilityOf:             "소속 성곽",
   hasHeritage:            "유산",
+  heritageOf:             "유산 소재지",
   hasHeadquarters:        "지휘부",
+  isHeadquartersOf:       "지휘 조직",
   hasSubordinateCommand:  "예하 지휘부",
   subordinateTo:          "상위 지휘부",
   stationedAt:            "주둔지",
+  hasGarrison:            "주둔 군사조직",
   participatedIn:         "참전",
+  hasParticipant:         "참전 인물",
   build:                  "축성/건립",
   builtBy:                "축성 주도자",
   developedWeapon:        "개발 무기",
   WeaponDevelopedBy:      "개발자",
+  occurredDuring:         "발생 시기",
+  hasEvent:               "해당 시기의 사건",
+  reignedDuring:          "재위 기간",
+  reignOf:                "재위 국왕",
+  commandedDuring:        "재임 시기",
+  hasComanderInPeriod:    "해당 시기의 지휘관",
   modernEquivalent:       "현대 대응개념",
   achievementNote:        "주요업적",
   specNote:               "제원/사양",
   sourceNote:             "출처",
   rankLabel:              "관직/계급",
   periodLabel:            "시기",
+  dynastyEraLabel:        "조선 왕력",
+  centuryLabel:           "세기",
   description:            "설명",
 };
 
@@ -313,14 +335,16 @@ function instToVM(inst, onto) {
     classLabel:   meta.label,
     classIcon:    meta.icon,
     description:  inst.description || (props.description || [])[0] || null,
-    yearStart:    (props.yearStart   || [])[0] || null,
-    yearEnd:      (props.yearEnd     || [])[0] || null,
-    periodLabel:  (props.periodLabel || [])[0] || null,
-    rankLabel:    (props.rankLabel   || [])[0] || null,
+    yearStart:    (props.yearStart      || [])[0] || null,
+    yearEnd:      (props.yearEnd        || [])[0] || null,
+    periodLabel:  (props.periodLabel    || [])[0] || null,
+    rankLabel:    (props.rankLabel      || [])[0] || null,
     achievementNote: (props.achievementNote || [])[0] || null,
-    specNote:     (props.specNote    || [])[0] || null,
+    specNote:     (props.specNote       || [])[0] || null,
     modernEquivalent: (props.modernEquivalent || [])[0] || null,
-    sourceNote:   (props.sourceNote  || [])[0] || null,
+    sourceNote:   (props.sourceNote     || [])[0] || null,
+    dynastyEraLabel: (props.dynastyEraLabel || [])[0] || null,
+    centuryLabel: (props.centuryLabel   || [])[0] || null,
     altLabel:     inst.altLabel || null,
     tags:         tags.slice(0, 6),
     rels:         inst.rels || [],
@@ -600,13 +624,46 @@ function buildSmartFilters(classKey, items, onto, selectedFilters) {
   // 유산 — Heritage
   // ══════════════════════════════════════════════════════════
   if (classKey === "Heritage" || classKey === "TangibleHeritage" || classKey === "IntangibleHeritage") {
-    // 역관계: Place/Fortress.hasHeritage → this
+    // 역관계: Place/Fortress.hasHeritage → this  (heritageOf의 역)
     const placeFacet = withMeta(
       buildInverseFacet("hasHeritage", "관련 장소/성곽", "place", 10),
       "Place/Fortress → Heritage", "hasHeritage 역관계 (↩ 장소·성곽에서 참조)",
       true, true
     );
     if (placeFacet) filters.push(placeFacet);
+  }
+
+  // ══════════════════════════════════════════════════════════
+  // 역사적 시간 — HistoricalTime / ReignPeriod / EventDate / Period
+  // ══════════════════════════════════════════════════════════
+  if (classKey === "HistoricalTime" || classKey === "ReignPeriod" ||
+      classKey === "EventDate"      || classKey === "Period") {
+    // 서브클래스 칩
+    const sub = buildSubclassFacet("시간 구분 (subClassOf HistoricalTime)");
+    if (sub) {
+      sub.relBadge = "HistoricalTime ▸ subClass";
+      sub.relDesc  = "ReignPeriod(치세) · EventDate(사건 시점) · Period(시기)";
+      filters.push(sub);
+    }
+    // hasEvent → MilitaryEvent  (정방향)
+    const evFacet = withMeta(
+      buildRelFacet(items, onto, "hasEvent", "해당 시기의 군사사건", "event"),
+      "HistoricalTime → MilitaryEvent", "hasEvent 관계 — range: MilitaryEvent"
+    );
+    if (evFacet) filters.push(evFacet);
+    // reignOf → King
+    const kingFacet = withMeta(
+      buildRelFacet(items, onto, "reignOf", "해당 치세의 국왕", "king"),
+      "ReignPeriod → King", "reignOf 관계 — range: King"
+    );
+    if (kingFacet) filters.push(kingFacet);
+    // 역관계: MilitaryEvent.occurredDuring → this
+    const evInvFacet = withMeta(
+      buildInverseFacet("occurredDuring", "이 시기에 발생한 사건", "event2", 12),
+      "MilitaryEvent → HistoricalTime", "occurredDuring 역관계 (↩ 사건에서 참조)",
+      true, true
+    );
+    if (evInvFacet) filters.push(evInvFacet);
   }
 
   return filters;
@@ -665,16 +722,37 @@ function applyFilters(items, classKey, selectedFilters, onto) {
           (r.predLocal === "usesWeapon" || r.predLocal === "occurredAt") && r.objId === i.resourceId
         );
       });
+    } else if (classKey === "HistoricalTime" || classKey === "ReignPeriod" ||
+               classKey === "EventDate"      || classKey === "Period") {
+      // 시간 클래스: hasEvent 정방향 필터
+      result = result.filter(i =>
+        (i.rels||[]).some(r => r.predLocal === "hasEvent" && r.objId === selectedFilters.event)
+      );
     } else {
       result = result.filter(i =>
         (i.rels||[]).some(r => r.predLocal === "participatedIn" && r.objId === selectedFilters.event)
       );
     }
   }
+  // event2: HistoricalTime 역관계 필터 (occurredDuring → HistoricalTime)
+  if (selectedFilters.event2) {
+    result = result.filter(i => {
+      const timInst = onto.instances[RES_NS + selectedFilters.event2];
+      if (!timInst) return false;
+      return (timInst.rels||[]).some(r => r.predLocal === "hasEvent" && r.objId === i.uri);
+    });
+  }
   if (selectedFilters.king) {
-    result = result.filter(i =>
-      (i.rels||[]).some(r => r.predLocal === "appointedBy" && r.objId === selectedFilters.king)
-    );
+    if (classKey === "HistoricalTime" || classKey === "ReignPeriod") {
+      // 시간 클래스: reignOf 정방향 필터
+      result = result.filter(i =>
+        (i.rels||[]).some(r => r.predLocal === "reignOf" && r.objId === selectedFilters.king)
+      );
+    } else {
+      result = result.filter(i =>
+        (i.rels||[]).some(r => r.predLocal === "appointedBy" && r.objId === selectedFilters.king)
+      );
+    }
   }
   if (selectedFilters.org) {
     result = result.filter(i =>
@@ -715,6 +793,7 @@ function buildStats(onto) {
     orgCount:       get("MilitaryOrganization"),
     placeCount:     get("Place"),
     heritageCount:  get("Heritage"),
+    timeCount:      get("HistoricalTime"),
   };
 }
 
@@ -743,7 +822,7 @@ router.get("/facet/:classKey", (req, res) => {
 
   // 선택된 필터 파라미터 수집
   const FILTER_KEYS = ["subclass","place","weapon","enemy","force","heritage","builder",
-                       "developer","event","king","org","parent","commander","facility"];
+                       "developer","event","event2","king","org","parent","commander","facility"];
   const selectedFilters = {};
   FILTER_KEYS.forEach(k => { if (req.query[k]) selectedFilters[k] = req.query[k]; });
 

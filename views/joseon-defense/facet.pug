@@ -434,6 +434,10 @@ block content
                     |  ~
                   if item.yearEnd
                     |  #{item.yearEnd}
+              if item.dynastyEraLabel
+                p.rc-meta(style='font-size:11px; color:var(--gold); font-weight:700;') 🕰️ #{item.dynastyEraLabel}
+              else if item.centuryLabel
+                p.rc-meta(style='font-size:11px; color:var(--gold);') #{item.centuryLabel}
               if item.rankLabel
                 span.rc-rank= item.rankLabel
               if item.specNote
