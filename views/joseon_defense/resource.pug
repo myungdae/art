@@ -1,0 +1,273 @@
+//- views/joseon_defense/resource.pug — 조선 국방 온톨로지 리소스 상세 페이지
+extends ../layout
+
+block content
+  style.
+    html, body { background: #0e0c08; color: #f0e8d0; }
+
+    .detail-wrap {
+      max-width: 1100px; margin: 0 auto; padding: 40px 24px 80px;
+    }
+
+    /* 뒤로 가기 */
+    .back-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 13px; font-weight: 700; color: rgba(240,232,208,0.4);
+      text-decoration: none; margin-bottom: 28px;
+      transition: color 0.2s;
+    }
+    .back-link:hover { color: #d4af37; }
+
+    /* 헤더 영역 */
+    .res-header {
+      margin-bottom: 32px;
+    }
+    .res-class-badge {
+      display: inline-flex; align-items: center; gap: 7px;
+      background: rgba(139,105,20,0.18);
+      border: 1px solid rgba(212,175,55,0.35);
+      border-radius: 50px; padding: 5px 16px;
+      font-size: 11px; font-weight: 800; color: #d4af37;
+      letter-spacing: 2px; text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    .res-title {
+      font-size: clamp(1.6rem, 3.5vw, 2.5rem);
+      font-weight: 900; color: #f0e8d0; line-height: 1.2;
+      margin-bottom: 16px;
+    }
+
+    /* 태그 행 */
+    .tag-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; }
+    .dtag {
+      display: inline-flex; align-items: center;
+      padding: 5px 14px; border-radius: 50px;
+      font-size: 12px; font-weight: 700;
+      text-decoration: none; transition: all 0.2s;
+    }
+    .dtag-gold { background: rgba(201,162,39,0.12); border: 1px solid rgba(201,162,39,0.3); color: #d4af37; }
+    .dtag-gold:hover { background: rgba(201,162,39,0.22); }
+    .dtag-blue { background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.3); color: #a5b4fc; }
+    .dtag-blue:hover { background: rgba(99,102,241,0.22); }
+    .dtag-gray { background: rgba(240,232,208,0.07); border: 1px solid rgba(240,232,208,0.15); color: rgba(240,232,208,0.6); }
+    .dtag-gray:hover { background: rgba(240,232,208,0.12); }
+    .dtag-green { background: rgba(34,197,94,0.10); border: 1px solid rgba(34,197,94,0.25); color: #86efac; }
+
+    /* 메인 그리드 */
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 28px;
+      align-items: start;
+    }
+    @media (max-width: 900px) {
+      .detail-grid { grid-template-columns: 1fr; }
+    }
+
+    /* 속성 카드 */
+    .detail-card {
+      background: #1a1508;
+      border: 1px solid #2a2010;
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+    .detail-card-header {
+      padding: 14px 20px;
+      border-bottom: 1px solid #2a2010;
+      font-size: 12px; font-weight: 800; color: #c9a227;
+      text-transform: uppercase; letter-spacing: 1.5px;
+    }
+
+    /* 속성 테이블 */
+    .prop-row {
+      display: grid; grid-template-columns: 140px 1fr;
+      border-bottom: 1px solid #2a2010; padding: 12px 20px;
+    }
+    .prop-row:last-child { border-bottom: none; }
+    .prop-key {
+      font-size: 11px; font-weight: 700; color: rgba(240,232,208,0.4);
+      text-transform: uppercase; letter-spacing: 0.5px;
+      padding-right: 12px; line-height: 1.6;
+    }
+    .prop-val {
+      font-size: 13px; color: #f0e8d0; word-break: break-word; line-height: 1.6;
+    }
+    .prop-val a { color: #c9a227; text-decoration: none; }
+    .prop-val a:hover { text-decoration: underline; }
+    .prop-year {
+      font-size: 16px; font-weight: 800; color: #d4af37;
+    }
+
+    /* 관계 섹션 */
+    .rel-section { margin-bottom: 20px; }
+    .rel-title {
+      font-size: 12px; font-weight: 800; color: rgba(240,232,208,0.4);
+      text-transform: uppercase; letter-spacing: 1.5px;
+      margin-bottom: 12px; padding: 0 0 8px 0;
+      border-bottom: 1px solid #2a2010;
+    }
+    .rel-list { display: flex; flex-direction: column; gap: 8px; }
+    .rel-item {
+      display: flex; align-items: flex-start; gap: 12px;
+      background: #1a1508; border: 1px solid #2a2010;
+      border-radius: 10px; padding: 12px 14px;
+      text-decoration: none; transition: border-color 0.2s;
+    }
+    .rel-item:hover { border-color: #c9a227; }
+    .rel-pred {
+      font-size: 10px; font-weight: 800; color: #c9a227;
+      letter-spacing: 1px; text-transform: uppercase;
+      white-space: nowrap; padding-top: 2px;
+      min-width: 80px;
+    }
+    .rel-label { font-size: 13px; font-weight: 700; color: #f0e8d0; line-height: 1.4; }
+    .rel-type { font-size: 11px; color: rgba(240,232,208,0.4); margin-top: 2px; }
+
+    /* 사이드 패널 */
+    .side-panel {}
+    .side-card {
+      background: #1a1508; border: 1px solid #2a2010;
+      border-radius: 14px; overflow: hidden; margin-bottom: 16px;
+    }
+    .side-card-header {
+      padding: 12px 18px; border-bottom: 1px solid #2a2010;
+      font-size: 12px; font-weight: 800; color: #c9a227;
+      text-transform: uppercase; letter-spacing: 1.5px;
+    }
+    .side-card-body { padding: 16px 18px; }
+    .side-prop { margin-bottom: 12px; }
+    .side-prop:last-child { margin-bottom: 0; }
+    .side-key {
+      font-size: 11px; font-weight: 700; color: rgba(240,232,208,0.4);
+      text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;
+    }
+    .side-val { font-size: 13px; color: #f0e8d0; line-height: 1.5; }
+
+    /* URI 표시 */
+    .uri-box {
+      background: rgba(240,232,208,0.04);
+      border: 1px solid #2a2010;
+      border-radius: 8px; padding: 10px 14px;
+      font-size: 11px; color: rgba(240,232,208,0.35);
+      word-break: break-all; font-family: monospace;
+    }
+
+  .detail-wrap
+    a.back-link(href=`/joseon_defense/facet/${resource.classKey || 'MilitaryEvent'}`) ← #{classLabel} 목록으로
+
+    //- ── 헤더 ────────────────────────────────────────────────
+    .res-header
+      .res-class-badge= classIcon + ' ' + classLabel
+      h1.res-title= resource.label
+
+      .tag-row
+        if resource.yearStart
+          span.dtag.dtag-gold ⏱ #{resource.yearStart}#{resource.yearEnd ? ' ~ ' + resource.yearEnd : ''}
+        if resource.periodLabel
+          span.dtag.dtag-blue 📅 #{resource.periodLabel}
+        each tag in (resource.tags || [])
+          span.dtag.dtag-gray= tag
+
+    //- ── 메인 그리드 ────────────────────────────────────────
+    .detail-grid
+
+      //- 좌: 속성 + 관계
+      div
+        //- 기본 속성 카드
+        .detail-card
+          .detail-card-header 기본 정보
+          if resource.yearStart || resource.yearEnd
+            .prop-row
+              span.prop-key 기간
+              span.prop-val
+                span.prop-year
+                  if resource.yearStart
+                    | #{resource.yearStart}
+                  if resource.yearStart && resource.yearEnd
+                    |  ~ 
+                  if resource.yearEnd
+                    | #{resource.yearEnd}
+          if resource.periodLabel
+            .prop-row
+              span.prop-key 시기
+              span.prop-val= resource.periodLabel
+          if resource.rankLabel
+            .prop-row
+              span.prop-key 관직/계급
+              span.prop-val= resource.rankLabel
+          if resource.modernEquivalent
+            .prop-row
+              span.prop-key 현대 대응개념
+              span.prop-val= resource.modernEquivalent
+          if resource.altLabel
+            .prop-row
+              span.prop-key 별칭
+              span.prop-val= resource.altLabel
+          if resource.sourceNote
+            .prop-row
+              span.prop-key 출처/근거
+              span.prop-val= resource.sourceNote
+          if resource.classLabel
+            .prop-row
+              span.prop-key 유형
+              span.prop-val= resource.classLabel
+
+        //- 관계 섹션들
+        if resource.relations && resource.relations.length
+          .detail-card
+            .detail-card-header 관계 (Triples)
+            each rel in resource.relations
+              .prop-row
+                span.prop-key= rel.predicateLabel
+                span.prop-val
+                  if rel.targetUri
+                    a(href=`/joseon_defense/resource/${rel.targetId}`)= rel.targetLabel
+                  else
+                    | #{rel.targetLabel}
+
+        //- 역관계 (inverse)
+        if resource.inverseRelations && resource.inverseRelations.length
+          .detail-card
+            .detail-card-header 역관계 (Inverse Triples)
+            each rel in resource.inverseRelations
+              .prop-row
+                span.prop-key= rel.predicateLabel
+                span.prop-val
+                  if rel.sourceUri
+                    a(href=`/joseon_defense/resource/${rel.sourceId}`)= rel.sourceLabel
+                  else
+                    | #{rel.sourceLabel}
+
+      //- 우: 사이드 패널
+      .side-panel
+        .side-card
+          .side-card-header 온톨로지 정보
+          .side-card-body
+            .side-prop
+              p.side-key 클래스
+              p.side-val= classLabel
+            .side-prop
+              p.side-key 리소스 URI
+              p.uri-box
+                | http://joseon-defense.eventpool.kr/resource/#{resource.resourceId}
+            if resource.subClassOf
+              .side-prop
+                p.side-key 상위 클래스
+                p.side-val= resource.subClassOf
+
+        if resource.description
+          .side-card
+            .side-card-header 설명
+            .side-card-body
+              p(style='font-size:13px; color:rgba(240,232,208,0.65); line-height:1.8;')= resource.description
+
+        .side-card
+          .side-card-header 관련 탐색
+          .side-card-body
+            a(href='/joseon_defense' style='display:block; font-size:13px; color:#c9a227; text-decoration:none; margin-bottom:10px;')
+              | 🏠 홈으로
+            a(href=`/joseon_defense/facet/${resource.classKey || 'MilitaryEvent'}` style='display:block; font-size:13px; color:rgba(240,232,208,0.6); text-decoration:none; margin-bottom:8px;')
+              | ← #{classLabel} 목록
+            a(href='/joseon_defense/facet/MilitaryEvent' style='display:block; font-size:13px; color:rgba(240,232,208,0.6); text-decoration:none;')
+              | 📜 군사사건 전체 탐색

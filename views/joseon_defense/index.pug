@@ -1,0 +1,592 @@
+//- views/joseon_defense/index.pug — 조선시대 국방 온톨로지 홈
+extends ../layout
+
+block content
+  - var S  = (typeof stats === 'object' && stats) || {};
+
+  style.
+    html, body { background: #0e0c08; color: #f0e8d0; }
+
+    /* ── Hero ─────────────────────────────────────────────── */
+    .hero {
+      position: relative;
+      min-height: 540px;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+      background: #0e0c08;
+    }
+
+    /* 배경 격자 패턴 - 전통 창문 문양 */
+    .hero-pattern {
+      position: absolute; inset: 0;
+      opacity: 0.06;
+      pointer-events: none;
+      background-image:
+        repeating-linear-gradient(0deg, #8b6914 0px, #8b6914 1px, transparent 1px, transparent 60px),
+        repeating-linear-gradient(90deg, #8b6914 0px, #8b6914 1px, transparent 1px, transparent 60px),
+        repeating-linear-gradient(45deg, #8b6914 0px, #8b6914 1px, transparent 1px, transparent 30px);
+    }
+
+    /* 상단 장식 - 수묵화 느낌의 그라데이션 오버레이 */
+    .hero-overlay {
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 70% 75% at 50% 50%,
+          rgba(14,12,8,0.85) 0%,
+          rgba(14,12,8,0.55) 55%,
+          rgba(14,12,8,0.15) 100%);
+      pointer-events: none;
+    }
+
+    /* Hero 콘텐츠 */
+    .hero-content {
+      position: relative; z-index: 10;
+      text-align: center; padding: 80px 24px 90px;
+      max-width: 760px;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(139,105,20,0.18);
+      border: 1px solid rgba(212,175,55,0.40);
+      border-radius: 50px; padding: 6px 20px;
+      font-size: 11px; font-weight: 800; color: #d4af37;
+      letter-spacing: 2.5px; text-transform: uppercase;
+      margin-bottom: 28px;
+    }
+    .hero-title {
+      font-size: clamp(2.2rem, 5.5vw, 3.8rem);
+      font-weight: 900; color: #f0e8d0; line-height: 1.18;
+      margin-bottom: 18px; letter-spacing: -1px;
+    }
+    .hero-title em { color: #d4af37; font-style: normal; }
+    .hero-sub {
+      font-size: 1.05rem; color: rgba(240,232,208,0.65);
+      margin-bottom: 44px; line-height: 1.9;
+    }
+    .hero-btns { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+    .btn-gold {
+      display: inline-flex; align-items: center; gap: 9px;
+      background: #c9a227; color: #0e0c08;
+      padding: 14px 34px; border-radius: 10px;
+      font-weight: 800; font-size: 15px; text-decoration: none;
+      transition: background 0.2s, transform 0.2s;
+      box-shadow: 0 4px 20px rgba(201,162,39,0.38);
+    }
+    .btn-gold:hover { background: #a07800; transform: translateY(-2px); color: #0e0c08; }
+    .btn-outline {
+      display: inline-flex; align-items: center; gap: 9px;
+      background: rgba(240,232,208,0.06); color: rgba(240,232,208,0.8);
+      padding: 14px 28px; border-radius: 10px;
+      border: 1.5px solid rgba(240,232,208,0.25);
+      font-weight: 700; font-size: 15px; text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-outline:hover { border-color: #d4af37; color: #d4af37; transform: translateY(-2px); }
+
+    /* ── 앵커 바 ────────────────────────────────────────────── */
+    .anchor-bar {
+      background: #1a1508;
+      border-top: 1px solid #2a2010;
+      border-bottom: 1px solid #2a2010;
+    }
+    .anchor-inner {
+      max-width: 1280px; margin: 0 auto;
+      display: flex; flex-wrap: wrap; justify-content: center;
+    }
+    .anchor-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 18px 32px; text-decoration: none;
+      border-right: 1px solid #2a2010;
+      transition: background 0.2s, color 0.2s;
+      font-size: 13px; font-weight: 700; color: rgba(240,232,208,0.55);
+    }
+    .anchor-item:last-child { border-right: none; }
+    .anchor-item:hover { background: rgba(212,175,55,0.06); color: #d4af37; }
+    .anchor-item .ai-icon { font-size: 1.15rem; }
+    .anchor-item .ai-cnt {
+      font-size: 11px; font-weight: 800; color: #c9a227;
+      background: rgba(201,162,39,0.12); border: 1px solid rgba(201,162,39,0.30);
+      padding: 1px 8px; border-radius: 50px;
+    }
+
+    /* ── 섹션 공통 ──────────────────────────────────────────── */
+    .section-wrap {
+      max-width: 1280px; margin: 0 auto; padding: 60px 24px;
+    }
+    .section-header {
+      display: flex; align-items: baseline; gap: 14px;
+      margin-bottom: 32px;
+    }
+    .section-title {
+      font-size: 1.5rem; font-weight: 900; color: #f0e8d0;
+    }
+    .section-sub {
+      font-size: 13px; color: rgba(240,232,208,0.4);
+    }
+    .section-more {
+      margin-left: auto; font-size: 13px; font-weight: 700;
+      color: #c9a227; text-decoration: none;
+      display: flex; align-items: center; gap: 5px;
+    }
+    .section-more:hover { color: #d4af37; }
+
+    /* ── 온톨로지 클래스 그리드 ─────────────────────────────── */
+    .class-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+    }
+    .class-card {
+      background: #1a1508;
+      border: 1px solid #2a2010;
+      border-radius: 14px;
+      padding: 20px 20px 18px;
+      text-decoration: none;
+      transition: border-color 0.2s, transform 0.2s, background 0.2s;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .class-card:hover {
+      border-color: #c9a227;
+      background: rgba(201,162,39,0.06);
+      transform: translateY(-3px);
+    }
+    .class-icon { font-size: 1.8rem; }
+    .class-label { font-size: 15px; font-weight: 800; color: #f0e8d0; }
+    .class-label-en { font-size: 11px; color: rgba(240,232,208,0.4); font-weight: 600; letter-spacing: 0.5px; }
+    .class-cnt {
+      font-size: 11px; font-weight: 800; color: #c9a227;
+      background: rgba(201,162,39,0.12); border: 1px solid rgba(201,162,39,0.3);
+      padding: 2px 9px; border-radius: 50px;
+      align-self: flex-start; margin-top: 4px;
+    }
+    .class-sub {
+      font-size: 11px; color: rgba(240,232,208,0.35); line-height: 1.5;
+    }
+
+    /* ── 온톨로지 속성 섹션 ─────────────────────────────────── */
+    .prop-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 14px;
+    }
+    .prop-card {
+      background: #1a1508;
+      border: 1px solid #2a2010;
+      border-radius: 12px;
+      padding: 16px 18px;
+    }
+    .prop-head {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 8px;
+    }
+    .prop-badge {
+      font-size: 10px; font-weight: 800; letter-spacing: 1px;
+      padding: 2px 8px; border-radius: 50px;
+    }
+    .prop-badge-obj {
+      background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.35);
+      color: #a5b4fc;
+    }
+    .prop-badge-data {
+      background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.3);
+      color: #86efac;
+    }
+    .prop-name { font-size: 13px; font-weight: 800; color: #f0e8d0; }
+    .prop-desc { font-size: 12px; color: rgba(240,232,208,0.45); line-height: 1.5; }
+    .prop-domain-range {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 11px; color: rgba(240,232,208,0.35);
+      margin-top: 8px; flex-wrap: wrap;
+    }
+    .prop-domain-range .arrow { color: #c9a227; }
+
+    /* ── 인스턴스 카드 ──────────────────────────────────────── */
+    .instance-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+    }
+    .inst-card {
+      background: #1a1508;
+      border: 1px solid #2a2010;
+      border-radius: 14px;
+      padding: 20px;
+      text-decoration: none;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .inst-card:hover {
+      border-color: #c9a227;
+      transform: translateY(-3px);
+    }
+    .inst-type {
+      font-size: 10px; font-weight: 800; color: #c9a227;
+      letter-spacing: 1.5px; text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .inst-title {
+      font-size: 15px; font-weight: 800; color: #f0e8d0;
+      margin-bottom: 8px; line-height: 1.4;
+    }
+    .inst-meta {
+      font-size: 12px; color: rgba(240,232,208,0.45); line-height: 1.6;
+    }
+    .inst-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .inst-tag {
+      font-size: 11px; padding: 2px 9px; border-radius: 50px;
+      background: rgba(240,232,208,0.07); border: 1px solid rgba(240,232,208,0.14);
+      color: rgba(240,232,208,0.55);
+    }
+
+    /* ── 개요 카드 ──────────────────────────────────────────── */
+    .overview-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+      margin-bottom: 48px;
+    }
+    @media (max-width: 768px) { .overview-grid { grid-template-columns: 1fr; } }
+    .overview-card {
+      background: #1a1508; border: 1px solid #2a2010;
+      border-radius: 16px; padding: 28px;
+    }
+    .ov-title {
+      font-size: 13px; font-weight: 800; color: #d4af37;
+      text-transform: uppercase; letter-spacing: 2px; margin-bottom: 14px;
+    }
+    .ov-text {
+      font-size: 14px; color: rgba(240,232,208,0.65); line-height: 1.85;
+    }
+
+    @media (max-width: 640px) {
+      .anchor-item { padding: 14px 16px; font-size: 12px; }
+      .class-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+  //- ── Hero ──────────────────────────────────────────────────
+  section.hero
+    .hero-pattern
+    .hero-overlay
+    .hero-content
+      .hero-badge 🔗 OWL Ontology Powered
+      h1.hero-title
+        | 조선시대 국방을
+        br
+        em 관계로 탐색하다
+      p.hero-sub
+        | 전라병영성 · 지휘관 · 무기체계 · 전쟁 · 군사시설을
+        br
+        | 온톨로지 기반으로 연결하는 역사 지식 플랫폼
+      .hero-btns
+        a.btn-gold(href='/joseon_defense/facet/Battle') ⚔️ 전투 탐색
+        a.btn-outline(href='/joseon_defense/facet/Fortress') 🏯 성곽 탐색
+
+  //- ── 앵커 바 ────────────────────────────────────────────────
+  section.anchor-bar
+    .anchor-inner
+      a.anchor-item(href='/joseon_defense/facet/Commander')
+        span.ai-icon 👤
+        span 지휘관
+        span.ai-cnt= (S.commanderCount != null ? S.commanderCount : 0)
+      a.anchor-item(href='/joseon_defense/facet/Fortress')
+        span.ai-icon 🏯
+        span 성곽
+        span.ai-cnt= (S.fortressCount != null ? S.fortressCount : 0)
+      a.anchor-item(href='/joseon_defense/facet/Battle')
+        span.ai-icon ⚔️
+        span 전투/전쟁
+        span.ai-cnt= (S.battleCount != null ? S.battleCount : 0)
+      a.anchor-item(href='/joseon_defense/facet/WeaponSystem')
+        span.ai-icon 🗡️
+        span 무기체계
+        span.ai-cnt= (S.weaponCount != null ? S.weaponCount : 0)
+      a.anchor-item(href='/joseon_defense/facet/MilitaryOrganization')
+        span.ai-icon 🚩
+        span 군사조직
+        span.ai-cnt= (S.orgCount != null ? S.orgCount : 0)
+      a.anchor-item(href='/joseon_defense/facet/Heritage')
+        span.ai-icon 🏛️
+        span 유산
+        span.ai-cnt= (S.heritageCount != null ? S.heritageCount : 0)
+
+  //- ── 본문 ───────────────────────────────────────────────────
+  .section-wrap
+
+    //- 개요
+    .overview-grid
+      .overview-card
+        p.ov-title 온톨로지 소개
+        p.ov-text
+          | 조선시대 국방 온톨로지(v0.1)는 전라병영성과 조선시대 지방군사체계를 중심으로
+          | 구축된 Static Ontology입니다. 지휘관·성곽·무기체계·전쟁·군사조직을
+          | OWL 기반의 관계 모델로 표현하여, 역사 지식을 구조화된 방식으로 탐색할 수 있습니다.
+      .overview-card
+        p.ov-title 핵심 개체
+        p.ov-text
+          | 강진 전라병영성(1417~), 전라병사, 신기전·총통·화차 등의 무기체계,
+          | 임진왜란·병자호란 등 주요 전쟁, 그리고 거북차 개발 실험까지—
+          | 조선의 군사 역사를 온톨로지 트리플로 연결합니다.
+
+    //- ── 클래스 (개념 유형) ─────────────────────────────────────
+    .section-header
+      span.section-title 🏷️ 개념 유형 (Classes)
+      span.section-sub 온톨로지에 정의된 모든 클래스
+    .class-grid
+      a.class-card(href='/joseon_defense/facet/Commander')
+        span.class-icon 👤
+        span.class-label 지휘관
+        span.class-label-en Commander
+        span.class-sub 전라병사·지휘관 등 군사 지도자
+      a.class-card(href='/joseon_defense/facet/King')
+        span.class-icon 👑
+        span.class-label 군 통수권자/국왕
+        span.class-label-en King
+        span.class-sub 임명권자, 최고 통수권자
+      a.class-card(href='/joseon_defense/facet/Fortress')
+        span.class-icon 🏯
+        span.class-label 성곽
+        span.class-label-en Fortress
+        span.class-sub 전라병영성 등 방어 시설
+      a.class-card(href='/joseon_defense/facet/Battle')
+        span.class-icon ⚔️
+        span.class-label 전투
+        span.class-label-en Battle
+        span.class-sub 개별 전투 사건
+      a.class-card(href='/joseon_defense/facet/War')
+        span.class-icon 🏳️
+        span.class-label 전쟁
+        span.class-label-en War
+        span.class-sub 임진왜란·병자호란 등
+      a.class-card(href='/joseon_defense/facet/WeaponSystem')
+        span.class-icon 🗡️
+        span.class-label 무기체계
+        span.class-label-en WeaponSystem
+        span.class-sub 총통·화차·신기전·거북차
+      a.class-card(href='/joseon_defense/facet/MilitaryOrganization')
+        span.class-icon 🚩
+        span.class-label 군사조직
+        span.class-label-en MilitaryOrganization
+        span.class-sub 병영·거진·제진·부대
+      a.class-card(href='/joseon_defense/facet/MilitaryFacility')
+        span.class-icon 🔱
+        span.class-label 군사시설
+        span.class-label-en MilitaryFacility
+        span.class-sub 옹성·해자·함정장애물
+      a.class-card(href='/joseon_defense/facet/EnemyForce')
+        span.class-icon 🗺️
+        span.class-label 외적/적대세력
+        span.class-label-en EnemyForce
+        span.class-sub 왜구·일본군·여진·후금
+      a.class-card(href='/joseon_defense/facet/Heritage')
+        span.class-icon 🏛️
+        span.class-label 유산
+        span.class-label-en Heritage
+        span.class-sub 유형·무형 문화유산
+      a.class-card(href='/joseon_defense/facet/Place')
+        span.class-icon 📍
+        span.class-label 장소
+        span.class-label-en Place
+        span.class-sub 성곽·전장·방어지역·도
+      a.class-card(href='/joseon_defense/facet/MilitaryEvent')
+        span.class-icon 📜
+        span.class-label 군사사건
+        span.class-label-en MilitaryEvent
+        span.class-sub 전투·전쟁·방어작전·원정
+
+    //- 구분선
+    div(style='border-top:1px solid #2a2010; margin: 56px 0')
+
+    //- ── 주요 객체 속성 ─────────────────────────────────────────
+    .section-header
+      span.section-title 🔗 객체 속성 (Object Properties)
+      span.section-sub 개념들 사이의 관계
+    .prop-grid
+      .prop-card
+        .prop-head
+          span.prop-badge.prop-badge-obj ObjectProperty
+          span.prop-name commands / commandedBy
+        p.prop-desc 지휘하다 / 지휘를 받다
+        .prop-domain-range
+          span Commander
+          span.arrow →
+          span MilitaryOrganization
+      .prop-card
+        .prop-head
+          span.prop-badge.prop-badge-obj ObjectProperty
+          span.prop-name appoints / appointedBy
+        p.prop-desc 임명하다 / 임명되다
+        .prop-domain-range
+          span King
+          span.arrow →
+          span Commander
+      .prop-card
+        .prop-head
+          span.prop-badge.prop-badge-obj ObjectProperty
+          span.prop-name againstEnemy
+        p.prop-desc 적대세력을 상대하다
+        .prop-domain-range
+          span MilitaryEvent
+          span.arrow →
+          span EnemyForce
+      .prop-card
+        .prop-head
+          span.prop-badge.prop-badge-obj ObjectProperty
+          span.prop-name usesWeapon / usedInMilitaryEvent
+        p.prop-desc 무기체계를 사용하다
+        .prop-domain-range
+          span MilitaryEvent
+          span.arrow →
+          span WeaponSystem
+      .prop-card
+        .prop-head
+          span.prop-badge.prop-badge-obj ObjectProperty
+          span.prop-name occurredAt
+        p.prop-desc 발생장소
+        .prop-domain-range
+          span MilitaryEvent
+          span.arrow →
+          span Place
+      .prop-card
+        .prop-head
+          span.prop-badge.prop-badge-obj ObjectProperty
+          span.prop-name hasFacility
+        p.prop-desc 군사시설을 갖다
+        .prop-domain-range
+          span Fortress
+          span.arrow →
+          span MilitaryFacility
+      .prop-card
+        .prop-head
+          span.prop-badge.prop-badge-obj ObjectProperty
+          span.prop-name hasHeritage
+        p.prop-desc 유산을 갖다
+        .prop-domain-range
+          span Place
+          span.arrow →
+          span Heritage
+      .prop-card
+        .prop-head
+          span.prop-badge.prop-badge-obj ObjectProperty
+          span.prop-name participatedIn
+        p.prop-desc 참전/참여하다
+        .prop-domain-range
+          span Person
+          span.arrow →
+          span MilitaryEvent
+      .prop-card
+        .prop-head
+          span.prop-badge.prop-badge-obj ObjectProperty
+          span.prop-name stationedAt
+        p.prop-desc 주둔하다
+        .prop-domain-range
+          span MilitaryOrganization
+          span.arrow →
+          span Place
+      .prop-card
+        .prop-head
+          span.prop-badge.prop-badge-obj ObjectProperty
+          span.prop-name hasSubordinateCommand
+        p.prop-desc 예하 지휘부를 두다
+        .prop-domain-range
+          span CommandPost
+          span.arrow →
+          span CommandPost
+      .prop-card
+        .prop-head
+          span.prop-badge.prop-badge-obj ObjectProperty
+          span.prop-name build / builtBy
+        p.prop-desc 축성/건립 주도
+        .prop-domain-range
+          span Person
+          span.arrow →
+          span MilitaryFacility
+      .prop-card
+        .prop-head
+          span.prop-badge.prop-badge-obj ObjectProperty
+          span.prop-name developedWeapon
+        p.prop-desc 무기체계를 개발하다
+        .prop-domain-range
+          span Person
+          span.arrow →
+          span WeaponSystem
+
+    //- 데이터 속성
+    div(style='margin-top:28px')
+    .prop-grid(style='margin-top:14px')
+      .prop-card
+        .prop-head
+          span.prop-badge.prop-badge-data DatatypeProperty
+          span.prop-name yearStart / yearEnd
+        p.prop-desc 시작연도 / 종료연도 (xsd:gYear)
+      .prop-card
+        .prop-head
+          span.prop-badge.prop-badge-data DatatypeProperty
+          span.prop-name periodLabel
+        p.prop-desc 시기표현 (xsd:string)
+      .prop-card
+        .prop-head
+          span.prop-badge.prop-badge-data DatatypeProperty
+          span.prop-name rankLabel
+        p.prop-desc 관직/계급 (xsd:string)
+      .prop-card
+        .prop-head
+          span.prop-badge.prop-badge-data DatatypeProperty
+          span.prop-name modernEquivalent
+        p.prop-desc 현대적 대응개념 (xsd:string)
+      .prop-card
+        .prop-head
+          span.prop-badge.prop-badge-data DatatypeProperty
+          span.prop-name sourceNote
+        p.prop-desc 출처/근거 메모 (xsd:string)
+
+    //- 구분선
+    div(style='border-top:1px solid #2a2010; margin: 56px 0')
+
+    //- ── 주요 인스턴스 ─────────────────────────────────────────
+    .section-header
+      span.section-title 📌 주요 인스턴스
+      span.section-sub 온톨로지에 정의된 핵심 개체들
+      a.section-more(href='/joseon_defense/facet/MilitaryEvent') 모두 보기 →
+    .instance-grid
+      a.inst-card(href='/joseon_defense/resource/GangjinJeollaByeongyeongseong')
+        p.inst-type Fortress
+        p.inst-title 강진 전라병영성
+        p.inst-meta 태종 17년(1417) 전라병영이 강진으로 이전한 뒤 중심 주둔지
+        .inst-tags
+          span.inst-tag 옹성
+          span.inst-tag 해자
+          span.inst-tag 함정장애물
+      a.inst-card(href='/joseon_defense/resource/ImjinWaeran')
+        p.inst-type War
+        p.inst-title 임진왜란
+        p.inst-meta 1592 ~ 1598 · 일본군 상대
+        .inst-tags
+          span.inst-tag 전라병영
+          span.inst-tag 신기전
+          span.inst-tag 총통
+      a.inst-card(href='/joseon_defense/resource/ByeongjaHoran')
+        p.inst-type War
+        p.inst-title 병자호란
+        p.inst-meta 1636 ~ 1637 · 후금/청군 상대
+        .inst-tags
+          span.inst-tag 전라병영
+      a.inst-card(href='/joseon_defense/resource/SingijeonWeapon')
+        p.inst-type RocketWeapon
+        p.inst-title 신기전
+        p.inst-meta 조선의 로켓 추진 병기
+      a.inst-card(href='/joseon_defense/resource/ChongtongCannon')
+        p.inst-type Cannon
+        p.inst-title 총통
+        p.inst-meta 총통/화포 계열 무기체계
+      a.inst-card(href='/joseon_defense/resource/GeobukchaWeapon')
+        p.inst-type WeaponSystem
+        p.inst-title 거북차
+        p.inst-meta 대형 거북차 — 개발과 전투실험
+      a.inst-card(href='/joseon_defense/resource/JeollaByeongyeong')
+        p.inst-type ProvincialArmyCommand
+        p.inst-title 전라병영
+        p.inst-meta 전라도 병마절도사영 — 강진 주둔
+        .inst-tags
+          span.inst-tag 병영
+          span.inst-tag 지방군사
+      a.inst-card(href='/joseon_defense/resource/BattleAgainstWokouUsingSingijeon')
+        p.inst-type Battle
+        p.inst-title 신기전과 총통을 활용한 왜구 격멸
+        p.inst-meta 신기전·총통 사용 · 왜구 상대

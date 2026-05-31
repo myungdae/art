@@ -47,6 +47,7 @@ const threadRouter      = safeRequire("./router/thread");
 const artworkRouter     = safeRequire("./router/artwork");
 const indexRouter       = safeRequire("./router/index");
 const publicRouter      = safeRequire("./router/public");
+const joseonDefenseRouter = safeRequire("./router/joseon_defense");
 
 console.log("📌 app.js 시작됨 (Art Platform)");
 
@@ -115,6 +116,7 @@ function useRouter(mountPath, router) {
   else console.warn("⚠️  라우터 없음, 건너뜀:", mountPath);
 }
 
+useRouter("/joseon_defense", joseonDefenseRouter);
 useRouter("/rdf-resource", rdfResourceRouter);
 useRouter("/artwork",      artworkRouter);
 useRouter("/facet",        facetRouter);
