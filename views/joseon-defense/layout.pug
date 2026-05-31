@@ -1,0 +1,246 @@
+//- views/joseon-defense/layout.pug — 조선 국방 온톨로지 전용 독립 레이아웃
+doctype html
+html(lang='ko')
+  head
+    meta(charset='utf-8')
+    meta(name='viewport' content='width=device-width, initial-scale=1.0')
+    title= (typeof pageTitle !== 'undefined' && pageTitle) ? pageTitle + ' — 조선 국방 온톨로지' : '조선시대 국방 온톨로지'
+    link(rel='shortcut icon' href='/assets/img/favicon.ico' type='image/x-icon')
+    link(rel='stylesheet' href='https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css')
+
+    block append_on_header
+
+    style.
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body {
+        background: #0e0c08;
+        color: #f0e8d0;
+        font-family: 'Helvetica Neue', Arial, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+        min-height: 100vh;
+      }
+
+      /* ── GNB ─────────────────────────────────────────────────── */
+      .jd-gnb {
+        position: sticky; top: 0; z-index: 100;
+        background: rgba(14,12,8,0.97);
+        border-bottom: 1px solid #2a2010;
+        backdrop-filter: blur(10px);
+        height: 64px;
+      }
+      .jd-gnb-inner {
+        max-width: 1340px; margin: 0 auto;
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 0 24px; height: 64px;
+      }
+
+      /* 로고 */
+      .jd-logo {
+        display: flex; align-items: center; gap: 10px;
+        text-decoration: none; flex-shrink: 0;
+      }
+      .jd-logo-icon { font-size: 1.5rem; }
+      .jd-logo-text {
+        font-size: 1.1rem; font-weight: 900; color: #f0e8d0;
+        letter-spacing: -0.5px;
+        line-height: 1.2;
+      }
+      .jd-logo-text span { color: #d4af37; }
+      .jd-logo-sub {
+        font-size: 10px; color: rgba(212,175,55,0.7);
+        font-weight: 700; letter-spacing: 1px;
+        display: block; margin-top: 1px;
+      }
+
+      /* 데스크탑 nav */
+      .jd-nav { display: flex; align-items: center; gap: 2px; }
+      .jd-nav a {
+        padding: 7px 13px; border-radius: 8px;
+        color: rgba(240,232,208,0.55); text-decoration: none;
+        font-size: 13px; font-weight: 700; transition: all 0.2s;
+        white-space: nowrap;
+      }
+      .jd-nav a:hover { color: #f0e8d0; background: rgba(212,175,55,0.08); }
+      .jd-nav a.active { color: #d4af37; background: rgba(212,175,55,0.12); }
+
+      /* 우측 뱃지 */
+      .jd-gnb-right { display: flex; align-items: center; gap: 10px; }
+      .jd-owl-badge {
+        display: inline-flex; align-items: center; gap: 6px;
+        background: rgba(139,105,20,0.15);
+        border: 1px solid rgba(212,175,55,0.3);
+        border-radius: 50px; padding: 5px 14px;
+        font-size: 10px; font-weight: 800; color: #d4af37;
+        letter-spacing: 1.5px; text-transform: uppercase;
+      }
+
+      /* 햄버거 */
+      .jd-hamburger {
+        display: none; flex-direction: column; gap: 5px;
+        cursor: pointer; padding: 6px; background: none; border: none;
+      }
+      .jd-hamburger span {
+        width: 22px; height: 2px; background: #f0e8d0; border-radius: 2px;
+        transition: all 0.3s; display: block;
+      }
+
+      /* 모바일 드로어 */
+      .jd-drawer {
+        position: fixed; top: 0; right: -300px; width: 280px; height: 100vh;
+        background: #1a1508; border-left: 1px solid #2a2010;
+        z-index: 200; transition: right 0.3s ease;
+        padding: 70px 0 20px; overflow-y: auto;
+      }
+      .jd-drawer.open { right: 0; }
+      .jd-drawer a {
+        display: block; padding: 14px 24px;
+        color: rgba(240,232,208,0.65);
+        text-decoration: none; font-weight: 700; font-size: 14px;
+        border-bottom: 1px solid #2a2010; transition: all 0.2s;
+      }
+      .jd-drawer a:hover { color: #d4af37; background: rgba(212,175,55,0.05); }
+      .jd-drawer a.active { color: #d4af37; }
+      .jd-overlay {
+        position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+        z-index: 199; display: none;
+      }
+      .jd-overlay.open { display: block; }
+      .jd-drawer-close {
+        position: absolute; top: 20px; right: 20px;
+        background: rgba(240,232,208,0.1); border: none; border-radius: 8px;
+        color: #f0e8d0; width: 36px; height: 36px; cursor: pointer;
+        font-size: 18px; display: flex; align-items: center; justify-content: center;
+      }
+
+      /* ── Main & Footer ──────────────────────────────────────── */
+      main.jd-main { min-height: calc(100vh - 64px); }
+
+      footer.jd-footer {
+        background: #0a0800;
+        border-top: 1px solid #2a2010;
+        padding: 48px 24px 28px;
+      }
+      .jd-footer-inner {
+        max-width: 1280px; margin: 0 auto;
+        display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 40px;
+      }
+      .jd-footer h4 {
+        font-size: 11px; font-weight: 800; color: #d4af37;
+        letter-spacing: 2px; text-transform: uppercase; margin-bottom: 16px;
+      }
+      .jd-footer p {
+        font-size: 13px; color: rgba(240,232,208,0.35); line-height: 2;
+      }
+      .jd-footer a {
+        display: block; font-size: 13px; color: rgba(240,232,208,0.45);
+        text-decoration: none; line-height: 2.4; transition: color 0.2s;
+      }
+      .jd-footer a:hover { color: #d4af37; }
+      .jd-footer-bottom {
+        max-width: 1280px; margin: 28px auto 0;
+        border-top: 1px solid #2a2010; padding-top: 20px;
+        display: flex; justify-content: space-between; align-items: center;
+        font-size: 11px; color: rgba(240,232,208,0.2);
+        flex-wrap: wrap; gap: 8px;
+      }
+      .jd-ontology-badge {
+        display: inline-flex; align-items: center; gap: 6px;
+        background: rgba(212,175,55,0.08);
+        border: 1px solid rgba(212,175,55,0.2);
+        border-radius: 50px; padding: 4px 12px;
+        font-size: 10px; color: #d4af37; font-weight: 700; letter-spacing: 1px;
+      }
+
+      @media (max-width: 900px) {
+        .jd-nav { display: none; }
+        .jd-gnb-right .jd-owl-badge { display: none; }
+        .jd-hamburger { display: flex; }
+        .jd-footer-inner { grid-template-columns: 1fr; gap: 24px; }
+        .jd-footer-bottom { flex-direction: column; text-align: center; }
+      }
+
+  body
+    //- ── GNB ────────────────────────────────────────────────────
+    nav.jd-gnb
+      .jd-gnb-inner
+        a.jd-logo(href='/joseon-defense')
+          .jd-logo-icon 🏯
+          div
+            .jd-logo-text 조선 <span>국방</span>
+            span.jd-logo-sub OWL Ontology
+
+        .jd-nav
+          a(href='/joseon-defense'                   class=(currentPage==='/joseon-defense' ? 'active' : '')) 🏠 홈
+          a(href='/joseon-defense/facet/Battle'      class=(currentPage && currentPage.indexOf('/joseon-defense/facet/Battle')===0 ? 'active' : '')) ⚔️ 전투/전쟁
+          a(href='/joseon-defense/facet/Commander'   class=(currentPage && currentPage.indexOf('/joseon-defense/facet/Commander')===0 ? 'active' : '')) 👤 지휘관
+          a(href='/joseon-defense/facet/Fortress'    class=(currentPage && currentPage.indexOf('/joseon-defense/facet/Fortress')===0 ? 'active' : '')) 🏯 성곽
+          a(href='/joseon-defense/facet/WeaponSystem' class=(currentPage && currentPage.indexOf('/joseon-defense/facet/WeaponSystem')===0 ? 'active' : '')) 🗡️ 무기체계
+          a(href='/joseon-defense/facet/MilitaryOrganization' class=(currentPage && currentPage.indexOf('/joseon-defense/facet/MilitaryOrganization')===0 ? 'active' : '')) 🚩 군사조직
+
+        .jd-gnb-right
+          span.jd-owl-badge 🔗 OWL Ontology
+
+        button.jd-hamburger#jdHamburger(type='button' aria-label='메뉴')
+          span
+          span
+          span
+
+    .jd-overlay#jdOverlay
+    .jd-drawer#jdDrawer
+      button.jd-drawer-close#jdDrawerClose ✕
+      a(href='/joseon-defense'                   class=(currentPage==='/joseon-defense' ? 'active' : '')) 🏠 홈
+      a(href='/joseon-defense/facet/Battle'      class=(currentPage && currentPage.indexOf('/joseon-defense/facet/Battle')===0 ? 'active' : '')) ⚔️ 전투/전쟁
+      a(href='/joseon-defense/facet/Commander'   class=(currentPage && currentPage.indexOf('/joseon-defense/facet/Commander')===0 ? 'active' : '')) 👤 지휘관
+      a(href='/joseon-defense/facet/Fortress'    class=(currentPage && currentPage.indexOf('/joseon-defense/facet/Fortress')===0 ? 'active' : '')) 🏯 성곽
+      a(href='/joseon-defense/facet/WeaponSystem' class=(currentPage && currentPage.indexOf('/joseon-defense/facet/WeaponSystem')===0 ? 'active' : '')) 🗡️ 무기체계
+      a(href='/joseon-defense/facet/MilitaryOrganization' class=(currentPage && currentPage.indexOf('/joseon-defense/facet/MilitaryOrganization')===0 ? 'active' : '')) 🚩 군사조직
+      a(href='/joseon-defense/facet/MilitaryEvent' class=(currentPage && currentPage.indexOf('/joseon-defense/facet/MilitaryEvent')===0 ? 'active' : '')) 📜 전체 군사사건
+      a(href='/joseon-defense/facet/EnemyForce'   class=(currentPage && currentPage.indexOf('/joseon-defense/facet/EnemyForce')===0 ? 'active' : '')) 🗺️ 외적/적대세력
+      a(href='/joseon-defense/facet/Heritage'     class=(currentPage && currentPage.indexOf('/joseon-defense/facet/Heritage')===0 ? 'active' : '')) 🏛️ 유산
+
+    //- ── Main ───────────────────────────────────────────────────
+    main.jd-main
+      block content
+
+    //- ── Footer ─────────────────────────────────────────────────
+    footer.jd-footer
+      .jd-footer-inner
+        div
+          h4 조선 국방 온톨로지
+          p 전라병영성과 조선시대 지방군사체계를 중심으로
+          p 구축된 OWL 기반 역사 지식 플랫폼입니다.
+          br
+          span.jd-ontology-badge 🔗 OWL Ontology Powered · v0.1
+        div
+          h4 탐색
+          a(href='/joseon-defense/facet/Battle')              ⚔️ 전투/전쟁 탐색
+          a(href='/joseon-defense/facet/Commander')           👤 지휘관 탐색
+          a(href='/joseon-defense/facet/Fortress')            🏯 성곽 탐색
+          a(href='/joseon-defense/facet/WeaponSystem')        🗡️ 무기체계 탐색
+          a(href='/joseon-defense/facet/MilitaryOrganization') 🚩 군사조직 탐색
+          a(href='/joseon-defense/facet/Heritage')            🏛️ 유산 탐색
+        div
+          h4 프로젝트 정보
+          p 기반 데이터: joseon_defense_static_ontology_v0_1.ttl
+          p baseURI: joseon-defense.eventpool.kr
+          p 온톨로지: OWL 2 (Static v0.1)
+          br
+          a(href='https://art.exko.kr' target='_blank') 🎨 ART+ 미술 플랫폼 →
+      .jd-footer-bottom
+        span © 2025 조선시대 국방 온톨로지 · Linked Data Center
+        span joseon-defense.eventpool.kr
+
+    script(src='https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js')
+    script.
+      (function(){
+        var btn     = document.getElementById('jdHamburger');
+        var drawer  = document.getElementById('jdDrawer');
+        var overlay = document.getElementById('jdOverlay');
+        var close   = document.getElementById('jdDrawerClose');
+        function open(){ drawer.classList.add('open'); overlay.classList.add('open'); }
+        function shut(){ drawer.classList.remove('open'); overlay.classList.remove('open'); }
+        if(btn)     btn.addEventListener('click', open);
+        if(close)   close.addEventListener('click', shut);
+        if(overlay) overlay.addEventListener('click', shut);
+      })();
+
+    block append_js

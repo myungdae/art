@@ -1,0 +1,433 @@
+# baseURI: http://joseon-defense.eventpool.kr/ontology
+
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix jos: <http://joseon-defense.eventpool.kr/ontology/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix res: <http://joseon-defense.eventpool.kr/resource/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://joseon-defense.eventpool.kr/ontology>
+  rdf:type owl:Ontology ;
+  dc:description "전라병영성과 조선시대 지방군사체계를 중심으로 한 Static Ontology 초안"@ko ;
+  rdfs:label "조선시대 국방 온톨로지 v0.1"@ko ;
+.
+jos:Barbican
+  rdf:type owl:Class ;
+  rdfs:label "옹성"@ko ;
+  rdfs:subClassOf jos:MilitaryFacility ;
+.
+jos:Battle
+  rdf:type owl:Class ;
+  rdfs:label "전투"@ko ;
+  rdfs:subClassOf jos:MilitaryEvent ;
+.
+jos:Battlefield
+  rdf:type owl:Class ;
+  rdfs:label "전장"@ko ;
+  rdfs:subClassOf jos:Place ;
+.
+jos:BorderArea
+  rdf:type owl:Class ;
+  rdfs:label "접경/방어지역"@ko ;
+  rdfs:subClassOf jos:Place ;
+.
+jos:Campaign
+  rdf:type owl:Class ;
+  rdfs:label "원정/정벌"@ko ;
+  rdfs:subClassOf jos:MilitaryEvent ;
+.
+jos:Cannon
+  rdf:type owl:Class ;
+  rdfs:label "총통/화포"@ko ;
+  rdfs:subClassOf jos:WeaponSystem ;
+.
+jos:Civilian
+  rdf:type owl:Class ;
+  rdfs:label "백성"@ko ;
+  rdfs:subClassOf jos:Person ;
+.
+jos:CommandPost
+  rdf:type owl:Class ;
+  rdfs:label "지휘부"@ko ;
+  rdfs:subClassOf jos:MilitaryOrganization ;
+.
+jos:Commander
+  rdf:type owl:Class ;
+  rdfs:label "지휘관"@ko ;
+  rdfs:subClassOf jos:Person ;
+.
+jos:CommemorationFacility
+  rdf:type owl:Class ;
+  rdfs:label "추모/선양시설"@ko ;
+  rdfs:subClassOf jos:TangibleHeritage ;
+.
+jos:DefenseOperation
+  rdf:type owl:Class ;
+  rdfs:label "방어작전"@ko ;
+  rdfs:subClassOf jos:MilitaryEvent ;
+.
+jos:DisasterRelief
+  rdf:type owl:Class ;
+  rdfs:label "대민지원/재해재난지원"@ko ;
+  rdfs:subClassOf jos:MilitaryEvent ;
+.
+jos:EnemyForce
+  rdf:type owl:Class ;
+  rdfs:label "외적/적대세력"@ko ;
+.
+jos:Fortress
+  rdf:type owl:Class ;
+  rdfs:label "성곽"@ko ;
+  rdfs:subClassOf jos:Place ;
+.
+jos:Geobukcha
+  rdf:type owl:Class ;
+  rdfs:label "거북차"@ko ;
+  rdfs:subClassOf jos:WeaponSystem ;
+.
+jos:Heritage
+  rdf:type owl:Class ;
+  rdfs:label "유산"@ko ;
+.
+jos:Hwacha
+  rdf:type owl:Class ;
+  rdfs:label "화차"@ko ;
+  rdfs:subClassOf jos:WeaponSystem ;
+.
+jos:IntangibleHeritage
+  rdf:type owl:Class ;
+  rdfs:label "무형유산"@ko ;
+  rdfs:subClassOf jos:Heritage ;
+.
+jos:Invasion
+  rdf:type owl:Class ;
+  rdfs:label "침입/침략"@ko ;
+  rdfs:subClassOf jos:MilitaryEvent ;
+.
+jos:JapaneseArmy
+  rdf:type owl:Class ;
+  rdfs:label "일본군"@ko ;
+  rdfs:subClassOf jos:EnemyForce ;
+.
+jos:JeollaByeongsa
+  rdf:type owl:Class ;
+  rdfs:label "전라병사/전라도 병마절도사"@ko ;
+  rdfs:subClassOf jos:Commander ;
+.
+jos:Jurchen
+  rdf:type owl:Class ;
+  rdfs:label "여진"@ko ;
+  rdfs:subClassOf jos:EnemyForce ;
+.
+jos:King
+  rdf:type owl:Class ;
+  rdfs:label "군 통수권자/국왕"@ko ;
+  rdfs:subClassOf jos:Person ;
+.
+jos:LargeGarrison
+  rdf:type owl:Class ;
+  rdfs:label "거진"@ko ;
+  rdfs:subClassOf jos:CommandPost ;
+.
+jos:LaterJinQing
+  rdf:type owl:Class ;
+  rdfs:label "후금/청군"@ko ;
+  rdfs:subClassOf jos:EnemyForce ;
+.
+jos:LocalGarrison
+  rdf:type owl:Class ;
+  rdfs:label "제진"@ko ;
+  rdfs:subClassOf jos:CommandPost ;
+.
+jos:MilitaryEvent
+  rdf:type owl:Class ;
+  rdfs:label "군사사건"@ko ;
+.
+jos:MilitaryFacility
+  rdf:type owl:Class ;
+  rdfs:label "군사시설"@ko ;
+.
+jos:MilitaryInnovation
+  rdf:type owl:Class ;
+  rdfs:label "군사기술개발"@ko ;
+  rdfs:subClassOf jos:MilitaryEvent ;
+.
+jos:MilitaryOrganization
+  rdf:type owl:Class ;
+  rdfs:label "군사조직"@ko ;
+.
+jos:Moat
+  rdf:type owl:Class ;
+  rdfs:label "해자"@ko ;
+  rdfs:subClassOf jos:MilitaryFacility ;
+.
+jos:Person
+  rdf:type owl:Class ;
+  rdfs:label "인물"@ko ;
+.
+jos:Place
+  rdf:type owl:Class ;
+  rdfs:label "장소"@ko ;
+.
+jos:Province
+  rdf:type owl:Class ;
+  rdfs:label "도"@ko ;
+  rdfs:subClassOf jos:Place ;
+.
+jos:ProvincialArmyCommand
+  rdf:type owl:Class ;
+  rdfs:label "병영"@ko ;
+  rdfs:subClassOf jos:CommandPost ;
+.
+jos:RocketWeapon
+  rdf:type owl:Class ;
+  rdfs:label "로켓무기"@ko ;
+  rdfs:subClassOf jos:WeaponSystem ;
+.
+jos:Singijeon
+  rdf:type owl:Class ;
+  rdfs:label "신기전"@ko ;
+  rdfs:subClassOf jos:RocketWeapon ;
+.
+jos:TangibleHeritage
+  rdf:type owl:Class ;
+  rdfs:label "유형유산"@ko ;
+  rdfs:subClassOf jos:Heritage ;
+.
+jos:TrapObstacle
+  rdf:type owl:Class ;
+  rdfs:label "함정장애물"@ko ;
+  rdfs:subClassOf jos:MilitaryFacility ;
+.
+jos:Unit
+  rdf:type owl:Class ;
+  rdfs:label "부대"@ko ;
+  rdfs:subClassOf jos:MilitaryOrganization ;
+.
+jos:UnnamedSoldier
+  rdf:type owl:Class ;
+  rdfs:label "무명용사"@ko ;
+  rdfs:subClassOf jos:Person ;
+.
+jos:War
+  rdf:type owl:Class ;
+  rdfs:label "전쟁"@ko ;
+  rdfs:subClassOf jos:MilitaryEvent ;
+.
+jos:WeaponDevelopedBy
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain jos:WeaponSystem ;
+  rdfs:label "무기쳬계가 개발되다"^^xsd:string ;
+  rdfs:range jos:Person ;
+  owl:inverseOf jos:developedWeapon ;
+.
+jos:WeaponSystem
+  rdf:type owl:Class ;
+  rdfs:label "무기체계"@ko ;
+.
+jos:Wokou
+  rdf:type owl:Class ;
+  rdfs:label "왜구"@ko ;
+  rdfs:subClassOf jos:EnemyForce ;
+.
+jos:againstEnemy
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain jos:MilitaryEvent ;
+  rdfs:label "적대세력을 상대하다"@ko ;
+  rdfs:range jos:EnemyForce ;
+.
+jos:appointedBy
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain jos:Commander ;
+  rdfs:label "appointed by"^^xsd:string ;
+  rdfs:range jos:King ;
+  owl:inverseOf jos:appoints ;
+.
+jos:appoints
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain jos:King ;
+  rdfs:label "임명하다"@ko ;
+  rdfs:range jos:Commander ;
+  owl:inverseOf jos:appointedBy ;
+.
+jos:build
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain jos:Person ;
+  rdfs:label "build"^^xsd:string ;
+  rdfs:range jos:MilitaryFacility ;
+  owl:inverseOf jos:builtBy ;
+.
+jos:builtBy
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain jos:MilitaryFacility ;
+  rdfs:label "축성/건립 주도자"@ko ;
+  rdfs:range jos:Person ;
+  owl:inverseOf jos:build ;
+.
+jos:commandedBy
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain jos:MilitaryOrganization ;
+  rdfs:label "지휘를 받다"@ko ;
+  rdfs:range jos:Commander ;
+  owl:inverseOf jos:commands ;
+.
+jos:commands
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain jos:Commander ;
+  rdfs:label "지휘하다"@ko ;
+  rdfs:range jos:MilitaryOrganization ;
+  owl:inverseOf jos:commandedBy ;
+.
+jos:developedWeapon
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain jos:Person ;
+  rdfs:label "무기체계를 개발하다"@ko ;
+  rdfs:range jos:WeaponSystem ;
+  owl:inverseOf jos:WeaponDevelopedBy ;
+.
+jos:hasFacility
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain jos:Fortress ;
+  rdfs:label "군사시설을 갖다"@ko ;
+  rdfs:range jos:MilitaryFacility ;
+.
+jos:hasHeadquarters
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain jos:MilitaryOrganization ;
+  rdfs:label "지휘부를 두다"@ko ;
+  rdfs:range jos:CommandPost ;
+.
+jos:hasHeritage
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain jos:Place ;
+  rdfs:label "유산을 갖다"@ko ;
+  rdfs:range jos:Heritage ;
+.
+jos:hasSubordinateCommand
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain jos:CommandPost ;
+  rdfs:label "예하 지휘부를 두다"@ko ;
+  rdfs:range jos:CommandPost ;
+.
+jos:involvesForce
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain jos:MilitaryEvent ;
+  rdfs:label "군사조직이 관여하다"@ko ;
+  rdfs:range jos:MilitaryOrganization ;
+.
+jos:modernEquivalent
+  rdf:type owl:DatatypeProperty ;
+  rdfs:label "현대적 대응개념"@ko ;
+  rdfs:range xsd:string ;
+.
+jos:occurredAt
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain jos:MilitaryEvent ;
+  rdfs:label "발생장소"@ko ;
+  rdfs:range jos:Place ;
+.
+jos:participatedIn
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain jos:Person ;
+  rdfs:label "참전/참여하다"@ko ;
+  rdfs:range jos:MilitaryEvent ;
+.
+jos:periodLabel
+  rdf:type owl:DatatypeProperty ;
+  rdfs:label "시기표현"@ko ;
+  rdfs:range xsd:string ;
+.
+jos:rankLabel
+  rdf:type owl:DatatypeProperty ;
+  rdfs:label "관직/계급"@ko ;
+  rdfs:range xsd:string ;
+.
+jos:sourceNote
+  rdf:type owl:DatatypeProperty ;
+  rdfs:label "출처/근거 메모"@ko ;
+  rdfs:range xsd:string ;
+.
+jos:stationedAt
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain jos:MilitaryOrganization ;
+  rdfs:label "주둔하다"@ko ;
+  rdfs:range jos:Place ;
+.
+jos:subordinateTo
+  rdf:type owl:ObjectProperty ;
+  rdfs:label "예속되다"@ko ;
+  owl:inverseOf jos:hasSubordinateCommand ;
+.
+jos:usedInMilitaryEvent
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain jos:WeaponSystem ;
+  rdfs:label "무기체계가 군사이벤트에 사용되다"^^xsd:string ;
+  rdfs:range jos:MilitaryEvent ;
+  owl:inverseOf jos:usesWeapon ;
+.
+jos:usesWeapon
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain jos:MilitaryEvent ;
+  rdfs:label "무기체계를 사용하다"@ko ;
+  rdfs:range jos:WeaponSystem ;
+  owl:inverseOf jos:usedInMilitaryEvent ;
+.
+jos:yearEnd
+  rdf:type owl:DatatypeProperty ;
+  rdfs:label "종료연도"@ko ;
+  rdfs:range xsd:gYear ;
+.
+jos:yearStart
+  rdf:type owl:DatatypeProperty ;
+  rdfs:label "시작연도"@ko ;
+  rdfs:range xsd:gYear ;
+.
+res:BattleAgainstWokouUsingSingijeon
+  rdf:type jos:Battle ;
+  jos:againstEnemy res:WokouForce ;
+  jos:usesWeapon res:ChongtongCannon ;
+  jos:usesWeapon res:SingijeonWeapon ;
+  rdfs:label "신기전과 총통을 활용한 왜구 격멸"@ko ;
+.
+res:ByeongjaHoran
+  rdf:type jos:War ;
+  jos:againstEnemy res:QingForce ;
+  jos:involvesForce res:JeollaByeongyeong ;
+  jos:yearEnd "1637"^^xsd:gYear ;
+  jos:yearStart "1636"^^xsd:gYear ;
+  rdfs:label "병자호란"@ko ;
+.
+res:ChongtongCannon
+  rdf:type jos:Cannon ;
+  rdfs:label "총통"@ko ;
+.
+res:ConstructionOfJeollaByeongyeongseong
+  rdf:type jos:MilitaryEvent ;
+  jos:involvesForce res:JeollaByeongyeong ;
+  jos:occurredAt res:GangjinJeollaByeongyeongseong ;
+  jos:periodLabel "태종 대"@ko ;
+  rdfs:label "강진 전라병영성 축성"@ko ;
+.
+res:DaejeonghyeonJin
+  rdf:type jos:LocalGarrison ;
+  jos:subordinateTo res:JejuGeojin ;
+  rdfs:label "대정현 제진"@ko ;
+.
+res:GangjinJeollaByeongyeongseong
+  rdf:type jos:Fortress ;
+  jos:hasFacility res:JeollaByeongyeongseongBarbican ;
+  jos:hasFacility res:JeollaByeongyeongseongMoat ;
+  jos:hasFacility res:JeollaByeongyeongseongTrap ;
+  jos:hasHeritage res:JeollaMilitaryHeritage ;
+  jos:periodLabel "태종 17년(1417) 전라병영이 강진으로 이전한 뒤 중심 주둔지"@ko ;
+  rdfs:label "강진 전라병영성"@ko ;
+  skos:altLabel "전라병영성"@ko ;
+.
+res:GeobukchaDevelopment
+  rdf:type jos:MilitaryInnovation ;
+  jos:involvesForce res:JeollaByeongyeong ;
+  jos:usesWeapon res:GeobukchaWeapon ;
+  rdfs:label "대형 거북차 개발과 전투실험"@ko ;
