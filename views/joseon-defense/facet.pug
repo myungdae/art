@@ -1,67 +1,63 @@
-//- views/joseon-defense/facet.pug — 조선 국방 온톨로지 패싯 탐색 (Domain-Range 기반 스마트 패싯 v2)
+//- views/joseon-defense/facet.pug — 조선 국방 온톨로지 패싯 탐색 (라이트 테마 v2)
 extends ./layout
 
 block content
   style.
-    html, body { background: #0e0c08; color: #f0e8d0; }
-
     /* ── 페이지 헤더 ─────────────────────────────────────────── */
     .facet-header {
-      background: linear-gradient(180deg, #1a1508 0%, #0e0c08 100%);
-      border-bottom: 1px solid #2a2010;
-      padding: 36px 24px 28px;
+      background: linear-gradient(180deg, #fffdf7 0%, #f5f3ee 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 32px 24px 24px;
     }
     .facet-header-inner { max-width: 1300px; margin: 0 auto; }
     .back-link {
       display: inline-flex; align-items: center; gap: 6px;
-      font-size: 13px; font-weight: 700; color: rgba(240,232,208,0.4);
-      text-decoration: none; margin-bottom: 16px; transition: color 0.2s;
+      font-size: 12px; font-weight: 700; color: var(--text-muted);
+      text-decoration: none; margin-bottom: 14px; transition: color 0.18s;
     }
-    .back-link:hover { color: #d4af37; }
+    .back-link:hover { color: var(--gold); }
     .page-badge {
       display: inline-flex; align-items: center; gap: 7px;
-      background: rgba(139,105,20,0.18);
-      border: 1px solid rgba(212,175,55,0.35);
-      border-radius: 50px; padding: 3px 14px;
-      font-size: 10px; font-weight: 800; color: #c9a227;
-      letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px;
+      background: var(--gold-bg);
+      border: 1px solid var(--gold-border);
+      border-radius: 50px; padding: 3px 13px;
+      font-size: 9px; font-weight: 800; color: var(--gold);
+      letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px;
     }
     .page-title {
-      font-size: clamp(1.5rem, 3vw, 2.2rem);
-      font-weight: 900; color: #f0e8d0; line-height: 1.2; margin-bottom: 6px;
+      font-size: clamp(1.5rem, 3vw, 2.1rem);
+      font-weight: 900; color: var(--text); line-height: 1.2; margin-bottom: 5px;
     }
-    .page-count { font-size: 14px; color: rgba(240,232,208,0.45); }
-    .page-count strong { color: #c9a227; }
+    .page-count { font-size: 13px; color: var(--text-muted); }
+    .page-count strong { color: var(--gold); font-weight: 800; }
 
     /* ── 클래스 탭 바 ─────────────────────────────────────────── */
     .class-tabs {
-      background: #131007;
-      border-bottom: 1px solid #2a2010;
-      overflow-x: auto;
-      scrollbar-width: none;
+      background: #fffdf7;
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto; scrollbar-width: none;
     }
     .class-tabs::-webkit-scrollbar { display: none; }
     .class-tabs-inner {
       max-width: 1300px; margin: 0 auto;
-      display: flex; padding: 0 24px; gap: 2px;
+      display: flex; padding: 0 24px; gap: 0;
     }
     .class-tab {
-      padding: 13px 18px;
+      padding: 12px 18px;
       font-size: 13px; font-weight: 700;
-      color: rgba(240,232,208,0.45);
+      color: var(--text-3);
       text-decoration: none; white-space: nowrap;
       border-bottom: 2.5px solid transparent;
-      transition: color 0.2s, border-color 0.2s;
+      transition: color 0.18s, border-color 0.18s;
       flex-shrink: 0;
     }
-    .class-tab:hover { color: #d4af37; }
-    .class-tab.active { color: #d4af37; border-bottom-color: #d4af37; }
+    .class-tab:hover { color: var(--gold); }
+    .class-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
 
     /* ── 메인 레이아웃 ────────────────────────────────────────── */
     .facet-layout {
       max-width: 1300px; margin: 0 auto;
-      display: grid;
-      grid-template-columns: 256px 1fr;
+      display: grid; grid-template-columns: 252px 1fr;
       gap: 0; padding: 28px 24px 80px;
     }
     @media (max-width: 960px) {
@@ -71,212 +67,222 @@ block content
 
     /* ── 사이드바 ────────────────────────────────────────────── */
     .facet-sidebar {
-      padding-right: 24px;
-      border-right: 1px solid #2a2010;
-      position: sticky;
-      top: 80px;
+      padding-right: 22px;
+      border-right: 1px solid var(--border);
+      position: sticky; top: 78px;
       max-height: calc(100vh - 100px);
       overflow-y: auto;
       scrollbar-width: thin;
-      scrollbar-color: #2a2010 transparent;
+      scrollbar-color: var(--border-dark) transparent;
     }
-    .facet-sidebar::-webkit-scrollbar { width: 4px; }
-    .facet-sidebar::-webkit-scrollbar-thumb { background: #2a2010; border-radius: 2px; }
+    .facet-sidebar::-webkit-scrollbar { width: 3px; }
+    .facet-sidebar::-webkit-scrollbar-thumb { background: var(--border-dark); border-radius: 2px; }
 
-    /* 패싯 섹션 헤더 */
-    .filter-group { margin-bottom: 24px; }
-    .filter-group-header {
-      display: flex; align-items: center; gap: 8px;
-      margin-bottom: 10px;
-    }
+    /* 패싯 그룹 */
+    .filter-group { margin-bottom: 20px; }
+    .filter-group-header { display: flex; align-items: center; gap: 7px; margin-bottom: 8px; }
     .filter-title {
-      font-size: 10px; font-weight: 800; color: #c9a227;
-      text-transform: uppercase; letter-spacing: 2px;
-      flex: 1;
+      font-size: 10px; font-weight: 800; color: var(--gold);
+      text-transform: uppercase; letter-spacing: 2px; flex: 1;
     }
-    /* Domain → Range 관계 표시 */
+    /* Domain→Range 뱃지 */
     .filter-rel-badge {
       font-size: 9px; font-weight: 700;
-      color: rgba(201,162,39,0.5);
-      background: rgba(201,162,39,0.07);
-      border: 1px solid rgba(201,162,39,0.15);
+      color: var(--gold-light);
+      background: var(--gold-bg);
+      border: 1px solid var(--gold-border);
       border-radius: 4px; padding: 1px 6px;
       white-space: nowrap;
     }
-
-    /* 서브클래스 칩 스타일 패싯 */
-    .filter-chips {
-      display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px;
+    .filter-rel-desc {
+      font-size: 10px; color: var(--text-muted);
+      margin-bottom: 7px; line-height: 1.5; padding-left: 1px;
     }
+
+    /* 서브클래스 칩 */
+    .filter-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 2px; }
     .filter-chip {
       display: inline-flex; align-items: center; gap: 4px;
-      padding: 5px 11px; border-radius: 50px;
+      padding: 4px 11px; border-radius: 50px;
       font-size: 12px; font-weight: 700;
-      background: rgba(240,232,208,0.05);
-      border: 1px solid rgba(240,232,208,0.12);
-      color: rgba(240,232,208,0.55);
-      text-decoration: none; transition: all 0.18s;
+      background: #fff;
+      border: 1.5px solid var(--border);
+      color: var(--text-2);
+      text-decoration: none; transition: all 0.16s;
+      box-shadow: var(--shadow-sm);
     }
     .filter-chip:hover {
-      background: rgba(212,175,55,0.1);
-      border-color: rgba(212,175,55,0.3);
-      color: #d4af37;
+      background: var(--gold-bg);
+      border-color: var(--gold-border);
+      color: var(--gold);
     }
     .filter-chip.active {
-      background: rgba(201,162,39,0.15);
-      border-color: rgba(201,162,39,0.45);
-      color: #c9a227;
+      background: var(--gold-bg);
+      border-color: var(--gold);
+      color: var(--gold);
+      box-shadow: 0 0 0 2px rgba(139,105,20,0.12);
     }
     .chip-cnt {
-      font-size: 10px; font-weight: 700;
-      background: rgba(201,162,39,0.15);
-      color: #c9a227; border-radius: 50px;
+      font-size: 10px; font-weight: 800;
+      background: rgba(139,105,20,0.1);
+      color: var(--gold); border-radius: 50px;
       padding: 0 5px; min-width: 18px; text-align: center;
     }
-    .chip-rm {
-      font-size: 12px; opacity: 0.7; margin-left: 2px;
-      display: inline-flex; align-items: center;
-    }
+    .chip-rm { font-size: 11px; opacity: 0.6; margin-left: 1px; }
 
     /* 목록형 패싯 */
     .filter-list { list-style: none; padding: 0; margin: 0; }
-    .filter-list li { margin-bottom: 2px; }
+    .filter-list li { margin-bottom: 1px; }
     .filter-list a {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 6px 10px; border-radius: 8px;
-      font-size: 13px; color: rgba(240,232,208,0.6);
-      text-decoration: none; transition: all 0.18s;
-      gap: 8px;
+      padding: 6px 9px; border-radius: 8px;
+      font-size: 13px; color: var(--text-2);
+      text-decoration: none; transition: all 0.16s; gap: 6px;
     }
-    .filter-list a:hover {
-      background: rgba(212,175,55,0.07); color: #d4af37;
-    }
+    .filter-list a:hover { background: var(--gold-bg); color: var(--gold); }
     .filter-list a.active {
-      background: rgba(212,175,55,0.12);
-      color: #d4af37; font-weight: 700;
+      background: var(--gold-bg);
+      color: var(--gold); font-weight: 700;
+      border: 1px solid var(--gold-border);
     }
     .filter-list-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .filter-cnt {
       font-size: 10px; font-weight: 700; flex-shrink: 0;
-      background: rgba(201,162,39,0.1);
-      border: 1px solid rgba(201,162,39,0.2);
-      color: #c9a227; padding: 1px 7px; border-radius: 50px;
+      background: rgba(139,105,20,0.08);
+      border: 1px solid var(--gold-border);
+      color: var(--gold); padding: 1px 7px; border-radius: 50px;
     }
-    /* 역관계 표시 아이콘 */
-    .filter-inverse-icon {
-      font-size: 9px; color: rgba(240,232,208,0.25);
-      flex-shrink: 0;
-    }
+    .filter-inverse-icon { font-size: 9px; color: var(--text-muted); flex-shrink: 0; }
+
+    /* 구분선 */
+    .filter-divider { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
 
     /* ── 검색 바 ─────────────────────────────────────────────── */
-    .search-bar-wrap { margin: 0 0 20px 0; }
+    .search-bar-wrap { margin: 0 0 18px 0; }
     .search-bar { display: flex; gap: 8px; }
     .search-input {
-      flex: 1; background: #1a1508;
-      border: 1.5px solid #2a2010; border-radius: 10px;
+      flex: 1; background: #fff;
+      border: 1.5px solid var(--border); border-radius: 10px;
       padding: 10px 16px; font-size: 14px;
-      color: #f0e8d0; outline: none; transition: border-color 0.2s;
+      color: var(--text); outline: none;
+      transition: border-color 0.18s, box-shadow 0.18s;
+      box-shadow: var(--shadow-sm);
     }
-    .search-input::placeholder { color: rgba(240,232,208,0.3); }
-    .search-input:focus { border-color: #c9a227; }
+    .search-input::placeholder { color: var(--text-muted); }
+    .search-input:focus { border-color: var(--gold-light); box-shadow: 0 0 0 3px rgba(201,162,39,0.12); }
     .search-btn {
-      background: #c9a227; color: #0e0c08; border: none;
+      background: var(--gold); color: #fff; border: none;
       border-radius: 10px; padding: 10px 22px;
       font-size: 14px; font-weight: 800;
-      cursor: pointer; transition: background 0.2s; flex-shrink: 0;
+      cursor: pointer; transition: background 0.18s; flex-shrink: 0;
+      box-shadow: var(--shadow-sm);
     }
-    .search-btn:hover { background: #a07800; }
+    .search-btn:hover { background: #6b5010; }
 
-    /* ── 활성 필터 표시 배너 ──────────────────────────────────── */
+    /* ── 활성 필터 배너 ───────────────────────────────────────── */
     .active-filters-bar {
-      display: flex; flex-wrap: wrap; gap: 7px;
-      margin-bottom: 18px; align-items: center;
+      display: flex; flex-wrap: wrap; gap: 6px;
+      margin-bottom: 16px; align-items: center;
     }
     .active-filters-label {
-      font-size: 12px; font-weight: 700;
-      color: rgba(240,232,208,0.35);
+      font-size: 11px; font-weight: 700; color: var(--text-muted);
     }
     .active-filter-tag {
       display: inline-flex; align-items: center; gap: 5px;
-      background: rgba(201,162,39,0.1);
-      border: 1px solid rgba(201,162,39,0.28);
-      border-radius: 50px; padding: 4px 12px;
-      font-size: 12px; font-weight: 700; color: #c9a227;
-      text-decoration: none; transition: all 0.18s;
+      background: var(--gold-bg);
+      border: 1px solid var(--gold-border);
+      border-radius: 50px; padding: 4px 11px;
+      font-size: 12px; font-weight: 700; color: var(--gold);
+      text-decoration: none; transition: all 0.16s;
     }
-    .active-filter-tag:hover {
-      background: rgba(201,162,39,0.18);
-      border-color: rgba(201,162,39,0.45);
-    }
-    .active-filter-tag .rm { font-size: 13px; opacity: 0.7; }
+    .active-filter-tag:hover { background: rgba(139,105,20,0.14); border-color: var(--gold); }
+    .active-filter-tag .rm { font-size: 12px; opacity: 0.6; }
     .clear-all-btn {
-      font-size: 11px; color: rgba(240,232,208,0.3);
+      font-size: 11px; color: var(--text-muted);
       text-decoration: none; padding: 4px 10px;
-      border-radius: 50px; border: 1px solid rgba(240,232,208,0.1);
-      transition: all 0.18s;
+      border-radius: 50px; border: 1px solid var(--border);
+      transition: all 0.16s;
     }
-    .clear-all-btn:hover { color: #c9a227; border-color: rgba(201,162,39,0.3); }
+    .clear-all-btn:hover { color: var(--gold); border-color: var(--gold-border); }
 
     /* ── 결과 헤더 ───────────────────────────────────────────── */
     .result-header {
       display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 18px; flex-wrap: wrap; gap: 12px;
+      margin-bottom: 16px; flex-wrap: wrap; gap: 10px;
     }
-    .result-count { font-size: 14px; color: rgba(240,232,208,0.5); }
-    .result-count strong { color: #c9a227; }
+    .result-count { font-size: 14px; color: var(--text-3); }
+    .result-count strong { color: var(--gold); font-weight: 800; }
     .sort-select {
-      background: #1a1508; border: 1px solid #2a2010; border-radius: 8px;
-      color: rgba(240,232,208,0.7); padding: 6px 12px; font-size: 13px;
-      cursor: pointer; outline: none;
+      background: #fff; border: 1.5px solid var(--border); border-radius: 8px;
+      color: var(--text-2); padding: 6px 12px; font-size: 13px;
+      cursor: pointer; outline: none; box-shadow: var(--shadow-sm);
+      transition: border-color 0.18s;
     }
+    .sort-select:focus { border-color: var(--gold-light); }
 
     /* ── 결과 카드 ───────────────────────────────────────────── */
     .result-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
       gap: 14px;
     }
     .result-card {
-      background: #1a1508; border: 1px solid #2a2010;
+      background: var(--bg-card);
+      border: 1.5px solid var(--border);
       border-radius: 14px; padding: 18px;
       text-decoration: none; display: block;
-      transition: border-color 0.2s, transform 0.2s;
+      transition: border-color 0.18s, transform 0.18s, box-shadow 0.18s;
+      box-shadow: var(--shadow-sm);
     }
-    .result-card:hover { border-color: #c9a227; transform: translateY(-3px); }
+    .result-card:hover {
+      border-color: var(--gold);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
     .rc-type {
-      font-size: 10px; font-weight: 800; color: #c9a227;
-      letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 7px;
+      display: flex; align-items: center; gap: 5px;
+      font-size: 10px; font-weight: 800; color: var(--gold);
+      letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px;
+    }
+    .rc-type-badge {
+      background: var(--gold-bg); border: 1px solid var(--gold-border);
+      border-radius: 4px; padding: 2px 7px;
+      font-size: 10px; font-weight: 800; color: var(--gold);
+      letter-spacing: 1px;
     }
     .rc-title {
-      font-size: 15px; font-weight: 800; color: #f0e8d0;
+      font-size: 15px; font-weight: 900; color: var(--text);
       line-height: 1.4; margin-bottom: 7px;
     }
-    .rc-meta { font-size: 12px; color: rgba(240,232,208,0.45); line-height: 1.6; margin-bottom: 4px; }
-    .rc-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+    .rc-meta {
+      font-size: 12px; color: var(--text-3); line-height: 1.6; margin-bottom: 3px;
+    }
+    .rc-rank {
+      font-size: 11px; color: var(--gold);
+      background: var(--gold-bg); border: 1px solid var(--gold-border);
+      border-radius: 4px; padding: 2px 7px; display: inline-block;
+      margin-top: 6px; font-weight: 700;
+    }
+    .rc-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 9px; }
     .rc-tag {
       font-size: 11px; padding: 2px 8px; border-radius: 50px;
-      background: rgba(240,232,208,0.05);
-      border: 1px solid rgba(240,232,208,0.12);
-      color: rgba(240,232,208,0.45);
+      background: #f0ede5; border: 1px solid var(--border);
+      color: var(--text-3);
+    }
+    .rc-year {
+      font-size: 11px; color: var(--text-muted); margin-top: 7px;
     }
 
     /* 빈 결과 */
     .empty-state {
-      text-align: center; padding: 80px 24px; color: rgba(240,232,208,0.35);
+      text-align: center; padding: 80px 24px; color: var(--text-muted);
     }
     .empty-state .ei { font-size: 3rem; margin-bottom: 16px; }
+    .empty-state .ei-msg { font-size: 15px; color: var(--text-3); }
+    .empty-state a { color: var(--gold); text-decoration: underline; }
 
-    /* ── 사이드바 구분선 ──────────────────────────────────────── */
-    .filter-divider {
-      border: none; border-top: 1px solid #2a2010; margin: 16px 0;
-    }
-
-    /* ── Domain-Range 관계 설명 툴팁 ─────────────────────────── */
-    .filter-rel-desc {
-      font-size: 10px; color: rgba(240,232,208,0.25);
-      margin-bottom: 8px; line-height: 1.5;
-      padding-left: 2px;
-    }
+    /* ── 결과 영역 패딩 ──────────────────────────────────────── */
+    .result-area { padding-left: 26px; min-width: 0; }
 
   //- ── 페이지 헤더 ──────────────────────────────────────────────
   .facet-header
@@ -292,7 +298,7 @@ block content
         strong= totalCount
         |  개 표시
 
-  //- ── 클래스 탭 바 (TABS 기반 동적 렌더링) ─────────────────────
+  //- ── 클래스 탭 바 (TABS 동적 렌더링) ─────────────────────────
   .class-tabs
     .class-tabs-inner
       each tab in tabs
@@ -304,16 +310,16 @@ block content
   //- ── 메인 레이아웃 ────────────────────────────────────────────
   .facet-layout
 
-    //- ── 사이드바 (Domain-Range 스마트 패싯) ───────────────────
+    //- ── 사이드바 ──────────────────────────────────────────────
     .facet-sidebar
 
-      - // URL 조합 헬퍼: 기존 필터 유지하며 특정 키 추가/제거
+      - // URL 조합 헬퍼
       - function buildUrl(baseClass, currentFilters, addKey, addVal, removeKey) {
       -   var params = Object.assign({}, currentFilters);
       -   if (removeKey) delete params[removeKey];
       -   if (addKey && addVal) {
-      -     if (params[addKey] === addVal) { delete params[addKey]; }
-      -     else { params[addKey] = addVal; }
+      -     if (params[addKey] === addVal) delete params[addKey];
+      -     else params[addKey] = addVal;
       -   }
       -   var qs = Object.entries(params).map(function(e){ return e[0]+'='+encodeURIComponent(e[1]); }).join('&');
       -   return '/joseon-defense/facet/' + baseClass + (qs ? '?' + qs : '');
@@ -322,18 +328,14 @@ block content
       if filters && filters.length
         each fg in filters
           .filter-group
-
-            //- 패싯 그룹 헤더: 레이블 + 관계 뱃지
             .filter-group-header
               p.filter-title= fg.label
               if fg.relBadge
                 span.filter-rel-badge= fg.relBadge
-
-            //- 관계 설명 (domain → range)
             if fg.relDesc
               p.filter-rel-desc= fg.relDesc
 
-            //- 서브클래스 패싯: 칩 스타일
+            //- 서브클래스: 칩 스타일
             if fg.key === 'subclass'
               .filter-chips
                 each opt in fg.options
@@ -345,13 +347,13 @@ block content
                     if isActive
                       span.chip-rm ✕
 
-            //- 일반 목록형 패싯 (관계 기반)
+            //- 일반 목록형 패싯
             else
               ul.filter-list
                 each opt in fg.options
                   li
-                    - var isActive   = (selectedFilters && selectedFilters[fg.key] === opt.value)
-                    - var filterUrl  = buildUrl(currentClass, selectedFilters, fg.key, opt.value, null)
+                    - var isActive  = (selectedFilters && selectedFilters[fg.key] === opt.value)
+                    - var filterUrl = buildUrl(currentClass, selectedFilters, fg.key, opt.value, null)
                     a(href=filterUrl class=(isActive ? 'active' : ''))
                       if fg.isInverse
                         span.filter-inverse-icon(title='역관계') ↩
@@ -361,12 +363,12 @@ block content
           hr.filter-divider
 
       else
-        p(style='font-size:12px; color:rgba(240,232,208,0.25); padding: 8px 0;') 이 클래스에 대한 패싯 정보가 없습니다.
+        p(style='font-size:12px; color:var(--text-muted); padding: 8px 0;') 이 클래스에 대한 패싯 정보가 없습니다.
 
     //- ── 결과 영역 ──────────────────────────────────────────────
-    div(style='padding-left: 28px; min-width: 0;')
+    .result-area
 
-      //- 검색 바 (기존 필터 파라미터 hidden 유지)
+      //- 검색 바
       .search-bar-wrap
         form.search-bar(method='GET' action=`/joseon-defense/facet/${currentClass}`)
           if selectedFilters
@@ -378,24 +380,21 @@ block content
           )
           button.search-btn(type='submit') 검색
 
-      //- 활성 필터 태그 배너
+      //- 활성 필터 배너
       - var hasFilters = (selectedFilters && Object.keys(selectedFilters).length > 0) || searchQuery
       if hasFilters
         .active-filters-bar
           span.active-filters-label 필터:
           if searchQuery
-            a.active-filter-tag(
-              href=`/joseon-defense/facet/${currentClass}${Object.keys(selectedFilters||{}).length ? '?' + Object.entries(selectedFilters||{}).map(function(e){ return e[0]+'='+encodeURIComponent(e[1]); }).join('&') : ''}`
-            )
+            - var noSearchUrl = '/joseon-defense/facet/'+currentClass+(Object.keys(selectedFilters||{}).length ? '?'+Object.entries(selectedFilters||{}).map(function(e){return e[0]+'='+encodeURIComponent(e[1]);}).join('&') : '')
+            a.active-filter-tag(href=noSearchUrl)
               span 🔍 #{searchQuery}
               span.rm ✕
           if selectedFilters
             each val, key in selectedFilters
-              - // 각 활성 필터 태그: 클릭 시 해당 필터만 제거
               - var removeUrl = buildUrl(currentClass, selectedFilters, null, null, key)
-              - // 레이블 찾기
               - var tagLabel  = val
-              - if (filters) { filters.forEach(function(fg){ if(fg.key===key && fg.options){ fg.options.forEach(function(o){ if(o.value===val) tagLabel = o.label; }); } }); }
+              - if (filters) { filters.forEach(function(fg){ if(fg.key===key && fg.options){ fg.options.forEach(function(o){ if(o.value===val) tagLabel=o.label; }); } }); }
               a.active-filter-tag(href=removeUrl)
                 span= tagLabel
                 span.rm ✕
@@ -409,7 +408,7 @@ block content
           if allCount !== totalCount
             |  (전체 #{allCount} 중)
         select.sort-select(
-          onchange=`location.href='/joseon-defense/facet/${currentClass}?sort='+this.value${Object.keys(selectedFilters||{}).length ? '+\'&\'+ '+"'"+Object.entries(selectedFilters||{}).map(function(e){ return e[0]+'='+encodeURIComponent(e[1]); }).join('&')+"'" : ''}+${searchQuery ? `'&q='+encodeURIComponent('${searchQuery}')` : "''"}`
+          onchange=`location.href='/joseon-defense/facet/${currentClass}?sort='+this.value+'${Object.keys(selectedFilters||{}).length ? '&'+Object.entries(selectedFilters||{}).map(function(e){return e[0]+'='+encodeURIComponent(e[1]);}).join('&') : ''}${searchQuery ? '&q='+encodeURIComponent(searchQuery) : ''}'`
         )
           option(value='alpha' selected=(sortBy==='alpha'))  이름순
           option(value='year'  selected=(sortBy==='year'))   연도순
@@ -419,16 +418,16 @@ block content
         .result-grid
           each item in items
             a.result-card(href=`/joseon-defense/resource/${item.resourceId}`)
-              p.rc-type
-                span= item.classIcon + ' ' 
-                span= item.classLabel || currentClass
+              .rc-type
+                span= item.classIcon
+                span.rc-type-badge= item.classLabel || currentClass
               p.rc-title= item.label
               if item.description
-                p.rc-meta= item.description.length > 80 ? item.description.slice(0,80)+'…' : item.description
+                p.rc-meta= item.description.length > 85 ? item.description.slice(0,85)+'…' : item.description
               if item.periodLabel
                 p.rc-meta= item.periodLabel
               else if item.yearStart || item.yearEnd
-                p.rc-meta
+                p.rc-year
                   if item.yearStart
                     | #{item.yearStart}
                   if item.yearStart && item.yearEnd
@@ -436,19 +435,20 @@ block content
                   if item.yearEnd
                     |  #{item.yearEnd}
               if item.rankLabel
-                p.rc-meta(style='color:rgba(201,162,39,0.6)') #{item.rankLabel}
+                span.rc-rank= item.rankLabel
+              if item.specNote
+                p.rc-meta(style='font-size:11px; color:var(--text-muted)') #{item.specNote.length > 60 ? item.specNote.slice(0,60)+'…' : item.specNote}
               if item.tags && item.tags.length
                 .rc-tags
-                  each tag in item.tags
+                  each tag in item.tags.slice(0,4)
                     span.rc-tag= tag
       else
         .empty-state
-          p.ei
-            = classIcon
-          p 해당 클래스의 인스턴스가 없습니다.
+          p.ei= classIcon
+          p.ei-msg 해당 클래스의 인스턴스가 없습니다.
           if Object.keys(selectedFilters||{}).length
             p(style='font-size:13px; margin-top:10px')
-              a(href=`/joseon-defense/facet/${currentClass}` style='color:#c9a227') 필터를 해제
+              a(href=`/joseon-defense/facet/${currentClass}`) 필터를 해제
               |  하면 더 많은 결과를 볼 수 있습니다.
           else
             p(style='font-size:13px; margin-top:8px') TTL 파일에 인스턴스 데이터를 추가하면 여기에 표시됩니다.

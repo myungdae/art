@@ -1,9 +1,9 @@
-//- views/joseon-defense/resource.pug — 조선 국방 온톨로지 리소스 상세 페이지
+//- views/joseon-defense/resource.pug — 조선 국방 온톨로지 리소스 상세 페이지 (라이트 테마 v2)
 extends ./layout
 
 block content
   style.
-    html, body { background: #0e0c08; color: #f0e8d0; }
+    html, body { background: var(--bg); color: var(--text); }
 
     .detail-wrap {
       max-width: 1100px; margin: 0 auto; padding: 40px 24px 80px;
@@ -12,11 +12,11 @@ block content
     /* 뒤로 가기 */
     .back-link {
       display: inline-flex; align-items: center; gap: 6px;
-      font-size: 13px; font-weight: 700; color: rgba(240,232,208,0.4);
+      font-size: 13px; font-weight: 700; color: var(--text-muted);
       text-decoration: none; margin-bottom: 28px;
       transition: color 0.2s;
     }
-    .back-link:hover { color: #d4af37; }
+    .back-link:hover { color: var(--gold); }
 
     /* 헤더 영역 */
     .res-header {
@@ -24,16 +24,16 @@ block content
     }
     .res-class-badge {
       display: inline-flex; align-items: center; gap: 7px;
-      background: rgba(139,105,20,0.18);
-      border: 1px solid rgba(212,175,55,0.35);
+      background: var(--gold-bg);
+      border: 1px solid var(--gold-border);
       border-radius: 50px; padding: 5px 16px;
-      font-size: 11px; font-weight: 800; color: #d4af37;
+      font-size: 11px; font-weight: 800; color: var(--gold);
       letter-spacing: 2px; text-transform: uppercase;
       margin-bottom: 16px;
     }
     .res-title {
       font-size: clamp(1.6rem, 3.5vw, 2.5rem);
-      font-weight: 900; color: #f0e8d0; line-height: 1.2;
+      font-weight: 900; color: var(--text); line-height: 1.2;
       margin-bottom: 16px;
     }
 
@@ -45,13 +45,21 @@ block content
       font-size: 12px; font-weight: 700;
       text-decoration: none; transition: all 0.2s;
     }
-    .dtag-gold { background: rgba(201,162,39,0.12); border: 1px solid rgba(201,162,39,0.3); color: #d4af37; }
-    .dtag-gold:hover { background: rgba(201,162,39,0.22); }
-    .dtag-blue { background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.3); color: #a5b4fc; }
-    .dtag-blue:hover { background: rgba(99,102,241,0.22); }
-    .dtag-gray { background: rgba(240,232,208,0.07); border: 1px solid rgba(240,232,208,0.15); color: rgba(240,232,208,0.6); }
-    .dtag-gray:hover { background: rgba(240,232,208,0.12); }
-    .dtag-green { background: rgba(34,197,94,0.10); border: 1px solid rgba(34,197,94,0.25); color: #86efac; }
+    .dtag-gold {
+      background: var(--gold-bg); border: 1px solid var(--gold-border); color: var(--gold);
+    }
+    .dtag-gold:hover { background: rgba(139,105,20,0.14); }
+    .dtag-blue {
+      background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.22); color: #4f46e5;
+    }
+    .dtag-blue:hover { background: rgba(99,102,241,0.14); }
+    .dtag-gray {
+      background: #f0ede5; border: 1px solid var(--border); color: var(--text-3);
+    }
+    .dtag-gray:hover { background: #e8e2d4; }
+    .dtag-green {
+      background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.22); color: #16a34a;
+    }
 
     /* 메인 그리드 */
     .detail-grid {
@@ -66,90 +74,95 @@ block content
 
     /* 속성 카드 */
     .detail-card {
-      background: #1a1508;
-      border: 1px solid #2a2010;
+      background: var(--bg-card);
+      border: 1.5px solid var(--border);
       border-radius: 16px;
       overflow: hidden;
       margin-bottom: 20px;
+      box-shadow: var(--shadow-sm);
     }
     .detail-card-header {
       padding: 14px 20px;
-      border-bottom: 1px solid #2a2010;
-      font-size: 12px; font-weight: 800; color: #c9a227;
+      border-bottom: 1px solid var(--border);
+      background: #fffdf7;
+      font-size: 12px; font-weight: 800; color: var(--gold);
       text-transform: uppercase; letter-spacing: 1.5px;
     }
 
     /* 속성 테이블 */
     .prop-row {
       display: grid; grid-template-columns: 140px 1fr;
-      border-bottom: 1px solid #2a2010; padding: 12px 20px;
+      border-bottom: 1px solid var(--border); padding: 12px 20px;
     }
     .prop-row:last-child { border-bottom: none; }
     .prop-key {
-      font-size: 11px; font-weight: 700; color: rgba(240,232,208,0.4);
+      font-size: 11px; font-weight: 700; color: var(--text-muted);
       text-transform: uppercase; letter-spacing: 0.5px;
       padding-right: 12px; line-height: 1.6;
     }
     .prop-val {
-      font-size: 13px; color: #f0e8d0; word-break: break-word; line-height: 1.6;
+      font-size: 13px; color: var(--text); word-break: break-word; line-height: 1.6;
     }
-    .prop-val a { color: #c9a227; text-decoration: none; }
-    .prop-val a:hover { text-decoration: underline; }
+    .prop-val a { color: var(--gold-light); text-decoration: none; }
+    .prop-val a:hover { color: var(--gold); text-decoration: underline; }
     .prop-year {
-      font-size: 16px; font-weight: 800; color: #d4af37;
+      font-size: 16px; font-weight: 800; color: var(--gold);
     }
 
     /* 관계 섹션 */
     .rel-section { margin-bottom: 20px; }
     .rel-title {
-      font-size: 12px; font-weight: 800; color: rgba(240,232,208,0.4);
+      font-size: 12px; font-weight: 800; color: var(--text-muted);
       text-transform: uppercase; letter-spacing: 1.5px;
       margin-bottom: 12px; padding: 0 0 8px 0;
-      border-bottom: 1px solid #2a2010;
+      border-bottom: 1px solid var(--border);
     }
     .rel-list { display: flex; flex-direction: column; gap: 8px; }
     .rel-item {
       display: flex; align-items: flex-start; gap: 12px;
-      background: #1a1508; border: 1px solid #2a2010;
+      background: var(--bg-card); border: 1.5px solid var(--border);
       border-radius: 10px; padding: 12px 14px;
-      text-decoration: none; transition: border-color 0.2s;
+      text-decoration: none; transition: border-color 0.2s, box-shadow 0.2s;
+      box-shadow: var(--shadow-sm);
     }
-    .rel-item:hover { border-color: #c9a227; }
+    .rel-item:hover { border-color: var(--gold); box-shadow: var(--shadow-md); }
     .rel-pred {
-      font-size: 10px; font-weight: 800; color: #c9a227;
+      font-size: 10px; font-weight: 800; color: var(--gold);
       letter-spacing: 1px; text-transform: uppercase;
       white-space: nowrap; padding-top: 2px;
       min-width: 80px;
     }
-    .rel-label { font-size: 13px; font-weight: 700; color: #f0e8d0; line-height: 1.4; }
-    .rel-type { font-size: 11px; color: rgba(240,232,208,0.4); margin-top: 2px; }
+    .rel-label { font-size: 13px; font-weight: 700; color: var(--text); line-height: 1.4; }
+    .rel-type { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 
     /* 사이드 패널 */
     .side-panel {}
     .side-card {
-      background: #1a1508; border: 1px solid #2a2010;
+      background: var(--bg-card); border: 1.5px solid var(--border);
       border-radius: 14px; overflow: hidden; margin-bottom: 16px;
+      box-shadow: var(--shadow-sm);
     }
     .side-card-header {
-      padding: 12px 18px; border-bottom: 1px solid #2a2010;
-      font-size: 12px; font-weight: 800; color: #c9a227;
+      padding: 12px 18px; border-bottom: 1px solid var(--border);
+      background: #fffdf7;
+      font-size: 12px; font-weight: 800; color: var(--gold);
       text-transform: uppercase; letter-spacing: 1.5px;
     }
     .side-card-body { padding: 16px 18px; }
     .side-prop { margin-bottom: 12px; }
     .side-prop:last-child { margin-bottom: 0; }
     .side-key {
-      font-size: 11px; font-weight: 700; color: rgba(240,232,208,0.4);
+      font-size: 11px; font-weight: 700; color: var(--text-muted);
       text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;
     }
-    .side-val { font-size: 13px; color: #f0e8d0; line-height: 1.5; }
+    .side-val { font-size: 13px; color: var(--text-2); line-height: 1.5; }
 
     /* URI 표시 */
     .uri-box {
-      background: rgba(240,232,208,0.04);
-      border: 1px solid #2a2010;
+      background: #f7f4ec;
+      border: 1px solid var(--border);
       border-radius: 8px; padding: 10px 14px;
-      font-size: 11px; color: rgba(240,232,208,0.35);
+      font-size: 11px; color: var(--text-muted);
       word-break: break-all; font-family: monospace;
     }
 
@@ -260,14 +273,14 @@ block content
           .side-card
             .side-card-header 설명
             .side-card-body
-              p(style='font-size:13px; color:rgba(240,232,208,0.65); line-height:1.8;')= resource.description
+              p(style='font-size:13px; color:var(--text-2); line-height:1.8;')= resource.description
 
         .side-card
           .side-card-header 관련 탐색
           .side-card-body
-            a(href='/joseon-defense' style='display:block; font-size:13px; color:#c9a227; text-decoration:none; margin-bottom:10px;')
+            a(href='/joseon-defense' style='display:block; font-size:13px; color:var(--gold-light); text-decoration:none; margin-bottom:10px;')
               | 🏠 홈으로
-            a(href=`/joseon-defense/facet/${resource.classKey || 'MilitaryEvent'}` style='display:block; font-size:13px; color:rgba(240,232,208,0.6); text-decoration:none; margin-bottom:8px;')
+            a(href=`/joseon-defense/facet/${resource.classKey || 'MilitaryEvent'}` style='display:block; font-size:13px; color:var(--text-3); text-decoration:none; margin-bottom:8px;')
               | ← #{classLabel} 목록
-            a(href='/joseon-defense/facet/MilitaryEvent' style='display:block; font-size:13px; color:rgba(240,232,208,0.6); text-decoration:none;')
+            a(href='/joseon-defense/facet/MilitaryEvent' style='display:block; font-size:13px; color:var(--text-3); text-decoration:none;')
               | 📜 군사사건 전체 탐색
