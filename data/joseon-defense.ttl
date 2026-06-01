@@ -232,6 +232,29 @@ jos:Wokou
   rdfs:label "왜구"@ko ;
   rdfs:subClassOf jos:EnemyForce ;
 .
+jos:HistoricalTime
+  rdf:type owl:Class ;
+  rdfs:label "역사적 시간"@ko ;
+  dc:description "군사사건·전투·전쟁 등이 발생한 역사적 시간 단위 (연도, 연간, 세기 등)"@ko ;
+.
+jos:ReignPeriod
+  rdf:type owl:Class ;
+  rdfs:label "치세/연호"@ko ;
+  rdfs:subClassOf jos:HistoricalTime ;
+  dc:description "국왕의 재위 기간 단위. 세종 연간, 임진왜란기 등"@ko ;
+.
+jos:EventDate
+  rdf:type owl:Class ;
+  rdfs:label "사건 발생 시점"@ko ;
+  rdfs:subClassOf jos:HistoricalTime ;
+  dc:description "특정 군사사건이 발생한 연도 또는 날짜"@ko ;
+.
+jos:Period
+  rdf:type owl:Class ;
+  rdfs:label "시기/기간"@ko ;
+  rdfs:subClassOf jos:HistoricalTime ;
+  dc:description "특정 기간에 걸친 역사적 시기 (1592~1598 임진왜란기 등)"@ko ;
+.
 
 # ════════════════════════════════════════════
 #  Object Properties
@@ -249,6 +272,14 @@ jos:againstEnemy
   rdfs:domain jos:MilitaryEvent ;
   rdfs:label "적대세력을 상대하다"@ko ;
   rdfs:range jos:EnemyForce ;
+  owl:inverseOf jos:facedInEvent ;
+.
+jos:facedInEvent
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain jos:EnemyForce ;
+  rdfs:label "대적된 군사사건"@ko ;
+  rdfs:range jos:MilitaryEvent ;
+  owl:inverseOf jos:againstEnemy ;
 .
 jos:appointedBy
   rdf:type owl:ObjectProperty ;
@@ -304,18 +335,42 @@ jos:hasFacility
   rdfs:domain jos:Fortress ;
   rdfs:label "군사시설을 갖다"@ko ;
   rdfs:range jos:MilitaryFacility ;
+  owl:inverseOf jos:facilityOf ;
+.
+jos:facilityOf
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain jos:MilitaryFacility ;
+  rdfs:label "소속 성곽/시설"@ko ;
+  rdfs:range jos:Fortress ;
+  owl:inverseOf jos:hasFacility ;
 .
 jos:hasHeadquarters
   rdf:type owl:ObjectProperty ;
   rdfs:domain jos:MilitaryOrganization ;
   rdfs:label "지휘부를 두다"@ko ;
   rdfs:range jos:CommandPost ;
+  owl:inverseOf jos:isHeadquartersOf ;
+.
+jos:isHeadquartersOf
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain jos:CommandPost ;
+  rdfs:label "지휘 조직"@ko ;
+  rdfs:range jos:MilitaryOrganization ;
+  owl:inverseOf jos:hasHeadquarters ;
 .
 jos:hasHeritage
   rdf:type owl:ObjectProperty ;
   rdfs:domain jos:Place ;
   rdfs:label "유산을 갖다"@ko ;
   rdfs:range jos:Heritage ;
+  owl:inverseOf jos:heritageOf ;
+.
+jos:heritageOf
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain jos:Heritage ;
+  rdfs:label "유산 소재지"@ko ;
+  rdfs:range jos:Place ;
+  owl:inverseOf jos:hasHeritage ;
 .
 jos:hasSubordinateCommand
   rdf:type owl:ObjectProperty ;
@@ -328,24 +383,56 @@ jos:involvesForce
   rdfs:domain jos:MilitaryEvent ;
   rdfs:label "군사조직이 관여하다"@ko ;
   rdfs:range jos:MilitaryOrganization ;
+  owl:inverseOf jos:participatedAsForce ;
+.
+jos:participatedAsForce
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain jos:MilitaryOrganization ;
+  rdfs:label "관여된 군사사건"@ko ;
+  rdfs:range jos:MilitaryEvent ;
+  owl:inverseOf jos:involvesForce ;
 .
 jos:occurredAt
   rdf:type owl:ObjectProperty ;
   rdfs:domain jos:MilitaryEvent ;
   rdfs:label "발생장소"@ko ;
   rdfs:range jos:Place ;
+  owl:inverseOf jos:wasSceneOf ;
+.
+jos:wasSceneOf
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain jos:Place ;
+  rdfs:label "사건 발생지"@ko ;
+  rdfs:range jos:MilitaryEvent ;
+  owl:inverseOf jos:occurredAt ;
 .
 jos:participatedIn
   rdf:type owl:ObjectProperty ;
   rdfs:domain jos:Person ;
   rdfs:label "참전/참여하다"@ko ;
   rdfs:range jos:MilitaryEvent ;
+  owl:inverseOf jos:hasParticipant ;
+.
+jos:hasParticipant
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain jos:MilitaryEvent ;
+  rdfs:label "참전 인물"@ko ;
+  rdfs:range jos:Person ;
+  owl:inverseOf jos:participatedIn ;
 .
 jos:stationedAt
   rdf:type owl:ObjectProperty ;
   rdfs:domain jos:MilitaryOrganization ;
   rdfs:label "주둔하다"@ko ;
   rdfs:range jos:Place ;
+  owl:inverseOf jos:hasGarrison ;
+.
+jos:hasGarrison
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain jos:Place ;
+  rdfs:label "주둔 군사조직"@ko ;
+  rdfs:range jos:MilitaryOrganization ;
+  owl:inverseOf jos:stationedAt ;
 .
 jos:subordinateTo
   rdf:type owl:ObjectProperty ;
@@ -365,6 +452,48 @@ jos:usesWeapon
   rdfs:label "무기체계를 사용하다"@ko ;
   rdfs:range jos:WeaponSystem ;
   owl:inverseOf jos:usedInMilitaryEvent ;
+.
+jos:occurredDuring
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain jos:MilitaryEvent ;
+  rdfs:label "발생 시기"@ko ;
+  rdfs:range jos:HistoricalTime ;
+  owl:inverseOf jos:hasEvent ;
+.
+jos:hasEvent
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain jos:HistoricalTime ;
+  rdfs:label "해당 시기의 사건"@ko ;
+  rdfs:range jos:MilitaryEvent ;
+  owl:inverseOf jos:occurredDuring ;
+.
+jos:reignedDuring
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain jos:King ;
+  rdfs:label "재위 기간"@ko ;
+  rdfs:range jos:ReignPeriod ;
+  owl:inverseOf jos:reignOf ;
+.
+jos:reignOf
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain jos:ReignPeriod ;
+  rdfs:label "재위 국왕"@ko ;
+  rdfs:range jos:King ;
+  owl:inverseOf jos:reignedDuring ;
+.
+jos:commandedDuring
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain jos:Commander ;
+  rdfs:label "재임 시기"@ko ;
+  rdfs:range jos:HistoricalTime ;
+  owl:inverseOf jos:hasComanderInPeriod ;
+.
+jos:hasComanderInPeriod
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain jos:HistoricalTime ;
+  rdfs:label "해당 시기의 지휘관"@ko ;
+  rdfs:range jos:Commander ;
+  owl:inverseOf jos:commandedDuring ;
 .
 
 # ════════════════════════════════════════════
@@ -410,6 +539,221 @@ jos:yearStart
   rdf:type owl:DatatypeProperty ;
   rdfs:label "시작연도"@ko ;
   rdfs:range xsd:gYear ;
+.
+jos:exactDate
+  rdf:type owl:DatatypeProperty ;
+  rdfs:domain jos:HistoricalTime ;
+  rdfs:label "정확한 날짜"@ko ;
+  rdfs:range xsd:date ;
+.
+jos:centuryLabel
+  rdf:type owl:DatatypeProperty ;
+  rdfs:domain jos:HistoricalTime ;
+  rdfs:label "세기 표현"@ko ;
+  rdfs:range xsd:string ;
+.
+jos:dynastyEraLabel
+  rdf:type owl:DatatypeProperty ;
+  rdfs:domain jos:HistoricalTime ;
+  rdfs:label "조선 왕력 표현"@ko ;
+  rdfs:range xsd:string ;
+.
+
+# ════════════════════════════════════════════
+#  Instances — 역사적 시간 (HistoricalTime)
+# ════════════════════════════════════════════
+
+res:TaejongReign
+  rdf:type jos:ReignPeriod ;
+  rdfs:label "태종 치세"@ko ;
+  dc:description "조선 태종 재위 기간(1400~1418). 전라병영성 강진 이전(1417) 명령"@ko ;
+  jos:yearStart "1400"^^xsd:gYear ;
+  jos:yearEnd "1418"^^xsd:gYear ;
+  jos:dynastyEraLabel "태종 원년~18년"@ko ;
+  jos:reignOf res:KingTaejong ;
+  jos:hasEvent res:ConstructionOfJeollaByeongyeongseong ;
+.
+res:SejongReign
+  rdf:type jos:ReignPeriod ;
+  rdfs:label "세종 치세"@ko ;
+  dc:description "조선 세종 재위 기간(1418~1450). 대마도 정벌(1419), 신기전·화포 개발"@ko ;
+  jos:yearStart "1418"^^xsd:gYear ;
+  jos:yearEnd "1450"^^xsd:gYear ;
+  jos:dynastyEraLabel "세종 원년~32년"@ko ;
+  jos:reignOf res:KingSejong ;
+  jos:hasEvent res:DaemadoExpedition1419 ;
+  jos:hasEvent res:JurchenExpedition ;
+.
+res:MyeongjongReign
+  rdf:type jos:ReignPeriod ;
+  rdfs:label "명종 치세"@ko ;
+  dc:description "조선 명종 재위 기간(1545~1567). 을묘왜변(1555) 발생"@ko ;
+  jos:yearStart "1545"^^xsd:gYear ;
+  jos:yearEnd "1567"^^xsd:gYear ;
+  jos:dynastyEraLabel "명종 원년~22년"@ko ;
+  jos:reignOf res:KingMyeongjong ;
+  jos:hasEvent res:EulmyoWaebyeon ;
+.
+res:SeonjoReign
+  rdf:type jos:ReignPeriod ;
+  rdfs:label "선조 치세"@ko ;
+  dc:description "조선 선조 재위 기간(1567~1608). 임진왜란·정유재란 발생"@ko ;
+  jos:yearStart "1567"^^xsd:gYear ;
+  jos:yearEnd "1608"^^xsd:gYear ;
+  jos:dynastyEraLabel "선조 원년~41년"@ko ;
+  jos:reignOf res:KingSeonjo ;
+  jos:hasEvent res:ImjinWaeran ;
+  jos:hasEvent res:BattleOfWongchiIchi ;
+  jos:hasEvent res:BattleOfHaengju ;
+  jos:hasEvent res:BattleOfNamwon ;
+.
+res:InjoReign
+  rdf:type jos:ReignPeriod ;
+  rdfs:label "인조 치세"@ko ;
+  dc:description "조선 인조 재위 기간(1623~1649). 정묘호란(1627)·병자호란(1636~1637) 발생"@ko ;
+  jos:yearStart "1623"^^xsd:gYear ;
+  jos:yearEnd "1649"^^xsd:gYear ;
+  jos:dynastyEraLabel "인조 원년~27년"@ko ;
+  jos:reignOf res:KingInjo ;
+  jos:hasEvent res:JeongmyoHoran ;
+  jos:hasEvent res:ByeongjaHoran ;
+  jos:hasEvent res:BattleOfGwanggyoSan ;
+.
+res:HyojongReign
+  rdf:type jos:ReignPeriod ;
+  rdfs:label "효종 치세"@ko ;
+  dc:description "조선 효종 재위 기간(1649~1659). 북벌 정책, 거북차 개발(1651~1652)"@ko ;
+  jos:yearStart "1649"^^xsd:gYear ;
+  jos:yearEnd "1659"^^xsd:gYear ;
+  jos:dynastyEraLabel "효종 원년~10년"@ko ;
+  jos:reignOf res:KingHyojong ;
+  jos:hasEvent res:GeobukchaDevelopment ;
+  jos:hasEvent res:HamelCaptivity ;
+.
+res:ImjinWarPeriod
+  rdf:type jos:Period ;
+  rdfs:label "임진왜란기"@ko ;
+  dc:description "선조 25년~31년(1592~1598). 일본군 침략 7년 전쟁 기간"@ko ;
+  jos:yearStart "1592"^^xsd:gYear ;
+  jos:yearEnd "1598"^^xsd:gYear ;
+  jos:dynastyEraLabel "선조 25~31년"@ko ;
+  jos:hasEvent res:ImjinWaeran ;
+  jos:hasEvent res:BattleOfWongchiIchi ;
+  jos:hasEvent res:BattleOfHaengju ;
+  jos:hasEvent res:BattleOfNamwon ;
+.
+res:HoranPeriod
+  rdf:type jos:Period ;
+  rdfs:label "호란기"@ko ;
+  dc:description "인조 5년~15년(1627~1637). 정묘호란과 병자호란을 포함하는 시기"@ko ;
+  jos:yearStart "1627"^^xsd:gYear ;
+  jos:yearEnd "1637"^^xsd:gYear ;
+  jos:dynastyEraLabel "인조 5~15년"@ko ;
+  jos:hasEvent res:JeongmyoHoran ;
+  jos:hasEvent res:ByeongjaHoran ;
+  jos:hasEvent res:BattleOfGwanggyoSan ;
+.
+res:EarlyJoseonPeriod
+  rdf:type jos:Period ;
+  rdfs:label "조선 전기"@ko ;
+  dc:description "조선 건국(1392)~임진왜란 이전(1592). 병영 체계 정비, 왜구 격퇴 시기"@ko ;
+  jos:yearStart "1392"^^xsd:gYear ;
+  jos:yearEnd "1591"^^xsd:gYear ;
+  jos:centuryLabel "14~16세기"@ko ;
+  jos:dynastyEraLabel "태조~선조 이전"@ko ;
+  jos:hasEvent res:ConstructionOfJeollaByeongyeongseong ;
+  jos:hasEvent res:DaemadoExpedition1419 ;
+  jos:hasEvent res:JurchenExpedition ;
+  jos:hasEvent res:EulmyoWaebyeon ;
+.
+res:LateJoseonPeriod
+  rdf:type jos:Period ;
+  rdfs:label "조선 후기"@ko ;
+  dc:description "광해군(1608)~고종(1895 폐영). 호란 이후 군제 변화 시기"@ko ;
+  jos:yearStart "1608"^^xsd:gYear ;
+  jos:yearEnd "1895"^^xsd:gYear ;
+  jos:centuryLabel "17~19세기"@ko ;
+  jos:dynastyEraLabel "광해군~고종"@ko ;
+  jos:hasEvent res:GeobukchaDevelopment ;
+  jos:hasEvent res:HamelCaptivity ;
+  jos:hasEvent res:GyeongsinEulbyeongFamine ;
+  jos:hasEvent res:LeeinJwaRebellion ;
+  jos:hasEvent res:JeollaByeongyeongClosure ;
+.
+res:Year1417
+  rdf:type jos:EventDate ;
+  rdfs:label "태종 17년 (1417)"@ko ;
+  dc:description "전라병영 강진 이전 및 병영성 축성 연도"@ko ;
+  jos:yearStart "1417"^^xsd:gYear ;
+  jos:dynastyEraLabel "태종 17년"@ko ;
+  jos:hasEvent res:ConstructionOfJeollaByeongyeongseong ;
+.
+res:Year1419
+  rdf:type jos:EventDate ;
+  rdfs:label "세종 1년 (1419)"@ko ;
+  dc:description "기해동정, 대마도 정벌 연도"@ko ;
+  jos:yearStart "1419"^^xsd:gYear ;
+  jos:dynastyEraLabel "세종 원년"@ko ;
+  jos:hasEvent res:DaemadoExpedition1419 ;
+.
+res:Year1555
+  rdf:type jos:EventDate ;
+  rdfs:label "명종 10년 (1555)"@ko ;
+  dc:description "을묘왜변 발생 연도. 왜구 수천 명 전라 해안 침입"@ko ;
+  jos:yearStart "1555"^^xsd:gYear ;
+  jos:dynastyEraLabel "명종 10년"@ko ;
+  jos:hasEvent res:EulmyoWaebyeon ;
+.
+res:Year1592
+  rdf:type jos:EventDate ;
+  rdfs:label "선조 25년 (1592)"@ko ;
+  dc:description "임진왜란 발발 연도. 일본군 조선 침략 시작"@ko ;
+  jos:yearStart "1592"^^xsd:gYear ;
+  jos:dynastyEraLabel "선조 25년"@ko ;
+  jos:hasEvent res:ImjinWaeran ;
+  jos:hasEvent res:BattleOfWongchiIchi ;
+.
+res:Year1593
+  rdf:type jos:EventDate ;
+  rdfs:label "선조 26년 (1593)"@ko ;
+  dc:description "행주대첩 발생 연도. 신기전·화차 활용 대승"@ko ;
+  jos:yearStart "1593"^^xsd:gYear ;
+  jos:dynastyEraLabel "선조 26년"@ko ;
+  jos:hasEvent res:BattleOfHaengju ;
+.
+res:Year1597
+  rdf:type jos:EventDate ;
+  rdfs:label "선조 30년 (1597)"@ko ;
+  dc:description "정유재란, 남원성 전투 연도. 이복남 순국"@ko ;
+  jos:yearStart "1597"^^xsd:gYear ;
+  jos:dynastyEraLabel "선조 30년"@ko ;
+  jos:hasEvent res:BattleOfNamwon ;
+.
+res:Year1636
+  rdf:type jos:EventDate ;
+  rdfs:label "인조 14년 (1636)"@ko ;
+  dc:description "병자호란 발발 연도. 청군 침략"@ko ;
+  jos:yearStart "1636"^^xsd:gYear ;
+  jos:dynastyEraLabel "인조 14년"@ko ;
+  jos:hasEvent res:ByeongjaHoran ;
+  jos:hasEvent res:BattleOfGwanggyoSan ;
+.
+res:Year1651
+  rdf:type jos:EventDate ;
+  rdfs:label "효종 2년 (1651)"@ko ;
+  dc:description "거북차 개발·전투실험 시작 연도"@ko ;
+  jos:yearStart "1651"^^xsd:gYear ;
+  jos:dynastyEraLabel "효종 2년"@ko ;
+  jos:hasEvent res:GeobukchaDevelopment ;
+  jos:hasEvent res:HamelCaptivity ;
+.
+res:Year1895
+  rdf:type jos:EventDate ;
+  rdfs:label "고종 32년 (1895)"@ko ;
+  dc:description "전라병영성 폐영 연도. 조선 지방 군사체계 해체"@ko ;
+  jos:yearStart "1895"^^xsd:gYear ;
+  jos:dynastyEraLabel "고종 32년"@ko ;
+  jos:hasEvent res:JeollaByeongyeongClosure ;
 .
 
 # ════════════════════════════════════════════
@@ -1027,6 +1371,9 @@ res:ConstructionOfJeollaByeongyeongseong
   jos:periodLabel "태종 17년(1417)"@ko ;
   jos:occurredAt res:GangjinJeollaByeongyeongseong ;
   jos:involvesForce res:JeollaByeongyeong ;
+  jos:occurredDuring res:Year1417 ;
+  jos:occurredDuring res:TaejongReign ;
+  jos:occurredDuring res:EarlyJoseonPeriod ;
   jos:sourceNote "이원승(2025)"@ko ;
 .
 res:DaemadoExpedition1419
@@ -1036,6 +1383,9 @@ res:DaemadoExpedition1419
   jos:yearStart "1419"^^xsd:gYear ;
   jos:againstEnemy res:WokouForce ;
   jos:involvesForce res:JeollaByeongyeong ;
+  jos:occurredDuring res:Year1419 ;
+  jos:occurredDuring res:SejongReign ;
+  jos:occurredDuring res:EarlyJoseonPeriod ;
   jos:sourceNote "이원승(2025)"@ko ;
 .
 res:JurchenExpedition
@@ -1056,6 +1406,9 @@ res:EulmyoWaebyeon
   jos:againstEnemy res:WokouForce ;
   jos:involvesForce res:JeollaByeongyeong ;
   jos:occurredAt res:DallyangSeong ;
+  jos:occurredDuring res:Year1555 ;
+  jos:occurredDuring res:MyeongjongReign ;
+  jos:occurredDuring res:EarlyJoseonPeriod ;
   jos:sourceNote "이원승(2025)"@ko ;
 .
 res:ImjinWaeran
@@ -1071,6 +1424,9 @@ res:ImjinWaeran
   jos:usesWeapon res:BigyeokJincheolloe ;
   jos:usesWeapon res:SeungjaTongtong ;
   jos:usesWeapon res:Jochong ;
+  jos:occurredDuring res:Year1592 ;
+  jos:occurredDuring res:SeonjoReign ;
+  jos:occurredDuring res:ImjinWarPeriod ;
   jos:sourceNote "이원승(2025)"@ko ;
 .
 res:BattleOfWongchiIchi
@@ -1095,6 +1451,9 @@ res:BattleOfHaengju
   jos:usesWeapon res:SingijeongiHwacha ;
   jos:usesWeapon res:ChongtongCannon ;
   jos:usesWeapon res:SeungjaTongtong ;
+  jos:occurredDuring res:Year1593 ;
+  jos:occurredDuring res:SeonjoReign ;
+  jos:occurredDuring res:ImjinWarPeriod ;
   jos:sourceNote "이원승(2025)"@ko ;
 .
 res:BattleOfNamwon
@@ -1105,6 +1464,9 @@ res:BattleOfNamwon
   jos:againstEnemy res:ImjinJapaneseArmy ;
   jos:involvesForce res:JeollaByeongyeong ;
   jos:occurredAt res:NamwonEupseong ;
+  jos:occurredDuring res:Year1597 ;
+  jos:occurredDuring res:SeonjoReign ;
+  jos:occurredDuring res:ImjinWarPeriod ;
   jos:sourceNote "이원승(2025)"@ko ;
 .
 res:BattleAgainstWokouUsingSingijeon
@@ -1136,6 +1498,9 @@ res:ByeongjaHoran
   jos:againstEnemy res:QingForce ;
   jos:involvesForce res:JeollaByeongyeong ;
   jos:usesWeapon res:Hongipo ;
+  jos:occurredDuring res:Year1636 ;
+  jos:occurredDuring res:InjoReign ;
+  jos:occurredDuring res:HoranPeriod ;
   jos:sourceNote "이원승(2025)"@ko ;
 .
 res:BattleOfGwanggyoSan
@@ -1155,6 +1520,9 @@ res:GeobukchaDevelopment
   jos:yearEnd "1652"^^xsd:gYear ;
   jos:involvesForce res:JeollaByeongyeong ;
   jos:usesWeapon res:GeobukchaWeapon ;
+  jos:occurredDuring res:Year1651 ;
+  jos:occurredDuring res:HyojongReign ;
+  jos:occurredDuring res:LateJoseonPeriod ;
   jos:sourceNote "이원승(2025)"@ko ;
 .
 res:GyeongsinEulbyeongFamine

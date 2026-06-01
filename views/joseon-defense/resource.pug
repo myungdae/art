@@ -209,6 +209,14 @@ block content
             .prop-row
               span.prop-key 관직/계급
               span.prop-val= resource.rankLabel
+          if resource.dynastyEraLabel
+            .prop-row
+              span.prop-key 조선 왕력
+              span.prop-val= resource.dynastyEraLabel
+          if resource.centuryLabel
+            .prop-row
+              span.prop-key 세기
+              span.prop-val= resource.centuryLabel
           if resource.modernEquivalent
             .prop-row
               span.prop-key 현대 대응개념
